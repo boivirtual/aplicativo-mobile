@@ -32,6 +32,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
   bool exibirFinalizadas = false;
   bool carregandoFinalizadas = false;
   bool _mostrarFormulario = false;
+  bool _iniciando = false;
 
   final Color corDoRotulo = Colors.blueGrey[800]!;
   final Color corTextoPendente = const Color(0xFF455A64);
@@ -393,15 +394,24 @@ class _PesagemScreenState extends State<PesagemScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    onPressed: _validarEIniciarNovaPesagem,
-                    child: const Text(
-                      "Iniciar On-Line",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    onPressed: _iniciando ? null : _validarEIniciarNovaPesagem,
+                    child: _iniciando
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            "Iniciar On-Line",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
               ),
@@ -558,9 +568,14 @@ class _PesagemScreenState extends State<PesagemScreen> {
   void _iniciarNovaPesagem() async {
     FocusManager.instance.primaryFocus?.unfocus();
 
+    setState(() => _iniciando = true);
+
     final int? idPesagemCriada = await _criarPesagemSemItensNoServidor();
     if (!mounted) return;
-    if (idPesagemCriada == null) return;
+    if (idPesagemCriada == null) {
+      setState(() => _iniciando = false);
+      return;
+    }
 
     await Navigator.push(
       context,
@@ -587,6 +602,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
       _criterioController.clear();
       _criteriosApartacao = [];
       _mostrarFormulario = false;
+      _iniciando = false;
     });
     _carregarDadosIniciais();
   }

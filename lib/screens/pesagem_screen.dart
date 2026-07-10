@@ -8,6 +8,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'pesagem_itens_screen.dart';
 import 'pesagem_consulta_screen.dart';
 import 'package:boivirtual/utils/app_alert.dart';
+import '../config/api_config.dart';
 
 class PesagemScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -158,7 +159,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
             .toList();
         final response = await http.post(
           Uri.parse(
-            "https://agrolandes.com.br/teste_boivirtual/sistema/api/rest/pesagem/list_pendentes.php",
+            "${ApiConfig.baseUrl}/rest/pesagem/list_pendentes.php",
           ),
           body: json.encode({"bd": cnpj, "fazendas": idsFazendas}),
         );
@@ -186,7 +187,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
       try {
         final response = await http.post(
           Uri.parse(
-            "https://agrolandes.com.br/teste_boivirtual/sistema/api/rest/pesagem/list_finalizadas.php",
+            "${ApiConfig.baseUrl}/rest/pesagem/list_finalizadas.php",
           ),
           body: json.encode({"bd": cnpj, "fazendas": idsFazendas}),
         );
@@ -511,7 +512,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
 
       final response = await http.post(
         Uri.parse(
-          "https://agrolandes.com.br/teste_boivirtual/sistema/api/rest/pesagem/create_pesagem.php",
+          "${ApiConfig.baseUrl}/rest/pesagem/create_pesagem.php",
         ),
         headers: {"Content-Type": "application/json"},
         body: json.encode(bodyMap),

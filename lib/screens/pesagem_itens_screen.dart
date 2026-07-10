@@ -17,6 +17,7 @@ import 'package:boivirtual/widgets/observacao_toggle_pesagem_widget.dart';
 import 'package:boivirtual/widgets/formulario_pesagem_topo_widget.dart';
 import 'pesagem_edicao_modal.dart';
 import 'package:boivirtual/utils/app_alert.dart';
+import '../config/api_config.dart';
 
 class PesagemItensScreen extends StatefulWidget {
   final String fazendaSelecionada;
@@ -249,7 +250,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
       final response = await http.post(
         Uri.parse(
-          "https://agrolandes.com.br/teste_boivirtual/sistema/api/rest/pesagem/update_pesagem.php",
+          "${ApiConfig.baseUrl}/rest/pesagem/update_pesagem.php",
         ),
         headers: {"Content-Type": "application/json"},
         body: json.encode(bodyMap),
@@ -913,7 +914,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     try {
       final response = await http.post(
         Uri.parse(
-          "https://agrolandes.com.br/teste_boivirtual/sistema/api/rest/pesagem/get_pesagem_completa.php",
+          "${ApiConfig.baseUrl}/rest/pesagem/get_pesagem_completa.php",
         ),
         body: json.encode({
           "bd": cnpjParaBanco,
@@ -972,7 +973,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     try {
       final response = await http.get(
         Uri.parse(
-          "https://agrolandes.com.br/teste_boivirtual/sistema/api/rest/animal/list.php?id=$termo&local=$fazendaSelecionada&bd=$cnpjParaBanco",
+          "${ApiConfig.baseUrl}/rest/animal/list.php?id=$termo&local=$fazendaSelecionada&bd=$cnpjParaBanco",
         ),
       );
       if (response.statusCode == 200) {
@@ -1090,7 +1091,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
       final response = await http
           .get(
             Uri.parse(
-              "https://agrolandes.com.br/teste_boivirtual/sistema/api/rest/animal/info.php?id=$idInterno&local=$fazendaSelecionada&bd=$cnpjParaBanco",
+              "${ApiConfig.baseUrl}/rest/animal/info.php?id=$idInterno&local=$fazendaSelecionada&bd=$cnpjParaBanco",
             ),
           )
           .timeout(const Duration(seconds: 8));
@@ -1232,7 +1233,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
       final response = await http.post(
         Uri.parse(
-          "https://agrolandes.com.br/teste_boivirtual/sistema/api/rest/pesagem/save_item.php",
+          "${ApiConfig.baseUrl}/rest/pesagem/save_item.php",
         ),
         headers: {"Content-Type": "application/json"},
         body: json.encode(body),
@@ -1259,7 +1260,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     try {
       await http.post(
         Uri.parse(
-          "https://agrolandes.com.br/teste_boivirtual/sistema/api/rest/pesagem/delete_item.php",
+          "${ApiConfig.baseUrl}/rest/pesagem/delete_item.php",
         ),
         headers: {"Content-Type": "application/json"},
         body: json.encode({
@@ -1282,7 +1283,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     try {
       final response = await http.post(
         Uri.parse(
-          "https://agrolandes.com.br/teste_boivirtual/sistema/api/rest/pesagem/update_obs_item_repetido.php",
+          "${ApiConfig.baseUrl}/rest/pesagem/update_obs_item_repetido.php",
         ),
         headers: {"Content-Type": "application/json"},
         body: json.encode({
@@ -1315,7 +1316,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
       }
       await http.post(
         Uri.parse(
-          "https://agrolandes.com.br/teste_boivirtual/sistema/api/rest/pesagem/update_item.php",
+          "${ApiConfig.baseUrl}/rest/pesagem/update_item.php",
         ),
         headers: {"Content-Type": "application/json"},
         body: json.encode({

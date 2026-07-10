@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config/api_config.dart';
 
 class PesagemConsultaMaeModal extends StatefulWidget {
   final String cnpj;
@@ -74,7 +75,7 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
     }
     try {
       final url =
-          "https://agrolandes.com.br/teste_boivirtual/sistema/api/rest/animal/list_mae_global.php?id=$termo&bd=$cnpjSeguro";
+          "${ApiConfig.baseUrl}/rest/animal/list_mae_global.php?id=$termo&bd=$cnpjSeguro";
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200 && response.body.isNotEmpty) {
@@ -101,7 +102,7 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
     });
     try {
       final url =
-          "https://agrolandes.com.br/teste_boivirtual/sistema/api/rest/animal/info_mae_global.php?id=${animal['id']}&bd=$cnpjSeguro";
+          "${ApiConfig.baseUrl}/rest/animal/info_mae_global.php?id=${animal['id']}&bd=$cnpjSeguro";
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         setState(() => infoMae = json.decode(response.body));

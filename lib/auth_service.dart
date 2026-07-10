@@ -2,11 +2,10 @@ import 'dart:convert'; // Para converter o JSON
 import 'package:http/http.dart' as http; // Para fazer a requisição Web
 import 'package:shared_preferences/shared_preferences.dart'; // Para salvar o login
 import 'package:flutter/material.dart';
+import 'config/api_config.dart';
 
 class AuthService {
-  // A URL que você me passou
-  final String _urlApi =
-      'https://agrolandes.com.br/teste_boivirtual/sistema/api/rest/usuario/login.php';
+  final String _urlApi = '${ApiConfig.baseUrl}/rest/usuario/login.php';
 
   Future<bool> login(String usuario, String senha) async {
     try {

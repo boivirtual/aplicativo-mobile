@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 
 class PesagemConsultaScreen extends StatefulWidget {
   final String fazendaSelecionada;
@@ -60,7 +61,7 @@ class _PesagemConsultaScreenState extends State<PesagemConsultaScreen> {
     setState(() => carregandoItens = true);
     try {
       final url = Uri.parse(
-        "https://agrolandes.com.br/teste_boivirtual/sistema/api/rest/pesagem/get_pesagem_completa.php",
+        "${ApiConfig.baseUrl}/rest/pesagem/get_pesagem_completa.php",
       );
       final response = await http.post(
         url,

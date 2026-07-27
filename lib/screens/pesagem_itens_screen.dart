@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/connectivity_service.dart';
+import '../services/animal_cache_service.dart';
 import '../repositories/pesagem_repository.dart';
 import '../repositories/animal_repository.dart';
 import 'pesagem_consulta_mae_modal.dart';
@@ -878,6 +879,10 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     if (fazendasJson != null) {
       setState(() => fazendasCarregadas = json.decode(fazendasJson));
     }
+    AnimalCacheService.instance.garantirCacheDaFazenda(
+      _fazendaSelecionadaAtual,
+      cnpjParaBanco,
+    );
     // id > 0: pesagem já sincronizada; id < 0: ainda só existe localmente
     // (offline). Nos dois casos há itens locais a carregar; só id == 0
     // (nunca deveria acontecer neste ponto) não dispara a busca.
@@ -940,43 +945,40 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
       return;
     }
     try {
-      final response = await AnimalRepository.instance.buscarPorCodigo(
+      List<dynamic> lista = await AnimalRepository.instance.buscarPorCodigo(
         termo: termo,
         local: fazendaSelecionada,
         bd: cnpjParaBanco,
       );
-      if (response.statusCode == 200) {
-        List<dynamic> lista = json.decode(response.body);
-        if (lista.isEmpty) {
-          _exibirMensagemErro("Cód $termo não encontrado!");
-          _noAnimalController.clear();
-          setState(() {
-            sugestoesAnimais = [];
-            mostrandoSugestoes = false;
-          });
-          return;
-        }
-        String formatarCodigo(String cod) {
-          if (cod.contains('-')) {
-            var partes = cod.split('-');
-            String num = partes[1].replaceFirst(RegExp(r'^0+'), '');
-            return "${partes[0]}-${num.isEmpty ? "0" : num}";
-          }
-          return cod.replaceFirst(RegExp(r'^0+'), '').isEmpty
-              ? "0"
-              : cod.replaceFirst(RegExp(r'^0+'), '');
-        }
-
+      if (lista.isEmpty) {
+        _exibirMensagemErro("Cód $termo não encontrado!");
+        _noAnimalController.clear();
         setState(() {
-          sugestoesAnimais = lista.take(6).map((item) {
-            item['exibicao'] = formatarCodigo(item['codigo'].toString());
-            return item;
-          }).toList();
-          mostrandoSugestoes =
-              sugestoesAnimais.isNotEmpty &&
-              _noAnimalController.text.isNotEmpty;
+          sugestoesAnimais = [];
+          mostrandoSugestoes = false;
         });
+        return;
       }
+      String formatarCodigo(String cod) {
+        if (cod.contains('-')) {
+          var partes = cod.split('-');
+          String num = partes[1].replaceFirst(RegExp(r'^0+'), '');
+          return "${partes[0]}-${num.isEmpty ? "0" : num}";
+        }
+        return cod.replaceFirst(RegExp(r'^0+'), '').isEmpty
+            ? "0"
+            : cod.replaceFirst(RegExp(r'^0+'), '');
+      }
+
+      setState(() {
+        sugestoesAnimais = lista.take(6).map((item) {
+          item['exibicao'] = formatarCodigo(item['codigo'].toString());
+          return item;
+        }).toList();
+        mostrandoSugestoes =
+            sugestoesAnimais.isNotEmpty &&
+            _noAnimalController.text.isNotEmpty;
+      });
     } catch (e) {
       debugPrint("Erro: $e");
     }
@@ -1057,20 +1059,18 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     });
 
     try {
-      final response = await AnimalRepository.instance.buscarDetalhes(
+      final data = await AnimalRepository.instance.buscarDetalhes(
         id: idInterno,
         local: fazendaSelecionada,
         bd: cnpjParaBanco,
       );
 
-      if (response.statusCode == 200) {
+      if (data.isNotEmpty) {
         if (_noAnimalController.text.isEmpty) {
           _processandoBusca = false;
           setState(() => carregandoAnimal = false);
           return;
         }
-
-        final data = json.decode(response.body);
 
         if (_motivoSelecionadoAtual == '002' &&
             _animalInvalidoParaDesmama(data['nascimento'])) {

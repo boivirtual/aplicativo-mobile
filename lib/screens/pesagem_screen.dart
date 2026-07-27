@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/connectivity_service.dart';
 import '../services/sync_service.dart';
+import '../services/animal_cache_service.dart';
 import '../repositories/pesagem_repository.dart';
 import 'pesagem_itens_screen.dart';
 import 'pesagem_consulta_screen.dart';
@@ -33,6 +34,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
   bool carregandoFinalizadas = false;
   bool _mostrarFormulario = false;
   bool _iniciando = false;
+  String? _cnpjCarregado;
 
   final Color corDoRotulo = Colors.blueGrey[800]!;
   final Color corTextoPendente = const Color(0xFF455A64);
@@ -205,6 +207,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
     final prefs = await SharedPreferences.getInstance();
     final String? fazendasJson = prefs.getString('userFazendas');
     final String? cnpj = prefs.getString('userCNPJ');
+    _cnpjCarregado = cnpj;
     if (fazendasJson != null) {
       final List<dynamic> lista = json.decode(fazendasJson);
       setState(() {
@@ -213,6 +216,12 @@ class _PesagemScreenState extends State<PesagemScreen> {
           fazendaSelecionada = fazendasCarregadas[0]['id'].toString();
         }
       });
+      if (fazendaSelecionada != null) {
+        AnimalCacheService.instance.garantirCacheDaFazenda(
+          fazendaSelecionada!,
+          cnpj,
+        );
+      }
       try {
         final List<int> idsFazendas = lista
             .map((f) => int.parse(f['id'].toString()))
@@ -411,7 +420,15 @@ class _PesagemScreenState extends State<PesagemScreen> {
                   },
                 )
                 .toList(),
-            (val) => setState(() => fazendaSelecionada = val),
+            (val) {
+              setState(() => fazendaSelecionada = val);
+              if (val != null) {
+                AnimalCacheService.instance.garantirCacheDaFazenda(
+                  val,
+                  _cnpjCarregado,
+                );
+              }
+            },
           ),
           const SizedBox(height: 8),
           _buildDropdownMinimal(

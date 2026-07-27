@@ -1,9 +1,8 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../config/api_config.dart';
+import '../repositories/animal_repository.dart';
 
 class PesagemConsultaMaeModal extends StatefulWidget {
   final String cnpj;
@@ -74,9 +73,10 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
       return;
     }
     try {
-      final url =
-          "${ApiConfig.baseUrl}/rest/animal/list_mae_global.php?id=$termo&bd=$cnpjSeguro";
-      final response = await http.get(Uri.parse(url));
+      final response = await AnimalRepository.instance.buscarMaePorCodigo(
+        termo: termo,
+        bd: cnpjSeguro,
+      );
 
       if (response.statusCode == 200 && response.body.isNotEmpty) {
         List lista = json.decode(response.body);
@@ -101,9 +101,10 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
       _buscaController.text = animal['codigo_limpo'];
     });
     try {
-      final url =
-          "${ApiConfig.baseUrl}/rest/animal/info_mae_global.php?id=${animal['id']}&bd=$cnpjSeguro";
-      final response = await http.get(Uri.parse(url));
+      final response = await AnimalRepository.instance.buscarDetalhesMae(
+        id: animal['id'].toString(),
+        bd: cnpjSeguro,
+      );
       if (response.statusCode == 200) {
         setState(() => infoMae = json.decode(response.body));
       }

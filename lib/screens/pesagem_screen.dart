@@ -2,12 +2,11 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 import '../services/connectivity_service.dart';
+import '../repositories/pesagem_repository.dart';
 import 'pesagem_itens_screen.dart';
 import 'pesagem_consulta_screen.dart';
 import 'package:boivirtual/utils/app_alert.dart';
-import '../config/api_config.dart';
 
 class PesagemScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -137,11 +136,9 @@ class _PesagemScreenState extends State<PesagemScreen> {
         final List<int> idsFazendas = lista
             .map((f) => int.parse(f['id'].toString()))
             .toList();
-        final response = await http.post(
-          Uri.parse(
-            "${ApiConfig.baseUrl}/rest/pesagem/list_pendentes.php",
-          ),
-          body: json.encode({"bd": cnpj, "fazendas": idsFazendas}),
+        final response = await PesagemRepository.instance.listarPendentes(
+          bd: cnpj,
+          fazendas: idsFazendas,
         );
         if (response.statusCode == 200) {
           setState(() {
@@ -165,11 +162,9 @@ class _PesagemScreenState extends State<PesagemScreen> {
           .toList();
       setState(() => carregandoFinalizadas = true);
       try {
-        final response = await http.post(
-          Uri.parse(
-            "${ApiConfig.baseUrl}/rest/pesagem/list_finalizadas.php",
-          ),
-          body: json.encode({"bd": cnpj, "fazendas": idsFazendas}),
+        final response = await PesagemRepository.instance.listarFinalizadas(
+          bd: cnpj,
+          fazendas: idsFazendas,
         );
         if (response.statusCode == 200) {
           setState(() {
@@ -490,13 +485,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
       debugPrint("USUÁRIO ENVIADO CREATE PESAGEM: $usuarioAtual");
       debugPrint("JSON CREATE PESAGEM: ${json.encode(bodyMap)}");
 
-      final response = await http.post(
-        Uri.parse(
-          "${ApiConfig.baseUrl}/rest/pesagem/create_pesagem.php",
-        ),
-        headers: {"Content-Type": "application/json"},
-        body: json.encode(bodyMap),
-      );
+      final response = await PesagemRepository.instance.criarPesagem(bodyMap);
 
       if (response.statusCode == 200) {
         final resJson = json.decode(response.body);

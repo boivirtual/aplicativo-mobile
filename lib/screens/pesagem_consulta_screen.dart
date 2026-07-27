@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-import '../config/api_config.dart';
+import '../repositories/pesagem_repository.dart';
 
 class PesagemConsultaScreen extends StatefulWidget {
   final String fazendaSelecionada;
@@ -60,15 +59,9 @@ class _PesagemConsultaScreenState extends State<PesagemConsultaScreen> {
   Future<void> _carregarItensDoServidor() async {
     setState(() => carregandoItens = true);
     try {
-      final url = Uri.parse(
-        "${ApiConfig.baseUrl}/rest/pesagem/get_pesagem_completa.php",
-      );
-      final response = await http.post(
-        url,
-        body: json.encode({
-          "bd": cnpjParaBanco,
-          "id_pesagem": widget.idPesagemExistente,
-        }),
+      final response = await PesagemRepository.instance.buscarPesagemCompleta(
+        bd: cnpjParaBanco,
+        idPesagem: widget.idPesagemExistente,
       );
 
       if (response.statusCode == 200) {

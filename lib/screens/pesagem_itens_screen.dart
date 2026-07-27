@@ -2,8 +2,9 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 import '../services/connectivity_service.dart';
+import '../repositories/pesagem_repository.dart';
+import '../repositories/animal_repository.dart';
 import 'pesagem_consulta_mae_modal.dart';
 import 'package:boivirtual/widgets/lista_itens_pesagem.dart';
 import 'package:boivirtual/widgets/resumo_pesagem_widget.dart';
@@ -16,7 +17,6 @@ import 'package:boivirtual/widgets/observacao_toggle_pesagem_widget.dart';
 import 'package:boivirtual/widgets/formulario_pesagem_topo_widget.dart';
 import 'pesagem_edicao_modal.dart';
 import 'package:boivirtual/utils/app_alert.dart';
-import '../config/api_config.dart';
 
 class PesagemItensScreen extends StatefulWidget {
   final String fazendaSelecionada;
@@ -247,12 +247,8 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
       debugPrint("JSON UPDATE PESAGEM: ${json.encode(bodyMap)}");
 
-      final response = await http.post(
-        Uri.parse(
-          "${ApiConfig.baseUrl}/rest/pesagem/update_pesagem.php",
-        ),
-        headers: {"Content-Type": "application/json"},
-        body: json.encode(bodyMap),
+      final response = await PesagemRepository.instance.atualizarPesagem(
+        bodyMap,
       );
 
       debugPrint("STATUS UPDATE PESAGEM: ${response.statusCode}");
@@ -894,14 +890,9 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   Future<void> _carregarItensDoServidor() async {
     setState(() => carregandoItensIniciais = true);
     try {
-      final response = await http.post(
-        Uri.parse(
-          "${ApiConfig.baseUrl}/rest/pesagem/get_pesagem_completa.php",
-        ),
-        body: json.encode({
-          "bd": cnpjParaBanco,
-          "id_pesagem": _idPesagemServer,
-        }),
+      final response = await PesagemRepository.instance.buscarPesagemCompleta(
+        bd: cnpjParaBanco,
+        idPesagem: _idPesagemServer,
       );
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -953,10 +944,10 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
       return;
     }
     try {
-      final response = await http.get(
-        Uri.parse(
-          "${ApiConfig.baseUrl}/rest/animal/list.php?id=$termo&local=$fazendaSelecionada&bd=$cnpjParaBanco",
-        ),
+      final response = await AnimalRepository.instance.buscarPorCodigo(
+        termo: termo,
+        local: fazendaSelecionada,
+        bd: cnpjParaBanco,
       );
       if (response.statusCode == 200) {
         List<dynamic> lista = json.decode(response.body);
@@ -1070,13 +1061,11 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     });
 
     try {
-      final response = await http
-          .get(
-            Uri.parse(
-              "${ApiConfig.baseUrl}/rest/animal/info.php?id=$idInterno&local=$fazendaSelecionada&bd=$cnpjParaBanco",
-            ),
-          )
-          .timeout(const Duration(seconds: 8));
+      final response = await AnimalRepository.instance.buscarDetalhes(
+        id: idInterno,
+        local: fazendaSelecionada,
+        bd: cnpjParaBanco,
+      );
 
       if (response.statusCode == 200) {
         if (_noAnimalController.text.isEmpty) {
@@ -1213,13 +1202,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
       debugPrint("JSON ENVIADO SAVE ITEM: ${json.encode(body)}");
 
-      final response = await http.post(
-        Uri.parse(
-          "${ApiConfig.baseUrl}/rest/pesagem/save_item.php",
-        ),
-        headers: {"Content-Type": "application/json"},
-        body: json.encode(body),
-      );
+      final response = await PesagemRepository.instance.salvarItem(body);
 
       if (response.statusCode == 200) {
         final resJson = json.decode(response.body);
@@ -1240,17 +1223,11 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
   Future<void> _excluirItemNoServidor(int numeroItem) async {
     try {
-      await http.post(
-        Uri.parse(
-          "${ApiConfig.baseUrl}/rest/pesagem/delete_item.php",
-        ),
-        headers: {"Content-Type": "application/json"},
-        body: json.encode({
-          "bd": cnpjParaBanco,
-          "pesagem_id": _idPesagemServer,
-          "numero_item": numeroItem,
-        }),
-      );
+      await PesagemRepository.instance.excluirItem({
+        "bd": cnpjParaBanco,
+        "pesagem_id": _idPesagemServer,
+        "numero_item": numeroItem,
+      });
     } catch (e) {
       debugPrint("Erro ao excluir: $e");
     }
@@ -1296,21 +1273,15 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
           !_listaCriteriosDinamica.contains(critLimpo)) {
         setState(() => _listaCriteriosDinamica.add(critLimpo));
       }
-      await http.post(
-        Uri.parse(
-          "${ApiConfig.baseUrl}/rest/pesagem/update_item.php",
-        ),
-        headers: {"Content-Type": "application/json"},
-        body: json.encode({
-          "bd": cnpjParaBanco,
-          "pesagem_id": _idPesagemServer,
-          "numero_item": numeroItem,
-          "peso": peso,
-          "obs": obs,
-          "criterio_apartacao": critLimpo,
-          "criterios_lista": _listaCriteriosDinamica,
-        }),
-      );
+      await PesagemRepository.instance.alterarItem({
+        "bd": cnpjParaBanco,
+        "pesagem_id": _idPesagemServer,
+        "numero_item": numeroItem,
+        "peso": peso,
+        "obs": obs,
+        "criterio_apartacao": critLimpo,
+        "criterios_lista": _listaCriteriosDinamica,
+      });
     } catch (e) {
       _exibirMensagemErro("Sem resposta do servidor.");
     }

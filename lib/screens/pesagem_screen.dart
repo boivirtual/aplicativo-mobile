@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'package:connectivity_plus/connectivity_plus.dart';
+import '../services/connectivity_service.dart';
 import 'pesagem_itens_screen.dart';
 import 'pesagem_consulta_screen.dart';
 import 'package:boivirtual/utils/app_alert.dart';
@@ -38,7 +37,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
   final Color corDoRotulo = Colors.blueGrey[800]!;
   final Color corTextoPendente = const Color(0xFF455A64);
 
-  late StreamSubscription<List<ConnectivityResult>> _subscription;
+  late StreamSubscription<NivelConexao> _subscription;
   bool _mostrarBanner = false;
   String _mensagemInternet = "";
   Color _corBanner = Colors.orange[800]!;
@@ -61,50 +60,31 @@ class _PesagemScreenState extends State<PesagemScreen> {
   }
 
   void _iniciarMonitoramentoInternet() {
-    _verificarConexaoAtual();
-    _subscription = Connectivity().onConnectivityChanged.listen(
-      (results) => _processarStatusInternet(results),
-    );
-  }
-
-  Future<void> _verificarConexaoAtual() async {
-    var result = await Connectivity().checkConnectivity();
-    _processarStatusInternet(result);
-  }
-
-  Future<void> _processarStatusInternet(
-    List<ConnectivityResult> results,
-  ) async {
-    if (results.contains(ConnectivityResult.none)) {
-      setState(() {
-        _mensagemInternet = "Atenção! Sem conexão com a Internet";
-        _corBanner = Colors.redAccent;
-        _mostrarBanner = true;
-      });
-    } else {
-      try {
-        final res = await InternetAddress.lookup(
-          'agrolandes.com.br',
-        ).timeout(const Duration(seconds: 3));
-        if (res.isNotEmpty && res[0].rawAddress.isNotEmpty) {
-          setState(() {
-            _mostrarBanner = false;
-          });
-        } else {
-          _setInternetRuim();
-        }
-      } catch (_) {
-        _setInternetRuim();
-      }
-    }
-  }
-
-  void _setInternetRuim() {
-    setState(() {
-      _mensagemInternet = "Atenção! Conexão com a Internet ruim!";
-      _corBanner = Colors.orange[800]!;
-      _mostrarBanner = true;
+    _subscription = ConnectivityService.instance.status.listen((nivel) {
+      _aplicarNivelConexao(nivel);
     });
+  }
+
+  void _aplicarNivelConexao(NivelConexao nivel) {
+    switch (nivel) {
+      case NivelConexao.semInternet:
+        setState(() {
+          _mensagemInternet = "Atenção! Sem conexão com a Internet";
+          _corBanner = Colors.redAccent;
+          _mostrarBanner = true;
+        });
+        break;
+      case NivelConexao.internetRuim:
+        setState(() {
+          _mensagemInternet = "Atenção! Conexão com a Internet ruim!";
+          _corBanner = Colors.orange[800]!;
+          _mostrarBanner = true;
+        });
+        break;
+      case NivelConexao.internetOk:
+        setState(() => _mostrarBanner = false);
+        break;
+    }
   }
 
   @override

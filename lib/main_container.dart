@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'services/connectivity_service.dart';
 import 'package:boivirtual/screens/pesagem_screen.dart';
 import 'package:boivirtual/screens/mapa_screen.dart';
 import 'package:boivirtual/screens/chuva_screen.dart';
@@ -23,7 +22,7 @@ class _MainContainerState extends State<MainContainer> {
   int _currentIndex = 2;
   String _userName = "Usuário";
 
-  late StreamSubscription<List<ConnectivityResult>> _subscription;
+  late StreamSubscription<NivelConexao> _subscription;
   bool _mostrarBanner = false;
   String _mensagemInternet = "";
   Color _corBanner = Colors.orange[800]!;
@@ -32,9 +31,8 @@ class _MainContainerState extends State<MainContainer> {
   void initState() {
     super.initState();
     _carregarDadosUsuario();
-    _verificarConexaoInicial();
-    _subscription = Connectivity().onConnectivityChanged.listen(
-      (results) => _processarStatusInternet(results),
+    _subscription = ConnectivityService.instance.status.listen(
+      (nivel) => _aplicarNivelConexao(nivel),
     );
   }
 
@@ -45,32 +43,23 @@ class _MainContainerState extends State<MainContainer> {
     });
   }
 
-  Future<void> _verificarConexaoInicial() async {
-    var result = await Connectivity().checkConnectivity();
-    _processarStatusInternet(result);
-  }
-
-  Future<void> _processarStatusInternet(
-    List<ConnectivityResult> results,
-  ) async {
-    if (results.contains(ConnectivityResult.none)) {
-      setState(() {
-        _mensagemInternet = "Sem Internet";
-        _corBanner = Colors.redAccent;
-        _mostrarBanner = true;
-      });
-    } else {
-      try {
-        final res = await InternetAddress.lookup(
-          'agrolandes.com.br',
-        ).timeout(const Duration(seconds: 3));
-        setState(
-          () => _mostrarBanner =
-              !(res.isNotEmpty && res[0].rawAddress.isNotEmpty),
-        );
-      } catch (_) {
+  void _aplicarNivelConexao(NivelConexao nivel) {
+    switch (nivel) {
+      case NivelConexao.semInternet:
+        setState(() {
+          _mensagemInternet = "Sem Internet";
+          _corBanner = Colors.redAccent;
+          _mostrarBanner = true;
+        });
+        break;
+      case NivelConexao.internetRuim:
+        // Mantém o mesmo comportamento de antes: só liga o banner, sem
+        // sobrescrever mensagem/cor (herda o que já estava definido).
         setState(() => _mostrarBanner = true);
-      }
+        break;
+      case NivelConexao.internetOk:
+        setState(() => _mostrarBanner = false);
+        break;
     }
   }
 

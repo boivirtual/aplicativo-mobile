@@ -1,0 +1,91 @@
+import 'dart:async';
+import 'dart:io';
+import 'package:connectivity_plus/connectivity_plus.dart';
+
+/// Nível de conectividade real, não só "tem uma interface de rede ativa".
+enum NivelConexao {
+  semInternet,
+  internetRuim,
+  internetOk,
+}
+
+/// Serviço único de conectividade, compartilhado pelo app inteiro.
+///
+/// Substitui os 3 blocos idênticos que existiam em main_container.dart,
+/// pesagem_screen.dart e pesagem_itens_screen.dart. Mantém exatamente a mesma
+/// heurística que já existia: "tem barra de sinal" (connectivity_plus) não é
+/// suficiente — só considera internet de verdade depois de um lookup DNS bem
+/// sucedido em agrolandes.com.br.
+///
+/// As telas continuam responsáveis por assinar/cancelar sua própria
+/// StreamSubscription (mesmo padrão de antes), só que ouvindo este serviço em
+/// vez de instanciar Connectivity() e repetir a lógica de DNS.
+class ConnectivityService {
+  ConnectivityService._() {
+    _iniciar();
+  }
+
+  static final ConnectivityService instance = ConnectivityService._();
+
+  final StreamController<NivelConexao> _controller =
+      StreamController<NivelConexao>.broadcast();
+
+  NivelConexao _ultimoNivel = NivelConexao.internetOk;
+  NivelConexao get nivelAtual => _ultimoNivel;
+
+  /// Stream de mudanças de nível de conexão. Emite o nível assim que alguém
+  /// assina (replay do último valor conhecido), e depois a cada mudança real.
+  Stream<NivelConexao> get status async* {
+    yield _ultimoNivel;
+    yield* _controller.stream;
+  }
+
+  bool get temInternetReal => _ultimoNivel == NivelConexao.internetOk;
+
+  void _iniciar() {
+    _verificarConexaoAtual();
+    Connectivity().onConnectivityChanged.listen(_processarStatusInternet);
+  }
+
+  Future<void> _verificarConexaoAtual() async {
+    final result = await Connectivity().checkConnectivity();
+    await _processarStatusInternet(result);
+  }
+
+  /// Força uma nova verificação agora (usado pelo botão manual "Sincronizar
+  /// agora" antes de tentar a fila, para não depender só do último evento).
+  Future<NivelConexao> verificarAgora() async {
+    final result = await Connectivity().checkConnectivity();
+    await _processarStatusInternet(result);
+    return _ultimoNivel;
+  }
+
+  Future<void> _processarStatusInternet(List<ConnectivityResult> results) async {
+    if (results.contains(ConnectivityResult.none)) {
+      _emitir(NivelConexao.semInternet);
+      return;
+    }
+
+    try {
+      final res = await InternetAddress.lookup(
+        'agrolandes.com.br',
+      ).timeout(const Duration(seconds: 3));
+
+      if (res.isNotEmpty && res[0].rawAddress.isNotEmpty) {
+        _emitir(NivelConexao.internetOk);
+      } else {
+        _emitir(NivelConexao.internetRuim);
+      }
+    } catch (_) {
+      _emitir(NivelConexao.internetRuim);
+    }
+  }
+
+  void _emitir(NivelConexao nivel) {
+    final mudou = nivel != _ultimoNivel;
+    _ultimoNivel = nivel;
+    if (mudou) {
+      _controller.add(nivel);
+    }
+  }
+}

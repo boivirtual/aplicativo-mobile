@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/login_screen.dart';
 import 'main_container.dart';
+import 'services/sync_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  // Liga o motor de sincronização offline assim que o app abre — ele fica
+  // ouvindo conectividade e reprocessando a fila local durante toda a vida
+  // do app, independente de qual tela está em primeiro plano.
+  SyncService.instance.iniciar();
   runApp(const MyApp());
 }
 

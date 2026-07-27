@@ -1,0 +1,195 @@
+import '../local_database.dart';
+
+class StatusSyncItem {
+  static const pendente = 'pendente';
+  static const sincronizado = 'sincronizado';
+}
+
+/// DAO da tabela itens_pesagem_locais — itens (pesos) espelhados no
+/// dispositivo, fonte de leitura da tela de itens (local-first).
+class ItemPesagemLocalDao {
+  ItemPesagemLocalDao._();
+  static final ItemPesagemLocalDao instance = ItemPesagemLocalDao._();
+
+  Future<int> proximoNumeroItemLocal(int pesagemIdLocal) async {
+    final db = await LocalDatabase.instance.database;
+    final r = await db.rawQuery(
+      'SELECT COALESCE(MAX(numero_item_local), 0) + 1 as prox FROM itens_pesagem_locais WHERE pesagem_id_local = ?',
+      [pesagemIdLocal],
+    );
+    return (r.first['prox'] as int?) ?? 1;
+  }
+
+  Future<int> inserir({
+    required int pesagemIdLocal,
+    required String uuid,
+    required int numeroItemLocal,
+    int? numeroItemServidor,
+    required Map<String, dynamic> campos,
+    String statusSync = StatusSyncItem.pendente,
+  }) async {
+    final db = await LocalDatabase.instance.database;
+    final agora = DateTime.now().toIso8601String();
+    return db.insert('itens_pesagem_locais', {
+      'pesagem_id_local': pesagemIdLocal,
+      'uuid': uuid,
+      'numero_item_local': numeroItemLocal,
+      'numero_item_servidor': numeroItemServidor,
+      'id_animal': campos['id_animal']?.toString(),
+      'codigo_animal': campos['codigo_animal']?.toString(),
+      'peso': campos['peso']?.toString(),
+      'ultimo_peso': campos['ultimo_peso']?.toString(),
+      'sexo': campos['sexo']?.toString(),
+      'nascimento': campos['nascimento']?.toString(),
+      'raca': campos['raca']?.toString(),
+      'pelagem': campos['pelagem']?.toString(),
+      'mae': campos['mae']?.toString(),
+      'obs': campos['obs']?.toString() ?? '',
+      'mens_repetido': campos['mens_repetido']?.toString() ?? '',
+      'id_pesagem_repetido': campos['id_pesagem_repetido']?.toString() ?? '0',
+      'criterio_apartacao': campos['criterio_apartacao']?.toString() ?? '',
+      'status_sync': statusSync,
+      'criado_em': agora,
+      'atualizado_em': agora,
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> listarPorPesagemLocal(
+    int pesagemIdLocal,
+  ) async {
+    final db = await LocalDatabase.instance.database;
+    return db.query(
+      'itens_pesagem_locais',
+      where: 'pesagem_id_local = ?',
+      whereArgs: [pesagemIdLocal],
+      orderBy: 'numero_item_local DESC',
+    );
+  }
+
+  Future<Map<String, dynamic>?> buscarPorUuid(String uuid) async {
+    final db = await LocalDatabase.instance.database;
+    final linhas = await db.query(
+      'itens_pesagem_locais',
+      where: 'uuid = ?',
+      whereArgs: [uuid],
+      limit: 1,
+    );
+    return linhas.isEmpty ? null : linhas.first;
+  }
+
+  /// Resolve o item pelo número que a tela está usando: pode já ter o número
+  /// oficial do servidor, ou ainda ser só o número local (enquanto pendente).
+  Future<Map<String, dynamic>?> buscarPorPesagemENumero(
+    int pesagemIdLocal,
+    int numero,
+  ) async {
+    final db = await LocalDatabase.instance.database;
+    final porServidor = await db.query(
+      'itens_pesagem_locais',
+      where: 'pesagem_id_local = ? AND numero_item_servidor = ?',
+      whereArgs: [pesagemIdLocal, numero],
+      limit: 1,
+    );
+    if (porServidor.isNotEmpty) return porServidor.first;
+
+    final porLocal = await db.query(
+      'itens_pesagem_locais',
+      where: 'pesagem_id_local = ? AND numero_item_local = ?',
+      whereArgs: [pesagemIdLocal, numero],
+      limit: 1,
+    );
+    return porLocal.isEmpty ? null : porLocal.first;
+  }
+
+  Future<void> confirmarSincronizacao(int idLocal, int numeroItemServidor) async {
+    final db = await LocalDatabase.instance.database;
+    await db.update(
+      'itens_pesagem_locais',
+      {
+        'numero_item_servidor': numeroItemServidor,
+        'status_sync': StatusSyncItem.sincronizado,
+        'atualizado_em': DateTime.now().toIso8601String(),
+      },
+      where: 'id_local = ?',
+      whereArgs: [idLocal],
+    );
+  }
+
+  Future<void> atualizarCampos(
+    int idLocal, {
+    String? peso,
+    String? obs,
+    String? criterioApartacao,
+    String? mensRepetido,
+    String? idPesagemRepetido,
+  }) async {
+    final db = await LocalDatabase.instance.database;
+    final valores = <String, dynamic>{
+      'atualizado_em': DateTime.now().toIso8601String(),
+    };
+    if (peso != null) valores['peso'] = peso;
+    if (obs != null) valores['obs'] = obs;
+    if (criterioApartacao != null) {
+      valores['criterio_apartacao'] = criterioApartacao;
+    }
+    if (mensRepetido != null) valores['mens_repetido'] = mensRepetido;
+    if (idPesagemRepetido != null) {
+      valores['id_pesagem_repetido'] = idPesagemRepetido;
+    }
+
+    await db.update(
+      'itens_pesagem_locais',
+      valores,
+      where: 'id_local = ?',
+      whereArgs: [idLocal],
+    );
+  }
+
+  Future<void> excluir(int idLocal) async {
+    final db = await LocalDatabase.instance.database;
+    await db.delete(
+      'itens_pesagem_locais',
+      where: 'id_local = ?',
+      whereArgs: [idLocal],
+    );
+  }
+
+  Future<void> importarDoServidor(
+    int pesagemIdLocal,
+    List<dynamic> itensServidor,
+  ) async {
+    for (final item in itensServidor) {
+      final numeroServidor = int.parse(
+        item['tbl_ite_pesagem_numero_item'].toString(),
+      );
+      final existente = await buscarPorPesagemENumero(
+        pesagemIdLocal,
+        numeroServidor,
+      );
+      if (existente != null) continue;
+
+      await inserir(
+        pesagemIdLocal: pesagemIdLocal,
+        uuid: 'importado-servidor-$pesagemIdLocal-$numeroServidor',
+        numeroItemLocal: await proximoNumeroItemLocal(pesagemIdLocal),
+        numeroItemServidor: numeroServidor,
+        campos: {
+          'id_animal': item['tbl_ite_pesagem_codigo_id_animal'],
+          'codigo_animal': item['tbl_ite_pesagem_codigo_animal'],
+          'peso': item['tbl_ite_pesagem_peso'],
+          'ultimo_peso': item['tbl_ite_pesagem_ultimo_peso'],
+          'sexo': item['tbl_ite_pesagem_sexo'],
+          'nascimento': item['tbl_ite_pesagem_nascimento'],
+          'raca': item['tbl_ite_pesagem_raca'],
+          'pelagem': item['tbl_ite_pesagem_pelagem'],
+          'mae': item['tbl_ite_pesagem_mae'],
+          'obs': item['tbl_ite_pesagem_observacao'],
+          'mens_repetido': item['tbl_ite_pesagem_mens_repetido'],
+          'id_pesagem_repetido': item['tbl_ite_pesagem_id_repetido'],
+          'criterio_apartacao': item['tbl_ite_pesagem_criterio_apartacao'],
+        },
+        statusSync: StatusSyncItem.sincronizado,
+      );
+    }
+  }
+}

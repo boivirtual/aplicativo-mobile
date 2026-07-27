@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/connectivity_service.dart';
+import '../services/sync_service.dart';
 import '../repositories/pesagem_repository.dart';
 import 'pesagem_itens_screen.dart';
 import 'pesagem_consulta_screen.dart';
@@ -41,6 +42,10 @@ class _PesagemScreenState extends State<PesagemScreen> {
   String _mensagemInternet = "";
   Color _corBanner = Colors.orange[800]!;
 
+  StreamSubscription<int>? _subPendentesSync;
+  int _pendentesSync = 0;
+  bool _sincronizandoManualmente = false;
+
   final Map<String, String> motivos = {
     '011': 'Controle Ganho de Peso',
     '002': 'Desmama',
@@ -56,6 +61,29 @@ class _PesagemScreenState extends State<PesagemScreen> {
     super.initState();
     _carregarDadosIniciais();
     _iniciarMonitoramentoInternet();
+    _subPendentesSync = SyncService.instance.pendentes.listen((qtd) {
+      if (mounted) setState(() => _pendentesSync = qtd);
+    });
+    SyncService.instance.atualizarContagemPendentes();
+  }
+
+  Future<void> _sincronizarAgora() async {
+    setState(() => _sincronizandoManualmente = true);
+    final resultado = await SyncService.instance.sincronizarAgora();
+    if (!mounted) return;
+    setState(() => _sincronizandoManualmente = false);
+
+    if (resultado.processadas > 0) {
+      _carregarDadosIniciais();
+    }
+
+    final mensagem = resultado.comErro > 0
+        ? "${resultado.processadas} sincronizado(s), ${resultado.comErro} ainda pendente(s)."
+        : resultado.processadas > 0
+        ? "${resultado.processadas} sincronizado(s) com sucesso."
+        : "Sem sinal ou nada novo para sincronizar.";
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensagem)));
   }
 
   void _iniciarMonitoramentoInternet() {
@@ -86,12 +114,65 @@ class _PesagemScreenState extends State<PesagemScreen> {
     }
   }
 
+  Widget _buildIndicadorSync() {
+    return Container(
+      width: double.infinity,
+      color: Colors.blueGrey[700],
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        children: [
+          const Icon(Icons.cloud_upload_outlined, color: Colors.white, size: 16),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _pendentesSync == 1
+                  ? "1 pesagem pendente de sincronização"
+                  : "$_pendentesSync pesagens pendentes de sincronização",
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          TextButton(
+            onPressed: _sincronizandoManualmente ? null : _sincronizarAgora,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: const Size(0, 28),
+            ),
+            child: _sincronizandoManualmente
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Text(
+                    "Sincronizar agora",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _descricaoController.dispose();
     _qtdAPesarController.dispose();
     _criterioController.dispose();
     _subscription.cancel();
+    _subPendentesSync?.cancel();
     super.dispose();
   }
 
@@ -136,15 +217,13 @@ class _PesagemScreenState extends State<PesagemScreen> {
         final List<int> idsFazendas = lista
             .map((f) => int.parse(f['id'].toString()))
             .toList();
-        final response = await PesagemRepository.instance.listarPendentes(
+        final listaPendentes = await PesagemRepository.instance.listarPendentes(
           bd: cnpj,
           fazendas: idsFazendas,
         );
-        if (response.statusCode == 200) {
-          setState(() {
-            pesagensPendentes = json.decode(response.body);
-          });
-        }
+        setState(() {
+          pesagensPendentes = listaPendentes;
+        });
       } catch (e) {
         debugPrint("Erro pendências: $e");
       }
@@ -162,15 +241,13 @@ class _PesagemScreenState extends State<PesagemScreen> {
           .toList();
       setState(() => carregandoFinalizadas = true);
       try {
-        final response = await PesagemRepository.instance.listarFinalizadas(
+        final lista = await PesagemRepository.instance.listarFinalizadas(
           bd: cnpj,
           fazendas: idsFazendas,
         );
-        if (response.statusCode == 200) {
-          setState(() {
-            pesagensFinalizadas = json.decode(response.body);
-          });
-        }
+        setState(() {
+          pesagensFinalizadas = lista;
+        });
       } catch (e) {
         debugPrint("Erro finalizadas: $e");
       } finally {
@@ -232,6 +309,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
                 ],
               ),
             ),
+          if (_pendentesSync > 0) _buildIndicadorSync(),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(
@@ -485,13 +563,10 @@ class _PesagemScreenState extends State<PesagemScreen> {
       debugPrint("USUÁRIO ENVIADO CREATE PESAGEM: $usuarioAtual");
       debugPrint("JSON CREATE PESAGEM: ${json.encode(bodyMap)}");
 
-      final response = await PesagemRepository.instance.criarPesagem(bodyMap);
+      final resJson = await PesagemRepository.instance.criarPesagem(bodyMap);
 
-      if (response.statusCode == 200) {
-        final resJson = json.decode(response.body);
-        if (resJson['success'] == true) {
-          return int.tryParse(resJson['pesagem_id'].toString());
-        }
+      if (resJson['success'] == true) {
+        return int.tryParse(resJson['pesagem_id'].toString());
       }
 
       if (mounted) {
@@ -713,7 +788,11 @@ class _PesagemScreenState extends State<PesagemScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    p['fazenda_nome'].toString(),
+                    (p['fazenda_nome'] ??
+                            _getNomeFazenda(
+                              p['tbl_pesagem_codigo_local'].toString(),
+                            ))
+                        .toString(),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,

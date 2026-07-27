@@ -88,4 +88,9 @@ class ConnectivityService {
       _controller.add(nivel);
     }
   }
+
+  /// Usado apenas em testes automatizados, para simular offline/online sem
+  /// depender do plugin de conectividade real. Nunca chamado em código de
+  /// produção.
+  void forcarNivelParaTeste(NivelConexao nivel) => _emitir(nivel);
 }

@@ -247,19 +247,13 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
       debugPrint("JSON UPDATE PESAGEM: ${json.encode(bodyMap)}");
 
-      final response = await PesagemRepository.instance.atualizarPesagem(
+      final resJson = await PesagemRepository.instance.atualizarPesagem(
         bodyMap,
       );
 
-      debugPrint("STATUS UPDATE PESAGEM: ${response.statusCode}");
-      debugPrint("BODY UPDATE PESAGEM: ${response.body}");
+      debugPrint("RESULTADO UPDATE PESAGEM: $resJson");
 
-      if (response.statusCode == 200) {
-        final resJson = json.decode(response.body);
-        return resJson['success'] == true;
-      }
-
-      return false;
+      return resJson['success'] == true;
     } catch (e) {
       debugPrint("Erro ao atualizar pesagem: $e");
       return false;
@@ -884,50 +878,52 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     if (fazendasJson != null) {
       setState(() => fazendasCarregadas = json.decode(fazendasJson));
     }
-    if (_idPesagemServer > 0) _carregarItensDoServidor();
+    // id > 0: pesagem já sincronizada; id < 0: ainda só existe localmente
+    // (offline). Nos dois casos há itens locais a carregar; só id == 0
+    // (nunca deveria acontecer neste ponto) não dispara a busca.
+    if (_idPesagemServer != 0) _carregarItensDoServidor();
   }
 
   Future<void> _carregarItensDoServidor() async {
     setState(() => carregandoItensIniciais = true);
     try {
-      final response = await PesagemRepository.instance.buscarPesagemCompleta(
+      final data = await PesagemRepository.instance.buscarPesagemCompleta(
         bd: cnpjParaBanco,
         idPesagem: _idPesagemServer,
       );
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success']) {
-          final List itensBanco = data['itens'];
-          setState(() {
-            _itensPesados.clear();
-            for (var item in itensBanco) {
-              int pesoInteiro =
-                  (double.tryParse(item['tbl_ite_pesagem_peso'].toString()) ??
-                          0)
-                      .toInt();
-              _itensPesados.add({
-                'id': item['tbl_ite_pesagem_codigo_id_animal'],
-                'numeroItem': int.parse(
-                  item['tbl_ite_pesagem_numero_item'].toString(),
-                ),
-                'alfaNumerico': item['tbl_ite_pesagem_codigo_animal'],
-                'peso': pesoInteiro.toString(),
-                'sexo': item['tbl_ite_pesagem_sexo'] == 'Macho' ? 'M' : 'F',
-                'nascimento': item['tbl_ite_pesagem_nascimento'],
-                'raca': item['tbl_ite_pesagem_raca'],
-                'pelagem': item['tbl_ite_pesagem_pelagem'],
-                'maeBrinco': item['tbl_ite_pesagem_mae'],
-                'obs': item['tbl_ite_pesagem_observacao'] ?? '',
-                'mensRepetido': item['tbl_ite_pesagem_mens_repetido'] ?? '',
-                'idPesagemRepetido':
-                    item['tbl_ite_pesagem_id_repetido']?.toString() ?? '',
-                'criterio': item['tbl_ite_pesagem_criterio_apartacao'] ?? '',
-              });
-            }
-            _qtdPesado = _itensPesados.length;
-            carregandoItensIniciais = false;
-          });
-        }
+      if (data['success'] == true) {
+        final List itensBanco = data['itens'];
+        setState(() {
+          _itensPesados.clear();
+          for (var item in itensBanco) {
+            int pesoInteiro =
+                (double.tryParse(item['tbl_ite_pesagem_peso'].toString()) ??
+                        0)
+                    .toInt();
+            _itensPesados.add({
+              'id': item['tbl_ite_pesagem_codigo_id_animal'],
+              'numeroItem': int.parse(
+                item['tbl_ite_pesagem_numero_item'].toString(),
+              ),
+              'alfaNumerico': item['tbl_ite_pesagem_codigo_animal'],
+              'peso': pesoInteiro.toString(),
+              'sexo': item['tbl_ite_pesagem_sexo'] == 'Macho' ? 'M' : 'F',
+              'nascimento': item['tbl_ite_pesagem_nascimento'],
+              'raca': item['tbl_ite_pesagem_raca'],
+              'pelagem': item['tbl_ite_pesagem_pelagem'],
+              'maeBrinco': item['tbl_ite_pesagem_mae'],
+              'obs': item['tbl_ite_pesagem_observacao'] ?? '',
+              'mensRepetido': item['tbl_ite_pesagem_mens_repetido'] ?? '',
+              'idPesagemRepetido':
+                  item['tbl_ite_pesagem_id_repetido']?.toString() ?? '',
+              'criterio': item['tbl_ite_pesagem_criterio_apartacao'] ?? '',
+            });
+          }
+          _qtdPesado = _itensPesados.length;
+          carregandoItensIniciais = false;
+        });
+      } else {
+        setState(() => carregandoItensIniciais = false);
       }
     } catch (e) {
       setState(() => carregandoItensIniciais = false);
@@ -1202,17 +1198,13 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
       debugPrint("JSON ENVIADO SAVE ITEM: ${json.encode(body)}");
 
-      final response = await PesagemRepository.instance.salvarItem(body);
+      final resJson = await PesagemRepository.instance.salvarItem(body);
 
-      if (response.statusCode == 200) {
-        final resJson = json.decode(response.body);
-
-        if (resJson['success']) {
-          setState(() {
-            _idPesagemServer = resJson['pesagem_id'];
-          });
-          return true;
-        }
+      if (resJson['success'] == true) {
+        setState(() {
+          _idPesagemServer = int.parse(resJson['pesagem_id'].toString());
+        });
+        return true;
       }
       return false;
     } catch (e) {

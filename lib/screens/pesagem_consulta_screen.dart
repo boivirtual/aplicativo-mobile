@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -59,31 +58,28 @@ class _PesagemConsultaScreenState extends State<PesagemConsultaScreen> {
   Future<void> _carregarItensDoServidor() async {
     setState(() => carregandoItens = true);
     try {
-      final response = await PesagemRepository.instance.buscarPesagemCompleta(
+      final data = await PesagemRepository.instance.buscarPesagemCompleta(
         bd: cnpjParaBanco,
         idPesagem: widget.idPesagemExistente,
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success']) {
-          final List itensBanco = data['itens'];
-          setState(() {
-            _itensPesados.clear();
-            for (var item in itensBanco) {
-              _itensPesados.add({
-                'alfaNumerico': item['tbl_ite_pesagem_codigo_animal'],
-                'peso': item['tbl_ite_pesagem_peso'],
-                'sexo': item['tbl_ite_pesagem_sexo'] == 'Macho' ? 'M' : 'F',
-                'nascimento': item['tbl_ite_pesagem_nascimento'],
-                'raca': item['tbl_ite_pesagem_raca'],
-                'pelagem': item['tbl_ite_pesagem_pelagem'],
-                'maeBrinco': item['tbl_ite_pesagem_mae'],
-                'obs': item['tbl_ite_pesagem_observacao'],
-              });
-            }
-          });
-        }
+      if (data['success'] == true) {
+        final List itensBanco = data['itens'];
+        setState(() {
+          _itensPesados.clear();
+          for (var item in itensBanco) {
+            _itensPesados.add({
+              'alfaNumerico': item['tbl_ite_pesagem_codigo_animal'],
+              'peso': item['tbl_ite_pesagem_peso'],
+              'sexo': item['tbl_ite_pesagem_sexo'] == 'Macho' ? 'M' : 'F',
+              'nascimento': item['tbl_ite_pesagem_nascimento'],
+              'raca': item['tbl_ite_pesagem_raca'],
+              'pelagem': item['tbl_ite_pesagem_pelagem'],
+              'maeBrinco': item['tbl_ite_pesagem_mae'],
+              'obs': item['tbl_ite_pesagem_observacao'],
+            });
+          }
+        });
       }
     } catch (e) {
       debugPrint("Erro ao carregar consulta: $e");

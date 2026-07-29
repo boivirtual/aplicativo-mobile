@@ -1047,23 +1047,29 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
           await _mostrarErroDesmamaERefocar();
           return;
         }
-        bool temAlertaServidor =
-            data['loteAberto'] != null &&
-            data['loteAberto'].toString().isNotEmpty;
-
-        bool mesmoLote = false;
-        if (temAlertaServidor) {
-          String nomeLoteSrv = data['loteAberto']
-              .toString()
-              .trim()
-              .toLowerCase();
-          //String loteAtual = widget.descricaoLote.trim().toLowerCase();
-          String loteAtual = _descricaoLoteAtual.trim().toLowerCase();
-          mesmoLote = (nomeLoteSrv == loteAtual);
-        }
+        // Alerta de "animal repetido em outro lote": checado 100% local,
+        // sem depender de rede. Um animal só existe numa fazenda (nunca
+        // duplicado entre locais), e os lotes em andamento daquela fazenda
+        // estão sempre neste aparelho no momento da pesagem (mesmo quando
+        // uma pesagem pendente é retomada depois em outro celular, os itens
+        // são reimportados nele antes de continuar) — então o que já está
+        // salvo localmente é a fonte de verdade, sem precisar de uma volta
+        // ao servidor pra cada animal (o vaqueiro precisa de resposta
+        // rápida, o bicho já está estressado na baia).
+        final conflito = await PesagemRepository.instance
+            .buscarLoteAbertoPorAnimal(
+              idAnimal: idInterno,
+              idPesagemDeTela: _idPesagemServer,
+            );
+        final bool temAlertaServidor = conflito != null;
+        final Map<String, dynamic> dataComConflito = Map<String, dynamic>.from(
+          data,
+        );
+        dataComConflito['loteAberto'] = conflito?['lote'];
+        dataComConflito['pesagemIdLoteAberto'] = conflito?['id_servidor'];
 
         setState(() {
-          infoAnimal = data;
+          infoAnimal = dataComConflito;
           carregandoAnimal = false;
           // Limpa o código vindo do Servidor
           if (_noAnimalController.text.isEmpty ||
@@ -1072,10 +1078,10 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
           }
         });
 
-        if (temAlertaServidor && !mesmoLote) {
+        if (temAlertaServidor) {
           if (_noAnimalController.text.isNotEmpty) {
             final String nMensagem = _limparZeros(data['codigo']);
-            final String loteRepetido = data['loteAberto'].toString().trim();
+            final String loteRepetido = conflito['lote'].toString().trim();
 
             _exibirMensagemOverlay(
               "ALERTA: Nº do Animal ($nMensagem) repetido no lote: $loteRepetido. Confirma?",
@@ -1414,11 +1420,12 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
                     .reduce((a, b) => a > b ? a : b) +
                 1;
 
+      // loteAberto só vem preenchido quando a checagem local (feita em
+      // _buscarDetalhesAnimal) já confirmou que é OUTRA pesagem em aberto —
+      // não precisa comparar nome de lote aqui de novo.
       final bool animalRepetido =
           infoAnimal?['loteAberto'] != null &&
-          infoAnimal!['loteAberto'].toString().trim().isNotEmpty &&
-          infoAnimal!['loteAberto'].toString().trim().toLowerCase() !=
-              _descricaoLoteAtual.trim().toLowerCase();
+          infoAnimal!['loteAberto'].toString().trim().isNotEmpty;
 
       final String mensRepetido = animalRepetido
           ? 'Repetido em: ${infoAnimal?['loteAberto'].toString().trim() ?? ''}'

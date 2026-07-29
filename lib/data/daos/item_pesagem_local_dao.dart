@@ -102,6 +102,34 @@ class ItemPesagemLocalDao {
     return porLocal.isEmpty ? null : porLocal.first;
   }
 
+  /// Procura se este animal já tem peso lançado em OUTRA pesagem ainda
+  /// aberta (lote diferente) neste mesmo aparelho — base pro alerta
+  /// "animal repetido em outro lote". Não depende de rede: um animal só
+  /// existe numa fazenda (nunca duplicado entre locais) e os lotes em
+  /// andamento de uma fazenda estão sempre no aparelho que está pesando
+  /// naquele momento (mesmo quando a pesagem é retomada depois, em outro
+  /// celular, os itens pendentes são reimportados nele antes de continuar)
+  /// — então o que está salvo localmente já é a fonte de verdade.
+  Future<Map<String, dynamic>?> buscarPesagemAbertaPorAnimal(
+    String idAnimal, {
+    int? excluirPesagemIdLocal,
+  }) async {
+    final db = await LocalDatabase.instance.database;
+    final linhas = await db.rawQuery(
+      '''
+      SELECT p.id_local, p.id_servidor, p.lote
+      FROM itens_pesagem_locais i
+      JOIN pesagens_locais p ON p.id_local = i.pesagem_id_local
+      WHERE i.id_animal = ?
+        AND p.finalizada = 'N'
+        AND p.id_local != ?
+      LIMIT 1
+      ''',
+      [idAnimal, excluirPesagemIdLocal ?? -1],
+    );
+    return linhas.isEmpty ? null : linhas.first;
+  }
+
   Future<void> confirmarSincronizacao(int idLocal, int numeroItemServidor) async {
     final db = await LocalDatabase.instance.database;
     await db.update(

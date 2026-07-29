@@ -661,6 +661,24 @@ class PesagemRepository {
     );
     return {"success": true};
   }
+
+  /// Verifica se o animal já está pesado em OUTRA pesagem aberta (lote
+  /// diferente) — olhando só o que já está salvo neste aparelho, sem
+  /// depender de rede (ver ItemPesagemLocalDao.buscarPesagemAbertaPorAnimal
+  /// pro raciocínio completo). Devolve o nome do lote conflitante, ou null
+  /// se não achou nenhum.
+  Future<Map<String, dynamic>?> buscarLoteAbertoPorAnimal({
+    required String idAnimal,
+    required int idPesagemDeTela,
+  }) async {
+    final local = await PesagemLocalDao.instance.resolverPorIdDeTela(
+      idPesagemDeTela,
+    );
+    return ItemPesagemLocalDao.instance.buscarPesagemAbertaPorAnimal(
+      idAnimal,
+      excluirPesagemIdLocal: local?['id_local'] as int?,
+    );
+  }
 }
 
 /// Decodifica um JSON de lista com segurança, devolvendo lista vazia se nulo/vazio/malformado.

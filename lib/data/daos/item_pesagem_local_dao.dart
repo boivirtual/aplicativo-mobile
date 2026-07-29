@@ -1,3 +1,4 @@
+import 'package:sqflite/sqflite.dart';
 import '../local_database.dart';
 
 class StatusSyncItem {
@@ -154,42 +155,74 @@ class ItemPesagemLocalDao {
     );
   }
 
+  /// Importa todos os itens de uma vez, numa única transação — tudo ou
+  /// nada. Sem isso, uma pesagem com muitos itens (centenas) podia ficar
+  /// com uma importação parcial presa pra sempre se o app fosse encerrado/
+  /// reiniciado no meio do loop (ex: hot restart durante o teste): as linhas
+  /// já inseridas ficavam valendo, e como a tela só rebusca no servidor
+  /// quando está com ZERO itens localmente, a contagem incompleta nunca
+  /// era corrigida sozinha.
   Future<void> importarDoServidor(
     int pesagemIdLocal,
     List<dynamic> itensServidor,
   ) async {
-    for (final item in itensServidor) {
-      final numeroServidor = int.parse(
-        item['tbl_ite_pesagem_numero_item'].toString(),
-      );
-      final existente = await buscarPorPesagemENumero(
-        pesagemIdLocal,
-        numeroServidor,
-      );
-      if (existente != null) continue;
+    final db = await LocalDatabase.instance.database;
+    final agora = DateTime.now().toIso8601String();
 
-      await inserir(
-        pesagemIdLocal: pesagemIdLocal,
-        uuid: 'importado-servidor-$pesagemIdLocal-$numeroServidor',
-        numeroItemLocal: await proximoNumeroItemLocal(pesagemIdLocal),
-        numeroItemServidor: numeroServidor,
-        campos: {
-          'id_animal': item['tbl_ite_pesagem_codigo_id_animal'],
-          'codigo_animal': item['tbl_ite_pesagem_codigo_animal'],
-          'peso': item['tbl_ite_pesagem_peso'],
-          'ultimo_peso': item['tbl_ite_pesagem_ultimo_peso'],
-          'sexo': item['tbl_ite_pesagem_sexo'],
-          'nascimento': item['tbl_ite_pesagem_nascimento'],
-          'raca': item['tbl_ite_pesagem_raca'],
-          'pelagem': item['tbl_ite_pesagem_pelagem'],
-          'mae': item['tbl_ite_pesagem_mae'],
-          'obs': item['tbl_ite_pesagem_observacao'],
-          'mens_repetido': item['tbl_ite_pesagem_mens_repetido'],
-          'id_pesagem_repetido': item['tbl_ite_pesagem_id_repetido'],
-          'criterio_apartacao': item['tbl_ite_pesagem_criterio_apartacao'],
-        },
-        statusSync: StatusSyncItem.sincronizado,
+    await db.transaction((txn) async {
+      final existentes = await txn.query(
+        'itens_pesagem_locais',
+        columns: ['numero_item_servidor'],
+        where: 'pesagem_id_local = ? AND numero_item_servidor IS NOT NULL',
+        whereArgs: [pesagemIdLocal],
       );
-    }
+      final numerosExistentes = existentes
+          .map((e) => e['numero_item_servidor'] as int)
+          .toSet();
+
+      final maxAtual = Sqflite.firstIntValue(
+            await txn.rawQuery(
+              'SELECT COALESCE(MAX(numero_item_local), 0) FROM itens_pesagem_locais WHERE pesagem_id_local = ?',
+              [pesagemIdLocal],
+            ),
+          ) ??
+          0;
+      var proximoLocal = maxAtual + 1;
+
+      for (final item in itensServidor) {
+        final numeroServidor = int.parse(
+          item['tbl_ite_pesagem_numero_item'].toString(),
+        );
+        if (numerosExistentes.contains(numeroServidor)) continue;
+
+        await txn.insert('itens_pesagem_locais', {
+          'pesagem_id_local': pesagemIdLocal,
+          'uuid': 'importado-servidor-$pesagemIdLocal-$numeroServidor',
+          'numero_item_local': proximoLocal,
+          'numero_item_servidor': numeroServidor,
+          'id_animal': item['tbl_ite_pesagem_codigo_id_animal']?.toString(),
+          'codigo_animal': item['tbl_ite_pesagem_codigo_animal']?.toString(),
+          'peso': item['tbl_ite_pesagem_peso']?.toString(),
+          'ultimo_peso': item['tbl_ite_pesagem_ultimo_peso']?.toString(),
+          'sexo': item['tbl_ite_pesagem_sexo']?.toString(),
+          'nascimento': item['tbl_ite_pesagem_nascimento']?.toString(),
+          'raca': item['tbl_ite_pesagem_raca']?.toString(),
+          'pelagem': item['tbl_ite_pesagem_pelagem']?.toString(),
+          'mae': item['tbl_ite_pesagem_mae']?.toString(),
+          'obs': item['tbl_ite_pesagem_observacao']?.toString() ?? '',
+          'mens_repetido':
+              item['tbl_ite_pesagem_mens_repetido']?.toString() ?? '',
+          'id_pesagem_repetido':
+              item['tbl_ite_pesagem_id_repetido']?.toString() ?? '0',
+          'criterio_apartacao':
+              item['tbl_ite_pesagem_criterio_apartacao']?.toString() ?? '',
+          'status_sync': StatusSyncItem.sincronizado,
+          'criado_em': agora,
+          'atualizado_em': agora,
+        });
+
+        proximoLocal++;
+      }
+    });
   }
 }

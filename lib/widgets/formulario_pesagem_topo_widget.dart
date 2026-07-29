@@ -148,24 +148,30 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
                               BoxShadow(color: Colors.black12, blurRadius: 4),
                             ],
                           ),
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: sugestoesAnimais.length,
-                            itemBuilder: (context, index) {
-                              final animal = sugestoesAnimais[index];
-                              return ListTile(
-                                dense: true,
-                                title: Text(
-                                  animal['exibicao'] ?? 'Sem ID',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                          // Altura limitada e rolagem própria: com a busca
+                          // trazendo até 6 sugestões, essa lista sem limite
+                          // (shrinkWrap puro) podia estourar o espaço da tela
+                          // quando o teclado também estava aberto.
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxHeight: 220),
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: sugestoesAnimais.length,
+                              itemBuilder: (context, index) {
+                                final animal = sugestoesAnimais[index];
+                                return ListTile(
+                                  dense: true,
+                                  title: Text(
+                                    animal['exibicao'] ?? 'Sem ID',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ),
-                                onTap: () => onSugestaoTap(animal),
-                              );
-                            },
+                                  onTap: () => onSugestaoTap(animal),
+                                );
+                              },
+                            ),
                           ),
                         ),
                     ],

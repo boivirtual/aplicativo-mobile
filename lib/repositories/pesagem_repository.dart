@@ -97,6 +97,7 @@ class PesagemRepository {
           for (final p in lista) {
             await PesagemLocalDao.instance.importarDoServidor(
               p as Map<String, dynamic>,
+              bd: bdSeguro,
             );
           }
           final locais = await PesagemLocalDao.instance.listarPendentesLocais(
@@ -125,6 +126,7 @@ class PesagemRepository {
     required String? bd,
     required List<int> fazendas,
   }) async {
+    final bdSeguro = bd ?? '';
     if (_online) {
       try {
         final response = await http.post(
@@ -136,6 +138,7 @@ class PesagemRepository {
           for (final p in lista) {
             await PesagemLocalDao.instance.importarDoServidor(
               p as Map<String, dynamic>,
+              bd: bdSeguro,
             );
           }
           return lista;
@@ -320,7 +323,10 @@ class PesagemRepository {
           final data = json.decode(response.body);
           if (data['success'] == true && data['pesagem'] != null) {
             final idLocalImportado = await PesagemLocalDao.instance
-                .importarDoServidor(data['pesagem'] as Map<String, dynamic>);
+                .importarDoServidor(
+              data['pesagem'] as Map<String, dynamic>,
+              bd: bd ?? '',
+            );
             await ItemPesagemLocalDao.instance.importarDoServidor(
               idLocalImportado,
               (data['itens'] as List<dynamic>?) ?? [],

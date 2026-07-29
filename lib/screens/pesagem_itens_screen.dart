@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/connectivity_service.dart';
 import '../services/animal_cache_service.dart';
+import '../widgets/indicador_conectividade_widget.dart';
 import '../repositories/pesagem_repository.dart';
 import '../repositories/animal_repository.dart';
 import 'pesagem_consulta_mae_modal.dart';
@@ -95,11 +95,6 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
   final Color corDoRotulo = Colors.blueGrey[800]!;
   int? _itemExpandidoIndex;
-
-  late StreamSubscription<NivelConexao> _subscription;
-  bool _mostrarBanner = false;
-  String _mensagemInternet = "";
-  Color _corBanner = Colors.orange[800]!;
 
   final Map<String, String> motivos = {
     '011': 'Controle Ganho de Peso',
@@ -279,7 +274,6 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     }
 
     _carregarDadosBase();
-    _iniciarMonitoramentoInternet();
 
     _focoNoAnimal.addListener(() {
       if (_focoNoAnimal.hasFocus) {
@@ -309,34 +303,6 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     });
   }
 
-  void _iniciarMonitoramentoInternet() {
-    _subscription = ConnectivityService.instance.status.listen((nivel) {
-      _aplicarNivelConexao(nivel);
-    });
-  }
-
-  void _aplicarNivelConexao(NivelConexao nivel) {
-    switch (nivel) {
-      case NivelConexao.semInternet:
-        setState(() {
-          _mensagemInternet = "Atenção! Sem conexão com a Internet";
-          _corBanner = Colors.redAccent;
-          _mostrarBanner = true;
-        });
-        break;
-      case NivelConexao.internetRuim:
-        setState(() {
-          _mensagemInternet = "Atenção! Conexão com a Internet ruim!";
-          _corBanner = Colors.orange[800]!;
-          _mostrarBanner = true;
-        });
-        break;
-      case NivelConexao.internetOk:
-        setState(() => _mostrarBanner = false);
-        break;
-    }
-  }
-
   @override
   void dispose() {
     _debounce?.cancel();
@@ -351,7 +317,6 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     _pesoController.dispose();
     _obsController.dispose();
     _criterioController.dispose();
-    _subscription.cancel();
     _sizePesoController.dispose();
     super.dispose();
   }
@@ -1613,6 +1578,10 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
             onPressed: widget.onBack,
           ),
           title: const Text('Pesagem', style: TextStyle(fontSize: 18)),
+          actions: const [
+            IndicadorConectividadeWidget(),
+            SizedBox(width: 4),
+          ],
         ),
       ),
       body: SafeArea(
@@ -1630,31 +1599,6 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
           },
           child: Column(
             children: [
-              if (_mostrarBanner)
-                Container(
-                  width: double.infinity,
-                  color: _corBanner,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.warning_amber_rounded,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        _mensagemInternet,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               FormularioPesagemTopoWidget(
                 filtroAtivoWidget: FiltroAtivoPesagemWidget(
                   nomeFazenda: _getNomeFazenda(_fazendaSelecionadaAtual),

@@ -103,6 +103,7 @@ class PesagemLocalDao {
 
   Future<void> atualizarCabecalho(
     int idLocal, {
+    String? bd,
     String? fazendaId,
     String? epocaId,
     String? lote,
@@ -114,6 +115,7 @@ class PesagemLocalDao {
     final valores = <String, dynamic>{
       'atualizado_em': DateTime.now().toIso8601String(),
     };
+    if (bd != null && bd.isNotEmpty) valores['bd'] = bd;
     if (fazendaId != null) valores['fazenda_id'] = fazendaId;
     if (epocaId != null) valores['epoca_id'] = epocaId;
     if (lote != null) valores['lote'] = lote;
@@ -144,7 +146,15 @@ class PesagemLocalDao {
   /// Salva/atualiza no cache local uma pesagem que veio do servidor (para
   /// permitir reabrir offline mesmo pesagens criadas antes deste dispositivo
   /// ter a fila offline, ou criadas por outro dispositivo/sistema web).
-  Future<int> importarDoServidor(Map<String, dynamic> pesagemServidor) async {
+  ///
+  /// [bd] precisa ser o CNPJ/banco real do usuário logado — listarPendentesLocais
+  /// filtra por esse campo quando offline, então gravar bd vazio aqui fazia
+  /// pesagens importadas do servidor sumirem da lista offline (só a pesagem
+  /// criada neste próprio aparelho, com bd certo, continuava aparecendo).
+  Future<int> importarDoServidor(
+    Map<String, dynamic> pesagemServidor, {
+    required String bd,
+  }) async {
     final idServidor = int.parse(
       pesagemServidor['tbl_pesagem_id'].toString(),
     );
@@ -163,6 +173,7 @@ class PesagemLocalDao {
     if (existente != null) {
       await atualizarCabecalho(
         existente['id_local'] as int,
+        bd: bd,
         fazendaId: pesagemServidor['tbl_pesagem_codigo_local']?.toString(),
         epocaId: pesagemServidor['tbl_pesagem_codigo_epoca']?.toString(),
         lote: pesagemServidor['tbl_pesagem_lote']?.toString() ?? '',
@@ -181,7 +192,7 @@ class PesagemLocalDao {
     return inserir(
       uuid: 'importado-servidor-$idServidor',
       idServidor: idServidor,
-      bd: '',
+      bd: bd,
       fazendaId: pesagemServidor['tbl_pesagem_codigo_local']?.toString() ?? '',
       epocaId: pesagemServidor['tbl_pesagem_codigo_epoca']?.toString() ?? '',
       lote: pesagemServidor['tbl_pesagem_lote']?.toString() ?? '',

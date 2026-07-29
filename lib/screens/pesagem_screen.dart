@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/connectivity_service.dart';
 import '../services/sync_service.dart';
 import '../services/animal_cache_service.dart';
 import '../repositories/pesagem_repository.dart';
+import '../widgets/indicador_conectividade_widget.dart';
 import 'pesagem_itens_screen.dart';
 import 'pesagem_consulta_screen.dart';
 import 'package:boivirtual/utils/app_alert.dart';
@@ -39,11 +39,6 @@ class _PesagemScreenState extends State<PesagemScreen> {
   final Color corDoRotulo = Colors.blueGrey[800]!;
   final Color corTextoPendente = const Color(0xFF455A64);
 
-  late StreamSubscription<NivelConexao> _subscription;
-  bool _mostrarBanner = false;
-  String _mensagemInternet = "";
-  Color _corBanner = Colors.orange[800]!;
-
   StreamSubscription<int>? _subPendentesSync;
   int _pendentesSync = 0;
   bool _sincronizandoManualmente = false;
@@ -68,7 +63,6 @@ class _PesagemScreenState extends State<PesagemScreen> {
   void initState() {
     super.initState();
     _carregarDadosIniciais();
-    _iniciarMonitoramentoInternet();
     _subPendentesSync = SyncService.instance.pendentes.listen((qtd) {
       if (mounted) setState(() => _pendentesSync = qtd);
     });
@@ -93,34 +87,6 @@ class _PesagemScreenState extends State<PesagemScreen> {
         : "Sem sinal ou nada novo para sincronizar.";
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensagem)));
-  }
-
-  void _iniciarMonitoramentoInternet() {
-    _subscription = ConnectivityService.instance.status.listen((nivel) {
-      _aplicarNivelConexao(nivel);
-    });
-  }
-
-  void _aplicarNivelConexao(NivelConexao nivel) {
-    switch (nivel) {
-      case NivelConexao.semInternet:
-        setState(() {
-          _mensagemInternet = "Atenção! Sem conexão com a Internet";
-          _corBanner = Colors.redAccent;
-          _mostrarBanner = true;
-        });
-        break;
-      case NivelConexao.internetRuim:
-        setState(() {
-          _mensagemInternet = "Atenção! Conexão com a Internet ruim!";
-          _corBanner = Colors.orange[800]!;
-          _mostrarBanner = true;
-        });
-        break;
-      case NivelConexao.internetOk:
-        setState(() => _mostrarBanner = false);
-        break;
-    }
   }
 
   Widget _buildIndicadorCarregando() {
@@ -214,7 +180,6 @@ class _PesagemScreenState extends State<PesagemScreen> {
     _descricaoController.dispose();
     _qtdAPesarController.dispose();
     _criterioController.dispose();
-    _subscription.cancel();
     _subPendentesSync?.cancel();
     AnimalCacheService.instance.baixando.removeListener(_ouvirBaixandoAnimais);
     super.dispose();
@@ -334,35 +299,14 @@ class _PesagemScreenState extends State<PesagemScreen> {
             onPressed: widget.onBack,
           ),
           title: const Text('Pesagem', style: TextStyle(fontSize: 18)),
+          actions: const [
+            IndicadorConectividadeWidget(),
+            SizedBox(width: 4),
+          ],
         ),
       ),
       body: Column(
         children: [
-          if (_mostrarBanner)
-            Container(
-              width: double.infinity,
-              color: _corBanner,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.warning_amber_rounded,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    _mensagemInternet,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
           if (carregandoPendentes || _baixandoAnimais) _buildIndicadorCarregando(),
           if (_pendentesSync > 0) _buildIndicadorSync(),
           Expanded(

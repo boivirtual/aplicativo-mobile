@@ -155,6 +155,18 @@ class ItemPesagemLocalDao {
     );
   }
 
+  /// Remove todos os itens de uma pesagem local — usado quando a pesagem
+  /// inteira é removida do cache (ex: confirmado que não existe mais no
+  /// servidor).
+  Future<void> excluirTodosDaPesagem(int pesagemIdLocal) async {
+    final db = await LocalDatabase.instance.database;
+    await db.delete(
+      'itens_pesagem_locais',
+      where: 'pesagem_id_local = ?',
+      whereArgs: [pesagemIdLocal],
+    );
+  }
+
   /// Importa todos os itens de uma vez, numa única transação — tudo ou
   /// nada. Sem isso, uma pesagem com muitos itens (centenas) podia ficar
   /// com uma importação parcial presa pra sempre se o app fosse encerrado/

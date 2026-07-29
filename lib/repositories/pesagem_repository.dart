@@ -94,12 +94,26 @@ class PesagemRepository {
         );
         if (response.statusCode == 200) {
           final lista = json.decode(response.body) as List<dynamic>;
+          final idsServidorAtuais = lista
+              .map(
+                (p) =>
+                    int.tryParse(
+                      (p as Map<String, dynamic>)['tbl_pesagem_id']
+                          .toString(),
+                    ) ??
+                    0,
+              )
+              .toSet();
+
           for (final p in lista) {
             await PesagemLocalDao.instance.importarDoServidor(
               p as Map<String, dynamic>,
               bd: bdSeguro,
             );
           }
+
+          await _reconciliarSumidosDoServidor(bdSeguro, idsServidorAtuais);
+
           final locais = await PesagemLocalDao.instance.listarPendentesLocais(
             bdSeguro,
           );
@@ -120,6 +134,60 @@ class PesagemRepository {
       bdSeguro,
     );
     return Future.wait(locais.map(_pesagemLocalParaMapaServidor));
+  }
+
+  /// Uma pesagem já sincronizada (id_servidor preenchido) que sumiu da
+  /// resposta de list_pendentes pode ter sido excluída no sistema web, ou
+  /// simplesmente finalizada — sem checar, ela ficava presa no cache local
+  /// pra sempre (list_pendentes.php só devolve o que está em aberto), e
+  /// reaparecia de forma inconsistente sempre que a tela caía no fallback
+  /// offline (que não tem esse filtro). Confirma direto com o servidor
+  /// antes de mexer em qualquer coisa — só remove o cache local quando o
+  /// servidor afirma explicitamente que a pesagem não existe mais.
+  Future<void> _reconciliarSumidosDoServidor(
+    String bd,
+    Set<int> idsServidorAtuais,
+  ) async {
+    final suspeitas = await PesagemLocalDao.instance
+        .listarSincronizadasNaoFinalizadas(bd);
+
+    for (final local in suspeitas) {
+      final idServidor = local['id_servidor'] as int;
+      if (idsServidorAtuais.contains(idServidor)) continue;
+
+      try {
+        final response = await http.post(
+          Uri.parse(
+            "${ApiConfig.baseUrl}/rest/pesagem/get_pesagem_completa.php",
+          ),
+          body: json.encode({"bd": bd, "id_pesagem": idServidor}),
+        );
+        if (response.statusCode != 200) continue;
+
+        final data = json.decode(response.body);
+        if (data['success'] == true) {
+          // Ainda existe no servidor (provavelmente só foi finalizada) —
+          // reimporta o cabeçalho atualizado em vez de deixar desatualizado.
+          if (data['pesagem'] != null) {
+            await PesagemLocalDao.instance.importarDoServidor(
+              data['pesagem'] as Map<String, dynamic>,
+              bd: bd,
+            );
+          }
+          continue;
+        }
+
+        // success == false com essa checagem específica confirma exclusão
+        // (o mesmo endpoint responde sucesso pra pesagem finalizada, então
+        // isso não derruba nada que só esteja fechado).
+        final idLocal = local['id_local'] as int;
+        await ItemPesagemLocalDao.instance.excluirTodosDaPesagem(idLocal);
+        await PesagemLocalDao.instance.excluirPorIdLocal(idLocal);
+      } catch (_) {
+        // sem confirmação clara do servidor — não mexe, tenta de novo na
+        // próxima consulta.
+      }
+    }
   }
 
   Future<List<dynamic>> listarFinalizadas({

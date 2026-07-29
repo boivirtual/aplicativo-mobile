@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import '../services/sync_service.dart';
 
-/// Aviso central e discreto de "Sincronizando dados..." — some sozinho
-/// quando a sincronização termina. Não bloqueia toques na tela (não tem
-/// barreira por trás), então não atrapalha quem estiver digitando enquanto
-/// isso acontece em segundo plano.
+/// Aviso central de "Sincronizando dados..." — some sozinho quando a
+/// sincronização termina. Fundo totalmente transparente (sem caixa/cor por
+/// trás) e sem bloquear toque na tela, então não atrapalha quem estiver
+/// digitando enquanto isso acontece em segundo plano.
 class IndicadorSincronizandoWidget extends StatelessWidget {
   const IndicadorSincronizandoWidget({super.key});
+
+  static const _corTexto = Color(0xFF18385F);
+  static const _sombraLegibilidade = [
+    Shadow(color: Colors.white, blurRadius: 6),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -15,40 +20,31 @@ class IndicadorSincronizandoWidget extends StatelessWidget {
       builder: (context, sincronizando, _) {
         if (!sincronizando) return const SizedBox.shrink();
 
-        return IgnorePointer(
+        return const IgnorePointer(
           child: Align(
-            alignment: const Alignment(0, -0.6),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 14,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.black87,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: Colors.white,
-                    ),
+            alignment: Alignment(0, -0.5),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 30,
+                  height: 30,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    color: _corTexto,
                   ),
-                  SizedBox(width: 12),
-                  Text(
-                    "Sincronizando dados...",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  "Sincronizando dados...",
+                  style: TextStyle(
+                    color: _corTexto,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    shadows: _sombraLegibilidade,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         );

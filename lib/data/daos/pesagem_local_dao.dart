@@ -143,6 +143,27 @@ class PesagemLocalDao {
     );
   }
 
+  /// Pesagens já confirmadas pelo servidor (id_servidor preenchido), ainda
+  /// marcadas como não finalizadas neste aparelho — candidatas a checar se
+  /// ainda existem no servidor (ver PesagemRepository._reconciliarExcluidos).
+  Future<List<Map<String, dynamic>>> listarSincronizadasNaoFinalizadas(
+    String bd,
+  ) async {
+    final db = await LocalDatabase.instance.database;
+    return db.query(
+      'pesagens_locais',
+      where: 'bd = ? AND finalizada = ? AND id_servidor IS NOT NULL',
+      whereArgs: [bd, 'N'],
+    );
+  }
+
+  /// Remove a pesagem do cache local — usado só quando o servidor confirma
+  /// que ela não existe mais (ex: excluída pelo sistema web).
+  Future<void> excluirPorIdLocal(int idLocal) async {
+    final db = await LocalDatabase.instance.database;
+    await db.delete('pesagens_locais', where: 'id_local = ?', whereArgs: [idLocal]);
+  }
+
   /// Salva/atualiza no cache local uma pesagem que veio do servidor (para
   /// permitir reabrir offline mesmo pesagens criadas antes deste dispositivo
   /// ter a fila offline, ou criadas por outro dispositivo/sistema web).

@@ -89,36 +89,43 @@ class _PesagemScreenState extends State<PesagemScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensagem)));
   }
 
+  static const _corIndicador = Color(0xFF18385F);
+  static const _sombraLegibilidade = [
+    Shadow(color: Colors.white, blurRadius: 6),
+  ];
+
   Widget _buildIndicadorCarregando() {
     final mensagem = carregandoPendentes && _baixandoAnimais
         ? "Baixando pesagens e cadastro de animais..."
         : carregandoPendentes
             ? "Baixando pesagens pendentes..."
             : "Baixando cadastro de animais da fazenda...";
-    return Container(
-      width: double.infinity,
-      color: Colors.blueGrey[400],
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      child: Row(
-        children: [
-          const SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
+    return IgnorePointer(
+      child: Align(
+        alignment: const Alignment(0, -0.5),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 30,
+              height: 30,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                color: _corIndicador,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
               mensagem,
               style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
+                color: _corIndicador,
                 fontWeight: FontWeight.bold,
+                fontSize: 14,
+                shadows: _sombraLegibilidade,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -305,12 +312,13 @@ class _PesagemScreenState extends State<PesagemScreen> {
           ],
         ),
       ),
-      body: Column(
+      body: Stack(
         children: [
-          if (carregandoPendentes || _baixandoAnimais) _buildIndicadorCarregando(),
-          if (_pendentesSync > 0) _buildIndicadorSync(),
-          Expanded(
-            child: SingleChildScrollView(
+          Column(
+            children: [
+              if (_pendentesSync > 0) _buildIndicadorSync(),
+              Expanded(
+                child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
                 vertical: 10.0,
@@ -384,6 +392,9 @@ class _PesagemScreenState extends State<PesagemScreen> {
               ),
             ),
           ),
+        ],
+      ),
+          if (carregandoPendentes || _baixandoAnimais) _buildIndicadorCarregando(),
         ],
       ),
     );

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import 'connectivity_service.dart';
@@ -36,6 +37,13 @@ class SyncService {
   /// Stream com a contagem de operações pendentes/em erro na fila — usado
   /// pelo indicador visual "N pendentes de sincronização".
   Stream<int> get pendentes => _pendentesController.stream;
+
+  /// true só enquanto existe pelo menos uma operação sendo processada de
+  /// verdade — usado pelo overlay "Sincronizando dados...". Deliberadamente
+  /// não é o mesmo que "_pendentesSync > 0": aquela contagem cai item a
+  /// item durante o loop e some rápido demais (pisca) quando a fila tem só
+  /// 1-2 operações; este flag cobre a duração inteira da tentativa.
+  final ValueNotifier<bool> sincronizando = ValueNotifier(false);
 
   void iniciar() {
     _subConectividade ??= ConnectivityService.instance.status.listen((nivel) {
@@ -79,6 +87,11 @@ class SyncService {
       }
 
       final pendentes = await OutboxDao.instance.listarPendentes();
+      if (pendentes.isEmpty) {
+        return const SincronizacaoResultado(processadas: 0, comErro: 0);
+      }
+
+      sincronizando.value = true;
       int processadas = 0;
       int comErro = 0;
 
@@ -107,6 +120,7 @@ class SyncService {
       return SincronizacaoResultado(processadas: processadas, comErro: comErro);
     } finally {
       _sincronizando = false;
+      sincronizando.value = false;
     }
   }
 

@@ -1,13 +1,13 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'services/connectivity_service.dart';
 import 'package:boivirtual/screens/pesagem_screen.dart';
 import 'package:boivirtual/screens/mapa_screen.dart';
 import 'package:boivirtual/screens/chuva_screen.dart';
 import 'package:boivirtual/screens/agenda_screen.dart';
 import 'package:boivirtual/screens/dashboard_screen.dart';
 import 'package:boivirtual/screens/home_screen.dart';
+import 'package:boivirtual/widgets/indicador_conectividade_widget.dart';
+import 'package:boivirtual/widgets/indicador_sincronizando_widget.dart';
 import 'auth_service.dart';
 
 class MainContainer extends StatefulWidget {
@@ -22,18 +22,10 @@ class _MainContainerState extends State<MainContainer> {
   int _currentIndex = 2;
   String _userName = "Usuário";
 
-  late StreamSubscription<NivelConexao> _subscription;
-  bool _mostrarBanner = false;
-  String _mensagemInternet = "";
-  Color _corBanner = Colors.orange[800]!;
-
   @override
   void initState() {
     super.initState();
     _carregarDadosUsuario();
-    _subscription = ConnectivityService.instance.status.listen(
-      (nivel) => _aplicarNivelConexao(nivel),
-    );
   }
 
   Future<void> _carregarDadosUsuario() async {
@@ -41,26 +33,6 @@ class _MainContainerState extends State<MainContainer> {
     setState(() {
       _userName = prefs.getString('userName') ?? "Usuário";
     });
-  }
-
-  void _aplicarNivelConexao(NivelConexao nivel) {
-    switch (nivel) {
-      case NivelConexao.semInternet:
-        setState(() {
-          _mensagemInternet = "Sem Internet";
-          _corBanner = Colors.redAccent;
-          _mostrarBanner = true;
-        });
-        break;
-      case NivelConexao.internetRuim:
-        // Mantém o mesmo comportamento de antes: só liga o banner, sem
-        // sobrescrever mensagem/cor (herda o que já estava definido).
-        setState(() => _mostrarBanner = true);
-        break;
-      case NivelConexao.internetOk:
-        setState(() => _mostrarBanner = false);
-        break;
-    }
   }
 
   void _confirmarSaida(BuildContext context) {
@@ -95,12 +67,6 @@ class _MainContainerState extends State<MainContainer> {
   }
 
   @override
-  void dispose() {
-    _subscription.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     const Color azulBarra = Color(0xFF18385F);
     const Color cinzaInativo = Colors.grey;
@@ -127,6 +93,8 @@ class _MainContainerState extends State<MainContainer> {
                 style: const TextStyle(fontSize: 18, color: Colors.white),
               ),
               actions: [
+                const IndicadorConectividadeWidget(),
+                const SizedBox(width: 4),
                 IconButton(
                   icon: const Icon(Icons.logout, color: Colors.white, size: 20),
                   onPressed: () => _confirmarSaida(context),
@@ -134,24 +102,10 @@ class _MainContainerState extends State<MainContainer> {
               ],
             )
           : null,
-      body: Column(
+      body: Stack(
         children: [
-          if (_mostrarBanner && _currentIndex == 5)
-            Container(
-              width: double.infinity,
-              color: _corBanner,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Center(
-                child: Text(
-                  _mensagemInternet,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          Expanded(child: pages[_currentIndex]),
+          Column(children: [Expanded(child: pages[_currentIndex])]),
+          const IndicadorSincronizandoWidget(),
         ],
       ),
       // AJUSTE: Se estiver na Home (Index 5), o rodapé some.

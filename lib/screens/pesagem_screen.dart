@@ -90,41 +90,51 @@ class _PesagemScreenState extends State<PesagemScreen> {
   }
 
   static const _corIndicador = Color(0xFF18385F);
-  static const _sombraLegibilidade = [
-    Shadow(color: Colors.white, blurRadius: 6),
-  ];
 
   Widget _buildIndicadorCarregando() {
     final mensagem = carregandoPendentes && _baixandoAnimais
         ? "Baixando pesagens e cadastro de animais..."
         : carregandoPendentes
             ? "Baixando pesagens pendentes..."
-            : "Baixando cadastro de animais da fazenda...";
+            : "Baixando cadastro de animais das fazendas...";
     return IgnorePointer(
       child: Align(
         alignment: const Alignment(0, -0.5),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(
-              width: 30,
-              height: 30,
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                color: _corIndicador,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              mensagem,
-              style: const TextStyle(
-                color: _corIndicador,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                shadows: _sombraLegibilidade,
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: _corIndicador,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: 10),
+              Text(
+                mensagem,
+                style: const TextStyle(
+                  color: _corIndicador,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

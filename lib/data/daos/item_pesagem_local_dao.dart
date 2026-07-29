@@ -130,6 +130,31 @@ class ItemPesagemLocalDao {
     return linhas.isEmpty ? null : linhas.first;
   }
 
+  /// Item mais recente deste animal, com apartação preenchida, em alguma
+  /// pesagem ainda aberta neste aparelho — base dos alertas de "mãe/bezerro
+  /// já com apartação em lote aberto" (ver AnimalRepository). Mesmo
+  /// raciocínio 100% local do buscarPesagemAbertaPorAnimal: os lotes em
+  /// andamento de uma fazenda estão sempre no aparelho que está pesando.
+  Future<Map<String, dynamic>?> buscarCriterioApartacaoAberta(
+    String idAnimal,
+  ) async {
+    final db = await LocalDatabase.instance.database;
+    final linhas = await db.rawQuery(
+      '''
+      SELECT i.criterio_apartacao AS criterio, i.pesagem_id_local, i.numero_item_local
+      FROM itens_pesagem_locais i
+      JOIN pesagens_locais p ON p.id_local = i.pesagem_id_local
+      WHERE i.id_animal = ?
+        AND p.finalizada = 'N'
+        AND IFNULL(i.criterio_apartacao, '') != ''
+      ORDER BY i.pesagem_id_local DESC, i.numero_item_local DESC
+      LIMIT 1
+      ''',
+      [idAnimal],
+    );
+    return linhas.isEmpty ? null : linhas.first;
+  }
+
   Future<void> confirmarSincronizacao(int idLocal, int numeroItemServidor) async {
     final db = await LocalDatabase.instance.database;
     await db.update(

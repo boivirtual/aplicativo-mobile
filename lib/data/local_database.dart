@@ -11,7 +11,7 @@ class LocalDatabase {
   LocalDatabase._();
   static final LocalDatabase instance = LocalDatabase._();
 
-  static const int _versaoSchema = 2;
+  static const int _versaoSchema = 3;
 
   Database? _db;
 
@@ -119,6 +119,7 @@ class LocalDatabase {
         data_ultimo_peso TEXT,
         lote_aberto TEXT,
         pesagem_id_lote_aberto TEXT,
+        peso_desmama TEXT,
         atualizado_em TEXT NOT NULL
       )
     ''');
@@ -139,6 +140,11 @@ class LocalDatabase {
       await db.execute(
         'CREATE INDEX IF NOT EXISTS idx_animais_cache_mae ON animais_cache (id_mae)',
       );
+    }
+    if (versaoAntiga < 3) {
+      // Peso de desmama — precisa pra saber se um bezerro já foi desmamado
+      // (regra do alerta "mãe/bezerro com apartação em lote aberto").
+      await db.execute('ALTER TABLE animais_cache ADD COLUMN peso_desmama TEXT');
     }
   }
 

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../services/connectivity_service.dart';
 import '../data/daos/animal_cache_dao.dart';
+import '../data/daos/item_pesagem_local_dao.dart';
 
 /// Camada única de acesso à API de animais.
 ///
@@ -37,7 +38,78 @@ class AnimalRepository {
     };
   }
 
-  Map<String, dynamic> _cacheParaFicha(Map<String, dynamic> row) {
+  /// Idade em meses <= 7, contando dia do mês (igual ao PHP original:
+  /// PERIOD_DIFF por ano/mês, com ajuste de -1 se o dia de hoje ainda não
+  /// chegou no dia de nascimento).
+  bool _idadeMenorIgual7Meses(String? nascimentoIso) {
+    if (nascimentoIso == null || nascimentoIso.isEmpty) return false;
+    final nascimento = DateTime.tryParse(nascimentoIso);
+    if (nascimento == null) return false;
+    final hoje = DateTime.now();
+    int meses = (hoje.year - nascimento.year) * 12 + (hoje.month - nascimento.month);
+    if (hoje.day < nascimento.day) meses--;
+    return meses <= 7;
+  }
+
+  bool _jaDesmamado(String? pesoDesmama) {
+    if (pesoDesmama == null || pesoDesmama.isEmpty) return false;
+    return (double.tryParse(pesoDesmama) ?? 0) > 0;
+  }
+
+  /// Regra "mãe com apartação em lote aberto" (mesma do servidor,
+  /// AnimalDao::getCriterioApartacaoMaeBezerroNaoDesmamado): só faz sentido
+  /// perguntar pela mãe se ESTE animal for um bezerro (<=7 meses, ainda não
+  /// desmamado) — a checagem em si é 100% local (ver
+  /// ItemPesagemLocalDao.buscarCriterioApartacaoAberta).
+  Future<String?> _buscarCriterioApartacaoMae(Map<String, dynamic> row) async {
+    final idMae = row['id_mae']?.toString();
+    if (idMae == null || idMae.isEmpty || idMae == '0') return null;
+    if (!_idadeMenorIgual7Meses(row['nascimento']?.toString())) return null;
+    if (_jaDesmamado(row['peso_desmama']?.toString())) return null;
+
+    final item = await ItemPesagemLocalDao.instance
+        .buscarCriterioApartacaoAberta(idMae);
+    return item?['criterio']?.toString();
+  }
+
+  /// Regra "bezerro não desmamado com apartação em lote aberto" (mesma do
+  /// servidor, AnimalDao::getBezerroNaoDesmamadoEmPesagemAberta): dado que
+  /// ESTE animal é a mãe, procura entre os filhos cacheados (ver
+  /// AnimalCacheDao.buscarFilhosPorIdMae) o mais recente que já tenha
+  /// apartação registrada em algum lote aberto.
+  Future<Map<String, dynamic>?> _buscarBezerroNaoDesmamado(
+    String idAnimalMae,
+  ) async {
+    final filhos = await AnimalCacheDao.instance.buscarFilhosPorIdMae(
+      idAnimalMae,
+    );
+
+    Map<String, dynamic>? melhor;
+    int melhorOrdem = -1;
+    for (final filho in filhos) {
+      if (!_idadeMenorIgual7Meses(filho['nascimento']?.toString())) continue;
+      if (_jaDesmamado(filho['peso_desmama']?.toString())) continue;
+
+      final item = await ItemPesagemLocalDao.instance
+          .buscarCriterioApartacaoAberta(filho['id_animal'].toString());
+      if (item == null) continue;
+
+      final ordem = (item['pesagem_id_local'] as int) * 1000000 +
+          (item['numero_item_local'] as int);
+      if (ordem > melhorOrdem) {
+        melhorOrdem = ordem;
+        melhor = {'codigo': filho['codigo'], 'criterio': item['criterio']};
+      }
+    }
+    return melhor;
+  }
+
+  Future<Map<String, dynamic>> _cacheParaFicha(Map<String, dynamic> row) async {
+    final criterioApartacaoMae = await _buscarCriterioApartacaoMae(row);
+    final bezerroApartacaoMae = await _buscarBezerroNaoDesmamado(
+      row['id_animal'].toString(),
+    );
+
     return {
       'id': row['id_animal'],
       'sexo': row['sexo'],
@@ -49,14 +121,13 @@ class AnimalRepository {
       'ultimoPeso': row['ultimo_peso'],
       'DataUltimo': row['data_ultimo_peso'],
       'estacaoMonta': false,
-      'loteAberto': row['lote_aberto'],
-      'pesagemIdLoteAberto':
-          int.tryParse(row['pesagem_id_lote_aberto']?.toString() ?? '') ?? 0,
-      // Não disponíveis offline nesta entrega (dependem de consultas
-      // adicionais que ainda não fazem parte do cache local) — degradam
-      // graciosamente em vez de travar a tela.
-      'criterioApartacaoMae': null,
-      'bezerroApartacaoMae': null,
+      // loteAberto/pesagemIdLoteAberto ficam sempre null aqui — quem checa
+      // isso é PesagemRepository.buscarLoteAbertoPorAnimal (ver
+      // pesagem_itens_screen.dart), que sobrescreve esses campos depois.
+      'loteAberto': null,
+      'pesagemIdLoteAberto': null,
+      'criterioApartacaoMae': criterioApartacaoMae,
+      'bezerroApartacaoMae': bezerroApartacaoMae,
       'codigo': row['codigo'],
     };
   }

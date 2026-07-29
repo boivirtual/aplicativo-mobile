@@ -30,6 +30,7 @@ class AnimalCacheDao {
         'brinco_mae': a['brincoMae']?.toString(),
         'ultimo_peso': a['ultimoPeso']?.toString(),
         'data_ultimo_peso': a['DataUltimo']?.toString(),
+        'peso_desmama': a['pesoDesmama']?.toString(),
         'atualizado_em': agora,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
     }

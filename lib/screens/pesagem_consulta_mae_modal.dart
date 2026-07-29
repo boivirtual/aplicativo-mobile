@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -76,12 +75,13 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
       return;
     }
 
-    // Consulta por mãe busca em todas as fazendas do usuário, não só na
-    // atual — cachear o cadastro completo de todas as fazendas ficou fora
-    // do escopo do trabalho offline (só a fazenda em uso foi cacheada).
-    // Sem isso, o app falhava calado (lista vazia, sem explicação);
-    // agora pelo menos avisa o motivo em vez de parecer "não encontrado".
-    if (!ConnectivityService.instance.temInternetReal) {
+    // Consulta por mãe busca em todas as fazendas do usuário (cache-first,
+    // igual à busca da fazenda atual). Só falta mesmo internet quando ainda
+    // não existe cache de fazenda nenhuma (ex: primeiro login, sem nunca
+    // ter ficado online) — nesse caso avisa em vez de parecer "não
+    // encontrado".
+    final temCache = await AnimalRepository.instance.temCacheDeAlgumaFazenda();
+    if (!temCache && !ConnectivityService.instance.temInternetReal) {
       setState(() {
         sugestoesAnimais = [];
         mostrandoSugestoes = false;
@@ -93,21 +93,18 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
     setState(() => _semInternet = false);
 
     try {
-      final response = await AnimalRepository.instance.buscarMaePorCodigo(
+      final lista = await AnimalRepository.instance.buscarMaePorCodigo(
         termo: termo,
         bd: cnpjSeguro,
       );
-
-      if (response.statusCode == 200 && response.body.isNotEmpty) {
-        List lista = json.decode(response.body);
-        setState(() {
-          sugestoesAnimais = lista.map((item) {
-            item['codigo_limpo'] = _limparCodigo(item['codigo'].toString());
-            return item;
-          }).toList();
-          mostrandoSugestoes = sugestoesAnimais.isNotEmpty;
-        });
-      }
+      setState(() {
+        sugestoesAnimais = lista.map((item) {
+          final mapa = Map<String, dynamic>.from(item as Map);
+          mapa['codigo_limpo'] = _limparCodigo(mapa['codigo'].toString());
+          return mapa;
+        }).toList();
+        mostrandoSugestoes = sugestoesAnimais.isNotEmpty;
+      });
     } catch (e) {
       debugPrint("Erro busca: $e");
     }
@@ -121,13 +118,11 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
       _buscaController.text = animal['codigo_limpo'];
     });
     try {
-      final response = await AnimalRepository.instance.buscarDetalhesMae(
+      final resultado = await AnimalRepository.instance.buscarDetalhesMae(
         id: animal['id'].toString(),
         bd: cnpjSeguro,
       );
-      if (response.statusCode == 200) {
-        setState(() => infoMae = json.decode(response.body));
-      }
+      setState(() => infoMae = resultado);
     } finally {
       setState(() => carregando = false);
     }

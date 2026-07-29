@@ -9,9 +9,11 @@ import '../data/daos/animal_cache_dao.dart';
 /// buscarPorCodigo/buscarDetalhes ficam local-first (M4): uma vez que o
 /// cache da fazenda foi baixado (AnimalCacheService), autocomplete e ficha
 /// do animal funcionam 100% offline. buscarMaePorCodigo/buscarDetalhesMae
-/// (busca global de mãe, modal "Consultar Mãe") continuam só online — cache-
-/// ar o cadastro de TODAS as fazendas do usuário para essa busca é escopo
-/// maior, fora desta entrega.
+/// (busca global de mãe, modal "Consultar Mãe") também são local-first, mas
+/// sobre o cache de TODAS as fazendas do usuário (não só a selecionada na
+/// tela) — é assim que o "Consultar Mãe" já funciona online, e o cache
+/// precisa espelhar essa mesma regra (ver
+/// AnimalCacheService.garantirCacheDeTodasFazendas).
 class AnimalRepository {
   AnimalRepository._();
   static final AnimalRepository instance = AnimalRepository._();
@@ -119,25 +121,87 @@ class AnimalRepository {
     return {};
   }
 
-  Future<http.Response> buscarMaePorCodigo({
-    required String termo,
-    required String? bd,
-  }) {
-    return http.get(
-      Uri.parse(
-        "${ApiConfig.baseUrl}/rest/animal/list_mae_global.php?id=$termo&bd=$bd",
-      ),
-    );
+  /// Proxy fino pro DAO — pra telas não precisarem importar o DAO
+  /// diretamente só pra decidir se mostram "sem internet" quando ainda não
+  /// há cache nenhum.
+  Future<bool> temCacheDeAlgumaFazenda() =>
+      AnimalCacheDao.instance.temCacheGlobal();
+
+  Map<String, dynamic> _cacheParaAutocompleteMae(Map<String, dynamic> row) {
+    return {'id': row['id_animal'], 'codigo': row['codigo']};
   }
 
-  Future<http.Response> buscarDetalhesMae({
+  Map<String, dynamic> _cacheParaFilho(Map<String, dynamic> row) {
+    return {
+      'id': row['id_animal'],
+      'codigo': row['codigo'],
+      'nascimento': _formatarNascimento(row['nascimento']),
+      'sexo': row['sexo'],
+      'raca': row['raca'],
+      'pelagem': row['pelagem'],
+      'local_nome': row['fazenda_nome'],
+    };
+  }
+
+  /// Busca de mãe (fêmeas adultas) em todas as fazendas do usuário — cache
+  /// primeiro (ver AnimalCacheDao.buscarPorCodigoGlobalFemeaAdulta), rede só
+  /// se ainda não houver cache de nenhuma fazenda.
+  Future<List<dynamic>> buscarMaePorCodigo({
+    required String termo,
+    required String? bd,
+  }) async {
+    final temCache = await AnimalCacheDao.instance.temCacheGlobal();
+    if (temCache) {
+      final linhas = await AnimalCacheDao.instance
+          .buscarPorCodigoGlobalFemeaAdulta(termo);
+      return linhas.map(_cacheParaAutocompleteMae).toList();
+    }
+
+    if (_online) {
+      try {
+        final response = await http.get(
+          Uri.parse(
+            "${ApiConfig.baseUrl}/rest/animal/list_mae_global.php?id=$termo&bd=$bd",
+          ),
+        );
+        if (response.statusCode == 200 && response.body.isNotEmpty) {
+          return json.decode(response.body) as List<dynamic>;
+        }
+      } catch (_) {
+        // sem conexão de fato — cai para lista vazia abaixo
+      }
+    }
+    return [];
+  }
+
+  /// Ficha da mãe (só os filhos, que é tudo que o modal usa) — cache
+  /// primeiro, entre todas as fazendas.
+  Future<Map<String, dynamic>> buscarDetalhesMae({
     required String id,
     required String? bd,
-  }) {
-    return http.get(
-      Uri.parse(
-        "${ApiConfig.baseUrl}/rest/animal/info_mae_global.php?id=$id&bd=$bd",
-      ),
-    );
+  }) async {
+    final temCache = await AnimalCacheDao.instance.temCacheGlobal();
+    if (temCache) {
+      final filhos = await AnimalCacheDao.instance.buscarFilhosPorIdMae(id);
+      return {'filhos': filhos.map(_cacheParaFilho).toList()};
+    }
+
+    if (_online) {
+      try {
+        final response = await http
+            .get(
+              Uri.parse(
+                "${ApiConfig.baseUrl}/rest/animal/info_mae_global.php?id=$id&bd=$bd",
+              ),
+            )
+            .timeout(const Duration(seconds: 8));
+        if (response.statusCode == 200) {
+          return json.decode(response.body) as Map<String, dynamic>;
+        }
+      } catch (_) {
+        // sem conexão de fato — cai para mapa vazio abaixo
+      }
+    }
+    return {};
   }
 }

@@ -8,7 +8,11 @@ class AnimalCacheDao {
   AnimalCacheDao._();
   static final AnimalCacheDao instance = AnimalCacheDao._();
 
-  Future<void> salvarLote(String fazendaId, List<Map<String, dynamic>> animais) async {
+  Future<void> salvarLote(
+    String fazendaId,
+    List<Map<String, dynamic>> animais, {
+    String? fazendaNome,
+  }) async {
     final db = await LocalDatabase.instance.database;
     final agora = DateTime.now().toIso8601String();
     final batch = db.batch();
@@ -16,6 +20,7 @@ class AnimalCacheDao {
       batch.insert('animais_cache', {
         'id_animal': a['id'].toString(),
         'fazenda_id': fazendaId,
+        'fazenda_nome': fazendaNome,
         'codigo': a['codigo']?.toString(),
         'sexo': a['sexo']?.toString(),
         'nascimento': a['nascimento']?.toString(),
@@ -37,6 +42,14 @@ class AnimalCacheDao {
       'SELECT COUNT(*) as qtd FROM animais_cache WHERE fazenda_id = ?',
       [fazendaId],
     );
+    return ((r.first['qtd'] as int?) ?? 0) > 0;
+  }
+
+  /// true se existe cache de QUALQUER fazenda — usado pela "Consultar Mãe",
+  /// que busca em todas as fazendas do usuário, não numa fazenda específica.
+  Future<bool> temCacheGlobal() async {
+    final db = await LocalDatabase.instance.database;
+    final r = await db.rawQuery('SELECT COUNT(*) as qtd FROM animais_cache');
     return ((r.first['qtd'] as int?) ?? 0) > 0;
   }
 
@@ -95,6 +108,54 @@ class AnimalCacheDao {
         .compareTo(_parteNumerica(b['codigo']?.toString() ?? '')));
 
     return encontrados.take(10).toList();
+  }
+
+  /// true se o animal é uma fêmea com mais de 12 meses — mesma regra usada
+  /// na busca global do servidor (AnimalDao::getAnimalByIdLike, ramo
+  /// "local == 0"), pra "Consultar Mãe" oferecer as mesmas candidatas
+  /// offline e online.
+  bool _femeaAdulta(Map<String, dynamic> linha) {
+    if (linha['sexo']?.toString() != 'F') return false;
+    final nascimento = DateTime.tryParse(linha['nascimento']?.toString() ?? '');
+    if (nascimento == null) return false;
+    final agora = DateTime.now();
+    final diferencaMeses =
+        (agora.year - nascimento.year) * 12 + (agora.month - nascimento.month);
+    return diferencaMeses > 12;
+  }
+
+  /// Busca por código em TODAS as fazendas cacheadas (não só uma) — usado
+  /// pela "Consultar Mãe", que precisa achar a mãe em qualquer fazenda que
+  /// o usuário tenha acesso, só entre fêmeas adultas (mesma regra do
+  /// servidor).
+  Future<List<Map<String, dynamic>>> buscarPorCodigoGlobalFemeaAdulta(
+    String termo,
+  ) async {
+    final db = await LocalDatabase.instance.database;
+    final todos = await db.query('animais_cache');
+
+    final termoNormalizado = _normalizarCodigo(termo.trim());
+    final encontrados = todos.where((linha) {
+      if (!_femeaAdulta(linha)) return false;
+      final codigo = linha['codigo']?.toString() ?? '';
+      return _normalizarCodigo(codigo).contains(termoNormalizado);
+    }).toList();
+
+    encontrados.sort((a, b) => _parteNumerica(a['codigo']?.toString() ?? '')
+        .compareTo(_parteNumerica(b['codigo']?.toString() ?? '')));
+
+    return encontrados.take(10).toList();
+  }
+
+  /// Todos os filhos (de qualquer fazenda) de um animal, pela ficha da mãe.
+  Future<List<Map<String, dynamic>>> buscarFilhosPorIdMae(String idMae) async {
+    final db = await LocalDatabase.instance.database;
+    return db.query(
+      'animais_cache',
+      where: 'id_mae = ?',
+      whereArgs: [idMae],
+      orderBy: 'id_animal DESC',
+    );
   }
 
   Future<Map<String, dynamic>?> buscarPorId(String idAnimal) async {

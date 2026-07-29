@@ -18,7 +18,11 @@ class AnimalCacheService {
   /// andamento — usado pela tela para mostrar "Baixando dados...".
   final ValueNotifier<bool> baixando = ValueNotifier(false);
 
-  Future<void> garantirCacheDaFazenda(String fazendaId, String? bd) async {
+  Future<void> garantirCacheDaFazenda(
+    String fazendaId,
+    String? bd, {
+    String? nomeFazenda,
+  }) async {
     if (fazendaId.isEmpty || bd == null || bd.isEmpty) return;
     if (_emAndamento.contains(fazendaId)) return;
     if (!ConnectivityService.instance.temInternetReal) return;
@@ -37,7 +41,11 @@ class AnimalCacheService {
           final animais = (data['animais'] as List)
               .map((e) => e as Map<String, dynamic>)
               .toList();
-          await AnimalCacheDao.instance.salvarLote(fazendaId, animais);
+          await AnimalCacheDao.instance.salvarLote(
+            fazendaId,
+            animais,
+            fazendaNome: nomeFazenda,
+          );
         }
       }
     } catch (_) {
@@ -45,6 +53,25 @@ class AnimalCacheService {
     } finally {
       _emAndamento.remove(fazendaId);
       if (_emAndamento.isEmpty) baixando.value = false;
+    }
+  }
+
+  /// Garante o cache de TODAS as fazendas que o usuário tem acesso (o array
+  /// devolvido no login) — necessário pra "Consultar Mãe" funcionar offline,
+  /// já que essa busca não é restrita à fazenda selecionada na tela, é
+  /// global entre todos os locais do usuário.
+  Future<void> garantirCacheDeTodasFazendas(
+    List<dynamic> fazendas,
+    String? bd,
+  ) async {
+    for (final f in fazendas) {
+      final mapa = f as Map;
+      final id = mapa['id']?.toString() ?? '';
+      final nome = mapa['nome']?.toString();
+      // Fire-and-forget: cada chamada já se protege sozinha (conectividade,
+      // dedup por fazenda em andamento); não precisa esperar uma pra
+      // disparar a próxima.
+      garantirCacheDaFazenda(id, bd, nomeFazenda: nome);
     }
   }
 }

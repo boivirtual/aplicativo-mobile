@@ -11,7 +11,7 @@ class LocalDatabase {
   LocalDatabase._();
   static final LocalDatabase instance = LocalDatabase._();
 
-  static const int _versaoSchema = 1;
+  static const int _versaoSchema = 2;
 
   Database? _db;
 
@@ -107,6 +107,7 @@ class LocalDatabase {
       CREATE TABLE animais_cache (
         id_animal TEXT PRIMARY KEY,
         fazenda_id TEXT NOT NULL,
+        fazenda_nome TEXT,
         codigo TEXT,
         sexo TEXT,
         nascimento TEXT,
@@ -124,10 +125,21 @@ class LocalDatabase {
     await db.execute(
       'CREATE INDEX idx_animais_cache_fazenda ON animais_cache (fazenda_id)',
     );
+    await db.execute(
+      'CREATE INDEX idx_animais_cache_mae ON animais_cache (id_mae)',
+    );
   }
 
   Future<void> _atualizarSchema(Database db, int versaoAntiga, int versaoNova) async {
-    // Reservado para futuras migrações de schema local.
+    if (versaoAntiga < 2) {
+      // Nome da fazenda de cada animal cacheado — precisa pra "Consultar
+      // Mãe" (busca em todas as fazendas do usuário) exibir de qual
+      // fazenda é cada filho, sem depender de rede pra isso.
+      await db.execute('ALTER TABLE animais_cache ADD COLUMN fazenda_nome TEXT');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_animais_cache_mae ON animais_cache (id_mae)',
+      );
+    }
   }
 
   /// Só para os testes/roteiro de verificação manual — apaga todos os dados

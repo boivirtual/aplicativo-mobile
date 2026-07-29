@@ -40,20 +40,46 @@ class AnimalCacheDao {
     return ((r.first['qtd'] as int?) ?? 0) > 0;
   }
 
-  /// Autocomplete por código (alfa ou numérico), igual à busca LIKE que a
-  /// API fazia — sem distinguir maiúsculas/minúsculas.
+  /// Remove o traço e os zeros à esquerda do número (ex: "C-000000087" ->
+  /// "C87", "000001874" -> "1874") para comparar do mesmo jeito que o
+  /// usuário digita o código na busca — sem isso, "C87" nunca batia com o
+  /// valor salvo no cache ("C-000000087"), mesmo o animal existindo.
+  String _normalizarCodigo(String codigo) {
+    String semTraco;
+    if (codigo.contains('-')) {
+      final partes = codigo.split('-');
+      final numero = partes[1].replaceFirst(RegExp(r'^0+'), '');
+      semTraco = '${partes[0]}${numero.isEmpty ? "0" : numero}';
+    } else {
+      final numero = codigo.replaceFirst(RegExp(r'^0+'), '');
+      semTraco = numero.isEmpty ? "0" : numero;
+    }
+    return semTraco.toUpperCase();
+  }
+
+  /// Autocomplete por código (alfa ou numérico) — busca em memória sobre o
+  /// cache da fazenda, comparando os códigos já sem traço/zeros à esquerda
+  /// para tolerar o jeito como o usuário realmente digita (ver
+  /// _normalizarCodigo).
   Future<List<Map<String, dynamic>>> buscarPorCodigo(
     String fazendaId,
     String termo,
   ) async {
     final db = await LocalDatabase.instance.database;
-    return db.query(
+    final todos = await db.query(
       'animais_cache',
-      where: 'fazenda_id = ? AND codigo LIKE ?',
-      whereArgs: [fazendaId, '%$termo%'],
+      where: 'fazenda_id = ?',
+      whereArgs: [fazendaId],
       orderBy: 'codigo ASC',
-      limit: 10,
     );
+
+    final termoNormalizado = _normalizarCodigo(termo.trim());
+    final encontrados = todos.where((linha) {
+      final codigo = linha['codigo']?.toString() ?? '';
+      return _normalizarCodigo(codigo).contains(termoNormalizado);
+    }).take(10).toList();
+
+    return encontrados;
   }
 
   Future<Map<String, dynamic>?> buscarPorId(String idAnimal) async {

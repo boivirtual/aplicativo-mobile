@@ -50,7 +50,7 @@ class PesagemRepository {
       'tbl_pesagem_filtros': row['filtro_desc'],
       'tbl_pesagem_finalizada': row['finalizada'],
       'tbl_pesagem_criterios_apartacao': criterios.join(', '),
-      'tbl_pesagem_data': row['criado_em'],
+      'tbl_pesagem_data': (row['criado_em'] as String).split('T').first,
       'fazenda_nome': null,
     };
   }

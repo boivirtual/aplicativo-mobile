@@ -48,6 +48,12 @@ class _PesagemScreenState extends State<PesagemScreen> {
   int _pendentesSync = 0;
   bool _sincronizandoManualmente = false;
 
+  bool carregandoPendentes = false;
+  bool _baixandoAnimais = false;
+  void _ouvirBaixandoAnimais() {
+    if (mounted) setState(() => _baixandoAnimais = AnimalCacheService.instance.baixando.value);
+  }
+
   final Map<String, String> motivos = {
     '011': 'Controle Ganho de Peso',
     '002': 'Desmama',
@@ -67,6 +73,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
       if (mounted) setState(() => _pendentesSync = qtd);
     });
     SyncService.instance.atualizarContagemPendentes();
+    AnimalCacheService.instance.baixando.addListener(_ouvirBaixandoAnimais);
   }
 
   Future<void> _sincronizarAgora() async {
@@ -114,6 +121,40 @@ class _PesagemScreenState extends State<PesagemScreen> {
         setState(() => _mostrarBanner = false);
         break;
     }
+  }
+
+  Widget _buildIndicadorCarregando() {
+    final mensagem = carregandoPendentes && _baixandoAnimais
+        ? "Baixando pesagens e cadastro de animais..."
+        : carregandoPendentes
+            ? "Baixando pesagens pendentes..."
+            : "Baixando cadastro de animais da fazenda...";
+    return Container(
+      width: double.infinity,
+      color: Colors.blueGrey[400],
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        children: [
+          const SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              mensagem,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildIndicadorSync() {
@@ -175,6 +216,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
     _criterioController.dispose();
     _subscription.cancel();
     _subPendentesSync?.cancel();
+    AnimalCacheService.instance.baixando.removeListener(_ouvirBaixandoAnimais);
     super.dispose();
   }
 
@@ -222,6 +264,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
           cnpj,
         );
       }
+      setState(() => carregandoPendentes = true);
       try {
         final List<int> idsFazendas = lista
             .map((f) => int.parse(f['id'].toString()))
@@ -235,6 +278,8 @@ class _PesagemScreenState extends State<PesagemScreen> {
         });
       } catch (e) {
         debugPrint("Erro pendências: $e");
+      } finally {
+        setState(() => carregandoPendentes = false);
       }
     }
   }
@@ -318,6 +363,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
                 ],
               ),
             ),
+          if (carregandoPendentes || _baixandoAnimais) _buildIndicadorCarregando(),
           if (_pendentesSync > 0) _buildIndicadorSync(),
           Expanded(
             child: SingleChildScrollView(
@@ -476,7 +522,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
                             ),
                           )
                         : const Text(
-                            "Iniciar On-Line",
+                            "Iniciar Pesagem",
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 15,

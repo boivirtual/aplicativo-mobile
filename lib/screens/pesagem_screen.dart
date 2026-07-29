@@ -103,7 +103,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Colors.blue.shade50,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(

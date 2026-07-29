@@ -299,7 +299,18 @@ class PesagemRepository {
   }) async {
     var local = await PesagemLocalDao.instance.resolverPorIdDeTela(idPesagem);
 
-    if (local == null && idPesagem > 0 && _online) {
+    // Mesmo quando a pesagem já é conhecida localmente (ex: cabeçalho
+    // importado pela lista de pendentes), se ainda não tem nenhum item
+    // salvo aqui é preciso buscar no servidor — senão a tela fica achando
+    // que a pesagem está vazia pra sempre. importarDoServidor dos itens é
+    // idempotente, então isso nunca duplica nem sobrescreve item já
+    // existente (inclusive pendente de sincronizar).
+    final semItensLocais = local != null &&
+        (await ItemPesagemLocalDao.instance
+                .listarPorPesagemLocal(local['id_local'] as int))
+            .isEmpty;
+
+    if ((local == null || semItensLocais) && idPesagem > 0 && _online) {
       try {
         final response = await http.post(
           Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/get_pesagem_completa.php"),

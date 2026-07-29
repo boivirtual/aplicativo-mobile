@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../repositories/animal_repository.dart';
+import '../services/connectivity_service.dart';
 
 class PesagemConsultaMaeModal extends StatefulWidget {
   final String cnpj;
@@ -28,6 +29,7 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
   List<dynamic> sugestoesAnimais = [];
   bool mostrandoSugestoes = false;
   bool carregando = false;
+  bool _semInternet = false;
   Map<String, dynamic>? infoMae;
   String? cnpjSeguro;
   Timer? _debounce;
@@ -69,9 +71,27 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
       setState(() {
         sugestoesAnimais = [];
         mostrandoSugestoes = false;
+        _semInternet = false;
       });
       return;
     }
+
+    // Consulta por mãe busca em todas as fazendas do usuário, não só na
+    // atual — cachear o cadastro completo de todas as fazendas ficou fora
+    // do escopo do trabalho offline (só a fazenda em uso foi cacheada).
+    // Sem isso, o app falhava calado (lista vazia, sem explicação);
+    // agora pelo menos avisa o motivo em vez de parecer "não encontrado".
+    if (!ConnectivityService.instance.temInternetReal) {
+      setState(() {
+        sugestoesAnimais = [];
+        mostrandoSugestoes = false;
+        _semInternet = true;
+      });
+      return;
+    }
+
+    setState(() => _semInternet = false);
+
     try {
       final response = await AnimalRepository.instance.buscarMaePorCodigo(
         termo: termo,
@@ -186,6 +206,24 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
                     border: Border.all(color: Colors.grey.shade300),
                   ),
                   child: _buildListaSugestoes(),
+                ),
+              if (_semInternet)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.cloud_off, color: Colors.grey.shade600, size: 18),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          "Sem internet — a consulta por mãe precisa de conexão.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               const SizedBox(height: 15),
               if (carregando) const CircularProgressIndicator(),

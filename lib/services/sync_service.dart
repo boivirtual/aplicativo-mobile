@@ -106,6 +106,15 @@ class SyncService {
       int processadas = 0;
       int comErro = 0;
 
+      // Pesagens (id do servidor -> bd) tocadas por SALVAR_ITEM/EXCLUIR_ITEM
+      // nesta rodada — o servidor recalcula sozinho o "repetido" de todos os
+      // itens do animal a cada criação/exclusão (mesmo em pesagens que não
+      // estão neste aparelho: outro dispositivo, ou o sistema web). Depois
+      // do loop, busca esse resultado de volta pra essas pesagens conhecidas
+      // aqui, só como informação extra pro usuário — quem realmente barra a
+      // finalização com pesos conflitantes é o sistema web.
+      final Map<int, String?> pesagensParaReconciliar = {};
+
       for (final operacao in pendentes) {
         if (!OutboxDao.instance.podeTentarAgora(operacao)) continue;
 
@@ -119,12 +128,19 @@ class SyncService {
           if (aindaPendente != null) continue;
         }
 
-        final sucesso = await _processarOperacao(operacao);
+        final sucesso = await _processarOperacao(
+          operacao,
+          pesagensParaReconciliar,
+        );
         if (sucesso) {
           processadas++;
         } else {
           comErro++;
         }
+      }
+
+      for (final entrada in pesagensParaReconciliar.entries) {
+        await _reconciliarMensRepetido(entrada.key, entrada.value);
       }
 
       await atualizarContagemPendentes();
@@ -135,7 +151,10 @@ class SyncService {
     }
   }
 
-  Future<bool> _processarOperacao(Map<String, dynamic> operacao) async {
+  Future<bool> _processarOperacao(
+    Map<String, dynamic> operacao,
+    Map<int, String?> pesagensParaReconciliar,
+  ) async {
     final id = operacao['id'] as int;
     final tipo = operacao['tipo_operacao'] as String;
     final payload =
@@ -146,11 +165,28 @@ class SyncService {
         case TipoOperacaoOutbox.criarPesagem:
           return await _processarCriarPesagem(id, payload);
         case TipoOperacaoOutbox.salvarItem:
-          return await _processarSalvarItem(id, payload);
+          return await _processarSalvarItem(
+            id,
+            payload,
+            pesagensParaReconciliar,
+          );
         case TipoOperacaoOutbox.editarItem:
           return await _processarChamadaSimples(id, payload, 'update_item.php');
         case TipoOperacaoOutbox.excluirItem:
-          return await _processarChamadaSimples(id, payload, 'delete_item.php');
+          final sucesso = await _processarChamadaSimples(
+            id,
+            payload,
+            'delete_item.php',
+          );
+          if (sucesso) {
+            final idServidor = int.tryParse(
+              payload['pesagem_id']?.toString() ?? '',
+            );
+            if (idServidor != null) {
+              pesagensParaReconciliar[idServidor] = payload['bd']?.toString();
+            }
+          }
+          return sucesso;
         case TipoOperacaoOutbox.editarPesagem:
           return await _processarChamadaSimples(id, payload, 'update_pesagem.php');
         default:
@@ -200,7 +236,11 @@ class SyncService {
     return true;
   }
 
-  Future<bool> _processarSalvarItem(int id, Map<String, dynamic> payload) async {
+  Future<bool> _processarSalvarItem(
+    int id,
+    Map<String, dynamic> payload,
+    Map<int, String?> pesagensParaReconciliar,
+  ) async {
     final pesagemUuid = payload['uuid_app'] as String?;
     final localPesagem = pesagemUuid != null
         ? await PesagemLocalDao.instance.buscarPorUuid(pesagemUuid)
@@ -250,8 +290,56 @@ class SyncService {
       }
     }
 
+    pesagensParaReconciliar[idServidorPesagem] = payload['bd']?.toString();
+
     await OutboxDao.instance.marcarConcluido(id);
     return true;
+  }
+
+  /// Busca de volta o que o servidor já recalculou sozinho (mens_repetido/
+  /// id_pesagem_repetido) depois de um SALVAR_ITEM/EXCLUIR_ITEM, e atualiza
+  /// os itens locais dessa pesagem — melhor esforço, não trava nem falha a
+  /// sincronização se der errado (o alerta principal, que barra a
+  /// finalização de verdade, é do sistema web).
+  Future<void> _reconciliarMensRepetido(
+    int idServidorPesagem,
+    String? bd,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/get_pesagem_completa.php"),
+        body: json.encode({"bd": bd, "id_pesagem": idServidorPesagem}),
+      );
+      if (response.statusCode != 200) return;
+
+      final data = json.decode(response.body);
+      if (data['success'] != true) return;
+
+      final local = await PesagemLocalDao.instance.buscarPorIdServidor(
+        idServidorPesagem,
+      );
+      if (local == null) return;
+      final idLocal = local['id_local'] as int;
+
+      final itens = (data['itens'] as List<dynamic>?) ?? [];
+      for (final item in itens) {
+        final numeroServidor = int.tryParse(
+          item['tbl_ite_pesagem_numero_item']?.toString() ?? '',
+        );
+        if (numeroServidor == null) continue;
+
+        await ItemPesagemLocalDao.instance.atualizarMensRepetido(
+          idLocal,
+          numeroServidor,
+          mensRepetido:
+              item['tbl_ite_pesagem_mens_repetido']?.toString() ?? '',
+          idPesagemRepetido:
+              item['tbl_ite_pesagem_id_repetido']?.toString() ?? '',
+        );
+      }
+    } catch (_) {
+      // best-effort — não deve travar a sincronização se isso falhar
+    }
   }
 
   Future<bool> _processarChamadaSimples(

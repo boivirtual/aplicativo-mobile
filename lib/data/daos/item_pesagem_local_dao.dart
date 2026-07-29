@@ -155,6 +155,31 @@ class ItemPesagemLocalDao {
     return linhas.isEmpty ? null : linhas.first;
   }
 
+  /// Atualiza a mensagem de "repetido" de um item já sincronizado, a
+  /// partir do que o servidor recalculou (o servidor sabe de itens do
+  /// mesmo animal em pesagens que nem estão neste aparelho — ex: outro
+  /// dispositivo, ou o sistema web). Usado pela reconciliação pós-sync do
+  /// SyncService; nunca mexe em item ainda pendente (numero_item_servidor
+  /// nulo), porque esse ainda nem existe no servidor pra ter sido
+  /// recalculado.
+  Future<void> atualizarMensRepetido(
+    int pesagemIdLocal,
+    int numeroItemServidor, {
+    required String mensRepetido,
+    required String idPesagemRepetido,
+  }) async {
+    final db = await LocalDatabase.instance.database;
+    await db.update(
+      'itens_pesagem_locais',
+      {
+        'mens_repetido': mensRepetido,
+        'id_pesagem_repetido': idPesagemRepetido,
+      },
+      where: 'pesagem_id_local = ? AND numero_item_servidor = ?',
+      whereArgs: [pesagemIdLocal, numeroItemServidor],
+    );
+  }
+
   Future<void> confirmarSincronizacao(int idLocal, int numeroItemServidor) async {
     final db = await LocalDatabase.instance.database;
     await db.update(

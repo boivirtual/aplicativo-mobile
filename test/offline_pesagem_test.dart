@@ -107,6 +107,55 @@ void main() {
       expect(resolvido!['codigo_animal'], 'B-1');
     });
 
+    test(
+      'ItemPesagemLocalDao: atualizarMensRepetido só mexe no item já confirmado pelo servidor',
+      () async {
+        final idLocalPesagem = await PesagemLocalDao.instance.inserir(
+          uuid: 'uuid-mens-repetido',
+          bd: '97174041604',
+          fazendaId: '57',
+          epocaId: '011',
+          lote: 'Lote Repetido',
+          qtdAPesar: 1,
+          criteriosLista: [],
+        );
+
+        final idLocalItem = await ItemPesagemLocalDao.instance.inserir(
+          pesagemIdLocal: idLocalPesagem,
+          uuid: 'item-uuid-repetido',
+          numeroItemLocal: 1,
+          campos: {'id_animal': '900001', 'codigo_animal': 'C-87', 'peso': '300'},
+        );
+        await ItemPesagemLocalDao.instance.confirmarSincronizacao(
+          idLocalItem,
+          42,
+        );
+
+        await ItemPesagemLocalDao.instance.atualizarMensRepetido(
+          idLocalPesagem,
+          42,
+          mensRepetido: 'Repetido em: Lote B',
+          idPesagemRepetido: '914',
+        );
+
+        final atualizado = await ItemPesagemLocalDao.instance
+            .buscarPorPesagemENumero(idLocalPesagem, 42);
+        expect(atualizado!['mens_repetido'], 'Repetido em: Lote B');
+        expect(atualizado['id_pesagem_repetido'], '914');
+
+        // numero_item_servidor que não existe -> não atualiza nada, não lança erro.
+        await ItemPesagemLocalDao.instance.atualizarMensRepetido(
+          idLocalPesagem,
+          999,
+          mensRepetido: 'não deveria aplicar',
+          idPesagemRepetido: '0',
+        );
+        final inalterado = await ItemPesagemLocalDao.instance
+            .buscarPorPesagemENumero(idLocalPesagem, 42);
+        expect(inalterado!['mens_repetido'], 'Repetido em: Lote B');
+      },
+    );
+
     test('OutboxDao: enfileirar, listar, marcar erro com backoff, marcar concluido', () async {
       final id = await OutboxDao.instance.enfileirar(
         tipoOperacao: TipoOperacaoOutbox.criarPesagem,

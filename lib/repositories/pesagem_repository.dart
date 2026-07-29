@@ -679,6 +679,89 @@ class PesagemRepository {
       excluirPesagemIdLocal: local?['id_local'] as int?,
     );
   }
+
+  // ---------------------------------------------------------------------
+  // Pendências de revisão (operações que o servidor recusou)
+  // ---------------------------------------------------------------------
+
+  /// Traduz as operações em "conflito" (recusadas explicitamente pelo
+  /// servidor) para algo legível na tela — em vez de tipo_operacao/uuid
+  /// crus, mostra qual lote e (quando aplicável) qual animal.
+  Future<List<Map<String, dynamic>>> listarPendenciasRevisao() async {
+    final conflitos = await OutboxDao.instance.listarConflitos();
+    final resultado = <Map<String, dynamic>>[];
+    for (final c in conflitos) {
+      final payload =
+          json.decode(c['payload_json'] as String) as Map<String, dynamic>;
+      resultado.add(await _descreverPendencia(c, payload));
+    }
+    return resultado;
+  }
+
+  Future<Map<String, dynamic>> _descreverPendencia(
+    Map<String, dynamic> outbox,
+    Map<String, dynamic> payload,
+  ) async {
+    final tipo = outbox['tipo_operacao'] as String;
+    Map<String, dynamic>? local;
+    String? animalCodigo;
+
+    switch (tipo) {
+      case TipoOperacaoOutbox.criarPesagem:
+      case TipoOperacaoOutbox.editarPesagem:
+        local = await PesagemLocalDao.instance.buscarPorUuid(
+          outbox['entidade_uuid'] as String,
+        );
+        break;
+      case TipoOperacaoOutbox.salvarItem:
+        final uuidPesagem = payload['uuid_app'] as String?;
+        if (uuidPesagem != null) {
+          local = await PesagemLocalDao.instance.buscarPorUuid(uuidPesagem);
+        }
+        animalCodigo = (payload['item'] as Map?)?['codigo_animal']
+            ?.toString();
+        break;
+      case TipoOperacaoOutbox.editarItem:
+      case TipoOperacaoOutbox.excluirItem:
+        final idServidor = int.tryParse(
+          payload['pesagem_id']?.toString() ?? '',
+        );
+        if (idServidor != null) {
+          local = await PesagemLocalDao.instance.buscarPorIdServidor(
+            idServidor,
+          );
+        }
+        break;
+    }
+
+    const rotulos = {
+      TipoOperacaoOutbox.criarPesagem: 'Criar pesagem',
+      TipoOperacaoOutbox.salvarItem: 'Salvar peso',
+      TipoOperacaoOutbox.editarItem: 'Editar peso',
+      TipoOperacaoOutbox.excluirItem: 'Excluir peso',
+      TipoOperacaoOutbox.editarPesagem: 'Editar pesagem',
+    };
+
+    return {
+      'id': outbox['id'],
+      'tipo': tipo,
+      'rotuloTipo': rotulos[tipo] ?? tipo,
+      'lote': local?['lote']?.toString() ?? payload['lote']?.toString(),
+      'animalCodigo': animalCodigo,
+      'mensagemErro':
+          outbox['ultimo_erro']?.toString() ?? 'Motivo não informado.',
+      'criadoEm': outbox['criado_em'],
+    };
+  }
+
+  /// Bota a pendência de volta na fila normal de sincronização.
+  Future<void> reenviarPendencia(int outboxId) =>
+      OutboxDao.instance.reenfileirar(outboxId);
+
+  /// Desiste de enviar essa operação — os dados continuam só neste
+  /// aparelho, nunca vão pro servidor. Não apaga nada localmente.
+  Future<void> descartarPendencia(int outboxId) =>
+      OutboxDao.instance.cancelar(outboxId);
 }
 
 /// Decodifica um JSON de lista com segurança, devolvendo lista vazia se nulo/vazio/malformado.

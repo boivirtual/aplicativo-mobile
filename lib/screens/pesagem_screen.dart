@@ -8,6 +8,7 @@ import '../repositories/pesagem_repository.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 import 'pesagem_itens_screen.dart';
 import 'pesagem_consulta_screen.dart';
+import 'pesagem_pendencias_revisao_screen.dart';
 import 'package:boivirtual/utils/app_alert.dart';
 
 class PesagemScreen extends StatefulWidget {
@@ -43,6 +44,9 @@ class _PesagemScreenState extends State<PesagemScreen> {
   int _pendentesSync = 0;
   bool _sincronizandoManualmente = false;
 
+  StreamSubscription<int>? _subConflitos;
+  int _pendenciasConflito = 0;
+
   bool carregandoPendentes = false;
   bool _baixandoAnimais = false;
   void _ouvirBaixandoAnimais() {
@@ -65,6 +69,9 @@ class _PesagemScreenState extends State<PesagemScreen> {
     _carregarDadosIniciais();
     _subPendentesSync = SyncService.instance.pendentes.listen((qtd) {
       if (mounted) setState(() => _pendentesSync = qtd);
+    });
+    _subConflitos = SyncService.instance.conflitos.listen((qtd) {
+      if (mounted) setState(() => _pendenciasConflito = qtd);
     });
     SyncService.instance.atualizarContagemPendentes();
     AnimalCacheService.instance.baixando.addListener(_ouvirBaixandoAnimais);
@@ -192,12 +199,67 @@ class _PesagemScreenState extends State<PesagemScreen> {
     );
   }
 
+  Future<void> _abrirPendenciasRevisao() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PesagemPendenciasRevisaoScreen(
+          onBack: () => Navigator.pop(context),
+        ),
+      ),
+    );
+    SyncService.instance.atualizarContagemPendentes();
+  }
+
+  Widget _buildIndicadorPendenciasRevisao() {
+    return Material(
+      color: Colors.red[700],
+      child: InkWell(
+        onTap: _abrirPendenciasRevisao,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _pendenciasConflito == 1
+                      ? "1 pendência de revisão"
+                      : "$_pendenciasConflito pendências de revisão",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const Text(
+                "Ver",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: Colors.white, size: 18),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _descricaoController.dispose();
     _qtdAPesarController.dispose();
     _criterioController.dispose();
     _subPendentesSync?.cancel();
+    _subConflitos?.cancel();
     AnimalCacheService.instance.baixando.removeListener(_ouvirBaixandoAnimais);
     super.dispose();
   }
@@ -325,6 +387,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
         children: [
           Column(
             children: [
+              if (_pendenciasConflito > 0) _buildIndicadorPendenciasRevisao(),
               if (_pendentesSync > 0) _buildIndicadorSync(),
               Expanded(
                 child: SingleChildScrollView(

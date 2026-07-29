@@ -67,6 +67,35 @@ class OutboxDao {
     return (r.first['qtd'] as int?) ?? 0;
   }
 
+  /// Operações que o servidor recusou explicitamente e que não tentam de
+  /// novo sozinhas — base da tela "Pendências de revisão".
+  Future<List<Map<String, dynamic>>> listarConflitos() async {
+    final db = await LocalDatabase.instance.database;
+    return db.query(
+      'outbox_sincronizacao',
+      where: 'status = ?',
+      whereArgs: [StatusOutbox.conflito],
+      orderBy: 'id DESC',
+    );
+  }
+
+  /// Bota a operação de volta na fila normal — próxima sincronização tenta
+  /// de novo. Zera tentativas/espera pra não herdar backoff de uma corrida
+  /// anterior sem relação com o motivo do conflito.
+  Future<void> reenfileirar(int id) async {
+    final db = await LocalDatabase.instance.database;
+    await db.update(
+      'outbox_sincronizacao',
+      {
+        'status': StatusOutbox.pendente,
+        'tentativas': 0,
+        'proxima_tentativa_em': null,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   /// Busca a operação pendente mais recente para uma entidade+tipo (usado
   /// para reescrever o payload em vez de duplicar operação, ex: editar um
   /// item que ainda não foi sincronizado).

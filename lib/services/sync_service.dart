@@ -33,10 +33,17 @@ class SyncService {
 
   final StreamController<int> _pendentesController =
       StreamController<int>.broadcast();
+  final StreamController<int> _conflitosController =
+      StreamController<int>.broadcast();
 
   /// Stream com a contagem de operações pendentes/em erro na fila — usado
   /// pelo indicador visual "N pendentes de sincronização".
   Stream<int> get pendentes => _pendentesController.stream;
+
+  /// Stream com a contagem de operações que o servidor recusou e não
+  /// tentam de novo sozinhas — usado pelo indicador "Pendências de
+  /// revisão".
+  Stream<int> get conflitos => _conflitosController.stream;
 
   /// true só enquanto existe pelo menos uma operação sendo processada de
   /// verdade — usado pelo overlay "Sincronizando dados...". Deliberadamente
@@ -71,6 +78,10 @@ class SyncService {
     final qtd = await OutboxDao.instance.contarPendentes();
     if (!_pendentesController.isClosed) {
       _pendentesController.add(qtd);
+    }
+    final qtdConflitos = await OutboxDao.instance.contarConflitos();
+    if (!_conflitosController.isClosed) {
+      _conflitosController.add(qtdConflitos);
     }
   }
 

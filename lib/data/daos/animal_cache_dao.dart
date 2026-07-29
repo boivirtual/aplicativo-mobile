@@ -57,10 +57,23 @@ class AnimalCacheDao {
     return semTraco.toUpperCase();
   }
 
+  /// Parte numérica do código (ex: "C-000000087" -> "000000087",
+  /// "000001874" -> "000001874") — sempre com a mesma quantidade de dígitos
+  /// nesta base, então comparar como texto já dá a ordem numérica certa.
+  /// Regra do sistema (igual à busca online, que usa
+  /// "ORDER BY tbl_animal_codigo_numerico ASC"): animais com o mesmo número
+  /// mas prefixos de letra diferentes (ex: B-87 e C-87) têm que aparecer
+  /// juntos, antes de números maiores que só coincidem ter "87" no meio
+  /// (ex: 1874, 6587) — NÃO pode ordenar pelo código completo (isso jogaria
+  /// os números "puros" para o começo da lista, na frente de B-87/C-87).
+  String _parteNumerica(String codigo) {
+    return codigo.contains('-') ? codigo.split('-').last : codigo;
+  }
+
   /// Autocomplete por código (alfa ou numérico) — busca em memória sobre o
   /// cache da fazenda, comparando os códigos já sem traço/zeros à esquerda
   /// para tolerar o jeito como o usuário realmente digita (ver
-  /// _normalizarCodigo).
+  /// _normalizarCodigo), e ordenando pelo número (ver _parteNumerica).
   Future<List<Map<String, dynamic>>> buscarPorCodigo(
     String fazendaId,
     String termo,
@@ -70,16 +83,18 @@ class AnimalCacheDao {
       'animais_cache',
       where: 'fazenda_id = ?',
       whereArgs: [fazendaId],
-      orderBy: 'codigo ASC',
     );
 
     final termoNormalizado = _normalizarCodigo(termo.trim());
     final encontrados = todos.where((linha) {
       final codigo = linha['codigo']?.toString() ?? '';
       return _normalizarCodigo(codigo).contains(termoNormalizado);
-    }).take(10).toList();
+    }).toList();
 
-    return encontrados;
+    encontrados.sort((a, b) => _parteNumerica(a['codigo']?.toString() ?? '')
+        .compareTo(_parteNumerica(b['codigo']?.toString() ?? '')));
+
+    return encontrados.take(10).toList();
   }
 
   Future<Map<String, dynamic>?> buscarPorId(String idAnimal) async {

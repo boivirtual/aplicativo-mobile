@@ -383,6 +383,12 @@ class PesagemRepository {
   Future<Map<String, dynamic>> buscarPesagemCompleta({
     required String? bd,
     required int idPesagem,
+    // true só na abertura inicial da tela — confirma com o servidor se
+    // algum item já sincronizado foi excluído por fora do app (sistema web
+    // ou outro dispositivo) desde a última vez. Fica false nas atualizações
+    // rápidas entre um peso e outro (ex: depois de salvar um item), pra não
+    // acrescentar uma chamada de rede extra a cada animal digitado.
+    bool reconciliar = false,
   }) async {
     var local = await PesagemLocalDao.instance.resolverPorIdDeTela(idPesagem);
 
@@ -397,7 +403,9 @@ class PesagemRepository {
                 .listarPorPesagemLocal(local['id_local'] as int))
             .isEmpty;
 
-    if ((local == null || semItensLocais) && idPesagem > 0 && _online) {
+    if ((local == null || semItensLocais || reconciliar) &&
+        idPesagem > 0 &&
+        _online) {
       try {
         final response = await http
             .post(
@@ -419,9 +427,28 @@ class PesagemRepository {
               data['pesagem'] as Map<String, dynamic>,
               bd: bd ?? '',
             );
+
+            final itensServidor = (data['itens'] as List<dynamic>?) ?? [];
+            final numerosServidorAtuais = itensServidor
+                .map(
+                  (i) => int.tryParse(
+                    (i as Map)['tbl_ite_pesagem_numero_item'].toString(),
+                  ),
+                )
+                .whereType<int>()
+                .toSet();
+            // Remove local o que o servidor não tem mais (ex: excluído
+            // pelo sistema web) — só mexe em item já confirmado
+            // (numero_item_servidor preenchido); nunca em item ainda
+            // pendente de sincronizar, senão perderia peso digitado
+            // offline antes mesmo dele ter chance de subir.
+            await ItemPesagemLocalDao.instance.excluirNaoPresentesNoServidor(
+              idLocalImportado,
+              numerosServidorAtuais,
+            );
             await ItemPesagemLocalDao.instance.importarDoServidor(
               idLocalImportado,
-              (data['itens'] as List<dynamic>?) ?? [],
+              itensServidor,
             );
             local = await PesagemLocalDao.instance.buscarPorIdLocal(
               idLocalImportado,

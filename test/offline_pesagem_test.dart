@@ -156,6 +156,73 @@ void main() {
       },
     );
 
+    test(
+      'ItemPesagemLocalDao: excluirNaoPresentesNoServidor remove só item já '
+      'confirmado que sumiu do servidor, nunca item ainda pendente',
+      () async {
+        final idLocalPesagem = await PesagemLocalDao.instance.inserir(
+          uuid: 'uuid-reconciliacao-item',
+          bd: '71746307668',
+          fazendaId: '56',
+          epocaId: '003',
+          lote: 'Transferencia',
+          qtdAPesar: 3,
+          criteriosLista: [],
+        );
+
+        // Item 1: já confirmado pelo servidor (numero 10) — vai sumir do
+        // servidor (ex: excluído pelo sistema web).
+        final idItem1 = await ItemPesagemLocalDao.instance.inserir(
+          pesagemIdLocal: idLocalPesagem,
+          uuid: 'item-excluido-no-servidor',
+          numeroItemLocal: 1,
+          campos: {'id_animal': '1', 'codigo_animal': 'B-1', 'peso': '150'},
+        );
+        await ItemPesagemLocalDao.instance.confirmarSincronizacao(idItem1, 10);
+
+        // Item 2: já confirmado pelo servidor (numero 11) — continua
+        // existindo lá.
+        final idItem2 = await ItemPesagemLocalDao.instance.inserir(
+          pesagemIdLocal: idLocalPesagem,
+          uuid: 'item-ainda-no-servidor',
+          numeroItemLocal: 2,
+          campos: {'id_animal': '2', 'codigo_animal': 'B-2', 'peso': '200'},
+        );
+        await ItemPesagemLocalDao.instance.confirmarSincronizacao(idItem2, 11);
+
+        // Item 3: ainda pendente de sincronizar (peso digitado offline,
+        // nunca chegou a existir no servidor) — não pode ser tocado.
+        await ItemPesagemLocalDao.instance.inserir(
+          pesagemIdLocal: idLocalPesagem,
+          uuid: 'item-pendente-offline',
+          numeroItemLocal: 3,
+          campos: {'id_animal': '3', 'codigo_animal': 'B-3', 'peso': '250'},
+        );
+
+        // Servidor agora só tem o número 11 (o 10 foi excluído por fora).
+        await ItemPesagemLocalDao.instance.excluirNaoPresentesNoServidor(
+          idLocalPesagem,
+          {11},
+        );
+
+        final restantes = await ItemPesagemLocalDao.instance
+            .listarPorPesagemLocal(idLocalPesagem);
+        expect(restantes.length, 2);
+        expect(
+          restantes.any((i) => i['numero_item_servidor'] == 10),
+          isFalse,
+        );
+        expect(
+          restantes.any((i) => i['numero_item_servidor'] == 11),
+          isTrue,
+        );
+        expect(
+          restantes.any((i) => i['uuid'] == 'item-pendente-offline'),
+          isTrue,
+        );
+      },
+    );
+
     test('OutboxDao: enfileirar, listar, marcar erro com backoff, marcar concluido', () async {
       final id = await OutboxDao.instance.enfileirar(
         tipoOperacao: TipoOperacaoOutbox.criarPesagem,

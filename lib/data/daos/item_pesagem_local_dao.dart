@@ -233,6 +233,35 @@ class ItemPesagemLocalDao {
     );
   }
 
+  /// Remove itens locais que sumiram do servidor (ex: excluídos pelo
+  /// sistema web ou por outro dispositivo) — só mexe em item já
+  /// confirmado (numero_item_servidor preenchido). Nunca toca em item
+  /// ainda pendente de sincronizar (numero_item_servidor nulo): esse ainda
+  /// não existe no servidor pra ter sido excluído de lá, é só um peso
+  /// digitado offline esperando subir.
+  Future<void> excluirNaoPresentesNoServidor(
+    int pesagemIdLocal,
+    Set<int> numerosServidorAtuais,
+  ) async {
+    final db = await LocalDatabase.instance.database;
+    final confirmados = await db.query(
+      'itens_pesagem_locais',
+      columns: ['id_local', 'numero_item_servidor'],
+      where: 'pesagem_id_local = ? AND numero_item_servidor IS NOT NULL',
+      whereArgs: [pesagemIdLocal],
+    );
+    for (final linha in confirmados) {
+      final numero = linha['numero_item_servidor'] as int;
+      if (!numerosServidorAtuais.contains(numero)) {
+        await db.delete(
+          'itens_pesagem_locais',
+          where: 'id_local = ?',
+          whereArgs: [linha['id_local']],
+        );
+      }
+    }
+  }
+
   /// Remove todos os itens de uma pesagem local — usado quando a pesagem
   /// inteira é removida do cache (ex: confirmado que não existe mais no
   /// servidor).

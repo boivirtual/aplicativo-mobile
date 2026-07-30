@@ -851,15 +851,25 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     // id > 0: pesagem já sincronizada; id < 0: ainda só existe localmente
     // (offline). Nos dois casos há itens locais a carregar; só id == 0
     // (nunca deveria acontecer neste ponto) não dispara a busca.
-    if (_idPesagemServer != 0) _carregarItensDoServidor();
+    //
+    // reconciliar: true só aqui (abertura da tela) — confirma com o
+    // servidor se algum item já sincronizado foi excluído por fora do app
+    // (sistema web ou outro dispositivo) desde a última vez que este
+    // aparelho olhou essa pesagem. Não passamos isso na atualização rápida
+    // pós-salvar (linha ~1480) pra não acrescentar uma chamada de rede
+    // extra a cada peso digitado.
+    if (_idPesagemServer != 0) {
+      _carregarItensDoServidor(reconciliar: true);
+    }
   }
 
-  Future<void> _carregarItensDoServidor() async {
+  Future<void> _carregarItensDoServidor({bool reconciliar = false}) async {
     setState(() => carregandoItensIniciais = true);
     try {
       final data = await PesagemRepository.instance.buscarPesagemCompleta(
         bd: cnpjParaBanco,
         idPesagem: _idPesagemServer,
+        reconciliar: reconciliar,
       );
       if (data['success'] == true) {
         final List itensBanco = data['itens'];

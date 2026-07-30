@@ -429,30 +429,16 @@ class PesagemRepository {
             );
 
             final itensServidor = (data['itens'] as List<dynamic>?) ?? [];
-            // Chave por ID DO ANIMAL, não por numero_item — o sistema web
-            // renumera 1..N a cada gravação (ver
-            // ItemPesagemLocalDao.reconciliarComServidor), então o número
-            // sozinho não identifica o mesmo item de forma confiável.
-            final numeroAtualPorIdAnimal = <String, int>{};
-            for (final item in itensServidor) {
-              final idAnimal = (item as Map)['tbl_ite_pesagem_codigo_id_animal']
-                  ?.toString();
-              final numero = int.tryParse(
-                item['tbl_ite_pesagem_numero_item']?.toString() ?? '',
-              );
-              if (idAnimal != null && numero != null) {
-                numeroAtualPorIdAnimal[idAnimal] = numero;
-              }
-            }
             // Remove local o que o servidor não tem mais (ex: excluído
             // pelo sistema web) e corrige o número dos que só foram
-            // renumerados — só mexe em item já confirmado
-            // (numero_item_servidor preenchido); nunca em item ainda
-            // pendente de sincronizar, senão perderia peso digitado
-            // offline antes mesmo dele ter chance de subir.
+            // renumerados — identifica pelo par animal+peso, não pelo
+            // numero_item (ver ItemPesagemLocalDao.reconciliarComServidor
+            // pro raciocínio completo). Só mexe em item já confirmado;
+            // nunca em item ainda pendente de sincronizar, senão perderia
+            // peso digitado offline antes mesmo dele ter chance de subir.
             await ItemPesagemLocalDao.instance.reconciliarComServidor(
               idLocalImportado,
-              numeroAtualPorIdAnimal,
+              itensServidor,
             );
             await ItemPesagemLocalDao.instance.importarDoServidor(
               idLocalImportado,

@@ -233,25 +233,42 @@ class ItemPesagemLocalDao {
     );
   }
 
+  /// Normaliza o peso pra comparação (o servidor pode devolver "300" ou
+  /// "300.00" dependendo do caminho — sem normalizar, isso quebraria a
+  /// chave de comparação por engano).
+  String _pesoNormalizado(dynamic peso) {
+    final valor = double.tryParse(peso?.toString() ?? '');
+    return valor != null ? valor.toStringAsFixed(2) : (peso?.toString() ?? '');
+  }
+
   /// Reconcilia os itens já confirmados com o que o servidor tem agora,
-  /// usando o ID DO ANIMAL como chave — nunca o numero_item.
+  /// usando ID DO ANIMAL + PESO como chave — nunca numero_item sozinho, e
+  /// nunca id do animal sozinho.
   ///
-  /// Isso importa porque o sistema web, ao salvar qualquer edição numa
-  /// pesagem (inclusive excluir 1 item), apaga TODOS os itens dela e
+  /// numero_item não serve porque o sistema web, ao salvar qualquer edição
+  /// numa pesagem (inclusive excluir 1 item), apaga TODOS os itens dela e
   /// reinsere de novo, renumerando 1..N pela ordem atual na tela
-  /// (gravar_pesagem_individual.php) — ou seja, numero_item não é um id
-  /// estável, é só "posição atual na lista". Comparar por número faria o
-  /// app confundir animais diferentes e apagar/atualizar o item errado
-  /// sempre que alguém excluísse algo pela web.
+  /// (gravar_pesagem_individual.php) — é só "posição atual na lista", não
+  /// um id estável.
+  ///
+  /// Só o ID do animal também não basta: o mesmo animal pode aparecer mais
+  /// de uma vez na mesma pesagem (o app permite — é o próprio cenário do
+  /// alerta de "animal repetido"), então duas linhas locais diferentes
+  /// teriam a mesma chave. Combinar com o peso resolve isso na prática,
+  /// já que duas pesagens de verdade do mesmo bicho quase sempre dão
+  /// leituras diferentes. No raro empate de peso idêntico, cai num
+  /// pareamento por ordem (FIFO) — não é garantia absoluta, mas é a
+  /// melhor informação disponível (o servidor não guarda nenhum id
+  /// estável de item que sobreviva a uma gravação pelo sistema web).
   ///
   /// Pra cada item já confirmado neste aparelho (numero_item_servidor
   /// preenchido):
-  /// - se o animal dele não está mais em [numeroAtualPorIdAnimal], foi
+  /// - se a combinação animal+peso não existe mais em [itensServidor], foi
   ///   excluído por fora (web ou outro dispositivo) -> remove local.
-  /// - se está, mas com um número diferente do que salvamos da última vez
-  ///   (foi renumerado por causa da exclusão de outro item), corrige o
-  ///   número local -> assim uma futura edição/exclusão feita neste app
-  ///   aponta pro item certo, não pro que passou a ocupar aquele número.
+  /// - se existe, mas com um número diferente do que salvamos da última
+  ///   vez (foi renumerado por causa da exclusão de outro item), corrige o
+  ///   número local -> uma futura edição/exclusão feita neste app aponta
+  ///   pro item certo, não pro que passou a ocupar aquele número.
   ///
   /// Nunca toca em item ainda pendente de sincronizar
   /// (numero_item_servidor nulo): esse ainda não existe no servidor pra
@@ -259,31 +276,55 @@ class ItemPesagemLocalDao {
   /// esperando subir.
   Future<void> reconciliarComServidor(
     int pesagemIdLocal,
-    Map<String, int> numeroAtualPorIdAnimal,
+    List<dynamic> itensServidor,
   ) async {
     final db = await LocalDatabase.instance.database;
+
+    String chave(String idAnimal, dynamic peso) =>
+        '$idAnimal|${_pesoNormalizado(peso)}';
+
+    final numerosPorChave = <String, List<int>>{};
+    for (final item in itensServidor) {
+      final mapa = item as Map;
+      final idAnimal = mapa['tbl_ite_pesagem_codigo_id_animal']?.toString();
+      final numero = int.tryParse(
+        mapa['tbl_ite_pesagem_numero_item']?.toString() ?? '',
+      );
+      if (idAnimal == null || numero == null) continue;
+      numerosPorChave
+          .putIfAbsent(chave(idAnimal, mapa['tbl_ite_pesagem_peso']), () => [])
+          .add(numero);
+    }
+    for (final lista in numerosPorChave.values) {
+      lista.sort();
+    }
+
     final confirmados = await db.query(
       'itens_pesagem_locais',
-      columns: ['id_local', 'id_animal', 'numero_item_servidor'],
+      columns: ['id_local', 'id_animal', 'peso', 'numero_item_servidor'],
       where: 'pesagem_id_local = ? AND numero_item_servidor IS NOT NULL',
       whereArgs: [pesagemIdLocal],
+      orderBy: 'numero_item_servidor ASC',
     );
-    for (final linha in confirmados) {
-      final idAnimal = linha['id_animal']?.toString();
-      final numeroAtual = idAnimal != null
-          ? numeroAtualPorIdAnimal[idAnimal]
-          : null;
 
-      if (numeroAtual == null) {
+    for (final linha in confirmados) {
+      final idAnimal = linha['id_animal']?.toString() ?? '';
+      final candidatos = numerosPorChave[chave(idAnimal, linha['peso'])];
+
+      if (candidatos == null || candidatos.isEmpty) {
         await db.delete(
           'itens_pesagem_locais',
           where: 'id_local = ?',
           whereArgs: [linha['id_local']],
         );
-      } else if (numeroAtual != linha['numero_item_servidor']) {
+        continue;
+      }
+
+      final novoNumero = candidatos.removeAt(0);
+      if (novoNumero != linha['numero_item_servidor']) {
         await db.update(
           'itens_pesagem_locais',
-          {'numero_item_servidor': numeroAtual},
+          {'numero_item_servidor': novoNumero},
           where: 'id_local = ?',
           whereArgs: [linha['id_local']],
         );

@@ -218,7 +218,23 @@ void main() {
         // tudo renumerado: A continua 1, C (era 3) vira 2, D (era 4) vira 3.
         await ItemPesagemLocalDao.instance.reconciliarComServidor(
           idLocalPesagem,
-          {'A': 1, 'C': 2, 'D': 3},
+          [
+            {
+              'tbl_ite_pesagem_codigo_id_animal': 'A',
+              'tbl_ite_pesagem_numero_item': '1',
+              'tbl_ite_pesagem_peso': '160',
+            },
+            {
+              'tbl_ite_pesagem_codigo_id_animal': 'C',
+              'tbl_ite_pesagem_numero_item': '2',
+              'tbl_ite_pesagem_peso': '300',
+            },
+            {
+              'tbl_ite_pesagem_codigo_id_animal': 'D',
+              'tbl_ite_pesagem_numero_item': '3',
+              'tbl_ite_pesagem_peso': '150',
+            },
+          ],
         );
 
         final restantes = await ItemPesagemLocalDao.instance
@@ -239,6 +255,77 @@ void main() {
         expect(restantes.any((i) => i['id_animal'] == 'E'), isTrue);
 
         expect(restantes.length, 4);
+      },
+    );
+
+    test(
+      'ItemPesagemLocalDao: reconciliarComServidor não confunde o mesmo '
+      'animal pesado 2x na mesma pesagem (usa peso pra distinguir)',
+      () async {
+        final idLocalPesagem = await PesagemLocalDao.instance.inserir(
+          uuid: 'uuid-mesmo-animal-2x',
+          bd: '71746307668',
+          fazendaId: '56',
+          epocaId: '003',
+          lote: 'Reteste',
+          qtdAPesar: 2,
+          criteriosLista: [],
+        );
+
+        // Animal X pesado duas vezes por engano (vaqueiro cantou errado,
+        // bicho voltou pra fila) — pesos diferentes nas duas leituras.
+        final idPrimeiraPesagem = await ItemPesagemLocalDao.instance.inserir(
+          pesagemIdLocal: idLocalPesagem,
+          uuid: 'item-X-primeira-leitura',
+          numeroItemLocal: 1,
+          campos: {'id_animal': 'X', 'codigo_animal': 'B-1', 'peso': '180'},
+        );
+        await ItemPesagemLocalDao.instance.confirmarSincronizacao(
+          idPrimeiraPesagem,
+          1,
+        );
+
+        final idSegundaPesagem = await ItemPesagemLocalDao.instance.inserir(
+          pesagemIdLocal: idLocalPesagem,
+          uuid: 'item-X-segunda-leitura',
+          numeroItemLocal: 2,
+          campos: {'id_animal': 'X', 'codigo_animal': 'B-1', 'peso': '183'},
+        );
+        await ItemPesagemLocalDao.instance.confirmarSincronizacao(
+          idSegundaPesagem,
+          2,
+        );
+
+        // Sistema web exclui um item de OUTRO lugar antes desse (nada a
+        // ver com o animal X) — os dois registros do X são renumerados
+        // juntos: quem era 1 e 2 vira 1 e 2 mesmo (sem exclusão entre
+        // eles), mas simula que os números vieram deslocados por uma
+        // exclusão anterior na lista (eram 5 e 6, viram 1 e 2).
+        await ItemPesagemLocalDao.instance.reconciliarComServidor(
+          idLocalPesagem,
+          [
+            {
+              'tbl_ite_pesagem_codigo_id_animal': 'X',
+              'tbl_ite_pesagem_numero_item': '1',
+              'tbl_ite_pesagem_peso': '180',
+            },
+            {
+              'tbl_ite_pesagem_codigo_id_animal': 'X',
+              'tbl_ite_pesagem_numero_item': '2',
+              'tbl_ite_pesagem_peso': '183',
+            },
+          ],
+        );
+
+        final itemPrimeira = await ItemPesagemLocalDao.instance
+            .buscarPorUuid('item-X-primeira-leitura');
+        final itemSegunda = await ItemPesagemLocalDao.instance
+            .buscarPorUuid('item-X-segunda-leitura');
+
+        // Cada leitura continua associada ao número certo pro SEU peso —
+        // não trocaram de identidade entre si.
+        expect(itemPrimeira!['numero_item_servidor'], 1);
+        expect(itemSegunda!['numero_item_servidor'], 2);
       },
     );
 

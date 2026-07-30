@@ -171,10 +171,16 @@ class SyncService {
             pesagensParaReconciliar,
           );
         case TipoOperacaoOutbox.editarItem:
-          return await _processarChamadaSimples(id, payload, 'update_item.php');
-        case TipoOperacaoOutbox.excluirItem:
-          final sucesso = await _processarChamadaSimples(
+          return await _processarEdicaoOuExclusaoItem(
             id,
+            operacao['entidade_uuid'] as String,
+            payload,
+            'update_item.php',
+          );
+        case TipoOperacaoOutbox.excluirItem:
+          final sucesso = await _processarEdicaoOuExclusaoItem(
+            id,
+            operacao['entidade_uuid'] as String,
             payload,
             'delete_item.php',
           );
@@ -300,12 +306,12 @@ class SyncService {
     return true;
   }
 
-  /// Busca de volta o que o servidor já recalculou sozinho (mens_repetido/
-  /// id_pesagem_repetido) depois de um SALVAR_ITEM/EXCLUIR_ITEM, e atualiza
-  /// os itens locais dessa pesagem — melhor esforço, não trava nem falha a
-  /// sincronização se der errado (o alerta principal, que barra a
-  /// finalização de verdade, é do sistema web).
-  Future<void> _reconciliarMensRepetido(
+  /// Busca os itens atuais de uma pesagem no servidor — usado tanto pela
+  /// reconciliação pós-sync (mens_repetido) quanto pela correção de número
+  /// antes de editar/excluir um item específico. null em qualquer falha
+  /// (rede, timeout, servidor recusou): quem chama trata como "sem
+  /// confirmação, segue com o que já tinha".
+  Future<List<dynamic>?> _buscarItensServidor(
     int idServidorPesagem,
     String? bd,
   ) async {
@@ -318,36 +324,103 @@ class SyncService {
             body: json.encode({"bd": bd, "id_pesagem": idServidorPesagem}),
           )
           .timeout(const Duration(seconds: 20));
-      if (response.statusCode != 200) return;
+      if (response.statusCode != 200) return null;
 
       final data = json.decode(response.body);
-      if (data['success'] != true) return;
-
-      final local = await PesagemLocalDao.instance.buscarPorIdServidor(
-        idServidorPesagem,
-      );
-      if (local == null) return;
-      final idLocal = local['id_local'] as int;
-
-      final itens = (data['itens'] as List<dynamic>?) ?? [];
-      for (final item in itens) {
-        final numeroServidor = int.tryParse(
-          item['tbl_ite_pesagem_numero_item']?.toString() ?? '',
-        );
-        if (numeroServidor == null) continue;
-
-        await ItemPesagemLocalDao.instance.atualizarMensRepetido(
-          idLocal,
-          numeroServidor,
-          mensRepetido:
-              item['tbl_ite_pesagem_mens_repetido']?.toString() ?? '',
-          idPesagemRepetido:
-              item['tbl_ite_pesagem_id_repetido']?.toString() ?? '',
-        );
-      }
+      if (data['success'] != true) return null;
+      return (data['itens'] as List<dynamic>?) ?? [];
     } catch (_) {
-      // best-effort — não deve travar a sincronização se isso falhar
+      return null;
     }
+  }
+
+  /// Busca de volta o que o servidor já recalculou sozinho (mens_repetido/
+  /// id_pesagem_repetido) depois de um SALVAR_ITEM/EXCLUIR_ITEM, e atualiza
+  /// os itens locais dessa pesagem — melhor esforço, não trava nem falha a
+  /// sincronização se der errado (o alerta principal, que barra a
+  /// finalização de verdade, é do sistema web). Também já reconcilia os
+  /// números dos itens (ver ItemPesagemLocalDao.reconciliarComServidor),
+  /// deixando o cache local fresco pra qualquer edição/exclusão futura.
+  Future<void> _reconciliarMensRepetido(
+    int idServidorPesagem,
+    String? bd,
+  ) async {
+    final itens = await _buscarItensServidor(idServidorPesagem, bd);
+    if (itens == null) return;
+
+    final local = await PesagemLocalDao.instance.buscarPorIdServidor(
+      idServidorPesagem,
+    );
+    if (local == null) return;
+    final idLocal = local['id_local'] as int;
+
+    await ItemPesagemLocalDao.instance.reconciliarComServidor(idLocal, itens);
+
+    for (final item in itens) {
+      final numeroServidor = int.tryParse(
+        (item as Map)['tbl_ite_pesagem_numero_item']?.toString() ?? '',
+      );
+      if (numeroServidor == null) continue;
+
+      await ItemPesagemLocalDao.instance.atualizarMensRepetido(
+        idLocal,
+        numeroServidor,
+        mensRepetido: item['tbl_ite_pesagem_mens_repetido']?.toString() ?? '',
+        idPesagemRepetido:
+            item['tbl_ite_pesagem_id_repetido']?.toString() ?? '',
+      );
+    }
+  }
+
+  /// Edita/exclui um item específico (identificado por numero_item) —
+  /// antes de enviar, confirma com o servidor qual é o número ATUAL desse
+  /// item. O sistema web renumera os itens de uma pesagem a cada gravação
+  /// (ver ItemPesagemLocalDao.reconciliarComServidor); se isso aconteceu
+  /// enquanto esta edição/exclusão ainda estava na fila deste aparelho, o
+  /// número guardado na hora que o usuário editou pode já pertencer a
+  /// outro animal agora. Sem essa correção, a edição/exclusão acertaria o
+  /// item errado no servidor.
+  Future<bool> _processarEdicaoOuExclusaoItem(
+    int id,
+    String itemUuid,
+    Map<String, dynamic> payload,
+    String endpoint,
+  ) async {
+    final idServidorPesagem = int.tryParse(
+      payload['pesagem_id']?.toString() ?? '',
+    );
+    var payloadCorrigido = payload;
+
+    if (idServidorPesagem != null) {
+      final itens = await _buscarItensServidor(
+        idServidorPesagem,
+        payload['bd']?.toString(),
+      );
+      if (itens != null) {
+        final local = await PesagemLocalDao.instance.buscarPorIdServidor(
+          idServidorPesagem,
+        );
+        if (local != null) {
+          await ItemPesagemLocalDao.instance.reconciliarComServidor(
+            local['id_local'] as int,
+            itens,
+          );
+        }
+
+        final itemLocal = await ItemPesagemLocalDao.instance.buscarPorUuid(
+          itemUuid,
+        );
+        final numeroAtual = itemLocal?['numero_item_servidor'] as int?;
+        if (numeroAtual != null) {
+          payloadCorrigido = Map<String, dynamic>.from(payload)
+            ..['numero_item'] = numeroAtual;
+        }
+      }
+      // itens == null (sem confirmação do servidor) -> segue com o número
+      // que já tinha, igual ao comportamento de antes desta correção.
+    }
+
+    return _processarChamadaSimples(id, payloadCorrigido, endpoint);
   }
 
   Future<bool> _processarChamadaSimples(

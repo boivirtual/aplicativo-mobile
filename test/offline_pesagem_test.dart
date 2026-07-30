@@ -157,8 +157,10 @@ void main() {
     );
 
     test(
-      'ItemPesagemLocalDao: excluirNaoPresentesNoServidor remove só item já '
-      'confirmado que sumiu do servidor, nunca item ainda pendente',
+      'ItemPesagemLocalDao: reconciliarComServidor identifica pelo ID do '
+      'animal, não pelo número (que o sistema web reatribui a cada '
+      'exclusão) — reproduz o bug real: excluir o item do meio não pode '
+      'apagar nem confundir os itens seguintes',
       () async {
         final idLocalPesagem = await PesagemLocalDao.instance.inserir(
           uuid: 'uuid-reconciliacao-item',
@@ -166,60 +168,77 @@ void main() {
           fazendaId: '56',
           epocaId: '003',
           lote: 'Transferencia',
-          qtdAPesar: 3,
+          qtdAPesar: 4,
           criteriosLista: [],
         );
 
-        // Item 1: já confirmado pelo servidor (numero 10) — vai sumir do
-        // servidor (ex: excluído pelo sistema web).
-        final idItem1 = await ItemPesagemLocalDao.instance.inserir(
+        // 4 itens confirmados, numerados 1..4 na ordem original.
+        final idA = await ItemPesagemLocalDao.instance.inserir(
           pesagemIdLocal: idLocalPesagem,
-          uuid: 'item-excluido-no-servidor',
+          uuid: 'item-animal-A',
           numeroItemLocal: 1,
-          campos: {'id_animal': '1', 'codigo_animal': 'B-1', 'peso': '150'},
+          campos: {'id_animal': 'A', 'codigo_animal': 'B-1620', 'peso': '160'},
         );
-        await ItemPesagemLocalDao.instance.confirmarSincronizacao(idItem1, 10);
+        await ItemPesagemLocalDao.instance.confirmarSincronizacao(idA, 1);
 
-        // Item 2: já confirmado pelo servidor (numero 11) — continua
-        // existindo lá.
-        final idItem2 = await ItemPesagemLocalDao.instance.inserir(
+        final idB = await ItemPesagemLocalDao.instance.inserir(
           pesagemIdLocal: idLocalPesagem,
-          uuid: 'item-ainda-no-servidor',
+          uuid: 'item-animal-B',
           numeroItemLocal: 2,
-          campos: {'id_animal': '2', 'codigo_animal': 'B-2', 'peso': '200'},
+          campos: {'id_animal': 'B', 'codigo_animal': 'B-1662', 'peso': '200'},
         );
-        await ItemPesagemLocalDao.instance.confirmarSincronizacao(idItem2, 11);
+        await ItemPesagemLocalDao.instance.confirmarSincronizacao(idB, 2);
 
-        // Item 3: ainda pendente de sincronizar (peso digitado offline,
-        // nunca chegou a existir no servidor) — não pode ser tocado.
+        final idC = await ItemPesagemLocalDao.instance.inserir(
+          pesagemIdLocal: idLocalPesagem,
+          uuid: 'item-animal-C',
+          numeroItemLocal: 3,
+          campos: {'id_animal': 'C', 'codigo_animal': 'B-187', 'peso': '300'},
+        );
+        await ItemPesagemLocalDao.instance.confirmarSincronizacao(idC, 3);
+
+        final idD = await ItemPesagemLocalDao.instance.inserir(
+          pesagemIdLocal: idLocalPesagem,
+          uuid: 'item-animal-D',
+          numeroItemLocal: 4,
+          campos: {'id_animal': 'D', 'codigo_animal': 'B-1672', 'peso': '150'},
+        );
+        await ItemPesagemLocalDao.instance.confirmarSincronizacao(idD, 4);
+
+        // Item pendente offline (peso digitado agora, nunca sincronizou) —
+        // não pode ser tocado de jeito nenhum.
         await ItemPesagemLocalDao.instance.inserir(
           pesagemIdLocal: idLocalPesagem,
           uuid: 'item-pendente-offline',
-          numeroItemLocal: 3,
-          campos: {'id_animal': '3', 'codigo_animal': 'B-3', 'peso': '250'},
+          numeroItemLocal: 5,
+          campos: {'id_animal': 'E', 'codigo_animal': 'B-999', 'peso': '250'},
         );
 
-        // Servidor agora só tem o número 11 (o 10 foi excluído por fora).
-        await ItemPesagemLocalDao.instance.excluirNaoPresentesNoServidor(
+        // Sistema web exclui o animal B (numero 2, o do meio) e reinsere
+        // tudo renumerado: A continua 1, C (era 3) vira 2, D (era 4) vira 3.
+        await ItemPesagemLocalDao.instance.reconciliarComServidor(
           idLocalPesagem,
-          {11},
+          {'A': 1, 'C': 2, 'D': 3},
         );
 
         final restantes = await ItemPesagemLocalDao.instance
             .listarPorPesagemLocal(idLocalPesagem);
-        expect(restantes.length, 2);
-        expect(
-          restantes.any((i) => i['numero_item_servidor'] == 10),
-          isFalse,
-        );
-        expect(
-          restantes.any((i) => i['numero_item_servidor'] == 11),
-          isTrue,
-        );
-        expect(
-          restantes.any((i) => i['uuid'] == 'item-pendente-offline'),
-          isTrue,
-        );
+
+        // B foi removido de verdade.
+        expect(restantes.any((i) => i['id_animal'] == 'B'), isFalse);
+
+        // A, C e D continuam, cada um com o NÚMERO NOVO do servidor — não
+        // com o número velho, e não confundidos entre si.
+        Map<String, dynamic> porAnimal(String id) =>
+            restantes.firstWhere((i) => i['id_animal'] == id);
+        expect(porAnimal('A')['numero_item_servidor'], 1);
+        expect(porAnimal('C')['numero_item_servidor'], 2);
+        expect(porAnimal('D')['numero_item_servidor'], 3);
+
+        // O item ainda pendente (nunca sincronizado) sobrevive intocado.
+        expect(restantes.any((i) => i['id_animal'] == 'E'), isTrue);
+
+        expect(restantes.length, 4);
       },
     );
 

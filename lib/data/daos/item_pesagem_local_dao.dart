@@ -233,28 +233,57 @@ class ItemPesagemLocalDao {
     );
   }
 
-  /// Remove itens locais que sumiram do servidor (ex: excluídos pelo
-  /// sistema web ou por outro dispositivo) — só mexe em item já
-  /// confirmado (numero_item_servidor preenchido). Nunca toca em item
-  /// ainda pendente de sincronizar (numero_item_servidor nulo): esse ainda
-  /// não existe no servidor pra ter sido excluído de lá, é só um peso
-  /// digitado offline esperando subir.
-  Future<void> excluirNaoPresentesNoServidor(
+  /// Reconcilia os itens já confirmados com o que o servidor tem agora,
+  /// usando o ID DO ANIMAL como chave — nunca o numero_item.
+  ///
+  /// Isso importa porque o sistema web, ao salvar qualquer edição numa
+  /// pesagem (inclusive excluir 1 item), apaga TODOS os itens dela e
+  /// reinsere de novo, renumerando 1..N pela ordem atual na tela
+  /// (gravar_pesagem_individual.php) — ou seja, numero_item não é um id
+  /// estável, é só "posição atual na lista". Comparar por número faria o
+  /// app confundir animais diferentes e apagar/atualizar o item errado
+  /// sempre que alguém excluísse algo pela web.
+  ///
+  /// Pra cada item já confirmado neste aparelho (numero_item_servidor
+  /// preenchido):
+  /// - se o animal dele não está mais em [numeroAtualPorIdAnimal], foi
+  ///   excluído por fora (web ou outro dispositivo) -> remove local.
+  /// - se está, mas com um número diferente do que salvamos da última vez
+  ///   (foi renumerado por causa da exclusão de outro item), corrige o
+  ///   número local -> assim uma futura edição/exclusão feita neste app
+  ///   aponta pro item certo, não pro que passou a ocupar aquele número.
+  ///
+  /// Nunca toca em item ainda pendente de sincronizar
+  /// (numero_item_servidor nulo): esse ainda não existe no servidor pra
+  /// ter sido excluído/renumerado de lá, é só um peso digitado offline
+  /// esperando subir.
+  Future<void> reconciliarComServidor(
     int pesagemIdLocal,
-    Set<int> numerosServidorAtuais,
+    Map<String, int> numeroAtualPorIdAnimal,
   ) async {
     final db = await LocalDatabase.instance.database;
     final confirmados = await db.query(
       'itens_pesagem_locais',
-      columns: ['id_local', 'numero_item_servidor'],
+      columns: ['id_local', 'id_animal', 'numero_item_servidor'],
       where: 'pesagem_id_local = ? AND numero_item_servidor IS NOT NULL',
       whereArgs: [pesagemIdLocal],
     );
     for (final linha in confirmados) {
-      final numero = linha['numero_item_servidor'] as int;
-      if (!numerosServidorAtuais.contains(numero)) {
+      final idAnimal = linha['id_animal']?.toString();
+      final numeroAtual = idAnimal != null
+          ? numeroAtualPorIdAnimal[idAnimal]
+          : null;
+
+      if (numeroAtual == null) {
         await db.delete(
           'itens_pesagem_locais',
+          where: 'id_local = ?',
+          whereArgs: [linha['id_local']],
+        );
+      } else if (numeroAtual != linha['numero_item_servidor']) {
+        await db.update(
+          'itens_pesagem_locais',
+          {'numero_item_servidor': numeroAtual},
           where: 'id_local = ?',
           whereArgs: [linha['id_local']],
         );

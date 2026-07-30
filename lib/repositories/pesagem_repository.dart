@@ -88,10 +88,12 @@ class PesagemRepository {
 
     if (_online) {
       try {
-        final response = await http.post(
-          Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/list_pendentes.php"),
-          body: json.encode({"bd": bd, "fazendas": fazendas}),
-        );
+        final response = await http
+            .post(
+              Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/list_pendentes.php"),
+              body: json.encode({"bd": bd, "fazendas": fazendas}),
+            )
+            .timeout(const Duration(seconds: 8));
         if (response.statusCode == 200) {
           final lista = json.decode(response.body) as List<dynamic>;
           final idsServidorAtuais = lista
@@ -156,12 +158,14 @@ class PesagemRepository {
       if (idsServidorAtuais.contains(idServidor)) continue;
 
       try {
-        final response = await http.post(
-          Uri.parse(
-            "${ApiConfig.baseUrl}/rest/pesagem/get_pesagem_completa.php",
-          ),
-          body: json.encode({"bd": bd, "id_pesagem": idServidor}),
-        );
+        final response = await http
+            .post(
+              Uri.parse(
+                "${ApiConfig.baseUrl}/rest/pesagem/get_pesagem_completa.php",
+              ),
+              body: json.encode({"bd": bd, "id_pesagem": idServidor}),
+            )
+            .timeout(const Duration(seconds: 8));
         if (response.statusCode != 200) continue;
 
         final data = json.decode(response.body);
@@ -197,10 +201,14 @@ class PesagemRepository {
     final bdSeguro = bd ?? '';
     if (_online) {
       try {
-        final response = await http.post(
-          Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/list_finalizadas.php"),
-          body: json.encode({"bd": bd, "fazendas": fazendas}),
-        );
+        final response = await http
+            .post(
+              Uri.parse(
+                "${ApiConfig.baseUrl}/rest/pesagem/list_finalizadas.php",
+              ),
+              body: json.encode({"bd": bd, "fazendas": fazendas}),
+            )
+            .timeout(const Duration(seconds: 8));
         if (response.statusCode == 200) {
           final lista = json.decode(response.body) as List<dynamic>;
           for (final p in lista) {
@@ -244,11 +252,15 @@ class PesagemRepository {
 
     if (_online) {
       try {
-        final response = await http.post(
-          Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/create_pesagem.php"),
-          headers: {"Content-Type": "application/json"},
-          body: json.encode(payloadEnvio),
-        );
+        final response = await http
+            .post(
+              Uri.parse(
+                "${ApiConfig.baseUrl}/rest/pesagem/create_pesagem.php",
+              ),
+              headers: {"Content-Type": "application/json"},
+              body: json.encode(payloadEnvio),
+            )
+            .timeout(const Duration(seconds: 8));
         if (response.statusCode == 200) {
           final resJson = json.decode(response.body);
           if (resJson['success'] == true) {
@@ -333,11 +345,15 @@ class PesagemRepository {
 
     if (_online) {
       try {
-        final response = await http.post(
-          Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/update_pesagem.php"),
-          headers: {"Content-Type": "application/json"},
-          body: json.encode(payloadEnvio),
-        );
+        final response = await http
+            .post(
+              Uri.parse(
+                "${ApiConfig.baseUrl}/rest/pesagem/update_pesagem.php",
+              ),
+              headers: {"Content-Type": "application/json"},
+              body: json.encode(payloadEnvio),
+            )
+            .timeout(const Duration(seconds: 8));
         if (response.statusCode == 200) {
           final resJson = json.decode(response.body);
           if (resJson['success'] == true) {
@@ -383,10 +399,18 @@ class PesagemRepository {
 
     if ((local == null || semItensLocais) && idPesagem > 0 && _online) {
       try {
-        final response = await http.post(
-          Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/get_pesagem_completa.php"),
-          body: json.encode({"bd": bd, "id_pesagem": idPesagem}),
-        );
+        final response = await http
+            .post(
+              Uri.parse(
+                "${ApiConfig.baseUrl}/rest/pesagem/get_pesagem_completa.php",
+              ),
+              body: json.encode({"bd": bd, "id_pesagem": idPesagem}),
+            )
+            // Timeout maior que os outros: essa chamada pode trazer
+            // centenas de itens de uma vez (já vimos pesagem com 272), uma
+            // internet lenta mas funcionando ainda merece a chance de
+            // completar antes de desistir.
+            .timeout(const Duration(seconds: 20));
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
           if (data['success'] == true && data['pesagem'] != null) {
@@ -479,11 +503,13 @@ class PesagemRepository {
 
     if (idServidorPesagem != null && _online) {
       try {
-        final response = await http.post(
-          Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/save_item.php"),
-          headers: {"Content-Type": "application/json"},
-          body: json.encode(payloadEnvio),
-        );
+        final response = await http
+            .post(
+              Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/save_item.php"),
+              headers: {"Content-Type": "application/json"},
+              body: json.encode(payloadEnvio),
+            )
+            .timeout(const Duration(seconds: 8));
         if (response.statusCode == 200) {
           final resJson = json.decode(response.body);
           if (resJson['success'] == true) {
@@ -560,11 +586,13 @@ class PesagemRepository {
 
     if (_online) {
       try {
-        final response = await http.post(
-          Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/delete_item.php"),
-          headers: {"Content-Type": "application/json"},
-          body: json.encode(payloadEnvio),
-        );
+        final response = await http
+            .post(
+              Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/delete_item.php"),
+              headers: {"Content-Type": "application/json"},
+              body: json.encode(payloadEnvio),
+            )
+            .timeout(const Duration(seconds: 8));
         if (response.statusCode == 200) {
           return {"success": true};
         }
@@ -641,11 +669,13 @@ class PesagemRepository {
 
     if (_online) {
       try {
-        final response = await http.post(
-          Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/update_item.php"),
-          headers: {"Content-Type": "application/json"},
-          body: json.encode(payloadEnvio),
-        );
+        final response = await http
+            .post(
+              Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/update_item.php"),
+              headers: {"Content-Type": "application/json"},
+              body: json.encode(payloadEnvio),
+            )
+            .timeout(const Duration(seconds: 8));
         if (response.statusCode == 200) {
           return {"success": true};
         }

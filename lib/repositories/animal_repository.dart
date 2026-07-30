@@ -148,16 +148,20 @@ class AnimalRepository {
 
     if (_online) {
       try {
-        final response = await http.get(
-          Uri.parse(
-            "${ApiConfig.baseUrl}/rest/animal/list.php?id=$termo&local=$local&bd=$bd",
-          ),
-        );
+        final response = await http
+            .get(
+              Uri.parse(
+                "${ApiConfig.baseUrl}/rest/animal/list.php?id=$termo&local=$local&bd=$bd",
+              ),
+            )
+            .timeout(const Duration(seconds: 8));
         if (response.statusCode == 200) {
           return json.decode(response.body) as List<dynamic>;
         }
       } catch (_) {
-        // sem conexão de fato — cai para lista vazia abaixo
+        // sem conexão de fato (ou internet lenta demais e estourou o
+        // tempo limite) — cai para lista vazia abaixo em vez de travar a
+        // digitação esperando a rede
       }
     }
     return [];
@@ -230,11 +234,13 @@ class AnimalRepository {
 
     if (_online) {
       try {
-        final response = await http.get(
-          Uri.parse(
-            "${ApiConfig.baseUrl}/rest/animal/list_mae_global.php?id=$termo&bd=$bd",
-          ),
-        );
+        final response = await http
+            .get(
+              Uri.parse(
+                "${ApiConfig.baseUrl}/rest/animal/list_mae_global.php?id=$termo&bd=$bd",
+              ),
+            )
+            .timeout(const Duration(seconds: 8));
         if (response.statusCode == 200 && response.body.isNotEmpty) {
           return json.decode(response.body) as List<dynamic>;
         }

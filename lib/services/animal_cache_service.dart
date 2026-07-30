@@ -30,11 +30,16 @@ class AnimalCacheService {
     _emAndamento.add(fazendaId);
     baixando.value = true;
     try {
-      final response = await http.get(
-        Uri.parse(
-          "${ApiConfig.baseUrl}/rest/animal/list_fazenda_completo.php?local=$fazendaId&bd=$bd",
-        ),
-      );
+      // Timeout maior que as chamadas interativas: isso baixa o cadastro
+      // inteiro da fazenda (pode ser centenas/milhares de animais) — numa
+      // internet lenta mas funcionando, vale esperar mais antes de desistir.
+      final response = await http
+          .get(
+            Uri.parse(
+              "${ApiConfig.baseUrl}/rest/animal/list_fazenda_completo.php?local=$fazendaId&bd=$bd",
+            ),
+          )
+          .timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success'] == true) {

@@ -200,11 +200,13 @@ class SyncService {
   }
 
   Future<bool> _processarCriarPesagem(int id, Map<String, dynamic> payload) async {
-    final response = await http.post(
-      Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/create_pesagem.php"),
-      headers: {"Content-Type": "application/json"},
-      body: json.encode(payload),
-    );
+    final response = await http
+        .post(
+          Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/create_pesagem.php"),
+          headers: {"Content-Type": "application/json"},
+          body: json.encode(payload),
+        )
+        .timeout(const Duration(seconds: 8));
 
     if (response.statusCode != 200) {
       await OutboxDao.instance.marcarErro(id, "HTTP ${response.statusCode}");
@@ -256,11 +258,13 @@ class SyncService {
     final payloadEnvio = Map<String, dynamic>.from(payload)
       ..['pesagem_id'] = idServidorPesagem;
 
-    final response = await http.post(
-      Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/save_item.php"),
-      headers: {"Content-Type": "application/json"},
-      body: json.encode(payloadEnvio),
-    );
+    final response = await http
+        .post(
+          Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/save_item.php"),
+          headers: {"Content-Type": "application/json"},
+          body: json.encode(payloadEnvio),
+        )
+        .timeout(const Duration(seconds: 8));
 
     if (response.statusCode != 200) {
       await OutboxDao.instance.marcarErro(id, "HTTP ${response.statusCode}");
@@ -306,10 +310,14 @@ class SyncService {
     String? bd,
   ) async {
     try {
-      final response = await http.post(
-        Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/get_pesagem_completa.php"),
-        body: json.encode({"bd": bd, "id_pesagem": idServidorPesagem}),
-      );
+      final response = await http
+          .post(
+            Uri.parse(
+              "${ApiConfig.baseUrl}/rest/pesagem/get_pesagem_completa.php",
+            ),
+            body: json.encode({"bd": bd, "id_pesagem": idServidorPesagem}),
+          )
+          .timeout(const Duration(seconds: 20));
       if (response.statusCode != 200) return;
 
       final data = json.decode(response.body);
@@ -347,11 +355,13 @@ class SyncService {
     Map<String, dynamic> payload,
     String endpoint,
   ) async {
-    final response = await http.post(
-      Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/$endpoint"),
-      headers: {"Content-Type": "application/json"},
-      body: json.encode(payload),
-    );
+    final response = await http
+        .post(
+          Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/$endpoint"),
+          headers: {"Content-Type": "application/json"},
+          body: json.encode(payload),
+        )
+        .timeout(const Duration(seconds: 8));
 
     if (response.statusCode != 200) {
       await OutboxDao.instance.marcarErro(id, "HTTP ${response.statusCode}");

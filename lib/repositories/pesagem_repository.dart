@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 import '../config/api_config.dart';
@@ -40,13 +41,22 @@ class PesagemRepository {
     final itensLocais = await ItemPesagemLocalDao.instance
         .listarPorPesagemLocal(idLocal);
 
+    // Os itens só são baixados quando a pesagem é aberta (lazy) — antes
+    // disso, itensLocais fica vazio mesmo para uma pesagem já com pesos
+    // registrados no servidor. Nesse caso usa o total que o próprio servidor
+    // informou na última listagem, pra não mostrar "0" como se os dados
+    // tivessem sumido (ver PesagemLocalDao.importarDoServidor).
+    final qtdPesados = itensLocais.isNotEmpty
+        ? itensLocais.length
+        : ((row['qtd_pesados_servidor'] as int?) ?? 0);
+
     return {
       'tbl_pesagem_id': idServidor ?? -idLocal,
       'tbl_pesagem_codigo_local': row['fazenda_id'],
       'tbl_pesagem_codigo_epoca': row['epoca_id'],
       'tbl_pesagem_lote': row['lote'],
       'tbl_pesagem_qtd_animais_a_pesar': row['qtd_a_pesar'],
-      'tbl_pesagem_qtd_animais_pesados': itensLocais.length,
+      'tbl_pesagem_qtd_animais_pesados': qtdPesados,
       'tbl_pesagem_filtros': row['filtro_desc'],
       'tbl_pesagem_finalizada': row['finalizada'],
       'tbl_pesagem_criterios_apartacao': criterios.join(', '),
@@ -380,6 +390,103 @@ class PesagemRepository {
   // Itens
   // ---------------------------------------------------------------------
 
+  /// Busca a pesagem+itens no servidor e grava/reconcilia localmente.
+  /// Devolve o id_local resultante, ou null se não conseguiu (sem conexão,
+  /// erro, ou o servidor não confirmou sucesso).
+  Future<int?> _baixarEImportarPesagemCompleta(
+    int idServidor, {
+    required String? bd,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(
+              "${ApiConfig.baseUrl}/rest/pesagem/get_pesagem_completa.php",
+            ),
+            body: json.encode({"bd": bd, "id_pesagem": idServidor}),
+          )
+          // Timeout maior que os outros: essa chamada pode trazer centenas
+          // de itens de uma vez (já vimos pesagem com 272), uma internet
+          // lenta mas funcionando ainda merece a chance de completar antes
+          // de desistir.
+          .timeout(const Duration(seconds: 20));
+      if (response.statusCode != 200) return null;
+
+      final data = json.decode(response.body);
+      if (data['success'] != true || data['pesagem'] == null) return null;
+
+      final idLocalImportado = await PesagemLocalDao.instance
+          .importarDoServidor(
+        data['pesagem'] as Map<String, dynamic>,
+        bd: bd ?? '',
+      );
+
+      final itensServidor = (data['itens'] as List<dynamic>?) ?? [];
+      // Remove local o que o servidor não tem mais (ex: excluído pelo
+      // sistema web) e corrige o número dos que só foram renumerados —
+      // identifica pelo par animal+peso, não pelo numero_item (ver
+      // ItemPesagemLocalDao.reconciliarComServidor pro raciocínio
+      // completo). Só mexe em item já confirmado; nunca em item ainda
+      // pendente de sincronizar, senão perderia peso digitado offline
+      // antes mesmo dele ter chance de subir.
+      await ItemPesagemLocalDao.instance.reconciliarComServidor(
+        idLocalImportado,
+        itensServidor,
+      );
+      await ItemPesagemLocalDao.instance.importarDoServidor(
+        idLocalImportado,
+        itensServidor,
+      );
+      return idLocalImportado;
+    } catch (_) {
+      // sem conexão de fato ou erro — quem chamou decide o fallback
+      return null;
+    }
+  }
+
+  bool _baixandoPendentes = false;
+
+  /// true enquanto há download de itens de pesagens pendentes em andamento
+  /// — a tela usa isso pra avisar que ainda não é seguro ir pro pasto sem
+  /// sinal (mesmo padrão do AnimalCacheService.baixando).
+  final ValueNotifier<bool> baixandoItensPendentes = ValueNotifier(false);
+
+  /// Baixa antecipadamente os itens de toda pesagem em aberto que ainda não
+  /// tem nenhum item salvo neste aparelho.
+  ///
+  /// Sem isso, uma pesagem que já existe no servidor mas nunca foi aberta
+  /// neste aparelho fica com os itens vazios pra sempre assim que a
+  /// internet cai — o vaqueiro chega no curral sem conseguir ver nem
+  /// continuar o que já tinha sido pesado antes. Roda em segundo plano
+  /// (quem chama não espera): melhor esforço, pesagem por pesagem, parando
+  /// na hora se a internet cair no meio do caminho.
+  Future<void> garantirItensDasPendentes(String? bd) async {
+    if (_baixandoPendentes || !_online) return;
+    _baixandoPendentes = true;
+    baixandoItensPendentes.value = true;
+    try {
+      final locais = await PesagemLocalDao.instance.listarPendentesLocais(
+        bd ?? '',
+      );
+      for (final local in locais) {
+        if (!_online) break;
+        final idServidor = local['id_servidor'] as int?;
+        if (idServidor == null) continue; // ainda só existe neste aparelho
+
+        final idLocal = local['id_local'] as int;
+        final temItens = (await ItemPesagemLocalDao.instance
+                .listarPorPesagemLocal(idLocal))
+            .isNotEmpty;
+        if (temItens) continue;
+
+        await _baixarEImportarPesagemCompleta(idServidor, bd: bd);
+      }
+    } finally {
+      _baixandoPendentes = false;
+      baixandoItensPendentes.value = false;
+    }
+  }
+
   Future<Map<String, dynamic>> buscarPesagemCompleta({
     required String? bd,
     required int idPesagem,
@@ -406,51 +513,14 @@ class PesagemRepository {
     if ((local == null || semItensLocais || reconciliar) &&
         idPesagem > 0 &&
         _online) {
-      try {
-        final response = await http
-            .post(
-              Uri.parse(
-                "${ApiConfig.baseUrl}/rest/pesagem/get_pesagem_completa.php",
-              ),
-              body: json.encode({"bd": bd, "id_pesagem": idPesagem}),
-            )
-            // Timeout maior que os outros: essa chamada pode trazer
-            // centenas de itens de uma vez (já vimos pesagem com 272), uma
-            // internet lenta mas funcionando ainda merece a chance de
-            // completar antes de desistir.
-            .timeout(const Duration(seconds: 20));
-        if (response.statusCode == 200) {
-          final data = json.decode(response.body);
-          if (data['success'] == true && data['pesagem'] != null) {
-            final idLocalImportado = await PesagemLocalDao.instance
-                .importarDoServidor(
-              data['pesagem'] as Map<String, dynamic>,
-              bd: bd ?? '',
-            );
-
-            final itensServidor = (data['itens'] as List<dynamic>?) ?? [];
-            // Remove local o que o servidor não tem mais (ex: excluído
-            // pelo sistema web) e corrige o número dos que só foram
-            // renumerados — identifica pelo par animal+peso, não pelo
-            // numero_item (ver ItemPesagemLocalDao.reconciliarComServidor
-            // pro raciocínio completo). Só mexe em item já confirmado;
-            // nunca em item ainda pendente de sincronizar, senão perderia
-            // peso digitado offline antes mesmo dele ter chance de subir.
-            await ItemPesagemLocalDao.instance.reconciliarComServidor(
-              idLocalImportado,
-              itensServidor,
-            );
-            await ItemPesagemLocalDao.instance.importarDoServidor(
-              idLocalImportado,
-              itensServidor,
-            );
-            local = await PesagemLocalDao.instance.buscarPorIdLocal(
-              idLocalImportado,
-            );
-          }
-        }
-      } catch (_) {
-        // sem conexão de fato ou erro — segue para a checagem abaixo
+      final idLocalImportado = await _baixarEImportarPesagemCompleta(
+        idPesagem,
+        bd: bd,
+      );
+      if (idLocalImportado != null) {
+        local = await PesagemLocalDao.instance.buscarPorIdLocal(
+          idLocalImportado,
+        );
       }
     }
 

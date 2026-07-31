@@ -11,7 +11,7 @@ class LocalDatabase {
   LocalDatabase._();
   static final LocalDatabase instance = LocalDatabase._();
 
-  static const int _versaoSchema = 3;
+  static const int _versaoSchema = 4;
 
   Database? _db;
 
@@ -42,6 +42,7 @@ class LocalDatabase {
         epoca_id TEXT NOT NULL,
         lote TEXT NOT NULL,
         qtd_a_pesar INTEGER NOT NULL,
+        qtd_pesados_servidor INTEGER,
         filtro_desc TEXT,
         usuario TEXT,
         criterios_lista TEXT,
@@ -145,6 +146,17 @@ class LocalDatabase {
       // Peso de desmama — precisa pra saber se um bezerro já foi desmamado
       // (regra do alerta "mãe/bezerro com apartação em lote aberto").
       await db.execute('ALTER TABLE animais_cache ADD COLUMN peso_desmama TEXT');
+    }
+    if (versaoAntiga < 4) {
+      // Total de animais pesados que o servidor já informa na própria
+      // listagem (list_pendentes.php) — os ITENS de uma pesagem só são
+      // baixados quando ela é aberta (lazy), então sem isso a lista offline
+      // mostrava "Pesados: 0" pra qualquer pesagem cujos itens ainda não
+      // tinham sido baixados neste aparelho, parecendo que os dados tinham
+      // sumido quando na verdade nunca tinham chegado ainda.
+      await db.execute(
+        'ALTER TABLE pesagens_locais ADD COLUMN qtd_pesados_servidor INTEGER',
+      );
     }
   }
 

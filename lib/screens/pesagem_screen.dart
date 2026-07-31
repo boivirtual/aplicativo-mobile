@@ -53,6 +53,14 @@ class _PesagemScreenState extends State<PesagemScreen> {
     if (mounted) setState(() => _baixandoAnimais = AnimalCacheService.instance.baixando.value);
   }
 
+  bool _baixandoItensPendentes = false;
+  void _ouvirBaixandoItensPendentes() {
+    if (mounted) {
+      setState(() => _baixandoItensPendentes =
+          PesagemRepository.instance.baixandoItensPendentes.value);
+    }
+  }
+
   final Map<String, String> motivos = {
     '011': 'Controle Ganho de Peso',
     '002': 'Desmama',
@@ -75,6 +83,9 @@ class _PesagemScreenState extends State<PesagemScreen> {
     });
     SyncService.instance.atualizarContagemPendentes();
     AnimalCacheService.instance.baixando.addListener(_ouvirBaixandoAnimais);
+    PesagemRepository.instance.baixandoItensPendentes.addListener(
+      _ouvirBaixandoItensPendentes,
+    );
   }
 
   Future<void> _sincronizarAgora() async {
@@ -99,11 +110,12 @@ class _PesagemScreenState extends State<PesagemScreen> {
   static const _corIndicador = Color(0xFF18385F);
 
   Widget _buildIndicadorCarregando() {
-    final mensagem = carregandoPendentes && _baixandoAnimais
-        ? "Baixando pesagens e cadastro de animais..."
-        : carregandoPendentes
-            ? "Baixando pesagens pendentes..."
-            : "Baixando cadastro de animais das fazendas...";
+    final partes = <String>[
+      if (carregandoPendentes) "pesagens pendentes",
+      if (_baixandoItensPendentes) "itens das pesagens em aberto",
+      if (_baixandoAnimais) "cadastro de animais das fazendas",
+    ];
+    final mensagem = "Baixando ${partes.join(', ')}...";
     return IgnorePointer(
       child: Align(
         alignment: const Alignment(0, -0.5),
@@ -261,6 +273,9 @@ class _PesagemScreenState extends State<PesagemScreen> {
     _subPendentesSync?.cancel();
     _subConflitos?.cancel();
     AnimalCacheService.instance.baixando.removeListener(_ouvirBaixandoAnimais);
+    PesagemRepository.instance.baixandoItensPendentes.removeListener(
+      _ouvirBaixandoItensPendentes,
+    );
     super.dispose();
   }
 
@@ -319,6 +334,11 @@ class _PesagemScreenState extends State<PesagemScreen> {
         setState(() {
           pesagensPendentes = listaPendentes;
         });
+        // Baixa em segundo plano os itens de qualquer pesagem em aberto que
+        // ainda não foi aberta neste aparelho — sem isso, se a internet cair
+        // antes do vaqueiro abrir aquela pesagem específica no curral, ele
+        // fica sem conseguir continuar de onde parou.
+        PesagemRepository.instance.garantirItensDasPendentes(cnpj);
       } catch (e) {
         debugPrint("Erro pendências: $e");
       } finally {
@@ -466,7 +486,8 @@ class _PesagemScreenState extends State<PesagemScreen> {
           ),
         ],
       ),
-          if (carregandoPendentes || _baixandoAnimais) _buildIndicadorCarregando(),
+          if (carregandoPendentes || _baixandoAnimais || _baixandoItensPendentes)
+            _buildIndicadorCarregando(),
         ],
       ),
     );

@@ -45,6 +45,17 @@ class ConnectivityService {
   void _iniciar() {
     _verificarConexaoAtual();
     Connectivity().onConnectivityChanged.listen(_processarStatusInternet);
+
+    // onConnectivityChanged só dispara quando o TIPO de rede muda (ex: wifi
+    // -> dados -> nenhuma). No campo é comum a internet cair e voltar sem
+    // trocar de tipo (ex: continua "conectado" no wifi/dados, só sem sinal
+    // de verdade um tempo) — sem essa reverificação periódica, o app ficava
+    // preso pra sempre no último nível medido (geralmente "ruim"), mesmo
+    // depois da internet voltar de verdade.
+    Timer.periodic(
+      const Duration(seconds: 15),
+      (_) => _verificarConexaoAtual(),
+    );
   }
 
   Future<void> _verificarConexaoAtual() async {

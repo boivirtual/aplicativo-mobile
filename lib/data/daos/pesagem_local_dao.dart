@@ -25,6 +25,7 @@ class PesagemLocalDao {
     required List<String> criteriosLista,
     String finalizada = 'N',
     String statusSync = StatusSyncPesagem.pendente,
+    int? qtdPesadosServidor,
   }) async {
     final db = await LocalDatabase.instance.database;
     final agora = DateTime.now().toIso8601String();
@@ -36,6 +37,7 @@ class PesagemLocalDao {
       'epoca_id': epocaId,
       'lote': lote,
       'qtd_a_pesar': qtdAPesar,
+      'qtd_pesados_servidor': qtdPesadosServidor,
       'filtro_desc': filtroDesc,
       'usuario': usuario,
       'criterios_lista': json.encode(criteriosLista),
@@ -110,6 +112,7 @@ class PesagemLocalDao {
     int? qtdAPesar,
     String? filtroDesc,
     List<String>? criteriosLista,
+    int? qtdPesadosServidor,
   }) async {
     final db = await LocalDatabase.instance.database;
     final valores = <String, dynamic>{
@@ -120,6 +123,9 @@ class PesagemLocalDao {
     if (epocaId != null) valores['epoca_id'] = epocaId;
     if (lote != null) valores['lote'] = lote;
     if (qtdAPesar != null) valores['qtd_a_pesar'] = qtdAPesar;
+    if (qtdPesadosServidor != null) {
+      valores['qtd_pesados_servidor'] = qtdPesadosServidor;
+    }
     if (filtroDesc != null) valores['filtro_desc'] = filtroDesc;
     if (criteriosLista != null) {
       valores['criterios_lista'] = json.encode(criteriosLista);
@@ -180,6 +186,9 @@ class PesagemLocalDao {
       pesagemServidor['tbl_pesagem_id'].toString(),
     );
     final existente = await buscarPorIdServidor(idServidor);
+    final qtdPesadosServidor = int.tryParse(
+      pesagemServidor['tbl_pesagem_qtd_animais_pesados']?.toString() ?? '',
+    );
 
     final criteriosBruto =
         (pesagemServidor['tbl_pesagem_criterios_apartacao'] ?? '').toString();
@@ -206,6 +215,7 @@ class PesagemLocalDao {
             0,
         filtroDesc: pesagemServidor['tbl_pesagem_filtros']?.toString(),
         criteriosLista: criteriosLista,
+        qtdPesadosServidor: qtdPesadosServidor,
       );
       return existente['id_local'] as int;
     }
@@ -228,6 +238,7 @@ class PesagemLocalDao {
       finalizada:
           pesagemServidor['tbl_pesagem_finalizada']?.toString() ?? 'N',
       statusSync: StatusSyncPesagem.sincronizado,
+      qtdPesadosServidor: qtdPesadosServidor,
     );
   }
 }

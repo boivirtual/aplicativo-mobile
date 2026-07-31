@@ -499,6 +499,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
                 AnimalCacheService.instance.garantirCacheDaFazenda(
                   val,
                   _cnpjCarregado,
+                  nomeFazenda: _getNomeFazenda(val),
                 );
               }
             },

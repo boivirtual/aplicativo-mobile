@@ -847,6 +847,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     AnimalCacheService.instance.garantirCacheDaFazenda(
       _fazendaSelecionadaAtual,
       cnpjParaBanco,
+      nomeFazenda: _getNomeFazenda(_fazendaSelecionadaAtual),
     );
     // id > 0: pesagem já sincronizada; id < 0: ainda só existe localmente
     // (offline). Nos dois casos há itens locais a carregar; só id == 0

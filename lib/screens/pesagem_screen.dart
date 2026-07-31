@@ -119,40 +119,48 @@ class _PesagemScreenState extends State<PesagemScreen> {
     return IgnorePointer(
       child: Align(
         alignment: const Alignment(0, -0.5),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.blue.shade50,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.18),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.85,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: _corIndicador,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                mensagem,
-                style: const TextStyle(
-                  color: _corIndicador,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: _corIndicador,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    mensagem,
+                    style: const TextStyle(
+                      color: _corIndicador,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

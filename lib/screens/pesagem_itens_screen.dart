@@ -318,13 +318,17 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
         setState(() => _pesoController.text = resultado);
         return true;
       } on FormatException {
-        _exibirMensagemErro("Fórmula de peso inválida.");
+        _exibirMensagemErro(
+          "Fórmula de peso inválida.",
+          onClose: _limparPesoEFocar,
+        );
         return false;
       }
     }
     if (texto.isNotEmpty && !pesoEhNumeroValido(texto)) {
       _exibirMensagemErro(
         "Peso inválido. Pra usar fórmula, comece com \"=\".",
+        onClose: _limparPesoEFocar,
       );
       return false;
     }
@@ -529,23 +533,32 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
                         )
                       : TextButton(
                           onPressed: () {
+                            // Já dispara onClose (via _onOverlayClose), se
+                            // quem chamou tiver passado um. Só cai no
+                            // comportamento padrão (limpar Nº do Animal e
+                            // focar nele) quando ninguém pediu algo
+                            // específico — sem essa checagem, um onClose
+                            // customizado (ex: limpar só o Peso) rodava
+                            // junto com esse padrão em vez de no lugar dele.
                             _removerErroOverlay();
 
-                            _noAnimalController.clear();
+                            if (onClose == null) {
+                              _noAnimalController.clear();
 
-                            setState(() {
-                              sugestoesAnimais = [];
-                              mostrandoSugestoes = false;
-                              _destacarCampoAnimal = false;
-                            });
+                              setState(() {
+                                sugestoesAnimais = [];
+                                mostrandoSugestoes = false;
+                                _destacarCampoAnimal = false;
+                              });
 
-                            Future.delayed(
-                              const Duration(milliseconds: 120),
-                              () {
-                                if (!mounted) return;
-                                _focoNoAnimal.requestFocus();
-                              },
-                            );
+                              Future.delayed(
+                                const Duration(milliseconds: 120),
+                                () {
+                                  if (!mounted) return;
+                                  _focoNoAnimal.requestFocus();
+                                },
+                              );
+                            }
                           },
                           child: const Text(
                             "FECHAR",
@@ -566,8 +579,16 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     Overlay.of(context).insert(_overlayEntry!);
   }
 
-  void _exibirMensagemErro(String msg) =>
-      _exibirMensagemOverlay(msg, isError: true);
+  void _exibirMensagemErro(String msg, {VoidCallback? onClose}) =>
+      _exibirMensagemOverlay(msg, isError: true, onClose: onClose);
+
+  /// Limpa só o Peso e devolve o foco nele — usado quando o erro é
+  /// especificamente do peso (fórmula/número inválido), pra não obrigar o
+  /// usuário a redigitar o Nº do Animal que já estava certo.
+  void _limparPesoEFocar() {
+    setState(() => _pesoController.clear());
+    _focarNoPesoComDelay();
+  }
 
   void _removerErroOverlay() {
     if (_overlayEntry != null) {

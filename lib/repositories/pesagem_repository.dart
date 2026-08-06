@@ -655,14 +655,14 @@ class PesagemRepository {
     final numeroServidor = item['numero_item_servidor'] as int?;
 
     if (numeroServidor == null) {
-      // Nunca sincronizado: cancela a operação pendente em vez de gerar exclusão remota.
-      final pendenteSalvar = await OutboxDao.instance.buscarPendentePorEntidade(
+      // Nunca sincronizado: cancela a operação pendente em vez de gerar
+      // exclusão remota — em qualquer status (pendente, erro ou conflito),
+      // senão uma tentativa que já falhou no servidor fica presa pra
+      // sempre em "Pendências de revisão" mesmo depois do item excluído.
+      await OutboxDao.instance.cancelarPorEntidade(
         item['uuid'] as String,
         TipoOperacaoOutbox.salvarItem,
       );
-      if (pendenteSalvar != null) {
-        await OutboxDao.instance.cancelar(pendenteSalvar['id'] as int);
-      }
       await ItemPesagemLocalDao.instance.excluir(item['id_local'] as int);
       return {"success": true};
     }

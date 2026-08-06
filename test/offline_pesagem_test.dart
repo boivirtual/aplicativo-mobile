@@ -505,5 +505,64 @@ void main() {
       );
       expect((completa['itens'] as List).length, 0);
     });
+
+    test('excluirItem de um item cujo envio já bateu em conflito no servidor '
+        'também cancela a pendência (bug real: ficava órfã em Pendências '
+        'de revisão mesmo depois do item excluído)', () async {
+      final resCriar = await PesagemRepository.instance.criarPesagem({
+        'bd': '97174041604',
+        'local_id': '57',
+        'epoca_id': '011',
+        'lote': 'Lote Conflito',
+        'filtro_desc': '',
+        'qtd_a_pesar': '5',
+        'criterios_lista': [],
+        'usuario': 'Teste',
+      });
+      final idPesagemTela = resCriar['pesagem_id'] as int;
+
+      await PesagemRepository.instance.salvarItem({
+        'bd': '97174041604',
+        'pesagem_id': idPesagemTela,
+        'local_id': '57',
+        'epoca_id': '011',
+        'lote': 'Lote Conflito',
+        'filtro_desc': '',
+        'usuario': 'Teste',
+        'qtd_a_pesar': '5',
+        'criterios_lista': [],
+        'item': {
+          'id_animal': '56',
+          'codigo_animal': 'B-56',
+          'peso': '300+100',
+          'sexo': 'Macho',
+        },
+      });
+
+      // Simula o que o SyncService faz quando o servidor rejeita o envio
+      // (ex: peso num formato que o servidor não aceita) — a operação vira
+      // "conflito", não "erro".
+      final pendenteAntes = await OutboxDao.instance.listarPendentes();
+      final salvarItemId = pendenteAntes
+          .firstWhere((o) => o['tipo_operacao'] == TipoOperacaoOutbox.salvarItem)['id']
+          as int;
+      await OutboxDao.instance.marcarConflito(
+        salvarItemId,
+        'Erro ao gravar item da pesagem.',
+      );
+
+      await PesagemRepository.instance.excluirItem({
+        'bd': '97174041604',
+        'pesagem_id': idPesagemTela,
+        'numero_item': 1,
+      });
+
+      final conflitos = await OutboxDao.instance.listarConflitos();
+      expect(
+        conflitos.any((o) => o['id'] == salvarItemId),
+        isFalse,
+        reason: 'operação em conflito deve ter sido cancelada junto com a exclusão do item',
+      );
+    });
   });
 }

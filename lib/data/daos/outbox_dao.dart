@@ -134,6 +134,27 @@ class OutboxDao {
     await db.delete('outbox_sincronizacao', where: 'id = ?', whereArgs: [id]);
   }
 
+  /// Cancela qualquer operação pendurada pra essa entidade, em QUALQUER
+  /// status (pendente, erro ou conflito) — diferente de
+  /// buscarPendentePorEntidade (que só olha pendente/erro, pensado pra
+  /// reescrever payload de algo que ainda vai ser tentado). Usado quando o
+  /// item é excluído de vez: mesmo que a tentativa de salvar já tenha
+  /// batido de frente com o servidor (conflito) e ficado presa em
+  /// "Pendências de revisão", excluir o item local tem que limpar isso
+  /// também, senão sobra uma pendência órfã apontando pra um item que nem
+  /// existe mais.
+  Future<void> cancelarPorEntidade(
+    String entidadeUuid,
+    String tipoOperacao,
+  ) async {
+    final db = await LocalDatabase.instance.database;
+    await db.delete(
+      'outbox_sincronizacao',
+      where: 'entidade_uuid = ? AND tipo_operacao = ?',
+      whereArgs: [entidadeUuid, tipoOperacao],
+    );
+  }
+
   Future<void> marcarConcluido(int id) async {
     final db = await LocalDatabase.instance.database;
     await db.update(

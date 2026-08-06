@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class FormularioPesagemTopoWidget extends StatelessWidget {
   final Widget filtroAtivoWidget;
@@ -191,7 +192,15 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
                       focusNode: focoNoPeso,
                       readOnly: !camposLiberados,
                       enabled: infoAnimal != null,
-                      keyboardType: TextInputType.number,
+                      // Texto (não number) de propósito: permite digitar
+                      // "=" e os operadores pra usar o campo como fórmula
+                      // (ex: "=34+10,5"), além dos dígitos normais.
+                      keyboardType: TextInputType.text,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'[0-9,.+\-*/()=]'),
+                        ),
+                      ],
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 22,

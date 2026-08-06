@@ -18,6 +18,7 @@ import 'package:boivirtual/widgets/observacao_toggle_pesagem_widget.dart';
 import 'package:boivirtual/widgets/formulario_pesagem_topo_widget.dart';
 import 'pesagem_edicao_modal.dart';
 import 'package:boivirtual/utils/app_alert.dart';
+import 'package:boivirtual/utils/calculadora_peso.dart';
 
 class PesagemItensScreen extends StatefulWidget {
   final String fazendaSelecionada;
@@ -299,8 +300,27 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
         }
       } else {
         _removerTarjaPeso();
+        _resolverFormulaDoPeso();
       }
     });
+  }
+
+  /// Se o campo Peso tiver sido digitado como fórmula (ex: "=34+10,5"),
+  /// calcula e substitui pelo resultado — igual ao Excel, o cálculo só
+  /// aparece quando o usuário sai do campo. Devolve false (e avisa o
+  /// usuário) se a fórmula for inválida, pra quem chamou poder impedir que
+  /// o item seja salvo com um peso que não faz sentido.
+  bool _resolverFormulaDoPeso() {
+    final texto = _pesoController.text;
+    if (!texto.trim().startsWith('=')) return true;
+    try {
+      final resultado = resolverFormulaPeso(texto);
+      setState(() => _pesoController.text = resultado);
+      return true;
+    } on FormatException {
+      _exibirMensagemErro("Fórmula de peso inválida.");
+      return false;
+    }
   }
 
   @override
@@ -1366,6 +1386,8 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
   Future<void> _executarAcaoPrincipal() async {
     if (_salvandoItem) return;
+
+    if (!_resolverFormulaDoPeso()) return;
 
     if (_noAnimalController.text.isEmpty || _pesoController.text.isEmpty) {
       _exibirMensagemErro("Preencha Nº Animal e Peso!");

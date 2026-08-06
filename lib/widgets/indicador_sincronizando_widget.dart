@@ -13,53 +13,60 @@ class IndicadorSincronizandoWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
-      valueListenable: SyncService.instance.sincronizando,
-      builder: (context, sincronizando, _) {
-        if (!sincronizando) return const SizedBox.shrink();
+      valueListenable: SyncService.instance.suprimirIndicador,
+      builder: (context, suprimir, __) {
+        if (suprimir) return const SizedBox.shrink();
 
-        return IgnorePointer(
-          child: Align(
-            alignment: const Alignment(0, -0.6),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 10,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+        return ValueListenableBuilder<bool>(
+          valueListenable: SyncService.instance.sincronizando,
+          builder: (context, sincronizando, _) {
+            if (!sincronizando) return const SizedBox.shrink();
+
+            return IgnorePointer(
+              child: Align(
+                alignment: const Alignment(0, -0.6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
                   ),
-                ],
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: _corTexto,
-                    ),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  SizedBox(width: 10),
-                  Text(
-                    "Sincronizando dados...",
-                    style: TextStyle(
-                      color: _corTexto,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: _corTexto,
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Text(
+                        "Sincronizando dados...",
+                        style: TextStyle(
+                          color: _corTexto,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );

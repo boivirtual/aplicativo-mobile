@@ -52,6 +52,15 @@ class SyncService {
   /// 1-2 operações; este flag cobre a duração inteira da tentativa.
   final ValueNotifier<bool> sincronizando = ValueNotifier(false);
 
+  /// true enquanto a tela de digitação de peso (PesagemItensScreen) está
+  /// aberta — usado só pra suprimir o overlay "Sincronizando dados...".
+  /// Com sinal intermitente no campo, o SyncService tenta sincronizar em
+  /// segundo plano com muita frequência, e o overlay piscando por cima da
+  /// tela atrapalha a digitação rápida de peso. A sincronização em si
+  /// continua rodando normal — só o aviso visual fica quieto enquanto o
+  /// usuário está pesando.
+  final ValueNotifier<bool> suprimirIndicador = ValueNotifier(false);
+
   void iniciar() {
     _subConectividade ??= ConnectivityService.instance.status.listen((nivel) {
       if (nivel == NivelConexao.internetOk) {

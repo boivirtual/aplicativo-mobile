@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/animal_cache_service.dart';
+import '../services/sync_service.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 import '../repositories/pesagem_repository.dart';
 import '../repositories/animal_repository.dart';
@@ -261,6 +262,13 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   void initState() {
     super.initState();
 
+    // Suprime o overlay global "Sincronizando dados..." enquanto o usuário
+    // está nesta tela — com sinal intermitente, o SyncService tenta
+    // sincronizar em segundo plano com frequência, e o aviso piscando por
+    // cima atrapalha a digitação rápida de peso. A sincronização em si
+    // continua rodando normal.
+    SyncService.instance.suprimirIndicador.value = true;
+
     _fazendaSelecionadaAtual = widget.fazendaSelecionada;
     _motivoSelecionadoAtual = widget.motivoSelecionado;
     _descricaoLoteAtual = widget.descricaoLote;
@@ -337,6 +345,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
   @override
   void dispose() {
+    SyncService.instance.suprimirIndicador.value = false;
     _debounce?.cancel();
     _timerTeclado?.cancel();
     _removerErroOverlay();

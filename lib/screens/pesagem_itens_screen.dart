@@ -312,15 +312,23 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   /// o item seja salvo com um peso que não faz sentido.
   bool _resolverFormulaDoPeso() {
     final texto = _pesoController.text;
-    if (!texto.trim().startsWith('=')) return true;
-    try {
-      final resultado = resolverFormulaPeso(texto);
-      setState(() => _pesoController.text = resultado);
-      return true;
-    } on FormatException {
-      _exibirMensagemErro("Fórmula de peso inválida.");
+    if (texto.trim().startsWith('=')) {
+      try {
+        final resultado = resolverFormulaPeso(texto);
+        setState(() => _pesoController.text = resultado);
+        return true;
+      } on FormatException {
+        _exibirMensagemErro("Fórmula de peso inválida.");
+        return false;
+      }
+    }
+    if (texto.isNotEmpty && !pesoEhNumeroValido(texto)) {
+      _exibirMensagemErro(
+        "Peso inválido. Pra usar fórmula, comece com \"=\".",
+      );
       return false;
     }
+    return true;
   }
 
   @override

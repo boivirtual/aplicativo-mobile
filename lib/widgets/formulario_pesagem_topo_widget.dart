@@ -181,44 +181,55 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   flex: 1,
-                  child: Container(
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: camposLiberados ? Colors.white : Colors.grey[200],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: TextFormField(
-                      controller: pesoController,
-                      focusNode: focoNoPeso,
-                      readOnly: !camposLiberados,
-                      enabled: infoAnimal != null,
-                      // Texto (não number) de propósito: permite digitar
-                      // "=" e os operadores pra usar o campo como fórmula
-                      // (ex: "=34+10,5"), além dos dígitos normais.
-                      keyboardType: TextInputType.text,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                          RegExp(r'[0-9,.+\-*/()=]'),
+                  child: ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: pesoController,
+                    builder: (context, valor, _) {
+                      final emModoFormula = valor.text.trim().startsWith('=');
+                      return Container(
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: emModoFormula
+                              ? Colors.blue.shade50
+                              : (camposLiberados
+                                  ? Colors.white
+                                  : Colors.grey[200]),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      ],
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: "Peso (Kg)",
-                        labelStyle: TextStyle(
-                          fontSize: 14,
-                          color: camposLiberados ? corDoRotulo : Colors.grey,
+                        child: TextFormField(
+                          controller: pesoController,
+                          focusNode: focoNoPeso,
+                          readOnly: !camposLiberados,
+                          enabled: infoAnimal != null,
+                          // Texto (não number) de propósito: permite digitar
+                          // "=" e os operadores pra usar o campo como fórmula
+                          // (ex: "=34+10,5"), além dos dígitos normais.
+                          keyboardType: TextInputType.text,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9,.+\-*/()=]'),
+                            ),
+                          ],
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: "Peso (Kg)",
+                            labelStyle: TextStyle(
+                              fontSize: 14,
+                              color:
+                                  camposLiberados ? corDoRotulo : Colors.grey,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 15,
+                              horizontal: 12,
+                            ),
+                          ),
                         ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 15,
-                          horizontal: 12,
-                        ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ),
               ],

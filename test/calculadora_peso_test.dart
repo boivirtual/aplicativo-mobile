@@ -54,4 +54,25 @@ void main() {
       expect(() => resolverFormulaPeso('=(10+5'), throwsFormatException);
     });
   });
+
+  group('pesoEhNumeroValido', () {
+    test('aceita número simples, com vírgula ou ponto', () {
+      expect(pesoEhNumeroValido('420'), true);
+      expect(pesoEhNumeroValido('34.5'), true);
+      expect(pesoEhNumeroValido('34,5'), true);
+    });
+
+    test('rejeita texto com operador sem "=" na frente (bug real: '
+        '"300+100" virava peso 0 sem avisar)', () {
+      expect(pesoEhNumeroValido('300+100'), false);
+      expect(pesoEhNumeroValido('30-5'), false);
+      expect(pesoEhNumeroValido('2*3'), false);
+    });
+
+    test('rejeita texto vazio ou não numérico', () {
+      expect(pesoEhNumeroValido(''), false);
+      expect(pesoEhNumeroValido('abc'), false);
+      expect(pesoEhNumeroValido('12.34.56'), false);
+    });
+  });
 }

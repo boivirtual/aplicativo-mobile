@@ -15,6 +15,15 @@ String resolverFormulaPeso(String texto) {
   return _formatarResultado(resultado);
 }
 
+/// true se o texto for só um número simples (dígitos + no máximo um
+/// separador decimal) — usado pra bloquear peso digitado errado quando NÃO
+/// é fórmula (ex: "300+100" sem o "=" na frente): sem essa checagem, esse
+/// texto passava direto pro salvamento e virava peso zero silenciosamente,
+/// sem avisar o usuário.
+final _numeroSimples = RegExp(r'^\d+([.,]\d+)?$');
+
+bool pesoEhNumeroValido(String texto) => _numeroSimples.hasMatch(texto.trim());
+
 String _formatarResultado(double valor) {
   if (valor.isNaN || valor.isInfinite) {
     throw const FormatException('Resultado inválido.');

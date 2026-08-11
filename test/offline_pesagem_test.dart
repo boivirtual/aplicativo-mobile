@@ -75,6 +75,39 @@ void main() {
       expect(porTelaNegativo!['id_local'], idLocal2);
     });
 
+    test('PesagemLocalDao: importarDoServidor atualiza finalizada ao reimportar uma '
+        'pesagem já conhecida (bug real: pesagem finalizada no servidor continuava '
+        '"aberta" no cache local, disparando alerta de animal repetido à toa)', () async {
+      final pesagemAberta = {
+        'tbl_pesagem_id': '919',
+        'tbl_pesagem_codigo_local': '57',
+        'tbl_pesagem_codigo_epoca': '003',
+        'tbl_pesagem_lote': 'Venda Edson Elias',
+        'tbl_pesagem_qtd_animais_a_pesar': '1',
+        'tbl_pesagem_filtros': 'FAZENDA PEDRA BONITA -> Venda',
+        'tbl_pesagem_finalizada': 'N',
+        'tbl_pesagem_criterios_apartacao': '',
+      };
+
+      final idLocal = await PesagemLocalDao.instance.importarDoServidor(
+        pesagemAberta,
+        bd: '71746307668',
+      );
+      final antes = await PesagemLocalDao.instance.buscarPorIdLocal(idLocal);
+      expect(antes!['finalizada'], 'N');
+
+      final pesagemFinalizada = Map<String, dynamic>.from(pesagemAberta)
+        ..['tbl_pesagem_finalizada'] = 'S';
+      final idLocalDeNovo = await PesagemLocalDao.instance.importarDoServidor(
+        pesagemFinalizada,
+        bd: '71746307668',
+      );
+      expect(idLocalDeNovo, idLocal, reason: 'mesma pesagem, não deve duplicar');
+
+      final depois = await PesagemLocalDao.instance.buscarPorIdLocal(idLocal);
+      expect(depois!['finalizada'], 'S');
+    });
+
     test('ItemPesagemLocalDao: numeração sequencial local e resolução por número', () async {
       final idLocalPesagem = await PesagemLocalDao.instance.inserir(
         uuid: 'uuid-item-pesagem',

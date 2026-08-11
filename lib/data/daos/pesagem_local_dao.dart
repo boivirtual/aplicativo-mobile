@@ -113,6 +113,7 @@ class PesagemLocalDao {
     String? filtroDesc,
     List<String>? criteriosLista,
     int? qtdPesadosServidor,
+    String? finalizada,
   }) async {
     final db = await LocalDatabase.instance.database;
     final valores = <String, dynamic>{
@@ -130,6 +131,7 @@ class PesagemLocalDao {
     if (criteriosLista != null) {
       valores['criterios_lista'] = json.encode(criteriosLista);
     }
+    if (finalizada != null) valores['finalizada'] = finalizada;
 
     await db.update(
       'pesagens_locais',
@@ -216,6 +218,12 @@ class PesagemLocalDao {
         filtroDesc: pesagemServidor['tbl_pesagem_filtros']?.toString(),
         criteriosLista: criteriosLista,
         qtdPesadosServidor: qtdPesadosServidor,
+        // Sem isso, uma pesagem finalizada depois de já estar cacheada
+        // neste aparelho ficava "aberta" pra sempre no cache local — e o
+        // alerta de "animal repetido em outro lote aberto" (que só olha
+        // pesagens locais com finalizada='N') continuava disparando pra
+        // animais de lotes que já tinham sido encerrados havia dias.
+        finalizada: pesagemServidor['tbl_pesagem_finalizada']?.toString(),
       );
       return existente['id_local'] as int;
     }

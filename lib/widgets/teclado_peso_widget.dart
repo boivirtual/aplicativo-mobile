@@ -24,7 +24,7 @@ class TecladoPesoWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(8, 10, 8, 10),
+      padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
       decoration: BoxDecoration(
         color: Colors.grey[100],
         border: Border(top: BorderSide(color: Colors.grey.shade300)),
@@ -40,7 +40,7 @@ class TecladoPesoWidget extends StatelessWidget {
               _botaoOperador('+'),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 5),
           Row(
             children: [
               _botaoDigito('4'),
@@ -49,7 +49,7 @@ class TecladoPesoWidget extends StatelessWidget {
               _botaoOperador('-'),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 5),
           Row(
             children: [
               _botaoDigito('7'),
@@ -58,7 +58,7 @@ class TecladoPesoWidget extends StatelessWidget {
               _botaoOperador('='),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 5),
           Row(
             children: [
               _botaoDigito(','),
@@ -72,11 +72,17 @@ class TecladoPesoWidget extends StatelessWidget {
     );
   }
 
+  // Altura enxuta de propósito: esse teclado divide a tela com o
+  // formulário inteiro (nº do animal, peso, apartação, ficha do animal,
+  // botão Confirma) — uma altura maior estourava o layout (RenderFlex
+  // overflow) em telas menores. Largura continua generosa (cada botão
+  // ocupa 1/4 da largura da tela), que é o que mais importa pra acertar
+  // o toque com a mão suja/luva.
   Widget _celula({required Widget child}) {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.all(4),
-        child: SizedBox(height: 56, child: child),
+        padding: const EdgeInsets.all(2),
+        child: SizedBox(height: 42, child: child),
       ),
     );
   }

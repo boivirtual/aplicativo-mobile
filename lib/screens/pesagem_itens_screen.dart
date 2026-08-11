@@ -342,7 +342,16 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     });
   }
 
-  void _confirmarTecladoPeso() => _focoNoPeso.unfocus();
+  void _confirmarTecladoPeso() {
+    // Peso vazio: não faz sentido "confirmar" nada — sem essa checagem, o
+    // teclado só sumia (unfocus) e o usuário ficava sem entender o que
+    // aconteceu, com o campo ainda vazio e sem teclado pra corrigir.
+    if (_pesoController.text.trim().isEmpty) {
+      _exibirMensagemErro("Digite o peso antes de confirmar.");
+      return;
+    }
+    _focoNoPeso.unfocus();
+  }
 
   /// Se o campo Peso tiver sido digitado como fórmula (ex: "=34+10,5"),
   /// calcula e substitui pelo resultado — igual ao Excel, o cálculo só

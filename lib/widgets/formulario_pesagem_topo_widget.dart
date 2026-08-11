@@ -200,10 +200,14 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
                           focusNode: focoNoPeso,
                           readOnly: !camposLiberados,
                           enabled: infoAnimal != null,
-                          // Texto (não number) de propósito: permite digitar
-                          // "=" e os operadores pra usar o campo como fórmula
-                          // (ex: "=34+10,5"), além dos dígitos normais.
-                          keyboardType: TextInputType.text,
+                          showCursor: true,
+                          // Nunca abre o teclado do sistema — a digitação
+                          // acontece só pelo TecladoPesoWidget (customizado),
+                          // que fica idêntico no Android e no iOS e já
+                          // inclui "=" e os operadores pra usar o campo como
+                          // fórmula (ex: "=34+10,5"). inputFormatters fica
+                          // como trava extra contra colar texto por fora.
+                          keyboardType: TextInputType.none,
                           inputFormatters: [
                             FilteringTextInputFormatter.allow(
                               RegExp(r'[0-9,.+\-*/()=]'),

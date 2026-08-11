@@ -17,6 +17,7 @@ import 'package:boivirtual/widgets/confirm_button_pesagem_widget.dart';
 import 'package:boivirtual/widgets/input_apartacao_pesagem_widget.dart';
 import 'package:boivirtual/widgets/observacao_toggle_pesagem_widget.dart';
 import 'package:boivirtual/widgets/formulario_pesagem_topo_widget.dart';
+import 'package:boivirtual/widgets/teclado_peso_widget.dart';
 import 'pesagem_edicao_modal.dart';
 import 'package:boivirtual/utils/app_alert.dart';
 import 'package:boivirtual/utils/calculadora_peso.dart';
@@ -94,6 +95,10 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
   bool _pesoBloqueado = true;
   VoidCallback? _onOverlayClose;
+
+  /// true enquanto o campo Peso está com foco — controla a exibição do
+  /// TecladoPesoWidget (o campo nunca abre o teclado do sistema).
+  bool _focoPesoAtivo = false;
 
   final Color corDoRotulo = Colors.blueGrey[800]!;
   int? _itemExpandidoIndex;
@@ -302,6 +307,8 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     });
 
     _focoNoPeso.addListener(() {
+      if (mounted) setState(() => _focoPesoAtivo = _focoNoPeso.hasFocus);
+
       if (_focoNoPeso.hasFocus) {
         if (infoAnimal != null && _pesoController.text.isEmpty) {
           _exibirTarjaPeso();
@@ -312,6 +319,30 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
       }
     });
   }
+
+  void _inserirCaracterePeso(String caractere) {
+    final texto = _pesoController.text + caractere;
+    setState(() {
+      _pesoController.value = TextEditingValue(
+        text: texto,
+        selection: TextSelection.collapsed(offset: texto.length),
+      );
+    });
+  }
+
+  void _apagarCaracterePeso() {
+    final texto = _pesoController.text;
+    if (texto.isEmpty) return;
+    final novoTexto = texto.substring(0, texto.length - 1);
+    setState(() {
+      _pesoController.value = TextEditingValue(
+        text: novoTexto,
+        selection: TextSelection.collapsed(offset: novoTexto.length),
+      );
+    });
+  }
+
+  void _confirmarTecladoPeso() => _focoNoPeso.unfocus();
 
   /// Se o campo Peso tiver sido digitado como fórmula (ex: "=34+10,5"),
   /// calcula e substitui pelo resultado — igual ao Excel, o cálculo só
@@ -1640,8 +1671,13 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
   @override
   Widget build(BuildContext context) {
-    bool tecladoVisivel = MediaQuery.of(context).viewInsets.bottom > 0;
     final bool camposLiberados = infoAnimal != null && !_pesoBloqueado;
+    // O campo Peso nunca abre o teclado do sistema (TecladoPesoWidget cobre
+    // esse papel) — por isso tecladoVisivel também considera o foco nele,
+    // pra esconder o rodapé do jeito que já acontecia com o teclado nativo.
+    final bool mostrarTecladoPeso = _focoPesoAtivo && camposLiberados;
+    bool tecladoVisivel =
+        MediaQuery.of(context).viewInsets.bottom > 0 || mostrarTecladoPeso;
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: false,
@@ -1894,6 +1930,12 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
                       ),
                     );
                   },
+                ),
+              if (mostrarTecladoPeso)
+                TecladoPesoWidget(
+                  onCaractere: _inserirCaracterePeso,
+                  onApagar: _apagarCaracterePeso,
+                  onConfirmar: _confirmarTecladoPeso,
                 ),
             ],
           ),

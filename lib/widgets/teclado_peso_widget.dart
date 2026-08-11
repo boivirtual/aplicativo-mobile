@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 
-/// Teclado numérico customizado pro campo Peso — desenhado do zero em vez
-/// de usar o teclado do sistema, pra ficar idêntico no Android e no iOS e
-/// pra permitir digitar fórmula (+, -, =) sem precisar trocar de layout de
-/// teclado no meio da digitação. Botões grandes de propósito (uso no
-/// curral, com a mão suja ou de luva).
+/// Teclado numérico customizado — desenhado do zero em vez de usar o
+/// teclado do sistema, pra ficar idêntico no Android e no iOS. Usado no
+/// campo Peso (com fórmula: +, -, =, vírgula) e também no Nº do Animal
+/// (apenas dígitos, via [mostrarOperadores] = false). Botões grandes de
+/// propósito (uso no curral, com a mão suja ou de luva).
 class TecladoPesoWidget extends StatelessWidget {
   final void Function(String caractere) onCaractere;
   final VoidCallback onApagar;
   final VoidCallback onConfirmar;
+  final bool mostrarOperadores;
 
   const TecladoPesoWidget({
     super.key,
     required this.onCaractere,
     required this.onApagar,
     required this.onConfirmar,
+    this.mostrarOperadores = true,
   });
 
   static const _corOperador = Color(0xFF185FA5);
@@ -31,45 +33,71 @@ class TecladoPesoWidget extends StatelessWidget {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              _botaoDigito('1'),
-              _botaoDigito('2'),
-              _botaoDigito('3'),
-              _botaoOperador('+'),
-            ],
-          ),
-          const SizedBox(height: 5),
-          Row(
-            children: [
-              _botaoDigito('4'),
-              _botaoDigito('5'),
-              _botaoDigito('6'),
-              _botaoOperador('-'),
-            ],
-          ),
-          const SizedBox(height: 5),
-          Row(
-            children: [
-              _botaoDigito('7'),
-              _botaoDigito('8'),
-              _botaoDigito('9'),
-              _botaoOperador('='),
-            ],
-          ),
-          const SizedBox(height: 5),
-          Row(
-            children: [
-              _botaoDigito(','),
-              _botaoDigito('0'),
-              _botaoApagar(),
-              _botaoConfirmar(),
-            ],
-          ),
-        ],
+        children: mostrarOperadores
+            ? _linhasComOperadores()
+            : _linhasApenasDigitos(),
       ),
     );
+  }
+
+  List<Widget> _linhasComOperadores() {
+    return [
+      Row(
+        children: [
+          _botaoDigito('1'),
+          _botaoDigito('2'),
+          _botaoDigito('3'),
+          _botaoOperador('+'),
+        ],
+      ),
+      const SizedBox(height: 5),
+      Row(
+        children: [
+          _botaoDigito('4'),
+          _botaoDigito('5'),
+          _botaoDigito('6'),
+          _botaoOperador('-'),
+        ],
+      ),
+      const SizedBox(height: 5),
+      Row(
+        children: [
+          _botaoDigito('7'),
+          _botaoDigito('8'),
+          _botaoDigito('9'),
+          _botaoOperador('='),
+        ],
+      ),
+      const SizedBox(height: 5),
+      Row(
+        children: [
+          _botaoDigito(','),
+          _botaoDigito('0'),
+          _botaoApagar(),
+          _botaoConfirmar(),
+        ],
+      ),
+    ];
+  }
+
+  List<Widget> _linhasApenasDigitos() {
+    return [
+      Row(
+        children: [_botaoDigito('1'), _botaoDigito('2'), _botaoDigito('3')],
+      ),
+      const SizedBox(height: 5),
+      Row(
+        children: [_botaoDigito('4'), _botaoDigito('5'), _botaoDigito('6')],
+      ),
+      const SizedBox(height: 5),
+      Row(
+        children: [_botaoDigito('7'), _botaoDigito('8'), _botaoDigito('9')],
+      ),
+      const SizedBox(height: 5),
+      Row(
+        children: [_botaoApagar(), _botaoDigito('0'), _botaoConfirmar()],
+      ),
+    ];
   }
 
   // Altura enxuta de propósito: esse teclado divide a tela com o

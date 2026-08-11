@@ -98,7 +98,16 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
                               controller: noAnimalController,
                               focusNode: focoNoAnimal,
                               readOnly: indexSendoEditado != null,
-                              keyboardType: TextInputType.number,
+                              // Igual ao campo Peso: nunca abre o teclado do
+                              // sistema — a digitação acontece pelo
+                              // TecladoPesoWidget (modo apenas dígitos), que
+                              // fica idêntico no Android e no iOS.
+                              // inputFormatters é trava extra contra colar
+                              // texto por fora.
+                              keyboardType: TextInputType.none,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontSize: 22,

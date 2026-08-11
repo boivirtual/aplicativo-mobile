@@ -100,6 +100,10 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   /// TecladoPesoWidget (o campo nunca abre o teclado do sistema).
   bool _focoPesoAtivo = false;
 
+  /// Mesma ideia do _focoPesoAtivo, só que pro campo Nº do Animal (teclado
+  /// em modo apenas dígitos).
+  bool _focoAnimalAtivo = false;
+
   final Color corDoRotulo = Colors.blueGrey[800]!;
   int? _itemExpandidoIndex;
 
@@ -290,6 +294,8 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     _carregarDadosBase();
 
     _focoNoAnimal.addListener(() {
+      if (mounted) setState(() => _focoAnimalAtivo = _focoNoAnimal.hasFocus);
+
       if (_focoNoAnimal.hasFocus) {
         _removerErroOverlay();
         if (_indexSendoEditado == null) {
@@ -339,6 +345,74 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
         text: novoTexto,
         selection: TextSelection.collapsed(offset: novoTexto.length),
       );
+    });
+  }
+
+  /// Mesma lógica que já existia no onChanged nativo do campo Nº do Animal
+  /// — extraída pra método porque agora também precisa ser chamada pelas
+  /// inserções/exclusões do teclado customizado, não só pelo TextField.
+  void _aoAlterarTextoAnimal(String val) {
+    if (_indexSendoEditado != null) return;
+
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () => _buscarAnimal(val));
+
+    _timerTeclado?.cancel();
+    if (val.isNotEmpty) {
+      _timerTeclado = Timer(const Duration(seconds: 2), () {
+        if (mounted && _focoNoAnimal.hasFocus) {
+          FocusScope.of(context).unfocus();
+        }
+      });
+    }
+  }
+
+  void _inserirCaractereAnimal(String caractere) {
+    if (_indexSendoEditado != null) return;
+    final texto = _noAnimalController.text + caractere;
+    setState(() {
+      _noAnimalController.value = TextEditingValue(
+        text: texto,
+        selection: TextSelection.collapsed(offset: texto.length),
+      );
+    });
+    _aoAlterarTextoAnimal(texto);
+  }
+
+  void _apagarCaractereAnimal() {
+    if (_indexSendoEditado != null) return;
+    final texto = _noAnimalController.text;
+    if (texto.isEmpty) return;
+    final novoTexto = texto.substring(0, texto.length - 1);
+    setState(() {
+      _noAnimalController.value = TextEditingValue(
+        text: novoTexto,
+        selection: TextSelection.collapsed(offset: novoTexto.length),
+      );
+    });
+    _aoAlterarTextoAnimal(novoTexto);
+  }
+
+  void _confirmarTecladoAnimal() {
+    final texto = _noAnimalController.text.trim();
+    if (texto.isEmpty) {
+      _exibirMensagemErro(
+        "Digite o número do animal.",
+        onClose: _focarNoAnimalComDelay,
+      );
+      return;
+    }
+    _debounce?.cancel();
+    _timerTeclado?.cancel();
+    _buscarAnimal(texto);
+    _focoNoAnimal.unfocus();
+  }
+
+  void _focarNoAnimalComDelay() {
+    Future.delayed(const Duration(milliseconds: 150), () {
+      if (mounted && _focoNoAnimal.canRequestFocus) {
+        _focoNoAnimal.requestFocus();
+      }
     });
   }
 
@@ -1688,8 +1762,14 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     // esse papel) — por isso tecladoVisivel também considera o foco nele,
     // pra esconder o rodapé do jeito que já acontecia com o teclado nativo.
     final bool mostrarTecladoPeso = _focoPesoAtivo && camposLiberados;
+    // Mesma ideia pro Nº do Animal: só faz sentido digitar quando não está
+    // editando um item já existente (nesse caso o campo é readOnly).
+    final bool mostrarTecladoAnimal =
+        _focoAnimalAtivo && _indexSendoEditado == null;
     bool tecladoVisivel =
-        MediaQuery.of(context).viewInsets.bottom > 0 || mostrarTecladoPeso;
+        MediaQuery.of(context).viewInsets.bottom > 0 ||
+        mostrarTecladoPeso ||
+        mostrarTecladoAnimal;
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: false,
@@ -1739,24 +1819,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
                 focoNoAnimal: _focoNoAnimal,
                 carregandoAnimal: carregandoAnimal,
 
-                onNoAnimalChanged: (val) {
-                  if (_indexSendoEditado != null) return;
-
-                  _debounce?.cancel();
-                  _debounce = Timer(
-                    const Duration(milliseconds: 400),
-                    () => _buscarAnimal(val),
-                  );
-
-                  _timerTeclado?.cancel();
-                  if (val.isNotEmpty) {
-                    _timerTeclado = Timer(const Duration(seconds: 2), () {
-                      if (mounted && _focoNoAnimal.hasFocus) {
-                        FocusScope.of(context).unfocus();
-                      }
-                    });
-                  }
-                },
+                onNoAnimalChanged: _aoAlterarTextoAnimal,
 
                 mostrandoSugestoes: mostrandoSugestoes,
                 sugestoesAnimais: sugestoesAnimais,
@@ -1942,6 +2005,13 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
                       ),
                     );
                   },
+                ),
+              if (mostrarTecladoAnimal)
+                TecladoPesoWidget(
+                  mostrarOperadores: false,
+                  onCaractere: _inserirCaractereAnimal,
+                  onApagar: _apagarCaractereAnimal,
+                  onConfirmar: _confirmarTecladoAnimal,
                 ),
               if (mostrarTecladoPeso)
                 TecladoPesoWidget(

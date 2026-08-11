@@ -67,6 +67,22 @@ class ItemPesagemLocalDao {
     );
   }
 
+  /// Quantos itens desta pesagem ainda não foram confirmados pelo servidor
+  /// (numero_item_servidor nulo) — usado pra montar a contagem "Pesados"
+  /// da lista somando com o total que o servidor já confirmou, em vez de
+  /// contar todos os itens locais (que podem estar temporariamente
+  /// desatualizados até a próxima reconciliação, ex: item excluído pelo
+  /// sistema web).
+  Future<int> contarPendentes(int pesagemIdLocal) async {
+    final db = await LocalDatabase.instance.database;
+    final r = await db.rawQuery(
+      'SELECT COUNT(*) as qtd FROM itens_pesagem_locais '
+      'WHERE pesagem_id_local = ? AND numero_item_servidor IS NULL',
+      [pesagemIdLocal],
+    );
+    return (r.first['qtd'] as int?) ?? 0;
+  }
+
   Future<Map<String, dynamic>?> buscarPorUuid(String uuid) async {
     final db = await LocalDatabase.instance.database;
     final linhas = await db.query(

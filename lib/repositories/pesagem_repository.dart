@@ -41,14 +41,20 @@ class PesagemRepository {
     final itensLocais = await ItemPesagemLocalDao.instance
         .listarPorPesagemLocal(idLocal);
 
-    // Os itens só são baixados quando a pesagem é aberta (lazy) — antes
-    // disso, itensLocais fica vazio mesmo para uma pesagem já com pesos
-    // registrados no servidor. Nesse caso usa o total que o próprio servidor
-    // informou na última listagem, pra não mostrar "0" como se os dados
-    // tivessem sumido (ver PesagemLocalDao.importarDoServidor).
-    final qtdPesados = itensLocais.isNotEmpty
-        ? itensLocais.length
-        : ((row['qtd_pesados_servidor'] as int?) ?? 0);
+    // qtd_pesados_servidor é atualizado a cada listagem online (ver
+    // PesagemLocalDao.importarDoServidor) — é o número que o SERVIDOR
+    // confirma agora, então soma só os itens locais ainda pendentes de
+    // sincronizar (esses o servidor não sabe ainda). Contar todos os itens
+    // locais direto (como era antes) dava número errado em dois casos: (1)
+    // pesagem nunca aberta neste aparelho, itens locais vazios mesmo tendo
+    // pesos no servidor; (2) item excluído por fora (sistema web) — o
+    // cache local só se limpa quando a pesagem é reaberta, então até lá
+    // ficava contando itens que já não existem mais.
+    final qtdPesadosServidor = row['qtd_pesados_servidor'] as int?;
+    final qtdPesados = qtdPesadosServidor != null
+        ? qtdPesadosServidor +
+            await ItemPesagemLocalDao.instance.contarPendentes(idLocal)
+        : itensLocais.length;
 
     return {
       'tbl_pesagem_id': idServidor ?? -idLocal,

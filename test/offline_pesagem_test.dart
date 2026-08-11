@@ -597,5 +597,51 @@ void main() {
         reason: 'operação em conflito deve ter sido cancelada junto com a exclusão do item',
       );
     });
+
+    test('listarPendentes: contagem "Pesados" usa o total confirmado pelo '
+        'servidor + itens locais pendentes, não os itens locais desatualizados '
+        '(bug real: itens excluídos pelo sistema web continuavam contados até '
+        'a pesagem ser reaberta no aparelho)', () async {
+      final pesagemServidor = {
+        'tbl_pesagem_id': '921',
+        'tbl_pesagem_codigo_local': '56',
+        'tbl_pesagem_codigo_epoca': '002',
+        'tbl_pesagem_lote': 'Teste teclado',
+        'tbl_pesagem_qtd_animais_a_pesar': '10',
+        // servidor já confirma só 1 — os outros 5 foram apagados por fora
+        // (sistema web), mas o cache local ainda não sabe disso.
+        'tbl_pesagem_qtd_animais_pesados': '1',
+        'tbl_pesagem_filtros': 'FAZENDA CASA BLANCA -> Desmama',
+        'tbl_pesagem_finalizada': 'N',
+        'tbl_pesagem_criterios_apartacao': '',
+      };
+      final idLocal = await PesagemLocalDao.instance.importarDoServidor(
+        pesagemServidor,
+        bd: '71746307668',
+      );
+
+      for (var i = 1; i <= 6; i++) {
+        await ItemPesagemLocalDao.instance.inserir(
+          pesagemIdLocal: idLocal,
+          uuid: 'importado-servidor-921-$i',
+          numeroItemLocal: i,
+          numeroItemServidor: i,
+          campos: {
+            'id_animal': '2245',
+            'codigo_animal': 'C-87',
+            'peso': '507',
+          },
+          statusSync: StatusSyncItem.sincronizado,
+        );
+      }
+
+      final lista = await PesagemRepository.instance.listarPendentes(
+        bd: '71746307668',
+        fazendas: const [56],
+      );
+      final pesagem =
+          lista.firstWhere((p) => (p as Map)['tbl_pesagem_id'] == 921) as Map;
+      expect(pesagem['tbl_pesagem_qtd_animais_pesados'], 1);
+    });
   });
 }

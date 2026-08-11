@@ -347,7 +347,10 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     // teclado só sumia (unfocus) e o usuário ficava sem entender o que
     // aconteceu, com o campo ainda vazio e sem teclado pra corrigir.
     if (_pesoController.text.trim().isEmpty) {
-      _exibirMensagemErro("Digite o peso antes de confirmar.");
+      _exibirMensagemErro(
+        "Digite o peso antes de confirmar.",
+        onClose: _focarNoPesoComDelay,
+      );
       return;
     }
     _focoNoPeso.unfocus();

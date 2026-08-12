@@ -1939,6 +1939,11 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
                     _destacarCampoAnimal = false;
                   });
                 },
+
+                // Com o teclado numérico aberto, sobra bem menos espaço na
+                // tela — sem isso as sugestões (até 6 itens) somadas ao
+                // teclado estouram o layout e cortam os botões de baixo.
+                sugestoesMaxHeight: mostrarTecladoAnimal ? 90 : 220,
               ),
               ResumoPesagemWidget(
                 qtdPesado: _qtdPesado,

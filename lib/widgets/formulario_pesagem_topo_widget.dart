@@ -30,6 +30,12 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
   final bool mostrarCursorFake;
   final VoidCallback onTapNoAnimal;
 
+  /// Altura máxima da lista de sugestões — precisa ser bem menor quando o
+  /// teclado numérico customizado também está na tela, senão os dois juntos
+  /// não cabem e o teclado estoura (RenderFlex overflow), cortando os
+  /// botões de baixo.
+  final double sugestoesMaxHeight;
+
   const FormularioPesagemTopoWidget({
     super.key,
     required this.filtroAtivoWidget,
@@ -54,6 +60,7 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
     required this.destacarCampoAnimal,
     required this.mostrarCursorFake,
     required this.onTapNoAnimal,
+    this.sugestoesMaxHeight = 220,
   });
 
   @override
@@ -163,7 +170,9 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
                           // (shrinkWrap puro) podia estourar o espaço da tela
                           // quando o teclado também estava aberto.
                           child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxHeight: 220),
+                            constraints: BoxConstraints(
+                              maxHeight: sugestoesMaxHeight,
+                            ),
                             child: ListView.builder(
                               shrinkWrap: true,
                               itemCount: sugestoesAnimais.length,

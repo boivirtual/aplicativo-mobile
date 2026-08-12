@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../repositories/animal_repository.dart';
 import '../services/connectivity_service.dart';
+import '../widgets/teclado_peso_widget.dart';
 
 class PesagemConsultaMaeModal extends StatefulWidget {
   final String cnpj;
@@ -34,10 +36,18 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
   Timer? _debounce;
   Timer? _timerTeclado;
 
+  /// true enquanto o campo Nº da Mãe está com foco — controla a exibição
+  /// do TecladoPesoWidget (modo apenas dígitos), igual ao Nº do Animal na
+  /// tela de itens: o campo nunca abre o teclado do sistema.
+  bool _focoAtivo = false;
+
   @override
   void initState() {
     super.initState();
     _carregarDados();
+    _focoBusca.addListener(() {
+      if (mounted) setState(() => _focoAtivo = _focoBusca.hasFocus);
+    });
   }
 
   @override
@@ -110,6 +120,53 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
     }
   }
 
+  void _aoAlterarTexto(String val) {
+    _timerTeclado?.cancel();
+    if (val.isNotEmpty) {
+      _timerTeclado = Timer(const Duration(seconds: 2), () {
+        if (mounted && _focoBusca.hasFocus) {
+          _focoBusca.unfocus();
+        }
+      });
+    }
+    _debounce?.cancel();
+    _debounce = Timer(
+      const Duration(milliseconds: 400),
+      () => _buscarAnimal(val),
+    );
+  }
+
+  void _inserirCaractere(String caractere) {
+    final texto = _buscaController.text + caractere;
+    setState(() {
+      _buscaController.value = TextEditingValue(
+        text: texto,
+        selection: TextSelection.collapsed(offset: texto.length),
+      );
+    });
+    _aoAlterarTexto(texto);
+  }
+
+  void _apagarCaractere() {
+    final texto = _buscaController.text;
+    if (texto.isEmpty) return;
+    final novoTexto = texto.substring(0, texto.length - 1);
+    setState(() {
+      _buscaController.value = TextEditingValue(
+        text: novoTexto,
+        selection: TextSelection.collapsed(offset: novoTexto.length),
+      );
+    });
+    _aoAlterarTexto(novoTexto);
+  }
+
+  void _confirmarTeclado() {
+    _timerTeclado?.cancel();
+    _debounce?.cancel();
+    _buscarAnimal(_buscaController.text);
+    _focoBusca.unfocus();
+  }
+
   Future<void> _buscarDetalhesMae(Map<String, dynamic> animal) async {
     setState(() {
       carregando = true;
@@ -140,92 +197,113 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
       content: SizedBox(
         width: MediaQuery.of(context).size.width * 0.9,
         height: MediaQuery.of(context).size.height * 0.7,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: TextField(
-                  controller: _buscaController,
-                  focusNode: _focoBusca,
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.left,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  decoration: const InputDecoration(
-                    labelText: "Nº da Mãe",
-                    labelStyle: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.normal,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: TextField(
+                        controller: _buscaController,
+                        focusNode: _focoBusca,
+                        // Nunca abre o teclado do sistema — digitação pelo
+                        // TecladoPesoWidget (modo apenas dígitos), igual ao
+                        // Nº do Animal na tela de itens.
+                        keyboardType: TextInputType.none,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        textAlign: TextAlign.left,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: "Nº da Mãe",
+                          labelStyle: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.normal,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 10),
+                        ),
+                        onTap: () {
+                          setState(() {
+                            _buscaController.clear();
+                            infoMae = null;
+                            sugestoesAnimais = [];
+                            mostrandoSugestoes = false;
+                          });
+                        },
+                        onChanged: _aoAlterarTexto,
+                      ),
                     ),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 10),
-                  ),
-                  onTap: () {
-                    setState(() {
-                      _buscaController.clear();
-                      infoMae = null;
-                      sugestoesAnimais = [];
-                      mostrandoSugestoes = false;
-                    });
-                  },
-                  onChanged: (val) {
-                    _timerTeclado?.cancel();
-                    if (val.isNotEmpty) {
-                      _timerTeclado = Timer(const Duration(seconds: 2), () {
-                        if (mounted && _focoBusca.hasFocus) {
-                          _focoBusca.unfocus();
-                        }
-                      });
-                    }
-                    _debounce?.cancel();
-                    _debounce = Timer(const Duration(milliseconds: 400), () {
-                      _buscarAnimal(val);
-                    });
-                  },
-                ),
-              ),
-              if (mostrandoSugestoes)
-                Container(
-                  margin: const EdgeInsets.only(top: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: _buildListaSugestoes(),
-                ),
-              if (_semInternet)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.cloud_off, color: Colors.grey.shade600, size: 18),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          "Sem internet — a consulta por mãe precisa de conexão.",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                    if (mostrandoSugestoes)
+                      Container(
+                        margin: const EdgeInsets.only(top: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: _focoAtivo ? 90 : 220,
+                          ),
+                          child: SingleChildScrollView(
+                            child: _buildListaSugestoes(),
+                          ),
                         ),
                       ),
-                    ],
-                  ),
+                    if (_semInternet)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.cloud_off,
+                              color: Colors.grey.shade600,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                "Sem internet — a consulta por mãe precisa de conexão.",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 15),
+                    if (carregando) const CircularProgressIndicator(),
+                    if (infoMae != null && !mostrandoSugestoes)
+                      _buildResultadosFilhos(),
+                  ],
                 ),
-              const SizedBox(height: 15),
-              if (carregando) const CircularProgressIndicator(),
-              if (infoMae != null && !mostrandoSugestoes)
-                _buildResultadosFilhos(),
-            ],
-          ),
+              ),
+            ),
+            if (_focoAtivo)
+              TecladoPesoWidget(
+                mostrarOperadores: false,
+                onCaractere: _inserirCaractere,
+                onApagar: _apagarCaractere,
+                onConfirmar: _confirmarTeclado,
+              ),
+          ],
         ),
       ),
       actions: [

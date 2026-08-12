@@ -585,7 +585,7 @@ class PesagemRepository {
       bodyMap['item'] as Map,
     );
 
-    final idLocalItem = await ItemPesagemLocalDao.instance.inserir(
+    await ItemPesagemLocalDao.instance.inserir(
       pesagemIdLocal: idLocalPesagem,
       uuid: itemUuid,
       numeroItemLocal: numeroLocal,
@@ -598,37 +598,16 @@ class PesagemRepository {
       ..['item'] = (Map<String, dynamic>.from(itemCampos)
         ..['uuid_app'] = itemUuid);
 
-    if (idServidorPesagem != null && _online) {
-      try {
-        final response = await http
-            .post(
-              Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/save_item.php"),
-              headers: {"Content-Type": "application/json"},
-              body: json.encode(payloadEnvio),
-            )
-            .timeout(const Duration(seconds: 8));
-        if (response.statusCode == 200) {
-          final resJson = json.decode(response.body);
-          if (resJson['success'] == true) {
-            final numeroServidor = int.parse(
-              resJson['numero_item'].toString(),
-            );
-            await ItemPesagemLocalDao.instance.confirmarSincronizacao(
-              idLocalItem,
-              numeroServidor,
-            );
-            return {
-              "success": true,
-              "pesagem_id": idServidorPesagem,
-              "numero_item": numeroServidor,
-            };
-          }
-        }
-      } catch (_) {
-        // cai para a fila offline abaixo
-      }
-    }
-
+    // Opção 2 (decidida em sessão): salvar item NUNCA espera rede, mesmo
+    // online — grava local e entra na fila, do mesmo jeito que já
+    // acontecia no caminho offline. Numa pesagem com centenas de animais
+    // em sequência, até um timeout curto "inteligente" ainda seria um
+    // imposto por animal toda vez que a rede estivesse ruim naquele
+    // instante exato (imprevisível, e pode se repetir dezenas de vezes
+    // com sinal intermitente); só o caminho 100% local remove essa
+    // variável por completo — "Confirma" fica sempre instantâneo. A
+    // reconciliação por animal+peso que já existe garante que tudo sobe
+    // certo depois, mesmo fora de ordem.
     await OutboxDao.instance.enfileirar(
       tipoOperacao: TipoOperacaoOutbox.salvarItem,
       entidadeUuid: itemUuid,
@@ -637,6 +616,10 @@ class PesagemRepository {
           : null,
       payload: payloadEnvio,
     );
+
+    // A sincronização em segundo plano (SyncService) já cuida de subir isso
+    // sozinha — pelo timer de primeiro plano (30s) ou assim que a
+    // conectividade real voltar — sem precisar de um gatilho extra aqui.
 
     return {
       "success": true,

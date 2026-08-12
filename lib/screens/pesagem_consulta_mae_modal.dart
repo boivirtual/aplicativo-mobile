@@ -201,99 +201,113 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: TextField(
-                        controller: _buscaController,
-                        focusNode: _focoBusca,
-                        // Nunca abre o teclado do sistema — digitação pelo
-                        // TecladoPesoWidget (modo apenas dígitos), igual ao
-                        // Nº do Animal na tela de itens.
-                        keyboardType: TextInputType.none,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        textAlign: TextAlign.left,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        decoration: const InputDecoration(
-                          labelText: "Nº da Mãe",
-                          labelStyle: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.normal,
+              // LayoutBuilder em vez de um valor fixo pra altura da lista de
+              // sugestões: como o teclado é um irmão FORA desse Expanded, o
+              // Column já desconta a altura dele automaticamente daqui —
+              // então a lista aproveita todo o espaço que sobra, maior com
+              // o teclado fechado e menor com ele aberto, sem precisar de
+              // dois números mágicos (90/220) fixos.
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final double alturaSugestoes = (constraints.maxHeight - 90)
+                      .clamp(80.0, 500.0);
+                  return SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(vertical: 10),
-                        ),
-                        onTap: () {
-                          setState(() {
-                            _buscaController.clear();
-                            infoMae = null;
-                            sugestoesAnimais = [];
-                            mostrandoSugestoes = false;
-                          });
-                        },
-                        onChanged: _aoAlterarTexto,
-                      ),
-                    ),
-                    if (mostrandoSugestoes)
-                      Container(
-                        margin: const EdgeInsets.only(top: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxHeight: _focoAtivo ? 90 : 220,
-                          ),
-                          child: SingleChildScrollView(
-                            child: _buildListaSugestoes(),
-                          ),
-                        ),
-                      ),
-                    if (_semInternet)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.cloud_off,
-                              color: Colors.grey.shade600,
-                              size: 18,
+                          child: TextField(
+                            controller: _buscaController,
+                            focusNode: _focoBusca,
+                            // Nunca abre o teclado do sistema — digitação
+                            // pelo TecladoPesoWidget (modo apenas dígitos),
+                            // igual ao Nº do Animal na tela de itens.
+                            keyboardType: TextInputType.none,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            textAlign: TextAlign.left,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
                             ),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                "Sem internet — a consulta por mãe precisa de conexão.",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.grey.shade700,
-                                  fontSize: 13,
-                                ),
+                            decoration: const InputDecoration(
+                              labelText: "Nº da Mãe",
+                              labelStyle: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                vertical: 10,
                               ),
                             ),
-                          ],
+                            onTap: () {
+                              setState(() {
+                                _buscaController.clear();
+                                infoMae = null;
+                                sugestoesAnimais = [];
+                                mostrandoSugestoes = false;
+                              });
+                            },
+                            onChanged: _aoAlterarTexto,
+                          ),
                         ),
-                      ),
-                    const SizedBox(height: 15),
-                    if (carregando) const CircularProgressIndicator(),
-                    if (infoMae != null && !mostrandoSugestoes)
-                      _buildResultadosFilhos(),
-                  ],
-                ),
+                        if (mostrandoSugestoes)
+                          Container(
+                            margin: const EdgeInsets.only(top: 5),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight: alturaSugestoes,
+                              ),
+                              child: SingleChildScrollView(
+                                child: _buildListaSugestoes(),
+                              ),
+                            ),
+                          ),
+                        if (_semInternet)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.cloud_off,
+                                  color: Colors.grey.shade600,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    "Sem internet — a consulta por mãe precisa de conexão.",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: Colors.grey.shade700,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        const SizedBox(height: 15),
+                        if (carregando) const CircularProgressIndicator(),
+                        if (infoMae != null && !mostrandoSugestoes)
+                          _buildResultadosFilhos(),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
             if (_focoAtivo)

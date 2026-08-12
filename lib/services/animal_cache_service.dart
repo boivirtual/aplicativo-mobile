@@ -14,6 +14,16 @@ class AnimalCacheService {
 
   final Set<String> _emAndamento = {};
 
+  /// Fazendas (chave "bd:fazendaId") cujo cadastro já foi baixado com
+  /// sucesso NESTA sessão do app — sem isso, toda vez que a tela de
+  /// pesagem era reaberta (ex: voltar do formulário, ou o pull-to-refresh
+  /// da lista de pendentes) o cadastro inteiro da fazenda era baixado de
+  /// novo, mostrando "Baixando cadastro de animais..." repetidamente
+  /// mesmo segundos depois do último download. Baixa de novo só quando o
+  /// app é reaberto (processo novo) — o cadastro não muda tão rápido a
+  /// ponto de precisar disso a cada vez que o usuário troca de tela.
+  final Set<String> _sincronizadasNestaSessao = {};
+
   /// true enquanto há pelo menos um download de cadastro de animais em
   /// andamento — usado pela tela para mostrar "Baixando dados...".
   final ValueNotifier<bool> baixando = ValueNotifier(false);
@@ -24,10 +34,12 @@ class AnimalCacheService {
     String? nomeFazenda,
   }) async {
     if (fazendaId.isEmpty || bd == null || bd.isEmpty) return;
-    if (_emAndamento.contains(fazendaId)) return;
+    final chave = '$bd:$fazendaId';
+    if (_sincronizadasNestaSessao.contains(chave)) return;
+    if (_emAndamento.contains(chave)) return;
     if (!ConnectivityService.instance.temInternetReal) return;
 
-    _emAndamento.add(fazendaId);
+    _emAndamento.add(chave);
     baixando.value = true;
     try {
       // Timeout maior que as chamadas interativas: isso baixa o cadastro
@@ -51,12 +63,17 @@ class AnimalCacheService {
             animais,
             fazendaNome: nomeFazenda,
           );
+          // Só marca como "feito nesta sessão" em caso de sucesso de
+          // verdade — se falhar (sem internet, timeout, erro do servidor),
+          // a próxima chamada tenta de novo em vez de ficar presa sem
+          // cache algum até o app reiniciar.
+          _sincronizadasNestaSessao.add(chave);
         }
       }
     } catch (_) {
       // best-effort — não deve travar nenhuma tela se isso falhar
     } finally {
-      _emAndamento.remove(fazendaId);
+      _emAndamento.remove(chave);
       if (_emAndamento.isEmpty) baixando.value = false;
     }
   }

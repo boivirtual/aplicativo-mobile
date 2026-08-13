@@ -104,6 +104,15 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   /// em modo apenas dígitos).
   bool _focoAnimalAtivo = false;
 
+  /// true só entre o momento em que um item é salvo com o Peso digitado
+  /// como fórmula (ex: "=300-180", pesagem de dois bezerros juntos na
+  /// balança) e o próximo item salvo — usado para detectar o par e
+  /// cruzar a OBS dos dois (ver _tentarCruzarObsPesagemConjunta). SEMPRE
+  /// reatribuído (nunca só setado pra true) depois de cada item novo, pra
+  /// não "grudar" e acabar cruzando a OBS de itens seguintes que não têm
+  /// nada a ver com esse par.
+  bool _ultimoItemUsouFormula = false;
+
   final Color corDoRotulo = Colors.blueGrey[800]!;
   int? _itemExpandidoIndex;
 
@@ -1436,6 +1445,55 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     }
   }
 
+  /// Pesagem de dois bezerros ariscos juntos na balança: o vaqueiro digita
+  /// o Peso do primeiro como fórmula (ex: "=300-180", total menos o peso
+  /// do segundo) e o do segundo como número normal logo em seguida. Ao
+  /// detectar esse padrão (ver chamada em _executarAcaoPrincipal), cruza a
+  /// OBS dos dois — "Pesado c/ <código do outro>" — acrescentando ao que
+  /// já houver digitado, sem sobrescrever nada.
+  Future<void> _tentarCruzarObsPesagemConjunta() async {
+    if (_itensPesados.length < 2) return;
+
+    final novo = _itensPesados[0];
+    final anterior = _itensPesados[1];
+
+    final codigoNovo = novo['alfaNumerico']?.toString() ?? '';
+    final codigoAnterior = anterior['alfaNumerico']?.toString() ?? '';
+    if (codigoNovo.isEmpty || codigoAnterior.isEmpty) return;
+
+    String acrescentar(String atual, String trecho) {
+      final limpo = atual.trim();
+      return limpo.isEmpty ? trecho : '$limpo; $trecho';
+    }
+
+    final obsAnteriorNova = acrescentar(
+      (anterior['obs'] ?? '').toString(),
+      'Pesado c/ $codigoNovo',
+    );
+    final obsNovoNova = acrescentar(
+      (novo['obs'] ?? '').toString(),
+      'Pesado c/ $codigoAnterior',
+    );
+
+    setState(() {
+      _itensPesados[1] = {...anterior, 'obs': obsAnteriorNova};
+      _itensPesados[0] = {...novo, 'obs': obsNovoNova};
+    });
+
+    await _alterarItemNoServidor(
+      anterior['numeroItem'],
+      anterior['peso'].toString(),
+      obsAnteriorNova,
+      (anterior['criterio'] ?? '').toString(),
+    );
+    await _alterarItemNoServidor(
+      novo['numeroItem'],
+      novo['peso'].toString(),
+      obsNovoNova,
+      (novo['criterio'] ?? '').toString(),
+    );
+  }
+
   void _prepararEdicao(int index) {
     final item = _itensPesados[index];
     setState(() {
@@ -1541,6 +1599,13 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
   Future<void> _executarAcaoPrincipal() async {
     if (_salvandoItem) return;
+
+    // Precisa ser capturado ANTES de resolver a fórmula (que já troca o
+    // texto do campo pelo resultado numérico) — depois disso não tem mais
+    // como saber se o usuário digitou "=300-180" ou só "120".
+    final bool pesoDigitadoComoFormula = _pesoController.text.trim().startsWith(
+      '=',
+    );
 
     if (!_resolverFormulaDoPeso()) return;
 
@@ -1662,6 +1727,15 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
         );
         return;
       }
+
+      // Pesagem de dois bezerros juntos na balança (ver
+      // _tentarCruzarObsPesagemConjunta): só entra em ação se o item
+      // ANTERIOR tiver usado fórmula no Peso e este aqui não — e sempre
+      // reatribui a flag logo depois, pra não "grudar" nos próximos itens.
+      if (_ultimoItemUsouFormula && !pesoDigitadoComoFormula) {
+        await _tentarCruzarObsPesagemConjunta();
+      }
+      _ultimoItemUsouFormula = pesoDigitadoComoFormula;
 
       if (_idPesagemServer > 0) {
         await _carregarItensDoServidor();

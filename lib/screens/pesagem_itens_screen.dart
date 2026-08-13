@@ -104,6 +104,14 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   /// em modo apenas dígitos).
   bool _focoAnimalAtivo = false;
 
+  /// true se o Peso do item que está sendo digitado AGORA foi resolvido a
+  /// partir de uma fórmula (ex: "=300-180") — marcado dentro de
+  /// _resolverFormulaDoPeso (no momento da resolução, já que por ali o
+  /// texto já vira o número puro) e sempre voltado a false sempre que o
+  /// campo Peso é limpo pra uma digitação nova (_limparCampos,
+  /// _limparPesoEFocar, foco no Nº do Animal, _prepararEdicao).
+  bool _pesoAtualUsouFormula = false;
+
   /// true só entre o momento em que um item é salvo com o Peso digitado
   /// como fórmula (ex: "=300-180", pesagem de dois bezerros juntos na
   /// balança) e o próximo item salvo — usado para detectar o par e
@@ -333,9 +341,24 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
         _resolverFormulaDoPeso();
       }
     });
+
+    // Cobre todo lugar que já faz _pesoController.clear() (limpar campos,
+    // erro de fórmula/peso inválido, cancelar, trocar de animal etc.) sem
+    // precisar caçar cada ponto um por um — assim que o campo Peso fica
+    // vazio, "esquece" que o item anterior usou fórmula.
+    _pesoController.addListener(() {
+      if (_pesoController.text.isEmpty) {
+        _pesoAtualUsouFormula = false;
+      }
+    });
   }
 
   void _inserirCaracterePeso(String caractere) {
+    // Se o usuário está digitando à mão por cima de um resultado que já
+    // tinha sido calculado por fórmula, o número final deixa de ser
+    // "puro" da fórmula — evita cruzar a OBS com o próximo item por
+    // engano.
+    _pesoAtualUsouFormula = false;
     final texto = _pesoController.text + caractere;
     setState(() {
       _pesoController.value = TextEditingValue(
@@ -346,6 +369,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   }
 
   void _apagarCaracterePeso() {
+    _pesoAtualUsouFormula = false;
     final texto = _pesoController.text;
     if (texto.isEmpty) return;
     final novoTexto = texto.substring(0, texto.length - 1);
@@ -450,6 +474,12 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
       try {
         final resultado = resolverFormulaPeso(texto);
         setState(() => _pesoController.text = resultado);
+        // Precisa marcar AQUI, não na hora de confirmar — o campo Peso já
+        // perde o foco (e essa função já roda) assim que o usuário toca
+        // "OK" no teclado numérico, bem antes de tocar em "Confirma". Se
+        // esperasse até _executarAcaoPrincipal, o texto já teria virado o
+        // número resolvido e a fórmula original estaria perdida.
+        _pesoAtualUsouFormula = true;
         return true;
       } on FormatException {
         _exibirMensagemErro(
@@ -1600,13 +1630,6 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   Future<void> _executarAcaoPrincipal() async {
     if (_salvandoItem) return;
 
-    // Precisa ser capturado ANTES de resolver a fórmula (que já troca o
-    // texto do campo pelo resultado numérico) — depois disso não tem mais
-    // como saber se o usuário digitou "=300-180" ou só "120".
-    final bool pesoDigitadoComoFormula = _pesoController.text.trim().startsWith(
-      '=',
-    );
-
     if (!_resolverFormulaDoPeso()) return;
 
     if (_noAnimalController.text.isEmpty || _pesoController.text.isEmpty) {
@@ -1732,10 +1755,14 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
       // _tentarCruzarObsPesagemConjunta): só entra em ação se o item
       // ANTERIOR tiver usado fórmula no Peso e este aqui não — e sempre
       // reatribui a flag logo depois, pra não "grudar" nos próximos itens.
-      if (_ultimoItemUsouFormula && !pesoDigitadoComoFormula) {
+      // Lida com _pesoAtualUsouFormula (não com o texto do campo, que a
+      // essa altura já foi resolvido/limpo) — precisa ser lido AQUI, antes
+      // de _limparCampos() zerar essa flag pra próxima digitação.
+      final bool esteItemUsouFormula = _pesoAtualUsouFormula;
+      if (_ultimoItemUsouFormula && !esteItemUsouFormula) {
         await _tentarCruzarObsPesagemConjunta();
       }
-      _ultimoItemUsouFormula = pesoDigitadoComoFormula;
+      _ultimoItemUsouFormula = esteItemUsouFormula;
 
       if (_idPesagemServer > 0) {
         await _carregarItensDoServidor();

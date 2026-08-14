@@ -539,6 +539,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
             motivoSelecionado,
             motivos.entries.map((e) => {'id': e.key, 'nome': e.value}).toList(),
             (val) => setState(() => motivoSelecionado = val),
+            placeholder: "...",
           ),
           const SizedBox(height: 8),
           _buildTextFieldMinimal(
@@ -1036,8 +1037,9 @@ class _PesagemScreenState extends State<PesagemScreen> {
     String label,
     String? value,
     List<Map<String, String>> items,
-    Function(String?) onChanged,
-  ) {
+    Function(String?) onChanged, {
+    String? placeholder,
+  }) {
     return Container(
       height: 55,
       padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -1055,17 +1057,30 @@ class _PesagemScreenState extends State<PesagemScreen> {
           isExpanded: true,
           initialValue:
               value, // AQUI: Trocado 'value' por 'initialValue' conforme o erro sugeriu
-          items: items
-              .map(
-                (item) => DropdownMenuItem(
-                  value: item['id'],
-                  child: Text(
-                    item['nome']!,
-                    style: const TextStyle(fontSize: 14),
-                  ),
+          items: [
+            // Item com value null pra representar "nada selecionado" de
+            // verdade — sem isso, com value inicial null e nenhum item
+            // correspondente, o Flutter destacava a PRIMEIRA opção da
+            // lista (cinza, como se já estivesse selecionada), confundindo
+            // o usuário e parecendo um título.
+            if (placeholder != null)
+              DropdownMenuItem<String>(
+                value: null,
+                child: Text(
+                  placeholder,
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
                 ),
-              )
-              .toList(),
+              ),
+            ...items.map(
+              (item) => DropdownMenuItem(
+                value: item['id'],
+                child: Text(
+                  item['nome']!,
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+            ),
+          ],
           onChanged: onChanged,
         ),
       ),

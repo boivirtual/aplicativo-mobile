@@ -427,16 +427,45 @@ class _PesagemScreenState extends State<PesagemScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (_mostrarFormulario)
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.scale, color: Color(0xFF18385F), size: 24),
-                        SizedBox(width: 8),
-                        Text(
+                        const Icon(
+                          Icons.scale,
+                          color: Color(0xFF18385F),
+                          size: 24,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
                           'Nova Pesagem',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF18385F),
+                          ),
+                        ),
+                        const Spacer(),
+                        SizedBox(
+                          height: 32,
+                          child: ElevatedButton(
+                            onPressed: () =>
+                                setState(() => _mostrarFormulario = false),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF4BBAEB),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text(
+                              'Voltar',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       ],

@@ -532,6 +532,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
                 );
               }
             },
+            placeholder: "...",
           ),
           const SizedBox(height: 8),
           _buildDropdownMinimal(

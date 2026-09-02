@@ -318,6 +318,15 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
     _carregarDadosBase();
 
+    _subPendentesSync = SyncService.instance.pendentes.listen((qtd) {
+      final diminuiu =
+          _ultimaContagemPendentes != null && qtd < _ultimaContagemPendentes!;
+      _ultimaContagemPendentes = qtd;
+      if (diminuiu && _idPesagemServer > 0 && mounted) {
+        _carregarItensDoServidor();
+      }
+    });
+
     _focoNoAnimal.addListener(() {
       if (mounted) setState(() => _focoAnimalAtivo = _focoNoAnimal.hasFocus);
 

@@ -178,6 +178,27 @@ class SyncService {
         await _reconciliarMensRepetido(entrada.key, entrada.value);
       }
 
+      if (processadas > 0) {
+        // Conseguiu concluir algo — sinal está bom na prática, não só no
+        // teste de DNS. Zera o recuo.
+        _rodadasSemProgresso = 0;
+        _proximaTentativaAutomaticaLiberada = null;
+      } else if (comErro > 0) {
+        // Tinha pendência, "conexão ok" no teste de DNS, mas nada avançou
+        // de verdade (timeout/erro real nas chamadas) — sinal ruim na
+        // prática. Espaça as PRÓXIMAS tentativas automáticas: 1min, 2min,
+        // 4min..., até 10min. O botão manual e "Tentar de novo" continuam
+        // liberados a qualquer momento (ignorarRecuo: true).
+        _rodadasSemProgresso++;
+        final minutos = (1 << (_rodadasSemProgresso - 1).clamp(0, 5)).clamp(
+          1,
+          10,
+        );
+        _proximaTentativaAutomaticaLiberada = DateTime.now().add(
+          Duration(minutes: minutos),
+        );
+      }
+
       await atualizarContagemPendentes();
       return SincronizacaoResultado(processadas: processadas, comErro: comErro);
     } finally {

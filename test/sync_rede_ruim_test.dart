@@ -16,6 +16,7 @@ import 'package:boivirtual/config/api_config.dart';
 import 'package:boivirtual/data/local_database.dart';
 import 'package:boivirtual/data/daos/outbox_dao.dart';
 import 'package:boivirtual/repositories/pesagem_repository.dart';
+import 'package:boivirtual/services/connectivity_service.dart';
 import 'package:boivirtual/services/sync_service.dart';
 
 /// Servidor de mentira que imita só o suficiente das rotas de

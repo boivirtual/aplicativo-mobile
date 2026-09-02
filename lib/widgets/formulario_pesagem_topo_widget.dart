@@ -216,7 +216,21 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
                         child: TextFormField(
                           controller: pesoController,
                           focusNode: focoNoPeso,
-                          readOnly: !camposLiberados,
+                          // SEMPRE readOnly, mesmo com camposLiberados=true
+                          // (digitação ativa) — toda escrita de verdade
+                          // acontece só programaticamente, via
+                          // TecladoPesoWidget. Deixar o campo "editável"
+                          // (readOnly: false) mesmo com
+                          // keyboardType: none ainda mantém uma conexão viva
+                          // com o teclado do sistema em alguns aparelhos —
+                          // essa conexão residual podia mandar uma
+                          // atualização por trás e "engolir" um dígito
+                          // digitado rápido no teclado customizado (bug
+                          // real: "283" virava "23"). readOnly não impede
+                          // nada programático (foco, cursor, e as
+                          // atualizações de texto continuam funcionando
+                          // normal).
+                          readOnly: true,
                           enabled: infoAnimal != null,
                           showCursor: true,
                           // Nunca abre o teclado do sistema — a digitação

@@ -45,9 +45,10 @@ void main() {
         NivelConexao.semInternet,
       );
 
-      await AnimalCacheDao.instance.salvarLote('56', [
+      await AnimalCacheDao.instance.salvarLote([
         {
           'id': '900001',
+          'fazendaId': '56',
           'codigo': 'C-000000087',
           'sexo': 'F',
           'nascimento': '2013-01-01',
@@ -56,6 +57,7 @@ void main() {
         },
         {
           'id': '900002',
+          'fazendaId': '56',
           'codigo': 'B-000001129',
           'sexo': 'F',
           'nascimento': isoHaMeses(2),
@@ -105,9 +107,10 @@ void main() {
         NivelConexao.semInternet,
       );
 
-      await AnimalCacheDao.instance.salvarLote('56', [
+      await AnimalCacheDao.instance.salvarLote([
         {
           'id': '900001',
+          'fazendaId': '56',
           'codigo': 'C-000000087',
           'sexo': 'F',
           'nascimento': '2013-01-01',
@@ -116,6 +119,7 @@ void main() {
         },
         {
           'id': '900002',
+          'fazendaId': '56',
           'codigo': 'B-000001129',
           'sexo': 'F',
           'nascimento': isoHaMeses(2),

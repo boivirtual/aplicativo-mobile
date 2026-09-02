@@ -66,7 +66,7 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
     if (!mounted) return;
 
     if (isLoggedIn) {
-      Navigator.pushReplacementNamed(context, '/main');
+      Navigator.pushReplacementNamed(context, '/atualizando');
     } else {
       Navigator.pushReplacementNamed(context, '/login');
     }

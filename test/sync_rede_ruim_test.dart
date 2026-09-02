@@ -96,11 +96,11 @@ class ServidorDeMentira {
 
     if (derrubarAposProximaCriacaoDePesagem) {
       derrubarAposProximaCriacaoDePesagem = false;
-      // Agenda a queda pra depois desta resposta já ter sido enviada de
-      // verdade pelo socket — um microtask era cedo demais (o handler
-      // retornar não garante que os bytes já saíram); um delay pequeno dá
-      // tempo do cliente receber a resposta antes do servidor cair.
-      Future.delayed(const Duration(milliseconds: 100), derrubar);
+      // close() SEM force só para de aceitar conexões NOVAS — a conexão
+      // desta própria resposta, já aceita, continua e entrega normal.
+      // Determinístico (sem depender de cronometrar um delay): a próxima
+      // requisição (save_item.php) já não encontra o servidor ouvindo.
+      unawaited(_http?.close());
     }
 
     return Response.ok(json.encode({"success": true, "pesagem_id": id}));

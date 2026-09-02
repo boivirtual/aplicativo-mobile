@@ -61,10 +61,20 @@ class SyncService {
   /// usuário está pesando.
   final ValueNotifier<bool> suprimirIndicador = ValueNotifier(false);
 
+  /// Quantas rodadas seguidas de sincronização automática tiveram operação
+  /// pendente mas não conseguiram concluir nenhuma — usado pra espaçar mais
+  /// as tentativas automáticas quando o sinal está "ok" pelo teste rápido
+  /// de DNS mas ruim na prática (timeouts reais nas chamadas). Zera assim
+  /// que uma rodada consegue concluir algo.
+  int _rodadasSemProgresso = 0;
+  DateTime? _proximaTentativaAutomaticaLiberada;
+
   void iniciar() {
+    // Conectividade acabou de voltar: sempre vale tentar na hora, ignorando
+    // o recuo (é um evento novo, não a mesma tentativa insistindo).
     _subConectividade ??= ConnectivityService.instance.status.listen((nivel) {
       if (nivel == NivelConexao.internetOk) {
-        sincronizarAgora();
+        sincronizarAgora(ignorarRecuo: true);
       }
     });
     _timerForeground ??= Timer.periodic(const Duration(seconds: 30), (_) {

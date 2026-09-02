@@ -302,6 +302,15 @@ class ItemPesagemLocalDao {
   ///   vez (foi renumerado por causa da exclusão de outro item), corrige o
   ///   número local -> uma futura edição/exclusão feita neste app aponta
   ///   pro item certo, não pro que passou a ocupar aquele número.
+  /// - também atualiza os demais campos "de conteúdo" (obs, critério de
+  ///   apartação, mens. repetido, etc.) com o que está no servidor agora —
+  ///   sem isso, uma obs incluída pelo sistema web (ex: item editado por
+  ///   fora) nunca aparecia no app depois de sincronizar, porque essa
+  ///   reconciliação só corrigia o número, nunca o resto do item já
+  ///   confirmado. Exceção: se este aparelho tem uma edição desse mesmo
+  ///   item ainda pendente de subir (EDITAR_ITEM na fila), não mexe nesses
+  ///   campos — senão jogaria fora um ajuste feito offline que ainda não
+  ///   teve chance de sincronizar.
   ///
   /// Nunca toca em item ainda pendente de sincronizar
   /// (numero_item_servidor nulo): esse ainda não existe no servidor pra
@@ -316,7 +325,7 @@ class ItemPesagemLocalDao {
     String chave(String idAnimal, dynamic peso) =>
         '$idAnimal|${_pesoNormalizado(peso)}';
 
-    final numerosPorChave = <String, List<int>>{};
+    final itensPorChave = <String, List<Map>>{};
     for (final item in itensServidor) {
       final mapa = item as Map;
       final idAnimal = mapa['tbl_ite_pesagem_codigo_id_animal']?.toString();
@@ -324,17 +333,29 @@ class ItemPesagemLocalDao {
         mapa['tbl_ite_pesagem_numero_item']?.toString() ?? '',
       );
       if (idAnimal == null || numero == null) continue;
-      numerosPorChave
+      itensPorChave
           .putIfAbsent(chave(idAnimal, mapa['tbl_ite_pesagem_peso']), () => [])
-          .add(numero);
+          .add(mapa);
     }
-    for (final lista in numerosPorChave.values) {
-      lista.sort();
+    for (final lista in itensPorChave.values) {
+      lista.sort((a, b) {
+        final na =
+            int.tryParse(a['tbl_ite_pesagem_numero_item'].toString()) ?? 0;
+        final nb =
+            int.tryParse(b['tbl_ite_pesagem_numero_item'].toString()) ?? 0;
+        return na.compareTo(nb);
+      });
     }
 
     final confirmados = await db.query(
       'itens_pesagem_locais',
-      columns: ['id_local', 'id_animal', 'peso', 'numero_item_servidor'],
+      columns: [
+        'id_local',
+        'uuid',
+        'id_animal',
+        'peso',
+        'numero_item_servidor',
+      ],
       where: 'pesagem_id_local = ? AND numero_item_servidor IS NOT NULL',
       whereArgs: [pesagemIdLocal],
       orderBy: 'numero_item_servidor ASC',
@@ -342,7 +363,7 @@ class ItemPesagemLocalDao {
 
     for (final linha in confirmados) {
       final idAnimal = linha['id_animal']?.toString() ?? '';
-      final candidatos = numerosPorChave[chave(idAnimal, linha['peso'])];
+      final candidatos = itensPorChave[chave(idAnimal, linha['peso'])];
 
       if (candidatos == null || candidatos.isEmpty) {
         await db.delete(
@@ -353,11 +374,48 @@ class ItemPesagemLocalDao {
         continue;
       }
 
-      final novoNumero = candidatos.removeAt(0);
+      final itemServidor = candidatos.removeAt(0);
+      final novoNumero = int.parse(
+        itemServidor['tbl_ite_pesagem_numero_item'].toString(),
+      );
+
+      final valores = <String, dynamic>{};
       if (novoNumero != linha['numero_item_servidor']) {
+        valores['numero_item_servidor'] = novoNumero;
+      }
+
+      final pendenteEdicao = await OutboxDao.instance.buscarPendentePorEntidade(
+        linha['uuid'] as String,
+        TipoOperacaoOutbox.editarItem,
+      );
+      if (pendenteEdicao == null) {
+        valores['codigo_animal'] =
+            itemServidor['tbl_ite_pesagem_codigo_animal']?.toString();
+        valores['ultimo_peso'] =
+            itemServidor['tbl_ite_pesagem_ultimo_peso']?.toString();
+        valores['sexo'] = itemServidor['tbl_ite_pesagem_sexo']?.toString();
+        valores['nascimento'] =
+            itemServidor['tbl_ite_pesagem_nascimento']?.toString();
+        valores['raca'] = itemServidor['tbl_ite_pesagem_raca']?.toString();
+        valores['pelagem'] =
+            itemServidor['tbl_ite_pesagem_pelagem']?.toString();
+        valores['mae'] = itemServidor['tbl_ite_pesagem_mae']?.toString();
+        valores['obs'] =
+            itemServidor['tbl_ite_pesagem_observacao']?.toString() ?? '';
+        valores['mens_repetido'] =
+            itemServidor['tbl_ite_pesagem_mens_repetido']?.toString() ?? '';
+        valores['id_pesagem_repetido'] =
+            itemServidor['tbl_ite_pesagem_id_repetido']?.toString() ?? '0';
+        valores['criterio_apartacao'] =
+            itemServidor['tbl_ite_pesagem_criterio_apartacao']?.toString() ??
+            '';
+      }
+
+      if (valores.isNotEmpty) {
+        valores['atualizado_em'] = DateTime.now().toIso8601String();
         await db.update(
           'itens_pesagem_locais',
-          {'numero_item_servidor': novoNumero},
+          valores,
           where: 'id_local = ?',
           whereArgs: [linha['id_local']],
         );

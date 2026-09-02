@@ -1764,9 +1764,15 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
       }
       _ultimoItemUsouFormula = esteItemUsouFormula;
 
-      if (_idPesagemServer > 0) {
-        await _carregarItensDoServidor();
-      }
+      // Não relê o banco local inteiro aqui — o item que acabou de ser
+      // salvo já está certo na lista (inserido no início desta função,
+      // ANTES de _enviarItemParaServidor). Reler tudo a cada peso confirmado
+      // ficava cada vez mais pesado numa pesagem grande (até 300 animais).
+      // A tela só relê o banco inteiro nos pontos em que algo pode mudar
+      // por fora da ação direta do vaqueiro: confirmação em segundo plano
+      // (ver o listener de SyncService.instance.pendentes no initState),
+      // a pesagem em par (_tentarCruzarObsPesagemConjunta, já tratada
+      // acima) e ao reabrir a pesagem (_carregarDadosBase).
 
       int limite = int.tryParse(_qtdAPesarAtual) ?? 0;
       if (!_mensagemLimiteExibida && limite > 0 && _qtdPesado > limite) {

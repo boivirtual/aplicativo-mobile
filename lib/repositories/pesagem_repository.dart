@@ -336,31 +336,8 @@ class PesagemRepository {
     final payloadEnvio = Map<String, dynamic>.from(bodyMap)
       ..['pesagem_id'] = idServidor;
 
-    if (_online) {
-      try {
-        final response = await http
-            .post(
-              Uri.parse(
-                "${ApiConfig.baseUrl}/rest/pesagem/update_pesagem.php",
-              ),
-              headers: {"Content-Type": "application/json"},
-              body: json.encode(payloadEnvio),
-            )
-            .timeout(const Duration(seconds: 8));
-        if (response.statusCode == 200) {
-          final resJson = json.decode(response.body);
-          if (resJson['success'] == true) {
-            return {
-              "success": true,
-              "message": resJson['message'] ?? "Pesagem atualizada com sucesso.",
-            };
-          }
-        }
-      } catch (_) {
-        // cai para a fila offline abaixo
-      }
-    }
-
+    // Opção 2: nunca espera rede aqui também — grava local (já feito acima)
+    // e entra na fila sempre.
     await OutboxDao.instance.enfileirar(
       tipoOperacao: TipoOperacaoOutbox.editarPesagem,
       entidadeUuid: local['uuid'] as String,

@@ -211,7 +211,7 @@ void main() {
 
   setUp(() async {
     await LocalDatabase.instance.resetarParaTeste();
-    servidor.modoRespostaMalformada = false;
+    servidor.resetar();
   });
 
   tearDown(() async {

@@ -87,7 +87,7 @@ class ConnectivityService {
 
     try {
       final res = await InternetAddress.lookup(
-        'agrolandes.com.br',
+        hostParaChecagem,
       ).timeout(const Duration(seconds: 3));
 
       if (res.isNotEmpty && res[0].rawAddress.isNotEmpty) {

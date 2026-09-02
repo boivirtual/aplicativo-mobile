@@ -27,6 +27,14 @@ class ConnectivityService {
 
   static final ConnectivityService instance = ConnectivityService._();
 
+  /// Host usado no lookup DNS que confirma internet de verdade. Não é
+  /// `const` de propósito: os testes de rede ruim
+  /// (test/sync_rede_ruim_test.dart) apontam isso pra "localhost" antes de
+  /// rodar, pra não depender de internet real (nem de conseguir resolver o
+  /// domínio de produção) dentro do ambiente de teste. Em produção nunca
+  /// muda do valor abaixo.
+  static String hostParaChecagem = 'agrolandes.com.br';
+
   final StreamController<NivelConexao> _controller =
       StreamController<NivelConexao>.broadcast();
 

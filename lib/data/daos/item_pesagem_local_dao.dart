@@ -63,7 +63,23 @@ class ItemPesagemLocalDao {
       'itens_pesagem_locais',
       where: 'pesagem_id_local = ?',
       whereArgs: [pesagemIdLocal],
-      orderBy: 'numero_item_local DESC',
+      // Item mais recente sempre no topo (mesmo comportamento de quando
+      // está digitando). numero_item_local sozinho não é confiável pra
+      // isso: uma importação antiga (antes da correção em
+      // importarDoServidor) pode ter deixado esse número fora de ordem
+      // para itens já confirmados, e não há como "consertar" o que já foi
+      // gravado sem reprocessar a pesagem inteira. numero_item_servidor,
+      // esse sim é sempre o número real e correto (reconciliarComServidor
+      // garante isso) — então pra item já confirmado (numero_item_servidor
+      // preenchido) usa ele pra ordenar; item ainda pendente de
+      // sincronizar (numero_item_servidor nulo — normalmente é o que
+      // acabou de ser digitado) sempre aparece antes de qualquer item já
+      // confirmado, e entre pendentes usa numero_item_local (que pra esses
+      // continua correto, é atribuído na hora que o próprio app grava).
+      orderBy:
+          'CASE WHEN numero_item_servidor IS NULL THEN 0 ELSE 1 END ASC, '
+          'numero_item_servidor DESC, '
+          'numero_item_local DESC',
     );
   }
 

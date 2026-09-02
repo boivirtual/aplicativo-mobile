@@ -13,6 +13,15 @@ class LocalDatabase {
 
   static const int _versaoSchema = 4;
 
+  /// Nome do arquivo do banco — não é `const` de propósito: os testes
+  /// automatizados rodam vários arquivos em paralelo (isolates diferentes),
+  /// e todos abrindo o MESMO arquivo físico no disco causava
+  /// "database is locked" de vez em quando quando o `flutter test` (sem
+  /// apontar um arquivo específico) rodava tudo de uma vez. Cada arquivo de
+  /// teste seta um nome próprio no início do `main()`. Em produção nunca
+  /// muda do valor abaixo.
+  static String nomeArquivo = 'boivirtual_offline.db';
+
   Database? _db;
 
   Future<Database> get database async {
@@ -21,7 +30,7 @@ class LocalDatabase {
   }
 
   Future<Database> _abrir() async {
-    final caminhoBanco = join(await getDatabasesPath(), 'boivirtual_offline.db');
+    final caminhoBanco = join(await getDatabasesPath(), nomeArquivo);
 
     return openDatabase(
       caminhoBanco,

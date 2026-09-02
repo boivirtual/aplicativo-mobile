@@ -8,19 +8,20 @@ class AnimalCacheDao {
   AnimalCacheDao._();
   static final AnimalCacheDao instance = AnimalCacheDao._();
 
-  Future<void> salvarLote(
-    String fazendaId,
-    List<Map<String, dynamic>> animais, {
-    String? fazendaNome,
-  }) async {
+  /// [animais] pode trazer qualquer fazenda misturada — desde a mudança que
+  /// parou de filtrar a exportação por fazenda, cada animal já vem com a
+  /// própria fazenda (`fazendaId`/`fazendaNome`, ver
+  /// AnimalDao::getAnimaisAtivosPorFazendaExport no servidor), não faz mais
+  /// sentido receber uma fazenda fixa aqui pra todo o lote.
+  Future<void> salvarLote(List<Map<String, dynamic>> animais) async {
     final db = await LocalDatabase.instance.database;
     final agora = DateTime.now().toIso8601String();
     final batch = db.batch();
     for (final a in animais) {
       batch.insert('animais_cache', {
         'id_animal': a['id'].toString(),
-        'fazenda_id': fazendaId,
-        'fazenda_nome': fazendaNome,
+        'fazenda_id': a['fazendaId']?.toString(),
+        'fazenda_nome': a['fazendaNome']?.toString(),
         'codigo': a['codigo']?.toString(),
         'sexo': a['sexo']?.toString(),
         'nascimento': a['nascimento']?.toString(),

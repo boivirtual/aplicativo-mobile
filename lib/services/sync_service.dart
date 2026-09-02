@@ -304,7 +304,24 @@ class SyncService {
       return false;
     }
 
-    final numeroServidor = int.parse(resJson['numero_item'].toString());
+    // Servidor respondeu success:true mas sem número de item utilizável —
+    // já aconteceu de verdade (servidor de teste desatualizado, sem o
+    // código que devolve numero_item) e derrubava aqui com uma
+    // FormatException não intencional, que o catch mais externo confundia
+    // com uma falha qualquer — o item já tinha sido gravado no servidor, e
+    // a mesma operação tentava de novo e duplicava. Agora trata isso de
+    // propósito: marca erro (com backoff) em vez de deixar a exceção
+    // acontecer sem contexto.
+    final numeroServidor = int.tryParse(resJson['numero_item']?.toString() ?? '');
+    if (numeroServidor == null) {
+      await OutboxDao.instance.marcarErro(
+        id,
+        "Servidor confirmou o salvamento mas não devolveu o número do item "
+        "(numero_item: ${resJson['numero_item']}) — provável versão "
+        "desatualizada do servidor.",
+      );
+      return false;
+    }
     final itemUuid = (payload['item'] as Map?)?['uuid_app'] as String?;
     if (itemUuid != null) {
       final itemLocal = await ItemPesagemLocalDao.instance.buscarPorUuid(

@@ -17,6 +17,10 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfiNoIsolate;
+  // Nome de arquivo próprio — evita "database is locked" quando o
+  // `flutter test` roda vários arquivos de teste em paralelo, cada um
+  // abrindo o mesmo banco físico.
+  LocalDatabase.nomeArquivo = 'test_offline_pesagem.db';
 
   // O plugin connectivity_plus não tem implementação nativa no ambiente de
   // teste (sem device/emulador) — sem esse mock, o construtor do

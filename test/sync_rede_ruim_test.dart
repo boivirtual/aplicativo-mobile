@@ -282,34 +282,19 @@ void main() {
 
         await servidor.iniciar();
         ApiConfig.baseUrl = 'http://localhost:${await servidor.porta}';
-
-        // Sincroniza só o CRIAR_PESAGEM e então derruba o servidor antes do
-        // SALVAR_ITEM ser tentado — simula a queda de sinal bem no meio de
-        // uma rodada de sincronização.
-        final pendentesAntes = await OutboxDao.instance.listarPendentes();
-        final criarPesagemOp = pendentesAntes.firstWhere(
-          (o) => o['tipo_operacao'] == TipoOperacaoOutbox.criarPesagem,
-        );
-        await SyncService.instance.reenfileirar(criarPesagemOp['id'] as int);
-
-        // Processa só a criação da pesagem manualmente e já derruba o
-        // servidor antes de deixar o item tentar.
-        final resultadoParcial = await SyncService.instance.sincronizarAgora(
-          ignorarRecuo: true,
-        );
-        // Nesse ambiente de teste as duas operações tendem a processar na
-        // mesma rodada (servidor rápido/local) — se as duas já
-        // completaram, o cenário de queda no meio não se aplica mais e o
-        // teste só confirma que nada duplicou, o que também é válido.
-        if (resultadoParcial.processadas == 2) {
-          expect(servidor.totalItensGravados, 1);
-          return;
-        }
-
-        await servidor.derrubar();
+        // O servidor se derruba sozinho logo depois de confirmar a
+        // criação da pesagem — a rodada de sincronização abaixo processa
+        // CRIAR_PESAGEM com sucesso e já encontra o servidor fora do ar na
+        // hora de tentar o SALVAR_ITEM, de forma determinística.
+        servidor.derrubarAposProximaCriacaoDePesagem = true;
 
         final resultadoComQueda = await SyncService.instance.sincronizarAgora(
           ignorarRecuo: true,
+        );
+        expect(
+          resultadoComQueda.processadas,
+          1,
+          reason: 'CRIAR_PESAGEM confirmou antes da queda',
         );
         expect(
           resultadoComQueda.comErro,

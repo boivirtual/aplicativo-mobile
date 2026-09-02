@@ -30,9 +30,10 @@ void main() {
   test('autocomplete e ficha do animal vêm do cache local quando offline', () async {
     ConnectivityService.instance.forcarNivelParaTeste(NivelConexao.semInternet);
 
-    await AnimalCacheDao.instance.salvarLote('57', [
+    await AnimalCacheDao.instance.salvarLote([
       {
         'id': '900001',
+        'fazendaId': '57',
         'codigo': 'B-000000001',
         'sexo': 'F',
         'nascimento': '2022-01-15',
@@ -45,6 +46,7 @@ void main() {
       },
       {
         'id': '900002',
+        'fazendaId': '57',
         'codigo': 'B-000000002',
         'sexo': 'M',
         'nascimento': '2021-03-20',

@@ -33,9 +33,11 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (success) {
-      // Se deu certo, vai para a tela principal e remove a tela de login da pilha
+      // Se deu certo, vai pra tela de "Atualizando dados" (que libera a
+      // tela principal só depois de atualizar cadastro de animais e
+      // pesagens) e remove a tela de login da pilha.
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/main');
+        Navigator.pushReplacementNamed(context, '/atualizando');
       }
     } else {
       // Se deu errado, mostra um aviso

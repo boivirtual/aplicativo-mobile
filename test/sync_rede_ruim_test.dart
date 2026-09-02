@@ -246,15 +246,6 @@ void main() {
         await servidor.iniciar();
         ApiConfig.baseUrl = 'http://localhost:${await servidor.porta}';
 
-        // ignore: avoid_print
-        print('DEBUG baseUrl=${ApiConfig.baseUrl}');
-        await ConnectivityService.instance.verificarAgora();
-        // ignore: avoid_print
-        print(
-          'DEBUG nivel=${ConnectivityService.instance.nivelAtual} '
-          'temInternetReal=${ConnectivityService.instance.temInternetReal}',
-        );
-
         final resultado1 = await SyncService.instance.sincronizarAgora(
           ignorarRecuo: true,
         );

@@ -1076,11 +1076,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     if (fazendasJson != null) {
       setState(() => fazendasCarregadas = json.decode(fazendasJson));
     }
-    AnimalCacheService.instance.garantirCacheDaFazenda(
-      _fazendaSelecionadaAtual,
-      cnpjParaBanco,
-      nomeFazenda: _getNomeFazenda(_fazendaSelecionadaAtual),
-    );
+    AnimalCacheService.instance.garantirCacheCompleto(cnpjParaBanco);
     // id > 0: pesagem já sincronizada; id < 0: ainda só existe localmente
     // (offline). Nos dois casos há itens locais a carregar; só id == 0
     // (nunca deveria acontecer neste ponto) não dispara a busca.

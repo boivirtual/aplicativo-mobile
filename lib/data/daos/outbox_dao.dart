@@ -98,7 +98,15 @@ class OutboxDao {
 
   /// Busca a operação pendente mais recente para uma entidade+tipo (usado
   /// para reescrever o payload em vez de duplicar operação, ex: editar um
-  /// item que ainda não foi sincronizado).
+  /// item que ainda não foi sincronizado) — e também pra decidir se algo
+  /// AINDA depende dela (ver sincronizarAgora em sync_service.dart).
+  ///
+  /// Inclui status `conflito`: uma operação recusada pelo servidor não para
+  /// de "bloquear" só porque o app desistiu de tentar sozinho — ela continua
+  /// pendente de resolução até o usuário decidir algo em "Pendências de
+  /// revisão" (bug real: itens SALVAR_ITEM dependentes de um CRIAR_PESAGEM
+  /// em conflito continuavam tentando sincronizar sem o cabeçalho existir
+  /// de verdade no servidor, ficando presos num loop silencioso).
   Future<Map<String, dynamic>?> buscarPendentePorEntidade(
     String entidadeUuid,
     String tipoOperacao,
@@ -106,12 +114,14 @@ class OutboxDao {
     final db = await LocalDatabase.instance.database;
     final linhas = await db.query(
       'outbox_sincronizacao',
-      where: 'entidade_uuid = ? AND tipo_operacao = ? AND status IN (?, ?)',
+      where:
+          'entidade_uuid = ? AND tipo_operacao = ? AND status IN (?, ?, ?)',
       whereArgs: [
         entidadeUuid,
         tipoOperacao,
         StatusOutbox.pendente,
         StatusOutbox.erro,
+        StatusOutbox.conflito,
       ],
       orderBy: 'id DESC',
       limit: 1,

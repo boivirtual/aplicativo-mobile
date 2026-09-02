@@ -158,10 +158,11 @@ class ServidorDeMentira {
 /// HTTP de verdade (só que contra localhost, nunca a internet), então
 /// devolvemos o HttpClient real de propósito.
 class _HttpOverridesReais extends HttpOverrides {
-  @override
-  HttpClient createHttpClient(SecurityContext? context) {
-    return HttpClient(context: context);
-  }
+  // Chamar o construtor público HttpClient(...) aqui de dentro recriava o
+  // mesmo override recursivamente (Stack Overflow) — o próprio HttpClient()
+  // consulta HttpOverrides.current pra decidir como se construir. A
+  // implementação padrão de HttpOverrides (via super) já constrói o
+  // cliente real, sem passar de novo pelo override.
 }
 
 void main() {

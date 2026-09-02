@@ -346,6 +346,13 @@ void main() {
           reason: 'item continua na fila, não foi perdido',
         );
 
+        // Simula o tempo de espera do backoff (aplicado pela falha real
+        // acima) já ter passado — mesma ideia usada no teste da resposta
+        // malformada.
+        await OutboxDao.instance.reenfileirar(
+          pendentesDepoisDaQueda.first['id'] as int,
+        );
+
         // Servidor volta.
         await servidor.iniciar();
         ApiConfig.baseUrl = 'http://localhost:${await servidor.porta}';

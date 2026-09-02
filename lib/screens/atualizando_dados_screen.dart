@@ -53,7 +53,7 @@ class _AtualizandoDadosScreenState extends State<AtualizandoDadosScreen> {
     } catch (_) {
       // Sem internet, timeout, ou qualquer erro — segue pro app mesmo
       // assim, com o que já estiver em cache local. O que não terminou
-      // continua rodando sozinho em segundo plano (ver garantirCacheDaFazenda
+      // continua rodando sozinho em segundo plano (ver garantirCacheCompleto
       // e garantirItensDasPendentes, que não são cancelados pelo timeout).
     } finally {
       if (mounted) {

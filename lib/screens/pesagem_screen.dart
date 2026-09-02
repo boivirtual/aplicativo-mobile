@@ -555,10 +555,12 @@ class _PesagemScreenState extends State<PesagemScreen> {
             (val) {
               setState(() => fazendaSelecionada = val);
               if (val != null) {
-                AnimalCacheService.instance.garantirCacheDaFazenda(
-                  val,
+                // Cadastro completo (todas as fazendas) já foi/está sendo
+                // baixado uma vez só em _carregarDadosIniciais — trocar de
+                // fazenda no dropdown não precisa baixar nada de novo,
+                // garantirCacheCompleto já dedupe por bd nesta sessão.
+                AnimalCacheService.instance.garantirCacheCompleto(
                   _cnpjCarregado,
-                  nomeFazenda: _getNomeFazenda(val),
                 );
               }
             },

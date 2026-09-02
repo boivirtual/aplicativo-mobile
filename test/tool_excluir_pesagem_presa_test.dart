@@ -6,11 +6,12 @@ import 'package:boivirtual/data/daos/pesagem_local_dao.dart';
 void main() {
   test('excluir a pesagem presa (id_local=13, lote teste, 27/08/2026)', () async {
     sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
     // Faz o LocalDatabase apontar pro arquivo puxado do celular, em vez de
     // um banco de teste novo — assim a exclusão usa o DAO de verdade (mesmo
     // código do app) só que sobre o arquivo real.
     LocalDatabase.nomeArquivo = 'boivirtual_offline.db';
-    await databaseFactoryFfi.setDatabasesPath(
+    await databaseFactory.setDatabasesPath(
       r'C:\Users\George\AppData\Local\Temp',
     );
 

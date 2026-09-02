@@ -1120,7 +1120,17 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
               ),
               'alfaNumerico': item['tbl_ite_pesagem_codigo_animal'],
               'peso': pesoInteiro.toString(),
-              'sexo': item['tbl_ite_pesagem_sexo'] == 'Macho' ? 'M' : 'F',
+              // Aceita as duas formas em que o sexo pode estar salvo aqui:
+              // "Macho"/"Fêmea" (item importado do servidor, formato cru do
+              // banco) ou "M"/"F" (item pesado no próprio app, formato que a
+              // tela usa ao gravar localmente — linha ~1741). Antes só
+              // reconhecia "Macho", então todo item pesado no app (salvo
+              // como "M") caía no else e virava "F" ao recarregar a lista.
+              'sexo':
+                  (item['tbl_ite_pesagem_sexo'] == 'Macho' ||
+                      item['tbl_ite_pesagem_sexo'] == 'M')
+                  ? 'M'
+                  : 'F',
               'nascimento': item['tbl_ite_pesagem_nascimento'],
               'raca': item['tbl_ite_pesagem_raca'],
               'pelagem': item['tbl_ite_pesagem_pelagem'],

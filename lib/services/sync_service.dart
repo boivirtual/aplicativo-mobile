@@ -158,6 +158,11 @@ class SyncService {
       final Map<int, String?> pesagensParaReconciliar = {};
 
       for (final operacao in pendentes) {
+        // ignore: avoid_print
+        print(
+          'DEBUG sync: op id=${operacao['id']} tipo=${operacao['tipo_operacao']} '
+          'status=${operacao['status']} podeTentar=${OutboxDao.instance.podeTentarAgora(operacao)}',
+        );
         if (!OutboxDao.instance.podeTentarAgora(operacao)) continue;
 
         final dependeDe = operacao['depende_de_uuid'] as String?;
@@ -167,6 +172,8 @@ class SyncService {
                 dependeDe,
                 TipoOperacaoOutbox.criarPesagem,
               );
+          // ignore: avoid_print
+          print('DEBUG sync: op id=${operacao['id']} aindaPendente=$aindaPendente');
           if (aindaPendente != null) continue;
         }
 
@@ -174,6 +181,8 @@ class SyncService {
           operacao,
           pesagensParaReconciliar,
         );
+        // ignore: avoid_print
+        print('DEBUG sync: op id=${operacao['id']} sucesso=$sucesso');
         if (sucesso) {
           processadas++;
         } else {

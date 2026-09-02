@@ -82,18 +82,23 @@ class AnimalCacheService {
   /// devolvido no login) — necessário pra "Consultar Mãe" funcionar offline,
   /// já que essa busca não é restrita à fazenda selecionada na tela, é
   /// global entre todos os locais do usuário.
+  ///
+  /// Baixa todas as fazendas em paralelo (Future.wait) e só resolve quando
+  /// TODAS terminarem — quem chama sem dar `await` (ex: PesagemScreen, ao
+  /// selecionar uma fazenda) continua funcionando exatamente igual, fire-
+  /// -and-forget; quem PRECISA esperar terminar de verdade (ex: a tela de
+  /// "Atualizando dados" no login) agora pode.
   Future<void> garantirCacheDeTodasFazendas(
     List<dynamic> fazendas,
     String? bd,
   ) async {
-    for (final f in fazendas) {
-      final mapa = f as Map;
-      final id = mapa['id']?.toString() ?? '';
-      final nome = mapa['nome']?.toString();
-      // Fire-and-forget: cada chamada já se protege sozinha (conectividade,
-      // dedup por fazenda em andamento); não precisa esperar uma pra
-      // disparar a próxima.
-      garantirCacheDaFazenda(id, bd, nomeFazenda: nome);
-    }
+    await Future.wait(
+      fazendas.map((f) {
+        final mapa = f as Map;
+        final id = mapa['id']?.toString() ?? '';
+        final nome = mapa['nome']?.toString();
+        return garantirCacheDaFazenda(id, bd, nomeFazenda: nome);
+      }),
+    );
   }
 }

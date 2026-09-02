@@ -90,7 +90,9 @@ class _PesagemScreenState extends State<PesagemScreen> {
 
   Future<void> _sincronizarAgora() async {
     setState(() => _sincronizandoManualmente = true);
-    final resultado = await SyncService.instance.sincronizarAgora();
+    final resultado = await SyncService.instance.sincronizarAgora(
+      ignorarRecuo: true,
+    );
     if (!mounted) return;
     setState(() => _sincronizandoManualmente = false);
 

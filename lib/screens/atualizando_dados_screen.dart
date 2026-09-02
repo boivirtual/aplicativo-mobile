@@ -76,10 +76,7 @@ class _AtualizandoDadosScreenState extends State<AtualizandoDadosScreen> {
     );
 
     await Future.wait([
-      AnimalCacheService.instance.garantirCacheDeTodasFazendas(
-        fazendas,
-        cnpj,
-      ),
+      AnimalCacheService.instance.garantirCacheCompleto(cnpj),
       PesagemRepository.instance.garantirItensDasPendentes(cnpj),
       PesagemRepository.instance.listarFinalizadas(
         bd: cnpj,

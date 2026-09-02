@@ -38,6 +38,13 @@ class ServidorDeMentira {
 
   final Set<String> _itensJaTentados = {};
 
+  /// Quando true, o servidor se derruba sozinho logo DEPOIS de responder o
+  /// próximo create_pesagem.php — simula a conexão caindo bem no meio de
+  /// uma rodada de sincronização, entre confirmar o cabeçalho e salvar o
+  /// item, de um jeito determinístico (sem depender de cronometrar de
+  /// fora).
+  bool derrubarAposProximaCriacaoDePesagem = false;
+
   Future<int> get porta async => (await _garantirIniciado())?.port ?? 0;
 
   Future<HttpServer?> _garantirIniciado() async => _http;

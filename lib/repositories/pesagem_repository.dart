@@ -266,33 +266,10 @@ class PesagemRepository {
     final payloadEnvio = Map<String, dynamic>.from(bodyMap)
       ..['uuid_app'] = uuid;
 
-    if (_online) {
-      try {
-        final response = await http
-            .post(
-              Uri.parse(
-                "${ApiConfig.baseUrl}/rest/pesagem/create_pesagem.php",
-              ),
-              headers: {"Content-Type": "application/json"},
-              body: json.encode(payloadEnvio),
-            )
-            .timeout(const Duration(seconds: 8));
-        if (response.statusCode == 200) {
-          final resJson = json.decode(response.body);
-          if (resJson['success'] == true) {
-            final idServidor = int.parse(resJson['pesagem_id'].toString());
-            await PesagemLocalDao.instance.confirmarSincronizacao(
-              idLocal,
-              idServidor,
-            );
-            return {"success": true, "pesagem_id": idServidor};
-          }
-        }
-      } catch (_) {
-        // cai para a fila offline abaixo
-      }
-    }
-
+    // Opção 2 (mesma decisão já aplicada em salvarItem, commit 232dd2b):
+    // "Iniciar Pesagem" nunca espera rede — grava local e entra na fila
+    // sempre, mesmo online. O SyncService sobe pro servidor em segundo
+    // plano.
     await OutboxDao.instance.enfileirar(
       tipoOperacao: TipoOperacaoOutbox.criarPesagem,
       entidadeUuid: uuid,

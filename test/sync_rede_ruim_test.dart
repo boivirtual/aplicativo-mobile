@@ -408,9 +408,17 @@ void main() {
         // mesmo com a resposta malformada.
         expect(servidor.totalItensGravados, 1);
 
-        // Tentativa de novo (ex: "Sincronizar agora" manual) — dessa vez a
-        // resposta vem certa, e por já ter uuid_app registrado o servidor
-        // devolve o número existente em vez de duplicar.
+        // O erro real aplica backoff (minutos de espera) antes da próxima
+        // tentativa automática — simula esse tempo já ter passado (sem
+        // esperar de verdade no teste) resetando a operação, exatamente
+        // como reenfileirar() já faz.
+        await OutboxDao.instance.reenfileirar(
+          pendentesAposMalformada.first['id'] as int,
+        );
+
+        // Tentativa de novo — dessa vez a resposta vem certa, e por já ter
+        // uuid_app registrado o servidor devolve o número existente em vez
+        // de duplicar.
         final resultado2 = await SyncService.instance.sincronizarAgora(
           ignorarRecuo: true,
         );

@@ -90,12 +90,12 @@ class _AtualizandoDadosScreenState extends State<AtualizandoDadosScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF18385F),
+    return const Scaffold(
+      backgroundColor: Color(0xFF18385F),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
+          children: [
             CircularProgressIndicator(color: Colors.white, strokeWidth: 5),
             SizedBox(height: 25),
             Text(

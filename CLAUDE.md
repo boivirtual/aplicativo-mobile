@@ -24,6 +24,14 @@ projeto completamente separado, em outra pasta (`C:\wamp64\www\reproducao\sistem
 Nunca commitar arquivos deste projeto Flutter dentro do repositório do
 sistema web, nem vice-versa.
 
+**Sobre a pasta `api/`** (backend que este app consome): ela vive dentro do
+repositório `sistema-web`, na branch **`master`** desse repositório — não
+existe mais uma branch separada só para ela (havia uma `offline-pesagem`
+nesse repositório até 2026-09-02, mas ela causava confusão real: o deploy
+manual do George sempre publica o que está no `master`, então trabalho
+feito só naquela branch nunca ia pro ar). Se for preciso editar algo em
+`api/`, é sempre no `master` do `sistema-web`.
+
 A branch de trabalho atual é `offline-pesagem`, mas o hook de auto-commit
 (veja abaixo) sempre envia para a branch que estiver ativa no momento
 (`git push origin HEAD`) — então, se a branch de trabalho mudar no futuro,

@@ -167,6 +167,11 @@ class _HttpOverridesReais extends HttpOverrides {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = _HttpOverridesReais();
+  // O lookup DNS que ConnectivityService faz pra confirmar "internet de
+  // verdade" não pode depender de internet real nem do domínio de
+  // produção dentro do ambiente de teste — aponta pro loopback, que
+  // sempre resolve na hora, local, sem rede nenhuma envolvida.
+  ConnectivityService.hostParaChecagem = 'localhost';
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfiNoIsolate;
 

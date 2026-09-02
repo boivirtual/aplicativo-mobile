@@ -126,18 +126,11 @@ class SyncService {
 
     try {
       await ConnectivityService.instance.verificarAgora();
-      // ignore: avoid_print
-      print(
-        'DEBUG sync: nivel=${ConnectivityService.instance.nivelAtual} '
-        'temInternetReal=${ConnectivityService.instance.temInternetReal}',
-      );
       if (!ConnectivityService.instance.temInternetReal) {
         return const SincronizacaoResultado(processadas: 0, comErro: 0);
       }
 
       final pendentes = await OutboxDao.instance.listarPendentes();
-      // ignore: avoid_print
-      print('DEBUG sync: pendentes.length=${pendentes.length}');
       if (pendentes.isEmpty) {
         _rodadasSemProgresso = 0;
         _proximaTentativaAutomaticaLiberada = null;

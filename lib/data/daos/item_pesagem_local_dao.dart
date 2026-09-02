@@ -394,7 +394,32 @@ class ItemPesagemLocalDao {
           0;
       var proximoLocal = maxAtual + 1;
 
-      for (final item in itensServidor) {
+      // get_pesagem_completa.php manda os itens do mais novo pro mais
+      // antigo (numero_item DESC) — é a ordem que a tela de detalhe da
+      // pesagem quer pra mostrar. Mas aqui numero_item_local precisa
+      // crescer do mais antigo pro mais novo, porque listarPorPesagemLocal
+      // exibe em numero_item_local DESC (mais recente no topo). Se
+      // processasse na ordem que chegou, o item mais novo pegaria o menor
+      // numero_item_local e o mais antigo o maior — invertendo a lista
+      // (bug real: item mais antigo aparecendo no topo depois de
+      // sincronizar). Por isso ordena por numero_item ASC antes de
+      // percorrer, sem depender da ordem em que o servidor mandou.
+      final itensOrdenados = itensServidor.toList()
+        ..sort((a, b) {
+          final numA =
+              int.tryParse(
+                (a as Map)['tbl_ite_pesagem_numero_item'].toString(),
+              ) ??
+              0;
+          final numB =
+              int.tryParse(
+                (b as Map)['tbl_ite_pesagem_numero_item'].toString(),
+              ) ??
+              0;
+          return numA.compareTo(numB);
+        });
+
+      for (final item in itensOrdenados) {
         final numeroServidor = int.parse(
           item['tbl_ite_pesagem_numero_item'].toString(),
         );

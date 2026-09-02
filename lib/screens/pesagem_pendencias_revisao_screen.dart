@@ -135,12 +135,34 @@ class _PesagemPendenciasRevisaoScreenState
             onPressed: widget.onBack,
           ),
           title: const Text(
-            'Pendências de revisão',
+            'O que o servidor recusou',
             style: TextStyle(fontSize: 16),
           ),
         ),
       ),
-      body: _carregando
+      body: Column(
+        children: [
+          if (!_carregando && _pendencias.isNotEmpty)
+            Container(
+              width: double.infinity,
+              color: Colors.blue[50],
+              padding: const EdgeInsets.all(12),
+              child: const Text(
+                "Isto é diferente de \"pendente de sincronização\": aqui o "
+                "aparelho já conseguiu falar com o servidor, e o servidor "
+                "respondeu recusando — por isso o app parou de tentar "
+                "sozinho e está esperando você decidir.",
+                style: TextStyle(fontSize: 12, color: Colors.blueGrey),
+              ),
+            ),
+          Expanded(child: _buildCorpo()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCorpo() {
+    return _carregando
           ? const Center(child: CircularProgressIndicator())
           : _pendencias.isEmpty
           ? Center(

@@ -327,11 +327,10 @@ class _PesagemScreenState extends State<PesagemScreen> {
           fazendaSelecionada = fazendasCarregadas[0]['id'].toString();
         }
       });
-      // Pré-carrega o cadastro de TODAS as fazendas do usuário (não só a
-      // selecionada) — "Consultar Mãe" busca em qualquer fazenda que o
-      // usuário tenha acesso, então precisa do cache de todas elas pra
-      // funcionar offline.
-      AnimalCacheService.instance.garantirCacheDeTodasFazendas(lista, cnpj);
+      // Pré-carrega o cadastro completo de animais do cliente (não só as
+      // fazendas do array do usuário) — "Consultar Mãe" precisa achar mãe
+      // em qualquer fazenda, inclusive fêmeas inativas com filho ativo.
+      AnimalCacheService.instance.garantirCacheCompleto(cnpj);
       setState(() => carregandoPendentes = true);
       try {
         final List<int> idsFazendas = lista

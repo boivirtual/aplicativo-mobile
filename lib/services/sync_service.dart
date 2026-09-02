@@ -266,7 +266,16 @@ class SyncService {
 
     if (idServidorPesagem == null) {
       // Cabeçalho ainda não confirmado — não deveria acontecer se a
-      // dependência foi respeitada, mas por segurança adia em vez de falhar.
+      // dependência foi respeitada (ver o filtro de status em
+      // OutboxDao.buscarPendentePorEntidade, que agora inclui `conflito`),
+      // mas por segurança marca erro (com backoff) em vez de devolver false
+      // silenciosamente — sem isso, essa operação ficava tentando de novo a
+      // cada ciclo de sync pra sempre, sem nunca aplicar espera nem aparecer
+      // como problema em lugar nenhum (bug real, causou fila presa).
+      await OutboxDao.instance.marcarErro(
+        id,
+        "Aguardando o cabeçalho da pesagem ser confirmado pelo servidor.",
+      );
       return false;
     }
 

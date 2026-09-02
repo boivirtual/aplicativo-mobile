@@ -13,6 +13,10 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfiNoIsolate;
+  // Nome de arquivo próprio — evita "database is locked" quando o
+  // `flutter test` roda vários arquivos de teste em paralelo, cada um
+  // abrindo o mesmo banco físico.
+  LocalDatabase.nomeArquivo = 'test_pendencias_revisao.db';
 
   TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
       .setMockMethodCallHandler(

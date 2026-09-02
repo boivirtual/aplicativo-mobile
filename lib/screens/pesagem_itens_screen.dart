@@ -519,6 +519,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   @override
   void dispose() {
     SyncService.instance.suprimirIndicador.value = false;
+    _subPendentesSync?.cancel();
     _debounce?.cancel();
     _timerTeclado?.cancel();
     _removerErroOverlay();

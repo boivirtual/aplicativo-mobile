@@ -104,7 +104,19 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
                             TextField(
                               controller: noAnimalController,
                               focusNode: focoNoAnimal,
-                              readOnly: indexSendoEditado != null,
+                              // SEMPRE readOnly (não só quando editando um
+                              // item existente) — mesmo motivo do campo
+                              // Peso: toda escrita já acontece
+                              // programaticamente via TecladoPesoWidget, e
+                              // deixar o campo "editável" mesmo com
+                              // keyboardType: none podia manter uma conexão
+                              // residual com o teclado do sistema em alguns
+                              // aparelhos, arriscando engolir um dígito
+                              // digitado rápido. O bloqueio de digitação
+                              // durante edição de item já é garantido à
+                              // parte, nos métodos que inserem/apagam
+                              // caractere (_indexSendoEditado != null).
+                              readOnly: true,
                               // Igual ao campo Peso: nunca abre o teclado do
                               // sistema — a digitação acontece pelo
                               // TecladoPesoWidget (modo apenas dígitos), que

@@ -686,23 +686,8 @@ class PesagemRepository {
       "criterios_lista": bodyMap['criterios_lista'],
     };
 
-    if (_online) {
-      try {
-        final response = await http
-            .post(
-              Uri.parse("${ApiConfig.baseUrl}/rest/pesagem/update_item.php"),
-              headers: {"Content-Type": "application/json"},
-              body: json.encode(payloadEnvio),
-            )
-            .timeout(const Duration(seconds: 8));
-        if (response.statusCode == 200) {
-          return {"success": true};
-        }
-      } catch (_) {
-        // cai para a fila offline abaixo
-      }
-    }
-
+    // Opção 2: nunca espera rede — edição local (já feita acima) entra na
+    // fila sempre.
     await OutboxDao.instance.enfileirar(
       tipoOperacao: TipoOperacaoOutbox.editarItem,
       entidadeUuid: item['uuid'] as String,

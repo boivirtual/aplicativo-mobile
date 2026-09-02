@@ -108,6 +108,11 @@ class ServidorDeMentira {
   Response _salvarItem(Map<String, dynamic> dados) {
     final item = dados['item'] as Map<String, dynamic>?;
     final uuid = item?['uuid_app']?.toString();
+    // ignore: avoid_print
+    print(
+      'DEBUG servidor: _salvarItem uuid=$uuid jaConhecido=${_itemNumeroPorUuid.containsKey(uuid)} '
+      'modoMalformada=$modoRespostaMalformada jaTentado=${_itensJaTentados.contains(uuid)}',
+    );
 
     // Reenvio idempotente: uuid já visto antes -> devolve o número já
     // atribuído, nunca duplica (igual ao PesagemDao.php real).

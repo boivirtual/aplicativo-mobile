@@ -67,7 +67,7 @@ class _PesagemPendenciasRevisaoScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Colocado na fila — sincronizando...")),
     );
-    await SyncService.instance.sincronizarAgora();
+    await SyncService.instance.sincronizarAgora(ignorarRecuo: true);
     await _carregar();
   }
 

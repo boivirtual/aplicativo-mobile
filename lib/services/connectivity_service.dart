@@ -15,7 +15,7 @@ enum NivelConexao {
 /// pesagem_screen.dart e pesagem_itens_screen.dart. Mantém exatamente a mesma
 /// heurística que já existia: "tem barra de sinal" (connectivity_plus) não é
 /// suficiente — só considera internet de verdade depois de um lookup DNS bem
-/// sucedido em agrolandes.com.br.
+/// sucedido (ver [hostParaChecagem]).
 ///
 /// As telas continuam responsáveis por assinar/cancelar sua própria
 /// StreamSubscription (mesmo padrão de antes), só que ouvindo este serviço em

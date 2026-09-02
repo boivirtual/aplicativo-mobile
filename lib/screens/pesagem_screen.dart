@@ -246,8 +246,8 @@ class _PesagemScreenState extends State<PesagemScreen> {
               Expanded(
                 child: Text(
                   _pendenciasConflito == 1
-                      ? "1 pendência de revisão"
-                      : "$_pendenciasConflito pendências de revisão",
+                      ? "1 pendência recusada pelo servidor"
+                      : "$_pendenciasConflito pendências recusadas pelo servidor",
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,

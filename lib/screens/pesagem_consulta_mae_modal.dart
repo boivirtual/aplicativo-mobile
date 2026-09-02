@@ -224,6 +224,15 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
                           child: TextField(
                             controller: _buscaController,
                             focusNode: _focoBusca,
+                            // SEMPRE readOnly — toda escrita já acontece
+                            // programaticamente via TecladoPesoWidget;
+                            // deixar o campo editável mesmo com
+                            // keyboardType: none podia manter uma conexão
+                            // residual com o teclado do sistema em alguns
+                            // aparelhos, arriscando engolir um dígito
+                            // digitado rápido (mesmo ajuste feito no Peso e
+                            // no Nº do Animal da tela de itens).
+                            readOnly: true,
                             // Nunca abre o teclado do sistema — digitação
                             // pelo TecladoPesoWidget (modo apenas dígitos),
                             // igual ao Nº do Animal na tela de itens.

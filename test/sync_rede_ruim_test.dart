@@ -151,8 +151,21 @@ class ServidorDeMentira {
   int get totalItensGravados => _itemNumeroPorUuid.length;
 }
 
+/// TestWidgetsFlutterBinding, sozinho, faz TODA chamada HTTP real devolver
+/// status 400 sem chegar na rede de verdade — proteção padrão do Flutter
+/// contra teste acidentalmente bater na internet. Esses testes PRECISAM de
+/// HTTP de verdade (só que contra localhost, nunca a internet), então
+/// devolvemos o HttpClient real de propósito.
+class _HttpOverridesReais extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return HttpClient(context: context);
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  HttpOverrides.global = _HttpOverridesReais();
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfiNoIsolate;
 

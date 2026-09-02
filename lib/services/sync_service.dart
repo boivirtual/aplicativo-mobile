@@ -104,8 +104,22 @@ class SyncService {
     }
   }
 
-  Future<SincronizacaoResultado> sincronizarAgora() async {
+  /// [ignorarRecuo] true pra gatilhos "de verdade" — botão manual
+  /// "Sincronizar agora", "Tentar de novo" de uma pendência, ou a
+  /// conectividade acabando de voltar. O timer periódico automático (a
+  /// única fonte de tentativas repetidas sem pedido explícito) sempre
+  /// respeita o recuo — é ele quem compete por banda/CPU bem na hora que o
+  /// vaqueiro mais precisa do celular respondendo rápido, se insistir toda
+  /// hora com sinal ruim.
+  Future<SincronizacaoResultado> sincronizarAgora({
+    bool ignorarRecuo = false,
+  }) async {
     if (_sincronizando) {
+      return const SincronizacaoResultado(processadas: 0, comErro: 0);
+    }
+    if (!ignorarRecuo &&
+        _proximaTentativaAutomaticaLiberada != null &&
+        DateTime.now().isBefore(_proximaTentativaAutomaticaLiberada!)) {
       return const SincronizacaoResultado(processadas: 0, comErro: 0);
     }
     _sincronizando = true;
@@ -118,6 +132,8 @@ class SyncService {
 
       final pendentes = await OutboxDao.instance.listarPendentes();
       if (pendentes.isEmpty) {
+        _rodadasSemProgresso = 0;
+        _proximaTentativaAutomaticaLiberada = null;
         return const SincronizacaoResultado(processadas: 0, comErro: 0);
       }
 

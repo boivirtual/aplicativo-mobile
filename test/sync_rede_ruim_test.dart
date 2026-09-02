@@ -96,10 +96,11 @@ class ServidorDeMentira {
 
     if (derrubarAposProximaCriacaoDePesagem) {
       derrubarAposProximaCriacaoDePesagem = false;
-      // Agenda a queda pra depois desta resposta já ter sido enviada —
-      // simula o sinal caindo bem no instante seguinte, não no meio desta
-      // chamada.
-      Future.microtask(derrubar);
+      // Agenda a queda pra depois desta resposta já ter sido enviada de
+      // verdade pelo socket — um microtask era cedo demais (o handler
+      // retornar não garante que os bytes já saíram); um delay pequeno dá
+      // tempo do cliente receber a resposta antes do servidor cair.
+      Future.delayed(const Duration(milliseconds: 100), derrubar);
     }
 
     return Response.ok(json.encode({"success": true, "pesagem_id": id}));

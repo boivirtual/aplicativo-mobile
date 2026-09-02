@@ -100,7 +100,8 @@ class ServidorDeMentira {
       // desta própria resposta, já aceita, continua e entrega normal.
       // Determinístico (sem depender de cronometrar um delay): a próxima
       // requisição (save_item.php) já não encontra o servidor ouvindo.
-      unawaited(_http?.close());
+      // ignore: discarded_futures
+      _http?.close();
     }
 
     return Response.ok(json.encode({"success": true, "pesagem_id": id}));

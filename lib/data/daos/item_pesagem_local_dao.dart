@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import '../local_database.dart';
+import 'outbox_dao.dart';
 
 class StatusSyncItem {
   static const pendente = 'pendente';

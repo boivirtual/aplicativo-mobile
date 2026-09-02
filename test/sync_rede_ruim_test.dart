@@ -60,6 +60,20 @@ class ServidorDeMentira {
     _http = null;
   }
 
+  /// Zera todo o estado em memória (contadores, mapas de idempotência,
+  /// flags) — a mesma instância do servidor é reaproveitada entre os
+  /// testes deste arquivo, então sem isso um teste via item/pesagem do
+  /// teste anterior "de graça".
+  void resetar() {
+    _proximoIdPesagem = 500;
+    _proximoNumeroItem = 1;
+    _pesagemIdPorUuid.clear();
+    _itemNumeroPorUuid.clear();
+    _itensJaTentados.clear();
+    modoRespostaMalformada = false;
+    derrubarAposProximaCriacaoDePesagem = false;
+  }
+
   Future<Response> _rotear(Request request) async {
     final corpo = await request.readAsString();
     final Map<String, dynamic> dados = corpo.isEmpty

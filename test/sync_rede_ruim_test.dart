@@ -85,16 +85,22 @@ class ServidorDeMentira {
 
   Response _criarPesagem(Map<String, dynamic> dados) {
     final uuid = dados['uuid_app']?.toString();
+    final int id;
     if (uuid != null && _pesagemIdPorUuid.containsKey(uuid)) {
-      return Response.ok(
-        json.encode({
-          "success": true,
-          "pesagem_id": _pesagemIdPorUuid[uuid],
-        }),
-      );
+      id = _pesagemIdPorUuid[uuid]!;
+    } else {
+      id = _proximoIdPesagem++;
+      if (uuid != null) _pesagemIdPorUuid[uuid] = id;
     }
-    final id = _proximoIdPesagem++;
-    if (uuid != null) _pesagemIdPorUuid[uuid] = id;
+
+    if (derrubarAposProximaCriacaoDePesagem) {
+      derrubarAposProximaCriacaoDePesagem = false;
+      // Agenda a queda pra depois desta resposta já ter sido enviada —
+      // simula o sinal caindo bem no instante seguinte, não no meio desta
+      // chamada.
+      Future.microtask(derrubar);
+    }
+
     return Response.ok(json.encode({"success": true, "pesagem_id": id}));
   }
 

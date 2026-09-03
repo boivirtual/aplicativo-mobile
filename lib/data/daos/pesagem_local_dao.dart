@@ -151,6 +151,17 @@ class PesagemLocalDao {
     );
   }
 
+  /// Total de pesagens deste bd salvas neste aparelho (pendentes e
+  /// finalizadas) — usado pela tela de Diagnóstico.
+  Future<int> contarTotalLocal(String bd) async {
+    final db = await LocalDatabase.instance.database;
+    final r = await db.rawQuery(
+      'SELECT COUNT(*) as qtd FROM pesagens_locais WHERE bd = ?',
+      [bd],
+    );
+    return (r.first['qtd'] as int?) ?? 0;
+  }
+
   /// Pesagens já confirmadas pelo servidor (id_servidor preenchido), ainda
   /// marcadas como não finalizadas neste aparelho — candidatas a checar se
   /// ainda existem no servidor (ver PesagemRepository._reconciliarExcluidos).

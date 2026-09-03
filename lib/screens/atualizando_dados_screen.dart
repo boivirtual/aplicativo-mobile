@@ -28,6 +28,12 @@ class AtualizandoDadosScreen extends StatefulWidget {
   /// o que estava na tela de baixo (ex: pesagem em andamento).
   final VoidCallback? aoConcluir;
 
+  /// Chave do SharedPreferences com a hora da última vez que os dados
+  /// realmente terminaram de atualizar (só grava em caso de sucesso, com
+  /// internet de verdade) — é o que [MainContainer] usa pra decidir se
+  /// chama esta tela de novo ao voltar de segundo plano.
+  static const chaveUltimaAtualizacao = 'ultimaAtualizacaoGeral';
+
   const AtualizandoDadosScreen({super.key, this.aoConcluir});
 
   @override
@@ -37,12 +43,6 @@ class AtualizandoDadosScreen extends StatefulWidget {
 
 class _AtualizandoDadosScreenState extends State<AtualizandoDadosScreen> {
   static const _tempoLimite = Duration(seconds: 18);
-
-  /// Chave do SharedPreferences com a hora da última vez que os dados
-  /// realmente terminaram de atualizar (só grava em caso de sucesso, com
-  /// internet de verdade) — é o que [MainContainer] usa pra decidir se
-  /// chama esta tela de novo ao voltar de segundo plano.
-  static const chaveUltimaAtualizacao = 'ultimaAtualizacaoGeral';
 
   @override
   void initState() {

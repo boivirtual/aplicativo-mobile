@@ -20,6 +20,12 @@ class AtualizacoesScreen extends StatefulWidget {
 class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
   static const _corBarra = Color(0xFF18385F);
 
+  /// Ano de 2 dígitos usado SÓ pra exibição (junto com o build number, que
+  /// não pode carregar o ano — ver comentário em [_formatarBuildComoData]).
+  /// Atualizar em janeiro de cada ano.
+  static const _anoExibicao = '26';
+  static const _anoExibicaoCompleto = '2026';
+
   bool _carregando = true;
   String _versaoNumero = '-';
   String _versaoData = '-';
@@ -38,17 +44,22 @@ class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
   /// O build number do pubspec.yaml (depois do "+") é MÊS+DIA+HORA+MINUTO
   /// da build, formato MMDDHHmm (ex: "09030926" = 03/09 às 09:26) — sem
   /// ano, porque o Android exige que esse número caiba num inteiro de 32
-  /// bits (até ~2,1 bilhões); com ano dava overflow e o build falhava
-  /// direto no Gradle. A hora importa porque pode sair mais de uma build
-  /// no mesmo dia. Se algum dia o build number voltar a ser sequencial (1,
-  /// 2, 3...), isso aqui mostra o valor cru sem tentar formatar como data.
-  String _formatarBuildComoData(String buildNumber) {
-    if (!RegExp(r'^\d{8}$').hasMatch(buildNumber)) return buildNumber;
-    final mes = buildNumber.substring(0, 2);
-    final dia = buildNumber.substring(2, 4);
-    final hora = buildNumber.substring(4, 6);
-    final minuto = buildNumber.substring(6, 8);
-    return '$dia/$mes às $hora:$minuto';
+  /// bits (até ~2,1 bilhões); com ano junto (ex: "2609030926") o número
+  /// passa de 2,6 bilhões e o build falha direto no Gradle. O ano exibido
+  /// aqui ([_anoExibicao]) é só cosmético, não vem do build number. A hora
+  /// importa porque pode sair mais de uma build no mesmo dia. Se algum dia
+  /// o build number voltar a ser sequencial (1, 2, 3...), isso aqui mostra
+  /// o valor cru sem tentar formatar como data.
+  ({String mes, String dia, String hora, String minuto})? _partesDoBuild(
+    String buildNumber,
+  ) {
+    if (!RegExp(r'^\d{8}$').hasMatch(buildNumber)) return null;
+    return (
+      mes: buildNumber.substring(0, 2),
+      dia: buildNumber.substring(2, 4),
+      hora: buildNumber.substring(4, 6),
+      minuto: buildNumber.substring(6, 8),
+    );
   }
 
   Future<void> _carregarTudo() async {
@@ -67,9 +78,15 @@ class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
         .buscarUltimaAtualizacao();
 
     if (!mounted) return;
+    final partes = _partesDoBuild(packageInfo.buildNumber);
     setState(() {
-      _versaoNumero = '${packageInfo.version}+${packageInfo.buildNumber}';
-      _versaoData = _formatarBuildComoData(packageInfo.buildNumber);
+      _versaoNumero = partes == null
+          ? '${packageInfo.version}+${packageInfo.buildNumber}'
+          : '${packageInfo.version}+$_anoExibicao${packageInfo.buildNumber}';
+      _versaoData = partes == null
+          ? packageInfo.buildNumber
+          : '${partes.dia}/${partes.mes}/$_anoExibicaoCompleto '
+                '${partes.hora}:${partes.minuto}';
       _usuario = usuario;
       _cnpj = cnpj;
       _fazendas = fazendas;

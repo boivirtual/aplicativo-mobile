@@ -106,9 +106,10 @@ class _MainContainerState extends State<MainContainer> {
               actions: [
                 const IndicadorConectividadeWidget(),
                 const SizedBox(width: 4),
-                // Um botão só com duas opções — "Conferir" (tela de
-                // Diagnóstico, pra checklist de testes) e "Sair" (logout,
-                // comportamento de antes, inalterado).
+                // Um botão só com duas opções — "Atualizações" (versão do
+                // app instalada + cadastro de animais, pra checklist de
+                // testes) e "Sair" (logout, comportamento de antes,
+                // inalterado).
                 PopupMenuButton<String>(
                   icon: const Icon(
                     Icons.more_vert,
@@ -116,20 +117,20 @@ class _MainContainerState extends State<MainContainer> {
                     size: 22,
                   ),
                   onSelected: (opcao) {
-                    if (opcao == 'conferir') {
-                      _abrirDiagnostico(context);
+                    if (opcao == 'atualizacoes') {
+                      _abrirAtualizacoes(context);
                     } else if (opcao == 'sair') {
                       _confirmarSaida(context);
                     }
                   },
                   itemBuilder: (context) => const [
                     PopupMenuItem(
-                      value: 'conferir',
+                      value: 'atualizacoes',
                       child: Row(
                         children: [
                           Icon(Icons.fact_check_outlined, size: 18),
                           SizedBox(width: 10),
-                          Text('Conferir'),
+                          Text('Atualizações'),
                         ],
                       ),
                     ),

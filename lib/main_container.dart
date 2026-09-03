@@ -36,6 +36,16 @@ class _MainContainerState extends State<MainContainer> {
     });
   }
 
+  void _abrirDiagnostico(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            DiagnosticoScreen(onBack: () => Navigator.pop(context)),
+      ),
+    );
+  }
+
   void _confirmarSaida(BuildContext context) {
     showDialog(
       context: context,

@@ -7,6 +7,8 @@ import 'package:boivirtual/screens/agenda_screen.dart';
 import 'package:boivirtual/screens/dashboard_screen.dart';
 import 'package:boivirtual/screens/home_screen.dart';
 import 'package:boivirtual/screens/atualizacoes_screen.dart';
+import 'package:boivirtual/screens/atualizando_dados_screen.dart';
+import 'package:boivirtual/services/connectivity_service.dart';
 import 'package:boivirtual/widgets/indicador_conectividade_widget.dart';
 import 'package:boivirtual/widgets/indicador_sincronizando_widget.dart';
 import 'auth_service.dart';
@@ -18,15 +20,76 @@ class MainContainer extends StatefulWidget {
   State<MainContainer> createState() => _MainContainerState();
 }
 
-class _MainContainerState extends State<MainContainer> {
+class _MainContainerState extends State<MainContainer>
+    with WidgetsBindingObserver {
   // REGRA: O programa abre direto na Pesagem (Index 2)
   int _currentIndex = 2;
   String _userName = "Usuário";
 
+  /// Android normalmente não fecha o app quando o vaqueiro sai (Home,
+  /// trocar de app) — só coloca em segundo plano e o processo continua
+  /// vivo, então reabrir volta direto pra onde parou, sem passar de novo
+  /// pela tela de atualização de dados. Se isso ficar parado por muito
+  /// tempo (o vaqueiro só volta depois de horas, ou no dia seguinte), o
+  /// cadastro de animais/pesagens pode estar bem desatualizado. Esse tempo
+  /// aqui é o quanto pode passar em segundo plano antes de forçar a tela de
+  /// atualização de novo ao voltar.
+  static const _tempoMaximoEmSegundoPlano = Duration(hours: 1);
+
+  bool _verificandoAoVoltar = false;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _carregarDadosUsuario();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _verificarSeAtualizaAoVoltar();
+    }
+  }
+
+  Future<void> _verificarSeAtualizaAoVoltar() async {
+    // Evita empilhar mais de uma verificação se o resumed disparar de novo
+    // rápido (ex: trocar de app repetidamente) antes da anterior terminar.
+    if (_verificandoAoVoltar) return;
+    _verificandoAoVoltar = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final ultimaIso = prefs.getString(
+        AtualizandoDadosScreen.chaveUltimaAtualizacao,
+      );
+      final ultima = ultimaIso != null ? DateTime.tryParse(ultimaIso) : null;
+      final passouDoTempo =
+          ultima == null ||
+          DateTime.now().difference(ultima) > _tempoMaximoEmSegundoPlano;
+      if (!passouDoTempo) return;
+
+      // Checagem fresca — não vale a pena nem mostrar a tela de atualização
+      // se não tiver internet de verdade agora.
+      await ConnectivityService.instance.verificarAgora();
+      if (!ConnectivityService.instance.temInternetReal) return;
+
+      if (!mounted) return;
+      final navigator = Navigator.of(context);
+      await navigator.push(
+        MaterialPageRoute(
+          builder: (context) =>
+              AtualizandoDadosScreen(aoConcluir: () => Navigator.pop(context)),
+        ),
+      );
+    } finally {
+      _verificandoAoVoltar = false;
+    }
   }
 
   Future<void> _carregarDadosUsuario() async {

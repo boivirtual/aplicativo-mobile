@@ -66,7 +66,7 @@ class _AtualizandoDadosScreenState extends State<AtualizandoDadosScreen> {
           // Só grava se chegou até aqui sem exceção/timeout — ou seja, a
           // atualização realmente terminou de ponta a ponta.
           await prefs.setString(
-            chaveUltimaAtualizacao,
+            AtualizandoDadosScreen.chaveUltimaAtualizacao,
             DateTime.now().toIso8601String(),
           );
         }

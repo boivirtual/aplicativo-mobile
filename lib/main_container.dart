@@ -36,12 +36,12 @@ class _MainContainerState extends State<MainContainer> {
     });
   }
 
-  void _abrirDiagnostico(BuildContext context) {
+  void _abrirAtualizacoes(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) =>
-            DiagnosticoScreen(onBack: () => Navigator.pop(context)),
+            AtualizacoesScreen(onBack: () => Navigator.pop(context)),
       ),
     );
   }

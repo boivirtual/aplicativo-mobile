@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/daos/animal_cache_dao.dart';
-import '../versao_app.dart';
 
 /// Tela de conferência do que está gravado neste aparelho — pensada pro
 /// TESTADOR conseguir checar sozinho itens do checklist de testes (ex:

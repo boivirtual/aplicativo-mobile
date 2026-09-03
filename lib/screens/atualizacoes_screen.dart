@@ -22,6 +22,8 @@ class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
   static const _corBarra = Color(0xFF18385F);
 
   bool _carregando = true;
+  String _versaoNumero = '-';
+  String _versaoData = '-';
   String _usuario = '-';
   String _cnpj = '-';
   List<dynamic> _fazendas = [];
@@ -34,8 +36,25 @@ class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
     _carregarTudo();
   }
 
+  /// O build number do pubspec.yaml (depois do "+") é a DATA da build, no
+  /// formato AAAAMMDD (ex: "20260903") — assim um número só serve tanto de
+  /// identificador de versão quanto de data, sem precisar manter os dois
+  /// campos manualmente em lugares separados. Se algum dia o build number
+  /// voltar a ser sequencial (1, 2, 3...) em vez de data, isso aqui mostra
+  /// o valor cru sem tentar formatar como data.
+  String _formatarBuildComoData(String buildNumber) {
+    final numeros = RegExp(r'^\d{8}$');
+    if (!numeros.hasMatch(buildNumber)) return buildNumber;
+    final ano = buildNumber.substring(0, 4);
+    final mes = buildNumber.substring(4, 6);
+    final dia = buildNumber.substring(6, 8);
+    return '$dia/$mes/$ano';
+  }
+
   Future<void> _carregarTudo() async {
     setState(() => _carregando = true);
+
+    final packageInfo = await PackageInfo.fromPlatform();
 
     final prefs = await SharedPreferences.getInstance();
     final usuario = prefs.getString('userName') ?? '-';
@@ -49,6 +68,8 @@ class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
 
     if (!mounted) return;
     setState(() {
+      _versaoNumero = '${packageInfo.version}+${packageInfo.buildNumber}';
+      _versaoData = _formatarBuildComoData(packageInfo.buildNumber);
       _usuario = usuario;
       _cnpj = cnpj;
       _fazendas = fazendas;

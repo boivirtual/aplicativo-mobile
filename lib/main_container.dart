@@ -106,9 +106,44 @@ class _MainContainerState extends State<MainContainer> {
               actions: [
                 const IndicadorConectividadeWidget(),
                 const SizedBox(width: 4),
-                IconButton(
-                  icon: const Icon(Icons.logout, color: Colors.white, size: 20),
-                  onPressed: () => _confirmarSaida(context),
+                // Um botão só com duas opções — "Conferir" (tela de
+                // Diagnóstico, pra checklist de testes) e "Sair" (logout,
+                // comportamento de antes, inalterado).
+                PopupMenuButton<String>(
+                  icon: const Icon(
+                    Icons.more_vert,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                  onSelected: (opcao) {
+                    if (opcao == 'conferir') {
+                      _abrirDiagnostico(context);
+                    } else if (opcao == 'sair') {
+                      _confirmarSaida(context);
+                    }
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(
+                      value: 'conferir',
+                      child: Row(
+                        children: [
+                          Icon(Icons.fact_check_outlined, size: 18),
+                          SizedBox(width: 10),
+                          Text('Conferir'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'sair',
+                      child: Row(
+                        children: [
+                          Icon(Icons.logout, size: 18),
+                          SizedBox(width: 10),
+                          Text('Sair'),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             )

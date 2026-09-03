@@ -2,12 +2,13 @@ name: boivirtual
 description: "A new Flutter project."
 publish_to: 'none'
 
-# O build number (depois do "+") é a DATA E HORA da build, no formato
-# AAAAMMDDHHmm — incrementar/atualizar sempre que uma build nova for gerada
-# pra teste (a hora importa: pode sair mais de uma build no mesmo dia), é
-# assim que o testador confirma na tela "Atualizações" qual versão está
-# rodando no aparelho.
-version: 1.0.0+202609030919
+# O build number (depois do "+") é MÊS+DIA+HORA+MINUTO da build, formato
+# MMDDHHmm (sem ano: o Android exige que isso caiba num inteiro de 32 bits,
+# até ~2,1 bilhões — com ano dava overflow e o build falhava) — atualizar
+# sempre que uma build nova for gerada pra teste (a hora importa: pode sair
+# mais de uma build no mesmo dia), é assim que o testador confirma na tela
+# "Atualizações" qual versão está rodando no aparelho.
+version: 1.0.0+09030926
 
 environment:
   sdk: ^3.10.0

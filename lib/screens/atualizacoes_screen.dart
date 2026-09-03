@@ -35,31 +35,20 @@ class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
     _carregarTudo();
   }
 
-  /// O build number do pubspec.yaml (depois do "+") é a DATA E HORA da
-  /// build, no formato AAAAMMDDHHmm (ex: "202609030919") — assim um número
-  /// só serve tanto de identificador de versão quanto de data/hora, sem
-  /// precisar manter dois campos manualmente em lugares separados. A hora
-  /// importa porque pode sair mais de uma build no mesmo dia. Também aceita
-  /// o formato antigo, só data (AAAAMMDD, 8 dígitos), pra builds já
-  /// distribuídas antes dessa mudança. Se algum dia o build number voltar a
-  /// ser sequencial (1, 2, 3...), isso aqui mostra o valor cru sem tentar
-  /// formatar como data.
+  /// O build number do pubspec.yaml (depois do "+") é MÊS+DIA+HORA+MINUTO
+  /// da build, formato MMDDHHmm (ex: "09030926" = 03/09 às 09:26) — sem
+  /// ano, porque o Android exige que esse número caiba num inteiro de 32
+  /// bits (até ~2,1 bilhões); com ano dava overflow e o build falhava
+  /// direto no Gradle. A hora importa porque pode sair mais de uma build
+  /// no mesmo dia. Se algum dia o build number voltar a ser sequencial (1,
+  /// 2, 3...), isso aqui mostra o valor cru sem tentar formatar como data.
   String _formatarBuildComoData(String buildNumber) {
-    if (RegExp(r'^\d{12}$').hasMatch(buildNumber)) {
-      final ano = buildNumber.substring(0, 4);
-      final mes = buildNumber.substring(4, 6);
-      final dia = buildNumber.substring(6, 8);
-      final hora = buildNumber.substring(8, 10);
-      final minuto = buildNumber.substring(10, 12);
-      return '$dia/$mes/$ano às $hora:$minuto';
-    }
-    if (RegExp(r'^\d{8}$').hasMatch(buildNumber)) {
-      final ano = buildNumber.substring(0, 4);
-      final mes = buildNumber.substring(4, 6);
-      final dia = buildNumber.substring(6, 8);
-      return '$dia/$mes/$ano';
-    }
-    return buildNumber;
+    if (!RegExp(r'^\d{8}$').hasMatch(buildNumber)) return buildNumber;
+    final mes = buildNumber.substring(0, 2);
+    final dia = buildNumber.substring(2, 4);
+    final hora = buildNumber.substring(4, 6);
+    final minuto = buildNumber.substring(6, 8);
+    return '$dia/$mes às $hora:$minuto';
   }
 
   Future<void> _carregarTudo() async {

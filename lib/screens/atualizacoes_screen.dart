@@ -120,8 +120,8 @@ class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   _secao("Versão do App", [
-                    _linha("Número", VersaoApp.numero, destaque: true),
-                    _linha("Data desta versão", VersaoApp.data),
+                    _linha("Número", _versaoNumero, destaque: true),
+                    _linha("Data desta versão", _versaoData),
                     _linha("O que mudou", VersaoApp.descricao),
                   ]),
                   _secao("Conta logada", [

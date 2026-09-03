@@ -216,7 +216,7 @@ class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
     bool alerta = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -224,7 +224,7 @@ class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
             flex: 3,
             child: Text(
               rotulo,
-              style: const TextStyle(fontSize: 13, color: Colors.black87),
+              style: const TextStyle(fontSize: 11, color: Colors.black87),
             ),
           ),
           Expanded(
@@ -233,11 +233,45 @@ class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
               valor,
               textAlign: TextAlign.right,
               style: TextStyle(
-                fontSize: destaque ? 18 : 13,
+                fontSize: destaque ? 15 : 11,
                 fontWeight: destaque ? FontWeight.bold : FontWeight.w600,
                 color: alerta
                     ? Colors.red[700]
                     : (destaque ? _corBarra : Colors.black87),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Título numa linha, valores um por linha embaixo, alinhados à esquerda
+  /// — diferente de [_linha] (rótulo e valor lado a lado): usado quando o
+  /// valor é uma lista de nomes que não cabe bem espremida numa coluna
+  /// estreita (ex: nomes de fazenda quebrando/enrolando no meio da palavra).
+  Widget _linhaLista(String rotulo, List<String> valores) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            rotulo,
+            style: const TextStyle(fontSize: 11, color: Colors.black87),
+          ),
+          const SizedBox(height: 4),
+          ...valores.map(
+            (v) => Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Text(
+                v,
+                textAlign: TextAlign.left,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
               ),
             ),
           ),

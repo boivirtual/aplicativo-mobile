@@ -121,7 +121,6 @@ class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
                   _secao("Versão do App", [
                     _linha("Número", _versaoNumero, destaque: true),
                     _linha("Data desta versão", _versaoData),
-                    _linha("O que mudou", VersaoApp.descricao),
                   ]),
                   _secao("Conta logada", [
                     _linha("Usuário", _usuario),

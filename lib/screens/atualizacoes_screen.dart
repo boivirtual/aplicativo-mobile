@@ -47,18 +47,25 @@ class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
   /// bits (até ~2,1 bilhões); com ano junto (ex: "2609030926") o número
   /// passa de 2,6 bilhões e o build falha direto no Gradle. O ano exibido
   /// aqui ([_anoExibicao]) é só cosmético, não vem do build number. A hora
-  /// importa porque pode sair mais de uma build no mesmo dia. Se algum dia
-  /// o build number voltar a ser sequencial (1, 2, 3...), isso aqui mostra
-  /// o valor cru sem tentar formatar como data.
-  ({String mes, String dia, String hora, String minuto})? _partesDoBuild(
-    String buildNumber,
-  ) {
-    if (!RegExp(r'^\d{8}$').hasMatch(buildNumber)) return null;
+  /// importa porque pode sair mais de uma build no mesmo dia.
+  ///
+  /// O Android guarda o build number como NÚMERO de verdade, não texto —
+  /// então o zero à esquerda do mês (janeiro a setembro, "0X") se perde ao
+  /// ler de volta: "09030926" volta como "9030926" (só 7 dígitos, bug real
+  /// visto ao vivo). Por isso completa com zero à esquerda até 8 dígitos
+  /// antes de interpretar. Se algum dia o build number voltar a ser
+  /// sequencial (1, 2, 3...) em vez de data, isso aqui não retorna nada e
+  /// quem chamou mostra o valor cru.
+  ({String mes, String dia, String hora, String minuto, String normalizado})?
+  _partesDoBuild(String buildNumber) {
+    final normalizado = buildNumber.padLeft(8, '0');
+    if (!RegExp(r'^\d{8}$').hasMatch(normalizado)) return null;
     return (
-      mes: buildNumber.substring(0, 2),
-      dia: buildNumber.substring(2, 4),
-      hora: buildNumber.substring(4, 6),
-      minuto: buildNumber.substring(6, 8),
+      mes: normalizado.substring(0, 2),
+      dia: normalizado.substring(2, 4),
+      hora: normalizado.substring(4, 6),
+      minuto: normalizado.substring(6, 8),
+      normalizado: normalizado,
     );
   }
 

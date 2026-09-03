@@ -42,8 +42,14 @@ class AnimalCacheService {
   /// recebe mais fazenda: a exportação em si não filtra por fazenda (ver
   /// classe acima). Único ponto de entrada agora; substitui as antigas
   /// garantirCacheDaFazenda/garantirCacheDeTodasFazendas.
-  Future<void> garantirCacheCompleto(String? bd) async {
+  ///
+  /// [forcar]: ignora a trava de "já baixado nesta sessão" — usado quando o
+  /// app volta de segundo plano depois de tempo parado (ver MainContainer),
+  /// já que nesse caso o processo nunca reiniciou e a trava continuaria
+  /// impedindo um novo download mesmo fazendo sentido atualizar de novo.
+  Future<void> garantirCacheCompleto(String? bd, {bool forcar = false}) async {
     if (bd == null || bd.isEmpty) return;
+    if (forcar) _sincronizadasNestaSessao.remove(bd);
     if (_sincronizadasNestaSessao.contains(bd)) return;
     if (_emAndamento.contains(bd)) return;
     if (!ConnectivityService.instance.temInternetReal) return;

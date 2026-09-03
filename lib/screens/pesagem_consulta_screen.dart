@@ -71,7 +71,14 @@ class _PesagemConsultaScreenState extends State<PesagemConsultaScreen> {
             _itensPesados.add({
               'alfaNumerico': item['tbl_ite_pesagem_codigo_animal'],
               'peso': item['tbl_ite_pesagem_peso'],
-              'sexo': item['tbl_ite_pesagem_sexo'] == 'Macho' ? 'M' : 'F',
+              // Mesma correção de pesagem_itens_screen.dart: aceita "Macho"
+              // (item importado do servidor) ou "M" (item pesado no
+              // próprio app, salvo localmente nesse formato).
+              'sexo':
+                  (item['tbl_ite_pesagem_sexo'] == 'Macho' ||
+                      item['tbl_ite_pesagem_sexo'] == 'M')
+                  ? 'M'
+                  : 'F',
               'nascimento': item['tbl_ite_pesagem_nascimento'],
               'raca': item['tbl_ite_pesagem_raca'],
               'pelagem': item['tbl_ite_pesagem_pelagem'],

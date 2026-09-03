@@ -5,7 +5,9 @@ import '../services/animal_cache_service.dart';
 import '../services/connectivity_service.dart';
 import '../repositories/pesagem_repository.dart';
 
-/// Tela de transição mostrada ao logar ou reabrir o app já logado — atualiza
+/// Tela de transição mostrada ao logar, reabrir o app já logado, OU voltar
+/// de segundo plano depois de um tempo parado (ver [MainContainer], que
+/// monitora isso e empurra esta tela por cima quando necessário) — atualiza
 /// o cadastro de animais e as pesagens ANTES de liberar o resto do app.
 ///
 /// Antes, o vaqueiro já tinha acesso à digitação da pesagem antes desses
@@ -19,7 +21,14 @@ import '../repositories/pesagem_repository.dart';
 /// presente mas lenta, um tempo limite evita virar uma trava nova — libera
 /// o app mesmo assim com o que já tiver, deixando o resto terminar sozinho.
 class AtualizandoDadosScreen extends StatefulWidget {
-  const AtualizandoDadosScreen({super.key});
+  /// Como fechar esta tela quando terminar. Por padrão (login/abertura do
+  /// app) substitui a rota atual por "/main". Quando empurrada por cima de
+  /// um app já em uso (retorno de segundo plano, ver [MainContainer]),
+  /// passa um callback que só fecha esta tela (Navigator.pop), preservando
+  /// o que estava na tela de baixo (ex: pesagem em andamento).
+  final VoidCallback? aoConcluir;
+
+  const AtualizandoDadosScreen({super.key, this.aoConcluir});
 
   @override
   State<AtualizandoDadosScreen> createState() =>
@@ -28,6 +37,12 @@ class AtualizandoDadosScreen extends StatefulWidget {
 
 class _AtualizandoDadosScreenState extends State<AtualizandoDadosScreen> {
   static const _tempoLimite = Duration(seconds: 18);
+
+  /// Chave do SharedPreferences com a hora da última vez que os dados
+  /// realmente terminaram de atualizar (só grava em caso de sucesso, com
+  /// internet de verdade) — é o que [MainContainer] usa pra decidir se
+  /// chama esta tela de novo ao voltar de segundo plano.
+  static const chaveUltimaAtualizacao = 'ultimaAtualizacaoGeral';
 
   @override
   void initState() {
@@ -48,6 +63,12 @@ class _AtualizandoDadosScreenState extends State<AtualizandoDadosScreen> {
         if (fazendasJson != null) {
           final List<dynamic> fazendas = json.decode(fazendasJson);
           await _atualizarTudo(cnpj, fazendas).timeout(_tempoLimite);
+          // Só grava se chegou até aqui sem exceção/timeout — ou seja, a
+          // atualização realmente terminou de ponta a ponta.
+          await prefs.setString(
+            chaveUltimaAtualizacao,
+            DateTime.now().toIso8601String(),
+          );
         }
       }
     } catch (_) {
@@ -55,9 +76,15 @@ class _AtualizandoDadosScreenState extends State<AtualizandoDadosScreen> {
       // assim, com o que já estiver em cache local. O que não terminou
       // continua rodando sozinho em segundo plano (ver garantirCacheCompleto
       // e garantirItensDasPendentes, que não são cancelados pelo timeout).
+      // Não grava a hora de atualização — assim a próxima checagem (login
+      // seguinte ou retorno de segundo plano) tenta de novo.
     } finally {
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/main');
+        if (widget.aoConcluir != null) {
+          widget.aoConcluir!();
+        } else {
+          Navigator.of(context).pushReplacementNamed('/main');
+        }
       }
     }
   }

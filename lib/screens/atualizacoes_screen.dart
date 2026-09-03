@@ -143,14 +143,14 @@ class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
                   _secao("Conta logada", [
                     _linha("Usuário", _usuario),
                     _linha("CNPJ / Banco", _cnpj),
-                    _linha(
+                    _linhaLista(
                       "Fazendas com acesso",
                       _fazendas.isEmpty
-                          ? "Nenhuma"
+                          ? ["Nenhuma"]
                           : _fazendas
                                 .map((f) => (f as Map)['nome']?.toString())
                                 .whereType<String>()
-                                .join(', '),
+                                .toList(),
                     ),
                   ]),
                   _secao("Cadastro de animais (cache local)", [

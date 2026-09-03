@@ -103,7 +103,14 @@ class _AtualizandoDadosScreenState extends State<AtualizandoDadosScreen> {
     );
 
     await Future.wait([
-      AnimalCacheService.instance.garantirCacheCompleto(cnpj),
+      // forcar: true quando isto roda por causa de um retorno de segundo
+      // plano (widget.aoConcluir != null) — o processo nunca reiniciou
+      // nesse caso, então a trava normal de "já baixado nesta sessão"
+      // impediria um novo download mesmo fazendo sentido atualizar de novo.
+      AnimalCacheService.instance.garantirCacheCompleto(
+        cnpj,
+        forcar: widget.aoConcluir != null,
+      ),
       PesagemRepository.instance.garantirItensDasPendentes(cnpj),
       PesagemRepository.instance.listarFinalizadas(
         bd: cnpj,

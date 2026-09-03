@@ -6,6 +6,7 @@ import 'package:boivirtual/screens/chuva_screen.dart';
 import 'package:boivirtual/screens/agenda_screen.dart';
 import 'package:boivirtual/screens/dashboard_screen.dart';
 import 'package:boivirtual/screens/home_screen.dart';
+import 'package:boivirtual/screens/diagnostico_screen.dart';
 import 'package:boivirtual/widgets/indicador_conectividade_widget.dart';
 import 'package:boivirtual/widgets/indicador_sincronizando_widget.dart';
 import 'auth_service.dart';

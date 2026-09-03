@@ -47,6 +47,25 @@ class AnimalCacheDao {
     return ((r.first['qtd'] as int?) ?? 0) > 0;
   }
 
+  /// Total de animais no cache local — usado pela tela de Diagnóstico, pra
+  /// o testador conferir sem precisar de ferramenta técnica (ex: comparar
+  /// com o total esperado no sistema web).
+  Future<int> contarTotal() async {
+    final db = await LocalDatabase.instance.database;
+    final r = await db.rawQuery('SELECT COUNT(*) as qtd FROM animais_cache');
+    return (r.first['qtd'] as int?) ?? 0;
+  }
+
+  /// Data/hora do animal mais recentemente gravado/atualizado no cache —
+  /// mostrada na tela de Diagnóstico como "última atualização do cadastro".
+  Future<String?> buscarUltimaAtualizacao() async {
+    final db = await LocalDatabase.instance.database;
+    final r = await db.rawQuery(
+      'SELECT MAX(atualizado_em) as ultima FROM animais_cache',
+    );
+    return r.first['ultima'] as String?;
+  }
+
   /// true se existe cache de QUALQUER fazenda — usado pela "Consultar Mãe",
   /// que busca em todas as fazendas do usuário, não numa fazenda específica.
   Future<bool> temCacheGlobal() async {

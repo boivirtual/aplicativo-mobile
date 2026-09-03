@@ -89,7 +89,7 @@ class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
     setState(() {
       _versaoNumero = partes == null
           ? '${packageInfo.version}+${packageInfo.buildNumber}'
-          : '${packageInfo.version}+$_anoExibicao${packageInfo.buildNumber}';
+          : '${packageInfo.version}+$_anoExibicao${partes.normalizado}';
       _versaoData = partes == null
           ? packageInfo.buildNumber
           : '${partes.dia}/${partes.mes}/$_anoExibicaoCompleto '

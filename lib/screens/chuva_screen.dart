@@ -318,7 +318,10 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                               _buildCardRegistro(),
                               const SizedBox(height: 4),
                               _buildResumoMesAtual(),
-                              const SizedBox(height: 4),
+                              // Mais espaço acima do seletor de ano do que
+                              // abaixo — assim ele lê como parte do gráfico
+                              // logo em seguida, não do card de resumo.
+                              const SizedBox(height: 14),
                               if (_carregandoGrafico && _mensal == null)
                                 const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 30),
@@ -328,7 +331,7 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                                 )
                               else ...[
                                 _buildSeletorAno(),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 2),
                                 if (_mensal != null)
                                   GraficoChuvaWidget(
                                     titulo:

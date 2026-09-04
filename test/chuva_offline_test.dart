@@ -170,6 +170,54 @@ void main() {
   );
 
   test(
+    'id de fazenda com zeros à esquerda (como vem do login) casa com o que o servidor grava sem padding '
+    '(bug real: tela buscava "000000057" e o cache tinha "57", gráfico sempre vazio)',
+    () async {
+      const fazendaComZeros = '000000057';
+
+      // Servidor manda o id como inteiro puro, sem padding (é como
+      // list.php/create.php respondem de verdade).
+      await ChuvaDao.instance.salvarLoteDoServidor(bd, [
+        {"id": 1, "local": 57, "data": "2026-04-10", "volume": 33.0},
+      ]);
+
+      // A tela, no entanto, sempre entrega o id como veio do login
+      // (userFazendas), com zeros à esquerda — o repositório precisa
+      // normalizar isso sozinho.
+      final valor = await ChuvaRepository.instance.buscarVolumeExistente(
+        bd: bd,
+        fazendaId: fazendaComZeros,
+        data: DateTime(2026, 4, 10),
+      );
+      expect(valor, 33);
+
+      final mensal = await ChuvaRepository.instance.graficoMensal(
+        bd: bd,
+        fazendaId: fazendaComZeros,
+        ano: 2026,
+      );
+      expect(mensal.firstWhere((m) => m['mes'] == 4)['mm'], 33);
+
+      // E o caminho inverso também: gravar usando o id com zeros tem que
+      // cair na mesma linha que já existe sem padding, não criar uma
+      // fazenda "fantasma" duplicada.
+      await ChuvaRepository.instance.gravar(
+        bd: bd,
+        fazendaId: fazendaComZeros,
+        data: DateTime(2026, 4, 10),
+        volume: 40,
+      );
+      final mensalDepois = await ChuvaRepository.instance.graficoMensal(
+        bd: bd,
+        fazendaId: '57',
+        ano: 2026,
+      );
+      expect(mensalDepois.firstWhere((m) => m['mes'] == 4)['mm'], 40);
+      expect(mensalDepois.firstWhere((m) => m['mes'] == 4)['dias'], 1);
+    },
+  );
+
+  test(
     'gráfico anual sempre traz 5 anos (ano-4..ano), com zero nos anos sem lançamento',
     () async {
       await ChuvaRepository.instance.gravar(

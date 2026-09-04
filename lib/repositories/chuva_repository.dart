@@ -13,6 +13,21 @@ class ChuvaRepository {
 
   bool get _online => ConnectivityService.instance.temInternetReal;
 
+  /// O id de fazenda que vem do login (userFazendas) é o tbl_pessoa_id
+  /// formatado com zeros à esquerda (ex: "000000056"), mesmo padrão usado
+  /// nos selects do sistema web. Mas o que a exportação do servidor
+  /// (list.php) devolve pra cada registro de chuva é o inteiro puro (56),
+  /// e é isso que fica salvo em chuva_cache.fazenda_id — normalizar aqui,
+  /// no único ponto de entrada do repositório, garante que toda leitura e
+  /// escrita usa a mesma chave, não importa de onde o id veio. Sem isso, a
+  /// tela buscava por "000000056" e nunca encontrava o que estava salvo
+  /// como "56" (bug real: gráfico sempre vazio, mesmo com o cache
+  /// populado).
+  String _normalizarFazendaId(String fazendaId) {
+    final numero = int.tryParse(fazendaId);
+    return numero != null ? numero.toString() : fazendaId;
+  }
+
   String formatarData(DateTime data) {
     final ano = data.year.toString().padLeft(4, '0');
     final mes = data.month.toString().padLeft(2, '0');

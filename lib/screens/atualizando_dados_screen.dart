@@ -117,6 +117,10 @@ class _AtualizandoDadosScreenState extends State<AtualizandoDadosScreen> {
         bd: cnpj,
         fazendas: idsFazendas,
       ),
+      // Chuva: sobe o que foi lançado offline e atualiza o cache local —
+      // mesmo ponto onde o cadastro de animais é atualizado, isolado do
+      // resto (ver ChuvaSyncService).
+      ChuvaSyncService.instance.sincronizarInicial(cnpj, idsFazendas),
     ]);
   }
 

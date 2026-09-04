@@ -105,6 +105,7 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
   }
 
   void _selecionarFazenda(String? id) {
+    debugPrint('[ChuvaScreen] fazenda selecionada: "$id" (bd="$_bd")');
     setState(() => fazendaSelecionada = id);
     _recarregarGraficos();
   }

@@ -104,7 +104,7 @@ class ChuvaRepository {
   }) {
     return ChuvaDao.instance.agregarPorMes(
       bd: bd,
-      fazendaId: fazendaId,
+      fazendaId: _normalizarFazendaId(fazendaId),
       ano: ano,
     );
   }

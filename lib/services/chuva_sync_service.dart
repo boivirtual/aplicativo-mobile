@@ -61,6 +61,7 @@ class ChuvaSyncService {
 
   Future<void> baixar(String bd, List<int> fazendas) async {
     try {
+      debugPrint('[ChuvaSync] baixar: bd=$bd fazendas=$fazendas');
       final response = await http
           .post(
             Uri.parse("${ApiConfig.baseUrl}/rest/chuva/list.php"),
@@ -68,6 +69,9 @@ class ChuvaSyncService {
             body: json.encode({"bd": bd, "fazendas": fazendas}),
           )
           .timeout(const Duration(seconds: 20));
+      debugPrint(
+        '[ChuvaSync] baixar: status=${response.statusCode} body=${response.body.substring(0, response.body.length.clamp(0, 500))}',
+      );
       if (response.statusCode != 200) return;
 
       final data = json.decode(response.body);
@@ -75,11 +79,15 @@ class ChuvaSyncService {
         final chuvas = (data['chuvas'] as List)
             .map((e) => e as Map<String, dynamic>)
             .toList();
+        debugPrint('[ChuvaSync] baixar: ${chuvas.length} registro(s) recebido(s), salvando no cache local');
         await ChuvaDao.instance.salvarLoteDoServidor(bd, chuvas);
+      } else {
+        debugPrint('[ChuvaSync] baixar: servidor respondeu success=false -> ${data['message']}');
       }
-    } catch (_) {
+    } catch (e, st) {
       // best-effort — mesmo padrão do AnimalCacheService, não deve travar
-      // nenhuma tela se isso falhar.
+      // nenhuma tela se isso falhar — mas loga pra dar pra diagnosticar.
+      debugPrint('[ChuvaSync] baixar: falhou -> $e\n$st');
     }
   }
 

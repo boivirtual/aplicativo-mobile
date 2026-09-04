@@ -200,6 +200,12 @@ class LocalDatabase {
         'ALTER TABLE pesagens_locais ADD COLUMN qtd_pesados_servidor INTEGER',
       );
     }
+    if (versaoAntiga < 5) {
+      // Cadastro de chuva (tela Chuva) — mesma tabela nova de quem instala
+      // do zero, criada aqui só para quem já tinha o app instalado antes
+      // desta versão.
+      await _criarTabelaChuvaCache(db);
+    }
   }
 
   /// Só para os testes/roteiro de verificação manual — apaga todos os dados

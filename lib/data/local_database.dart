@@ -11,7 +11,7 @@ class LocalDatabase {
   LocalDatabase._();
   static final LocalDatabase instance = LocalDatabase._();
 
-  static const int _versaoSchema = 4;
+  static const int _versaoSchema = 5;
 
   /// Nome do arquivo do banco — não é `const` de propósito: os testes
   /// automatizados rodam vários arquivos em paralelo (isolates diferentes),

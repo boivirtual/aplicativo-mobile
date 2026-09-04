@@ -497,7 +497,7 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
-            height: 46,
+            height: 54,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4CAF50),

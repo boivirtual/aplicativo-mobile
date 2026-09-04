@@ -152,15 +152,6 @@ class ChuvaDao {
       [bd, fazendaId, ano.toString().padLeft(4, '0')],
     );
 
-    final totalNaFazenda = await db.rawQuery(
-      'SELECT COUNT(*) as qtd, MIN(data) as minData, MAX(data) as maxData FROM chuva_cache WHERE bd = ? AND fazenda_id = ?',
-      [bd, fazendaId],
-    );
-    debugPrint(
-      '[ChuvaDao] agregarPorMes: bd="$bd" fazendaId="$fazendaId" ano=$ano -> ${linhas.length} mes(es) com dado; '
-      'total na fazenda (todos os anos) = ${totalNaFazenda.first}',
-    );
-
     final porMes = <int, Map<String, num>>{
       for (var m = 1; m <= 12; m++) m: {'mes': m, 'mm': 0, 'dias': 0},
     };

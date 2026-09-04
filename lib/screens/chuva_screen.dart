@@ -403,7 +403,10 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
     // inputs brancos sem borda com cantos arredondados por cima.
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      // Horizontal mais justo (10, igual em espírito ao resumo/gráfico
+      // abaixo, que usam 8/12) — com 16 os inputs ficavam visivelmente mais
+      // "encolhidos" nas laterais do que os cards logo abaixo.
+      padding: const EdgeInsets.fromLTRB(10, 14, 10, 14),
       decoration: BoxDecoration(
         color: Colors.grey[100],
         borderRadius: BorderRadius.circular(12),
@@ -411,7 +414,9 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
             'Registrar Precipitação',
             style: TextStyle(
               fontSize: 14,

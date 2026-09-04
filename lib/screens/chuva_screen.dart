@@ -454,8 +454,11 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                       child: Text(
                         _formatarDataExibicao(_dataSelecionada),
                         textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.visible,
+                        softWrap: false,
                         style: const TextStyle(
-                          fontSize: 20,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

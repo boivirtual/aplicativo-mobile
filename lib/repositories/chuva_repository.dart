@@ -61,11 +61,12 @@ class ChuvaRepository {
     required double volume,
     String? usuario,
   }) async {
+    final fazendaIdNormalizado = _normalizarFazendaId(fazendaId);
     final dataStr = formatarData(data);
 
     await ChuvaDao.instance.salvarLocal(
       bd: bd,
-      fazendaId: fazendaId,
+      fazendaId: fazendaIdNormalizado,
       data: dataStr,
       volume: volume,
       usuario: usuario,
@@ -74,7 +75,7 @@ class ChuvaRepository {
     if (_online) {
       final ok = await ChuvaSyncService.instance.enviarUm(
         bd: bd,
-        fazendaId: fazendaId,
+        fazendaId: fazendaIdNormalizado,
         data: dataStr,
         volume: volume,
         usuario: usuario,
@@ -82,7 +83,7 @@ class ChuvaRepository {
       if (ok) {
         await ChuvaDao.instance.marcarSincronizado(
           bd: bd,
-          fazendaId: fazendaId,
+          fazendaId: fazendaIdNormalizado,
           data: dataStr,
         );
       }

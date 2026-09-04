@@ -4,6 +4,7 @@ import 'screens/login_screen.dart';
 import 'screens/atualizando_dados_screen.dart';
 import 'main_container.dart';
 import 'services/sync_service.dart';
+import 'services/chuva_sync_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,6 +12,9 @@ void main() {
   // ouvindo conectividade e reprocessando a fila local durante toda a vida
   // do app, independente de qual tela está em primeiro plano.
   SyncService.instance.iniciar();
+  // Motor de sincronização da chuva — isolado do de cima de propósito (ver
+  // ChuvaSyncService), não mexe na fila/lógica da pesagem.
+  ChuvaSyncService.instance.iniciar();
   runApp(const MyApp());
 }
 

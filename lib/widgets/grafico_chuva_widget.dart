@@ -197,7 +197,7 @@ class GraficoChuvaWidget extends StatelessWidget {
                           barRods: [
                             BarChartRodData(
                               toY: mm[i],
-                              width: mm.length > 6 ? 14 : 24,
+                              width: largBarra,
                               borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                               gradient: const LinearGradient(
                                 begin: Alignment.topCenter,

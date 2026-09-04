@@ -86,6 +86,7 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
   @override
   void dispose() {
     _volumeController.dispose();
+    _volumeFocus.dispose();
     super.dispose();
   }
 

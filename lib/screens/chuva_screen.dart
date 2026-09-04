@@ -101,14 +101,29 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
       }
       carregando = false;
     });
-    if (fazendaSelecionada != null) {
-      await _recarregarGraficos();
-    }
+    await _sincronizarEAtualizar();
   }
 
   void _selecionarFazenda(String? id) {
     setState(() => fazendaSelecionada = id);
     _recarregarGraficos();
+  }
+
+  /// Tenta subir pendências + baixar o cache mais recente do servidor
+  /// (melhor esforço — offline ou falha não impedem a leitura do que já
+  /// está local) e só então recarrega os gráficos. Chamado ao abrir a tela
+  /// e no "puxar pra atualizar".
+  Future<void> _sincronizarEAtualizar() async {
+    if (_bd != null && _bd!.isNotEmpty && fazendasCarregadas.isNotEmpty) {
+      final idsFazendas = fazendasCarregadas
+          .map((f) => int.tryParse((f as Map)['id'].toString()) ?? 0)
+          .where((id) => id > 0)
+          .toList();
+      if (idsFazendas.isNotEmpty) {
+        await ChuvaSyncService.instance.sincronizarInicial(_bd, idsFazendas);
+      }
+    }
+    await _recarregarGraficos();
   }
 
   Future<void> _recarregarGraficos() async {

@@ -285,6 +285,7 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: widget.onBack,
         ),
+        actions: const [IndicadorConectividadeWidget(), SizedBox(width: 8)],
       ),
       body: carregando
           ? const Center(child: CircularProgressIndicator())

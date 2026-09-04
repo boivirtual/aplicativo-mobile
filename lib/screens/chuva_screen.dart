@@ -371,6 +371,8 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         IconButton(
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
           icon: const Icon(Icons.chevron_left, color: Color(0xFF18385F)),
           onPressed: () => _trocarAno(-1),
         ),
@@ -383,6 +385,8 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
           ),
         ),
         IconButton(
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
           icon: const Icon(Icons.chevron_right, color: Color(0xFF18385F)),
           onPressed: _anoGrafico >= DateTime.now().year
               ? null

@@ -201,17 +201,50 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
 
     if (existente != null) {
       if (!mounted) return;
-      AppAlert.confirmacao(
-        context,
+      final sobrescrever = await _confirmarSobrescrita(
         mensagem:
             'Já existe volume cadastrado para essa data (${existente.toStringAsFixed(0)} mm). '
             'Deseja sobrescrever para ${volume.toStringAsFixed(0)} mm?',
-        onConfirmar: () => _confirmarGravacao(volume),
       );
-      return;
+      if (sobrescrever != true) {
+        // Cancelou: limpa o volume digitado e devolve o foco pro campo,
+        // pronto pra um novo lançamento.
+        _volumeController.clear();
+        _volumeFocus.requestFocus();
+        return;
+      }
     }
 
     await _confirmarGravacao(volume);
+  }
+
+  /// Mesmo visual do AppAlert.confirmacao, mas devolve explicitamente se o
+  /// usuário confirmou ou cancelou — o app_alert.dart genérico só chama um
+  /// callback de confirmação e não avisa o cancelamento, e esse fluxo
+  /// precisa saber quando foi cancelado pra limpar o campo.
+  Future<bool?> _confirmarSobrescrita({required String mensagem}) {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text('Confirmação', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(mensagem),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Confirmar',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF007AFF)),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _confirmarGravacao(double volume) async {
@@ -226,6 +259,10 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
       );
       if (!mounted) return;
       _volumeController.clear();
+      // Volta pro dia de hoje — sem isso, o próximo lançamento (o mais
+      // comum é registrar o dia atual, seguido) ficava preso na última
+      // data escolhida.
+      setState(() => _dataSelecionada = DateTime.now());
       await _recarregarGraficos();
       if (!mounted) return;
       await AppAlert.sucesso(context, 'Volume registrado com sucesso.');

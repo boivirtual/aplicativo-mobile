@@ -77,7 +77,8 @@ class ChuvaRepository {
     }
   }
 
-  Future<int> contarPendentes(String bd) => ChuvaDao.instance.contarPendentes(bd);
+  Future<int> contarPendentes(String bd) =>
+      ChuvaDao.instance.contarPendentes(bd);
 
   /// Gráfico mensal (ano informado) — 12 itens, jan..dez.
   Future<List<Map<String, num>>> graficoMensal({
@@ -85,7 +86,11 @@ class ChuvaRepository {
     required String fazendaId,
     required int ano,
   }) {
-    return ChuvaDao.instance.agregarPorMes(bd: bd, fazendaId: fazendaId, ano: ano);
+    return ChuvaDao.instance.agregarPorMes(
+      bd: bd,
+      fazendaId: fazendaId,
+      ano: ano,
+    );
   }
 
   /// Gráfico anual — 5 itens, ano-4..ano.

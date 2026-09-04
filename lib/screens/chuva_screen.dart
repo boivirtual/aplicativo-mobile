@@ -8,12 +8,32 @@ import '../widgets/cabecalho_fazenda_widget.dart';
 import '../widgets/grafico_chuva_widget.dart';
 
 const _mesesAbrev = [
-  'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-  'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
+  'Jan',
+  'Fev',
+  'Mar',
+  'Abr',
+  'Mai',
+  'Jun',
+  'Jul',
+  'Ago',
+  'Set',
+  'Out',
+  'Nov',
+  'Dez',
 ];
 const _mesesCompletos = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
 ];
 
 /// Tela de Chuva — cadastro de precipitação diária e os mesmos dois
@@ -197,7 +217,10 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: const Text('Chuva', style: TextStyle(fontSize: 18, color: Colors.white)),
+        title: const Text(
+          'Chuva',
+          style: TextStyle(fontSize: 18, color: Colors.white),
+        ),
         backgroundColor: const Color(0xFF18385F),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -221,7 +244,10 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                       ? Center(
                           child: Text(
                             'Selecione uma fazenda.',
-                            style: TextStyle(color: Colors.grey[600], fontStyle: FontStyle.italic),
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontStyle: FontStyle.italic,
+                            ),
                           ),
                         )
                       : RefreshIndicator(
@@ -236,25 +262,38 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                               if (_carregandoGrafico && _mensal == null)
                                 const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 30),
-                                  child: Center(child: CircularProgressIndicator()),
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
                                 )
                               else ...[
                                 _buildSeletorAno(),
                                 const SizedBox(height: 8),
                                 if (_mensal != null)
                                   GraficoChuvaWidget(
-                                    titulo: 'Precipitação x Dias Chuvosos ($_anoGrafico)',
+                                    titulo:
+                                        'Precipitação x Dias Chuvosos ($_anoGrafico)',
                                     rotulos: _mesesAbrev,
-                                    mm: _mensal!.map((e) => e['mm']!.toDouble()).toList(),
-                                    dias: _mensal!.map((e) => e['dias']!.toDouble()).toList(),
+                                    mm: _mensal!
+                                        .map((e) => e['mm']!.toDouble())
+                                        .toList(),
+                                    dias: _mensal!
+                                        .map((e) => e['dias']!.toDouble())
+                                        .toList(),
                                   ),
                                 const SizedBox(height: 14),
                                 if (_anual != null)
                                   GraficoChuvaWidget(
                                     titulo: 'Histórico últimos 5 anos',
-                                    rotulos: _anual!.map((e) => e['ano'].toString()).toList(),
-                                    mm: _anual!.map((e) => e['mm']!.toDouble()).toList(),
-                                    dias: _anual!.map((e) => e['dias']!.toDouble()).toList(),
+                                    rotulos: _anual!
+                                        .map((e) => e['ano'].toString())
+                                        .toList(),
+                                    mm: _anual!
+                                        .map((e) => e['mm']!.toDouble())
+                                        .toList(),
+                                    dias: _anual!
+                                        .map((e) => e['dias']!.toDouble())
+                                        .toList(),
                                   ),
                               ],
                               const SizedBox(height: 20),
@@ -277,11 +316,17 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
         ),
         Text(
           '$_anoGrafico',
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF18385F)),
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF18385F),
+          ),
         ),
         IconButton(
           icon: const Icon(Icons.chevron_right, color: Color(0xFF18385F)),
-          onPressed: _anoGrafico >= DateTime.now().year ? null : () => _trocarAno(1),
+          onPressed: _anoGrafico >= DateTime.now().year
+              ? null
+              : () => _trocarAno(1),
         ),
       ],
     );
@@ -295,7 +340,11 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -303,7 +352,11 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
         children: [
           const Text(
             'Registrar Precipitação',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF18385F)),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF18385F),
+            ),
           ),
           const SizedBox(height: 12),
           Row(
@@ -317,13 +370,20 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Data',
                       border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(_formatarDataExibicao(_dataSelecionada)),
-                        const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                        const Icon(
+                          Icons.calendar_today,
+                          size: 16,
+                          color: Colors.grey,
+                        ),
                       ],
                     ),
                   ),
@@ -334,12 +394,19 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                 flex: 2,
                 child: TextField(
                   controller: _volumeController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                  ],
                   decoration: const InputDecoration(
                     labelText: 'Volume (mm)',
                     border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 14,
+                    ),
                   ),
                 ),
               ),
@@ -353,18 +420,27 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4CAF50),
                 disabledBackgroundColor: const Color(0xFF4CAF50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               onPressed: _salvando ? null : _gravar,
               child: _salvando
                   ? const SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Colors.white,
+                      ),
                     )
                   : const Text(
                       'Gravar',
-                      style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
             ),
           ),
@@ -382,15 +458,26 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
     );
     final mmMes = dadosMes?['mm'] ?? 0;
     final diasMes = dadosMes?['dias'] ?? 0;
-    final mmAno = _mensal?.fold<num>(0, (soma, e) => soma + (e['mm'] ?? 0)) ?? 0;
+    final mmAno =
+        _mensal?.fold<num>(0, (soma, e) => soma + (e['mm'] ?? 0)) ?? 0;
 
     Widget item(String rotulo, String valor) {
       return Expanded(
         child: Column(
           children: [
-            Text(valor, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF18385F))),
+            Text(
+              valor,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF18385F),
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(rotulo, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+            Text(
+              rotulo,
+              style: const TextStyle(fontSize: 11, color: Colors.grey),
+            ),
           ],
         ),
       );
@@ -403,7 +490,11 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Row(

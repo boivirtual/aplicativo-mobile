@@ -174,12 +174,18 @@ class LocalDatabase {
     );
   }
 
-  Future<void> _atualizarSchema(Database db, int versaoAntiga, int versaoNova) async {
+  Future<void> _atualizarSchema(
+    Database db,
+    int versaoAntiga,
+    int versaoNova,
+  ) async {
     if (versaoAntiga < 2) {
       // Nome da fazenda de cada animal cacheado — precisa pra "Consultar
       // Mãe" (busca em todas as fazendas do usuário) exibir de qual
       // fazenda é cada filho, sem depender de rede pra isso.
-      await db.execute('ALTER TABLE animais_cache ADD COLUMN fazenda_nome TEXT');
+      await db.execute(
+        'ALTER TABLE animais_cache ADD COLUMN fazenda_nome TEXT',
+      );
       await db.execute(
         'CREATE INDEX IF NOT EXISTS idx_animais_cache_mae ON animais_cache (id_mae)',
       );
@@ -187,7 +193,9 @@ class LocalDatabase {
     if (versaoAntiga < 3) {
       // Peso de desmama — precisa pra saber se um bezerro já foi desmamado
       // (regra do alerta "mãe/bezerro com apartação em lote aberto").
-      await db.execute('ALTER TABLE animais_cache ADD COLUMN peso_desmama TEXT');
+      await db.execute(
+        'ALTER TABLE animais_cache ADD COLUMN peso_desmama TEXT',
+      );
     }
     if (versaoAntiga < 4) {
       // Total de animais pesados que o servidor já informa na própria

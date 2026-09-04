@@ -38,7 +38,24 @@ class GraficoChuvaWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final maxMm = mm.fold<double>(0, (p, v) => v > p ? v : p);
     final maxDias = dias.fold<double>(0, (p, v) => v > p ? v : p);
-    final tetoMm = _tetoAgradavel(maxMm, const [10, 20, 30, 50, 75, 100, 150, 200, 300, 400, 500, 750, 1000, 1500, 2000, 3000]);
+    final tetoMm = _tetoAgradavel(maxMm, const [
+      10,
+      20,
+      30,
+      50,
+      75,
+      100,
+      150,
+      200,
+      300,
+      400,
+      500,
+      750,
+      1000,
+      1500,
+      2000,
+      3000,
+    ]);
     final tetoDias = _tetoAgradavel(maxDias, const [5, 10, 15, 20, 25, 31]);
 
     Widget rotuloEixoX(double valor, TitleMeta meta) {
@@ -81,9 +98,17 @@ class GraficoChuvaWidget extends StatelessWidget {
           const SizedBox(height: 10),
           const Row(
             children: [
-              _ItemLegenda(cor: _corBarra, formato: _FormatoLegenda.quadrado, texto: 'mm Chuva'),
+              _ItemLegenda(
+                cor: _corBarra,
+                formato: _FormatoLegenda.quadrado,
+                texto: 'mm Chuva',
+              ),
               SizedBox(width: 16),
-              _ItemLegenda(cor: _corLinha, formato: _FormatoLegenda.linha, texto: 'Dias Chuvosos'),
+              _ItemLegenda(
+                cor: _corLinha,
+                formato: _FormatoLegenda.linha,
+                texto: 'Dias Chuvosos',
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -103,10 +128,18 @@ class GraficoChuvaWidget extends StatelessWidget {
                 ),
                 borderData: FlBorderData(show: false),
                 titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                   bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: true, reservedSize: 26, getTitlesWidget: rotuloEixoX),
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 26,
+                      getTitlesWidget: rotuloEixoX,
+                    ),
                   ),
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
@@ -114,7 +147,10 @@ class GraficoChuvaWidget extends StatelessWidget {
                       reservedSize: 34,
                       getTitlesWidget: (v, meta) => Text(
                         v.toInt().toString(),
-                        style: const TextStyle(fontSize: 10, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
                   ),
@@ -128,7 +164,9 @@ class GraficoChuvaWidget extends StatelessWidget {
                           toY: mm[i],
                           color: _corBarra,
                           width: mm.length > 6 ? 12 : 22,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(2)),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(2),
+                          ),
                         ),
                       ],
                     ),
@@ -149,10 +187,18 @@ class GraficoChuvaWidget extends StatelessWidget {
                 gridData: const FlGridData(show: false),
                 borderData: FlBorderData(show: false),
                 titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                   bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: true, reservedSize: 26, getTitlesWidget: rotuloEixoX),
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 26,
+                      getTitlesWidget: rotuloEixoX,
+                    ),
                   ),
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
@@ -161,21 +207,31 @@ class GraficoChuvaWidget extends StatelessWidget {
                       interval: tetoDias / 4 <= 0 ? 1 : tetoDias / 4,
                       getTitlesWidget: (v, meta) => Text(
                         v.toInt().toString(),
-                        style: const TextStyle(fontSize: 10, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
                   ),
                 ),
                 lineBarsData: [
                   LineChartBarData(
-                    spots: [for (var i = 0; i < dias.length; i++) FlSpot(i.toDouble(), dias[i])],
+                    spots: [
+                      for (var i = 0; i < dias.length; i++)
+                        FlSpot(i.toDouble(), dias[i]),
+                    ],
                     isCurved: false,
                     color: _corLinha,
                     barWidth: 2,
                     dotData: FlDotData(
                       show: true,
                       getDotPainter: (spot, pct, bar, index) =>
-                          FlDotCirclePainter(radius: 2.5, color: _corLinha, strokeWidth: 0),
+                          FlDotCirclePainter(
+                            radius: 2.5,
+                            color: _corLinha,
+                            strokeWidth: 0,
+                          ),
                     ),
                   ),
                 ],
@@ -195,7 +251,11 @@ class _ItemLegenda extends StatelessWidget {
   final _FormatoLegenda formato;
   final String texto;
 
-  const _ItemLegenda({required this.cor, required this.formato, required this.texto});
+  const _ItemLegenda({
+    required this.cor,
+    required this.formato,
+    required this.texto,
+  });
 
   @override
   Widget build(BuildContext context) {

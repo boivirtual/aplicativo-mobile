@@ -188,7 +188,8 @@ class ChuvaDao {
     );
 
     final porAno = <int, Map<String, num>>{
-      for (var a = anoInicial; a <= anoFinal; a++) a: {'ano': a, 'mm': 0, 'dias': 0},
+      for (var a = anoInicial; a <= anoFinal; a++)
+        a: {'ano': a, 'mm': 0, 'dias': 0},
     };
     for (final linha in linhas) {
       final ano = linha['ano'] as int;

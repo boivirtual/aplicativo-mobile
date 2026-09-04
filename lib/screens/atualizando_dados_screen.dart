@@ -38,8 +38,7 @@ class AtualizandoDadosScreen extends StatefulWidget {
   const AtualizandoDadosScreen({super.key, this.aoConcluir});
 
   @override
-  State<AtualizandoDadosScreen> createState() =>
-      _AtualizandoDadosScreenState();
+  State<AtualizandoDadosScreen> createState() => _AtualizandoDadosScreenState();
 }
 
 class _AtualizandoDadosScreenState extends State<AtualizandoDadosScreen> {

@@ -52,6 +52,7 @@ class GraficoChuvaWidget extends StatelessWidget {
       10, 20, 30, 50, 75, 100, 150, 200, 300, 400, 500, 750, 1000, 1500, 2000, 3000,
     ]);
     final tetoDias = _tetoAgradavel(maxDias, const [5, 10, 15, 20, 25, 31]);
+    final largBarra = mm.length > 6 ? 14.0 : 24.0;
 
     Widget rotuloEixoX(double valor, TitleMeta meta) {
       final i = valor.round();

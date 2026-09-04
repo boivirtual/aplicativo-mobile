@@ -7,6 +7,7 @@ import '../services/chuva_sync_service.dart';
 import '../utils/app_alert.dart';
 import '../widgets/cabecalho_fazenda_widget.dart';
 import '../widgets/grafico_chuva_widget.dart';
+import '../widgets/indicador_conectividade_widget.dart';
 
 const _mesesAbrev = [
   'Jan',

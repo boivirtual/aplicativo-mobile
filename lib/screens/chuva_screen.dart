@@ -101,6 +101,7 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
       }
       carregando = false;
     });
+    debugPrint('[ChuvaScreen] contexto: bd="$_bd" fazendas=$fazendasCarregadas');
     await _sincronizarEAtualizar();
   }
 

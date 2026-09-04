@@ -115,7 +115,12 @@ class GraficoChuvaWidget extends StatelessWidget {
                   BarChartData(
                     maxY: tetoMm,
                     minY: 0,
-                    alignment: BarChartAlignment.spaceBetween,
+                    // spaceEvenly (não spaceBetween): cada categoria fica
+                    // dona de uma "fatia" igual da largura, com a barra
+                    // centralizada nela — é exatamente essa mesma divisão
+                    // (fatia i vai de i a i+1) que o LineChart de cima usa
+                    // (minX:-0.5, maxX:n-0.5), então os dois batem.
+                    alignment: BarChartAlignment.spaceEvenly,
                     barTouchData: BarTouchData(
                       enabled: true,
                       touchTooltipData: BarTouchTooltipData(

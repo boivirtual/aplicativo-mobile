@@ -69,6 +69,7 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
 
   DateTime _dataSelecionada = DateTime.now();
   final _volumeController = TextEditingController();
+  final _volumeFocus = FocusNode();
   bool _salvando = false;
 
   int _anoGrafico = DateTime.now().year;

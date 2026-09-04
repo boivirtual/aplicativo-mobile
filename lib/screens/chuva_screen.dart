@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../repositories/chuva_repository.dart';
+import '../services/chuva_sync_service.dart';
 import '../utils/app_alert.dart';
 import '../widgets/cabecalho_fazenda_widget.dart';
 import '../widgets/grafico_chuva_widget.dart';

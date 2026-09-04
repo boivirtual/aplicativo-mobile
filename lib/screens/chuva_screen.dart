@@ -443,11 +443,12 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(
                           vertical: 15,
-                          horizontal: 12,
+                          horizontal: 6,
                         ),
+                        suffixIconConstraints: BoxConstraints(minWidth: 24, minHeight: 24),
                         suffixIcon: Icon(
                           Icons.calendar_today,
-                          size: 16,
+                          size: 14,
                           color: Colors.grey,
                         ),
                       ),

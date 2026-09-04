@@ -410,7 +410,7 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
       // Horizontal mais justo (10, igual em espírito ao resumo/gráfico
       // abaixo, que usam 8/12) — com 16 os inputs ficavam visivelmente mais
       // "encolhidos" nas laterais do que os cards logo abaixo.
-      padding: const EdgeInsets.fromLTRB(10, 14, 10, 14),
+      padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
       decoration: BoxDecoration(
         color: Colors.grey[100],
         borderRadius: BorderRadius.circular(12),

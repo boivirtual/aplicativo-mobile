@@ -79,8 +79,8 @@ class GraficoChuvaWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          Row(
-            children: const [
+          const Row(
+            children: [
               _ItemLegenda(cor: _corBarra, formato: _FormatoLegenda.quadrado, texto: 'mm Chuva'),
               SizedBox(width: 16),
               _ItemLegenda(cor: _corLinha, formato: _FormatoLegenda.linha, texto: 'Dias Chuvosos'),

@@ -423,62 +423,70 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Mesma altura/largura/estilo dos campos "Nº do Animal" e
+              // "Peso (Kg)" da Pesagem (formulario_pesagem_topo_widget.dart):
+              // 80 de altura, metade/metade, valor grande e centralizado.
               Expanded(
-                flex: 3,
+                flex: 1,
                 child: GestureDetector(
                   onTap: _escolherData,
                   child: Container(
-                    height: 56,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    height: 80,
                     decoration: _decoracaoInputBranco,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'Data',
-                              style: TextStyle(fontSize: 11, color: Colors.grey),
-                            ),
-                            Text(
-                              _formatarDataExibicao(_dataSelecionada),
-                              style: const TextStyle(fontSize: 15),
-                            ),
-                          ],
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Data',
+                        labelStyle: TextStyle(fontSize: 14, color: Colors.grey),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          vertical: 15,
+                          horizontal: 12,
                         ),
-                        const Icon(
+                        suffixIcon: Icon(
                           Icons.calendar_today,
                           size: 16,
                           color: Colors.grey,
                         ),
-                      ],
+                      ),
+                      child: Text(
+                        _formatarDataExibicao(_dataSelecionada),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                flex: 2,
+                flex: 1,
                 child: Container(
-                  height: 56,
+                  height: 80,
                   decoration: _decoracaoInputBranco,
                   child: TextField(
                     controller: _volumeController,
+                    focusNode: _volumeFocus,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
                     ],
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
                     decoration: const InputDecoration(
                       labelText: 'Volume (mm)',
-                      labelStyle: TextStyle(fontSize: 12, color: Colors.grey),
+                      labelStyle: TextStyle(fontSize: 14, color: Colors.grey),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 12,
-                        vertical: 18,
+                        vertical: 15,
                       ),
                     ),
                   ),

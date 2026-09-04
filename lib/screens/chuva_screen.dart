@@ -560,19 +560,20 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
     Widget item(String rotulo, String valor, {bool destaque = false}) {
       return Expanded(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               valor,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: destaque ? Colors.blue[300] : const Color(0xFF18385F),
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 1),
             Text(
               rotulo,
-              style: const TextStyle(fontSize: 11, color: Colors.grey),
+              style: const TextStyle(fontSize: 9, color: Colors.grey),
             ),
           ],
         ),
@@ -581,7 +582,7 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),

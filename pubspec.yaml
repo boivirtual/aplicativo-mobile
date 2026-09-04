@@ -8,7 +8,7 @@ publish_to: 'none'
 # sempre que uma build nova for gerada pra teste (a hora importa: pode sair
 # mais de uma build no mesmo dia), é assim que o testador confirma na tela
 # "Atualizações" qual versão está rodando no aparelho.
-version: 2.0.0+09031703
+version: 2.0.0+09040806
 
 environment:
   sdk: ^3.10.0

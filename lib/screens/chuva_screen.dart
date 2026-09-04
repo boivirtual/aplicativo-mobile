@@ -414,9 +414,7 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4),
-            child: Text(
+          const Text(
             'Registrar Precipitação',
             style: TextStyle(
               fontSize: 14,

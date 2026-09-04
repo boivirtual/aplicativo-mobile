@@ -351,20 +351,21 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
     );
   }
 
+  static const _decoracaoInputBranco = BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.all(Radius.circular(8)),
+  );
+
   Widget _buildCardRegistro() {
+    // Mesmo padrão visual do cartão de digitação da Pesagem
+    // (formulario_pesagem_topo_widget.dart): card cinza claro por trás,
+    // inputs brancos sem borda com cantos arredondados por cima.
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.grey[100],
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -385,19 +386,27 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                 flex: 3,
                 child: GestureDetector(
                   onTap: _escolherData,
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Data',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 14,
-                      ),
-                    ),
+                  child: Container(
+                    height: 56,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: _decoracaoInputBranco,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(_formatarDataExibicao(_dataSelecionada)),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Data',
+                              style: TextStyle(fontSize: 11, color: Colors.grey),
+                            ),
+                            Text(
+                              _formatarDataExibicao(_dataSelecionada),
+                              style: const TextStyle(fontSize: 15),
+                            ),
+                          ],
+                        ),
                         const Icon(
                           Icons.calendar_today,
                           size: 16,
@@ -411,20 +420,25 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
               const SizedBox(width: 10),
               Expanded(
                 flex: 2,
-                child: TextField(
-                  controller: _volumeController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-                  ],
-                  decoration: const InputDecoration(
-                    labelText: 'Volume (mm)',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 14,
+                child: Container(
+                  height: 56,
+                  decoration: _decoracaoInputBranco,
+                  child: TextField(
+                    controller: _volumeController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                    ],
+                    decoration: const InputDecoration(
+                      labelText: 'Volume (mm)',
+                      labelStyle: TextStyle(fontSize: 12, color: Colors.grey),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 18,
+                      ),
                     ),
                   ),
                 ),

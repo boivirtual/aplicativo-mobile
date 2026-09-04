@@ -535,7 +535,7 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
           item('Mês', _mesesCompletos[mesAtual - 1]),
           item('Dias Chuva', diasMes.toString()),
           item('mm Mês', mmMes.toStringAsFixed(0)),
-          item('mm Ano', mmAno.toStringAsFixed(0)),
+          item('mm Ano', mmAno.toStringAsFixed(0), destaque: true),
         ],
       ),
     );

@@ -139,6 +139,39 @@ class LocalDatabase {
     await db.execute(
       'CREATE INDEX idx_animais_cache_mae ON animais_cache (id_mae)',
     );
+
+    await _criarTabelaChuvaCache(db);
+  }
+
+  Future<void> _criarTabelaChuvaCache(Database db) async {
+    // Cache local do registro de chuva — mesmo papel de animais_cache, mas
+    // com escrita: um lançamento feito em campo grava aqui primeiro
+    // (sincronizado = 0) e só marca sincronizado = 1 depois que
+    // ChuvaSyncService confirma com o servidor. A UNIQUE(bd, fazenda_id,
+    // data) replica a regra do servidor (um registro por dia/fazenda, o
+    // mais recente sobrescreve — ver ChuvaDao::createChuva no backend) e
+    // permite usar INSERT ... OR REPLACE tanto para gravação local quanto
+    // para atualizar com o que vem do servidor.
+    await db.execute('''
+      CREATE TABLE chuva_cache (
+        id_local INTEGER PRIMARY KEY AUTOINCREMENT,
+        bd TEXT NOT NULL,
+        fazenda_id TEXT NOT NULL,
+        data TEXT NOT NULL,
+        volume REAL NOT NULL DEFAULT 0,
+        id_servidor INTEGER,
+        usuario TEXT,
+        sincronizado INTEGER NOT NULL DEFAULT 1,
+        atualizado_em TEXT NOT NULL,
+        UNIQUE (bd, fazenda_id, data)
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX idx_chuva_cache_fazenda ON chuva_cache (bd, fazenda_id)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_chuva_cache_sincronizado ON chuva_cache (bd, sincronizado)',
+    );
   }
 
   Future<void> _atualizarSchema(Database db, int versaoAntiga, int versaoNova) async {

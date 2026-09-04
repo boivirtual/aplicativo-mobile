@@ -110,6 +110,55 @@ class GraficoChuvaWidget extends StatelessWidget {
             height: _alturaGrafico,
             child: Stack(
               children: [
+                // Sombra de cada barra — o fl_chart não tem uma propriedade
+                // de sombra nas barras (BarChartRodData não suporta
+                // BoxShadow), então desenhamos uma sombra própria, no chão
+                // do gráfico, embaixo de onde cada barra vai cair (mesma
+                // divisão em fatias iguais da largura que o BarChart usa
+                // logo abaixo, com alignment: spaceEvenly).
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      left: _reservadoEsquerda,
+                      right: _reservadoDireita,
+                      bottom: _reservadoBaixo + 2,
+                    ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final n = mm.length;
+                        if (n == 0 || constraints.maxWidth <= 0) {
+                          return const SizedBox.shrink();
+                        }
+                        final fatia = constraints.maxWidth / n;
+                        return Stack(
+                          children: [
+                            for (var i = 0; i < n; i++)
+                              if (mm[i] > 0)
+                                Positioned(
+                                  left: i * fatia + fatia / 2 - 12,
+                                  bottom: 0,
+                                  child: Container(
+                                    width: 24,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      color: Colors.transparent,
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: _azulBarraBase.withValues(alpha: 0.45),
+                                          blurRadius: 6,
+                                          spreadRadius: 1,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
                 // Camada de baixo: as barras — é ela quem responde ao toque.
                 BarChart(
                   BarChartData(

@@ -52,16 +52,8 @@ class ChuvaSyncService {
   /// sobe qualquer lançamento feito offline e depois atualiza o cache local
   /// com o que está no servidor (outros dispositivos, sistema web, etc.).
   Future<void> sincronizarInicial(String? bd, List<int> fazendas) async {
-    if (bd == null || bd.isEmpty || fazendas.isEmpty) {
-      debugPrint(
-        '[ChuvaSync] sincronizarInicial: abortou -> bd=$bd fazendas=$fazendas',
-      );
-      return;
-    }
-    if (!ConnectivityService.instance.temInternetReal) {
-      debugPrint('[ChuvaSync] sincronizarInicial: sem internet real, abortou');
-      return;
-    }
+    if (bd == null || bd.isEmpty || fazendas.isEmpty) return;
+    if (!ConnectivityService.instance.temInternetReal) return;
 
     await enviarPendentes(bd);
     await baixar(bd, fazendas);

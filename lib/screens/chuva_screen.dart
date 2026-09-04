@@ -494,16 +494,16 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
     final mmAno =
         _mensal?.fold<num>(0, (soma, e) => soma + (e['mm'] ?? 0)) ?? 0;
 
-    Widget item(String rotulo, String valor) {
+    Widget item(String rotulo, String valor, {bool destaque = false}) {
       return Expanded(
         child: Column(
           children: [
             Text(
               valor,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF18385F),
+                color: destaque ? Colors.blue[300] : const Color(0xFF18385F),
               ),
             ),
             const SizedBox(height: 2),

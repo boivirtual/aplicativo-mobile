@@ -192,14 +192,6 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
     }
   }
 
-  String _getNomeFazenda(String id) {
-    final fazenda = fazendasCarregadas.firstWhere(
-      (f) => f['id'].toString() == id,
-      orElse: () => {'nome': 'Não encontrada'},
-    );
-    return fazenda['nome'].toString().toUpperCase();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

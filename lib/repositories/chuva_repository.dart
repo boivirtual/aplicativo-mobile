@@ -44,7 +44,7 @@ class ChuvaRepository {
   }) async {
     final linha = await ChuvaDao.instance.buscarPorData(
       bd: bd,
-      fazendaId: fazendaId,
+      fazendaId: _normalizarFazendaId(fazendaId),
       data: formatarData(data),
     );
     if (linha == null) return null;

@@ -210,6 +210,79 @@ class GraficoChuvaWidget extends StatelessWidget {
                     ],
                   ),
                 ),
+                // "Pele" 3D das barras — o fl_chart não desenha faces
+                // laterais nem brilho de topo (BarChartRodData não tem
+                // sombra/relevo nativo), então desenhamos por cima, na
+                // mesma posição/altura de cada barra: uma tira clara no
+                // topo (luz batendo) e uma tira escura na lateral direita
+                // (sombra), pra ler como um prisma em vez de um retângulo
+                // chapado. Só visual — IgnorePointer pra não atrapalhar o
+                // toque que já funciona na camada de baixo.
+                IgnorePointer(
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      left: _reservadoEsquerda,
+                      right: _reservadoDireita,
+                      bottom: _reservadoBaixo,
+                    ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final n = mm.length;
+                        if (n == 0 || constraints.maxWidth <= 0) {
+                          return const SizedBox.shrink();
+                        }
+                        final fatia = constraints.maxWidth / n;
+                        final alturaPlot = constraints.maxHeight;
+                        return Stack(
+                          children: [
+                            for (var i = 0; i < n; i++)
+                              if (mm[i] > 0)
+                                Builder(builder: (context) {
+                                  final altura =
+                                      ((mm[i] / tetoMm).clamp(0.0, 1.0)) * alturaPlot;
+                                  final esquerda = i * fatia + fatia / 2 - largBarra / 2;
+                                  return Positioned(
+                                    left: esquerda,
+                                    bottom: 0,
+                                    width: largBarra,
+                                    height: altura,
+                                    child: Stack(
+                                      children: [
+                                        // face lateral direita, mais escura
+                                        Positioned(
+                                          right: 0,
+                                          top: 3,
+                                          bottom: 0,
+                                          width: 3,
+                                          child: Container(
+                                            color: const Color(0xFF1F4FA8).withValues(alpha: 0.55),
+                                          ),
+                                        ),
+                                        // brilho no topo
+                                        Positioned(
+                                          left: 0,
+                                          right: 0,
+                                          top: 0,
+                                          height: 3,
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withValues(alpha: 0.65),
+                                              borderRadius: const BorderRadius.vertical(
+                                                top: Radius.circular(4),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
                 // Camada de cima: só a linha (visual) — não recebe toque,
                 // pra não disputar o gesto com as barras.
                 IgnorePointer(

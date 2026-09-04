@@ -313,10 +313,10 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                       : RefreshIndicator(
                           onRefresh: _sincronizarEAtualizar,
                           child: ListView(
-                            padding: const EdgeInsets.all(14),
+                            padding: const EdgeInsets.fromLTRB(14, 6, 14, 14),
                             children: [
                               _buildCardRegistro(),
-                              const SizedBox(height: 14),
+                              const SizedBox(height: 8),
                               _buildResumoMesAtual(),
                               const SizedBox(height: 14),
                               if (_carregandoGrafico && _mensal == null)

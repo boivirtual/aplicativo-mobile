@@ -270,7 +270,7 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                           ),
                         )
                       : RefreshIndicator(
-                          onRefresh: _recarregarGraficos,
+                          onRefresh: _sincronizarEAtualizar,
                           child: ListView(
                             padding: const EdgeInsets.all(14),
                             children: [

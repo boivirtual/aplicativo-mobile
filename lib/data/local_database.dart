@@ -216,5 +216,6 @@ class LocalDatabase {
     await db.delete('itens_pesagem_locais');
     await db.delete('pesagens_locais');
     await db.delete('animais_cache');
+    await db.delete('chuva_cache');
   }
 }

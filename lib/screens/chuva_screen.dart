@@ -44,9 +44,12 @@ const _mesesCompletos = [
 /// Offline-first: o lançamento grava no cache local na hora (nunca espera
 /// rede) e sincroniza sozinho — na abertura do app (ver
 /// AtualizandoDadosScreen/ChuvaSyncService.sincronizarInicial, mesmo ponto
-/// onde o cadastro de animais é atualizado) e, se ficou pendente, assim que
-/// a internet voltar. Os gráficos sempre leem do cache local, então
-/// funcionam sem internet depois da primeira sincronização.
+/// onde o cadastro de animais é atualizado), toda vez que esta tela é
+/// aberta, e no "puxar pra atualizar". Sem isso, uma sincronização inicial
+/// que falhou (ex: sem internet naquele instante, ou servidor fora do ar)
+/// só seria tentada de novo ao reabrir o app inteiro — aqui não precisa.
+/// Os gráficos sempre leem do cache local, então continuam funcionando sem
+/// internet depois da primeira sincronização.
 class ChuvaScreen extends StatefulWidget {
   final VoidCallback onBack;
   const ChuvaScreen({super.key, required this.onBack});

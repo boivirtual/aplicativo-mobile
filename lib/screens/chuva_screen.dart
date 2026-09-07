@@ -576,7 +576,7 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
   Widget _buildCardGraficos() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(8, 6, 8, 12),
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 10),
       decoration: BoxDecoration(
         color: Colors.grey[100],
         borderRadius: BorderRadius.circular(12),

@@ -316,12 +316,7 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                             padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
                             children: [
                               _buildCardRegistro(),
-                              const SizedBox(height: 4),
-                              _buildResumoMesAtual(),
-                              // Mais espaço acima do seletor de ano do que
-                              // abaixo — assim ele lê como parte do gráfico
-                              // logo em seguida, não do card de resumo.
-                              const SizedBox(height: 14),
+                              const SizedBox(height: 10),
                               if (_carregandoGrafico && _mensal == null)
                                 const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 30),
@@ -329,36 +324,8 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                                     child: CircularProgressIndicator(),
                                   ),
                                 )
-                              else ...[
-                                _buildSeletorAno(),
-                                const SizedBox(height: 2),
-                                if (_mensal != null)
-                                  GraficoChuvaWidget(
-                                    titulo:
-                                        'Precipitação x Dias Chuvosos ($_anoGrafico)',
-                                    rotulos: _mesesAbrev,
-                                    mm: _mensal!
-                                        .map((e) => e['mm']!.toDouble())
-                                        .toList(),
-                                    dias: _mensal!
-                                        .map((e) => e['dias']!.toDouble())
-                                        .toList(),
-                                  ),
-                                const SizedBox(height: 14),
-                                if (_anual != null)
-                                  GraficoChuvaWidget(
-                                    titulo: 'Histórico últimos 5 anos',
-                                    rotulos: _anual!
-                                        .map((e) => e['ano'].toString())
-                                        .toList(),
-                                    mm: _anual!
-                                        .map((e) => e['mm']!.toDouble())
-                                        .toList(),
-                                    dias: _anual!
-                                        .map((e) => e['dias']!.toDouble())
-                                        .toList(),
-                                  ),
-                              ],
+                              else
+                                _buildCardGraficos(),
                               const SizedBox(height: 20),
                             ],
                           ),

@@ -337,32 +337,37 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
   }
 
   Widget _buildSeletorAno() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        IconButton(
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-          icon: const Icon(Icons.chevron_left, color: Color(0xFF18385F)),
-          onPressed: () => _trocarAno(-1),
-        ),
-        Text(
-          '$_anoGrafico',
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF18385F),
+    return SizedBox(
+      height: 24,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 26, minHeight: 24),
+            iconSize: 20,
+            icon: const Icon(Icons.chevron_left, color: Color(0xFF18385F)),
+            onPressed: () => _trocarAno(-1),
           ),
-        ),
-        IconButton(
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-          icon: const Icon(Icons.chevron_right, color: Color(0xFF18385F)),
-          onPressed: _anoGrafico >= DateTime.now().year
-              ? null
-              : () => _trocarAno(1),
-        ),
-      ],
+          Text(
+            '$_anoGrafico',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF18385F),
+            ),
+          ),
+          IconButton(
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 26, minHeight: 24),
+            iconSize: 20,
+            icon: const Icon(Icons.chevron_right, color: Color(0xFF18385F)),
+            onPressed: _anoGrafico >= DateTime.now().year
+                ? null
+                : () => _trocarAno(1),
+          ),
+        ],
+      ),
     );
   }
 

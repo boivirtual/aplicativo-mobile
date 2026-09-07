@@ -507,14 +507,18 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                     ),
             ),
           ),
+          const SizedBox(height: 10),
+          _buildLinhaResumo(),
         ],
       ),
     );
   }
 
-  Widget _buildResumoMesAtual() {
-    final agora = DateTime.now();
-    final mesAtual = agora.month;
+  /// Resumo do mês/ano — fica dentro do mesmo card de "Registrar
+  /// Precipitação" (caixa branca sobre o cinza, igual aos inputs), porque
+  /// os números pertencem a esse contexto.
+  Widget _buildLinhaResumo() {
+    final mesAtual = DateTime.now().month;
     final dadosMes = _mensal?.firstWhere(
       (e) => e['mes'] == mesAtual,
       orElse: () => const {'mes': 0, 'mm': 0, 'dias': 0},
@@ -549,24 +553,48 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+      decoration: _decoracaoInputBranco,
       child: Row(
         children: [
           item('Mês', _mesesCompletos[mesAtual - 1]),
           item('Dias Chuva', diasMes.toString()),
           item('mm Mês', mmMes.toStringAsFixed(0)),
           item('mm Ano', mmAno.toStringAsFixed(0), destaque: true),
+        ],
+      ),
+    );
+  }
+
+  /// Card cinza (mesmo padrão do de "Registrar Precipitação") envolvendo o
+  /// seletor de ano e os dois gráficos, cada um numa caixa branca.
+  Widget _buildCardGraficos() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 12),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          _buildSeletorAno(),
+          const SizedBox(height: 2),
+          if (_mensal != null)
+            GraficoChuvaWidget(
+              titulo: 'Precipitação x Dias Chuvosos ($_anoGrafico)',
+              rotulos: _mesesAbrev,
+              mm: _mensal!.map((e) => e['mm']!.toDouble()).toList(),
+              dias: _mensal!.map((e) => e['dias']!.toDouble()).toList(),
+            ),
+          const SizedBox(height: 10),
+          if (_anual != null)
+            GraficoChuvaWidget(
+              titulo: 'Histórico últimos 5 anos',
+              rotulos: _anual!.map((e) => e['ano'].toString()).toList(),
+              mm: _anual!.map((e) => e['mm']!.toDouble()).toList(),
+              dias: _anual!.map((e) => e['dias']!.toDouble()).toList(),
+            ),
         ],
       ),
     );

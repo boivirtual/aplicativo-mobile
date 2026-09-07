@@ -70,17 +70,13 @@ class GraficoChuvaWidget extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 14, 12, 10),
-      decoration: BoxDecoration(
+      padding: const EdgeInsets.fromLTRB(10, 12, 8, 8),
+      // Caixa branca sobre o card cinza que a envolve (ver
+      // ChuvaScreen._buildCardGraficos) — mesma ideia dos inputs brancos da
+      // Pesagem. Sem sombra: já está aninhada num card.
+      decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.all(Radius.circular(8)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

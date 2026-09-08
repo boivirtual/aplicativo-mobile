@@ -768,6 +768,9 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     VoidCallback? onCancel,
     bool mostrarSimNao = false,
   }) {
+    debugPrint(
+      "[BUSCA-DEBUG] _exibirMensagemOverlay msg='$msg' onClose=${onClose != null} JA_TINHA_OVERLAY=${_overlayEntry != null} onCloseAntigo=${_onOverlayClose != null}",
+    );
     _removerErroOverlay();
     _onOverlayClose = onClose;
 

@@ -534,6 +534,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     _timerTeclado?.cancel();
     _removerErroOverlay();
     _removerTarjaPeso();
+    _removerSugestoesOverlay();
     _focoNoAnimal.dispose();
     _focoNoPeso.dispose();
     _focoNaObs.dispose();

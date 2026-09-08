@@ -617,6 +617,62 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     }
   }
 
+  void _onSugestaoAnimalTap(dynamic animal) {
+    final String idSel = animal['id'].toString();
+    final String n = animal['exibicao'] ?? animal['codigo'];
+    final dynamic nascimento = animal['nascimento'];
+
+    setState(() {
+      _noAnimalController.text = n;
+      mostrandoSugestoes = false;
+    });
+
+    if (_motivoSelecionadoAtual == '002' &&
+        _animalInvalidoParaDesmama(nascimento)) {
+      setState(() {
+        infoAnimal = null;
+        _pesoController.clear();
+        _pesoBloqueado = true;
+        mostrandoSugestoes = false;
+      });
+
+      _mostrarErroDesmamaERefocar();
+      return;
+    }
+
+    if (_itensPesados.any((it) => it['id'].toString() == idSel)) {
+      _exibirMensagemOverlay(
+        "Animal3 $n já está na lista! Confirma?",
+        isError: true,
+        mostrarSimNao: true,
+        onClose: () {
+          setState(() {
+            _noAnimalController.text = n;
+            _pesoBloqueado = false;
+            _jaConfirmouDuplicidade = true;
+          });
+          _buscarDetalhesAnimal(
+            idSel,
+            ignorarValidacao: true,
+            codigoFormatado: n,
+          );
+        },
+        onCancel: () {
+          setState(() {
+            _noAnimalController.clear();
+            infoAnimal = null;
+            _pesoController.clear();
+            mostrandoSugestoes = false;
+          });
+          _focoNoAnimal.requestFocus();
+          return;
+        },
+      );
+    } else {
+      _buscarDetalhesAnimal(idSel, ignorarValidacao: true);
+    }
+  }
+
   void _exibirTarjaPeso() {
     _removerTarjaPeso();
     String rawPeso = infoAnimal?['ultimoPeso']?.toString() ?? "0";

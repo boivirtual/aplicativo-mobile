@@ -463,6 +463,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   }
 
   void _confirmarTecladoAnimal() {
+    debugPrint("[BUSCA-DEBUG] _confirmarTecladoAnimal texto='${_noAnimalController.text}'");
     final texto = _noAnimalController.text.trim();
     if (texto.isEmpty) {
       _exibirMensagemErro(
@@ -478,7 +479,11 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   }
 
   void _focarNoAnimalComDelay() {
+    debugPrint("[BUSCA-DEBUG] _focarNoAnimalComDelay AGENDADO");
     Future.delayed(const Duration(milliseconds: 150), () {
+      debugPrint(
+        "[BUSCA-DEBUG] _focarNoAnimalComDelay DISPAROU: mounted=$mounted canRequestFocus=${_focoNoAnimal.canRequestFocus} hasFocus=${_focoNoAnimal.hasFocus}",
+      );
       if (mounted && _focoNoAnimal.canRequestFocus) {
         _focoNoAnimal.requestFocus();
       }

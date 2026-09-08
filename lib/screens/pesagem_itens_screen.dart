@@ -339,6 +339,9 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     });
 
     _focoNoAnimal.addListener(() {
+      debugPrint(
+        "[FOCO-DEBUG] ${DateTime.now().millisecondsSinceEpoch} listener _focoNoAnimal: hasFocus=${_focoNoAnimal.hasFocus}",
+      );
       if (mounted) setState(() => _focoAnimalAtivo = _focoNoAnimal.hasFocus);
 
       if (_focoNoAnimal.hasFocus) {

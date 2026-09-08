@@ -222,19 +222,16 @@ class _MainContainerState extends State<MainContainer>
       bottomNavigationBar: _currentIndex == 5
           ? null
           : BottomNavigationBar(
-              // TEMPORÁRIO (2026-09-08): a aba Chuva (página 3) está
-              // escondida do rodapé enquanto o George testa a Pesagem, pra
-              // o testador não confundir. `_paginasRodape` mapeia a posição
-              // do item do rodapé -> índice na lista `pages` (pula o 3).
-              // Para REVERTER: apagar `_paginasRodape`, voltar
-              // `currentIndex`/`onTap` para `_currentIndex` direto e
-              // recolocar o `_buildNavItem('chuva.png', 'Chuva', 3, ...)`
-              // entre Pesagem e Agenda. Ver também home_screen.dart.
-              currentIndex: _paginasRodape.contains(_currentIndex)
-                  ? _paginasRodape.indexOf(_currentIndex)
-                  : 0,
-              onTap: (pos) =>
-                  setState(() => _currentIndex = _paginasRodape[pos]),
+              currentIndex: _currentIndex > 4 ? 0 : _currentIndex,
+              // TEMPORÁRIO (2026-09-08): o ícone da Chuva (posição 3)
+              // continua aparecendo no rodapé, mas o toque nele é ignorado
+              // enquanto o George testa a Pesagem — pra não confundir o
+              // testador. Para REVERTER: trocar por
+              // `onTap: (index) => setState(() => _currentIndex = index)`.
+              onTap: (index) {
+                if (index == 3) return; // Chuva: clique inibido
+                setState(() => _currentIndex = index);
+              },
               type: BottomNavigationBarType.fixed,
               backgroundColor: Colors.white,
               selectedItemColor: azulBarra,
@@ -261,6 +258,7 @@ class _MainContainerState extends State<MainContainer>
                   azulBarra,
                   cinzaInativo,
                 ),
+                _buildNavItem('chuva.png', 'Chuva', 3, azulBarra, cinzaInativo),
                 _buildNavItem(
                   'agenda.png',
                   'Agenda',
@@ -272,10 +270,6 @@ class _MainContainerState extends State<MainContainer>
             ),
     );
   }
-
-  // TEMPORÁRIO (2026-09-08): posições do rodapé -> índice em `pages`,
-  // pulando a Chuva (3). Ver comentário no bottomNavigationBar.
-  static const _paginasRodape = [0, 1, 2, 4];
 
   BottomNavigationBarItem _buildNavItem(
     String img,

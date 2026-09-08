@@ -339,6 +339,9 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     });
 
     _focoNoAnimal.addListener(() {
+      debugPrint(
+        "[BUSCA-DEBUG] listener _focoNoAnimal disparou: hasFocus=${_focoNoAnimal.hasFocus}",
+      );
       if (mounted) setState(() => _focoAnimalAtivo = _focoNoAnimal.hasFocus);
 
       if (_focoNoAnimal.hasFocus) {

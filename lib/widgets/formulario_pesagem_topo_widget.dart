@@ -10,10 +10,12 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
   final bool carregandoAnimal;
   final void Function(String) onNoAnimalChanged;
 
-  final bool mostrandoSugestoes;
-  final List<dynamic> sugestoesAnimais;
-  final List<Map<String, dynamic>> itensPesados;
-  final void Function(dynamic animal) onSugestaoTap;
+  /// Presos ao campo Nº do Animal — a lista de sugestões flutua por cima
+  /// da tela (Overlay, gerenciado pela tela-mãe), em vez de participar do
+  /// layout normal aqui: fazer isso aqui dentro empurrava o teclado
+  /// numérico pra baixo bem no meio da digitação (bug real).
+  final LayerLink noAnimalLayerLink;
+  final GlobalKey campoNoAnimalKey;
 
   final Map<String, dynamic>? infoAnimal;
   final bool pesoBloqueado;

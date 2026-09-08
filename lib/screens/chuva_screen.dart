@@ -558,10 +558,8 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
       );
     }
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-      decoration: _decoracaoInputBranco,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Row(
         children: [
           item('Mês', _mesesCompletos[mesAtual - 1]),

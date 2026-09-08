@@ -1731,6 +1731,19 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     });
 
     _focoNoPeso.requestFocus();
+    debugPrint(
+      "[TARJA-DEBUG] logo apos requestFocus: hasFocus=${_focoNoPeso.hasFocus}",
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      debugPrint(
+        "[TARJA-DEBUG] pos-frame: hasFocus=${_focoNoPeso.hasFocus}",
+      );
+    });
+    Future.delayed(const Duration(milliseconds: 50), () {
+      debugPrint(
+        "[TARJA-DEBUG] 50ms depois: hasFocus=${_focoNoPeso.hasFocus}",
+      );
+    });
 
     // A data do último peso não fica guardada no item local (só o valor do
     // peso em si) — busca de novo no cache (offline, rápido) só pra

@@ -40,6 +40,13 @@ class TecladoPesoWidget extends StatelessWidget {
     );
   }
 
+  // Espaço bem enxuto entre linhas de propósito: é área "morta" de verdade
+  // (não pertence a nenhum botão) — diferente do espaço entre botões da
+  // mesma linha, que agora faz parte da área clicável do botão vizinho
+  // (ver _celula). Menor esse valor, menor a chance de um toque cair bem
+  // no meio, entre uma linha e outra, sem acertar nenhum botão.
+  static const double _espacoEntreLinhas = 3;
+
   List<Widget> _linhasComOperadores() {
     return [
       Row(
@@ -50,7 +57,7 @@ class TecladoPesoWidget extends StatelessWidget {
           _botaoOperador('+'),
         ],
       ),
-      const SizedBox(height: 5),
+      const SizedBox(height: _espacoEntreLinhas),
       Row(
         children: [
           _botaoDigito('4'),
@@ -59,7 +66,7 @@ class TecladoPesoWidget extends StatelessWidget {
           _botaoOperador('-'),
         ],
       ),
-      const SizedBox(height: 5),
+      const SizedBox(height: _espacoEntreLinhas),
       Row(
         children: [
           _botaoDigito('7'),
@@ -68,7 +75,7 @@ class TecladoPesoWidget extends StatelessWidget {
           _botaoOperador('='),
         ],
       ),
-      const SizedBox(height: 5),
+      const SizedBox(height: _espacoEntreLinhas),
       Row(
         children: [
           _botaoDigito(','),
@@ -85,15 +92,15 @@ class TecladoPesoWidget extends StatelessWidget {
       Row(
         children: [_botaoDigito('1'), _botaoDigito('2'), _botaoDigito('3')],
       ),
-      const SizedBox(height: 5),
+      const SizedBox(height: _espacoEntreLinhas),
       Row(
         children: [_botaoDigito('4'), _botaoDigito('5'), _botaoDigito('6')],
       ),
-      const SizedBox(height: 5),
+      const SizedBox(height: _espacoEntreLinhas),
       Row(
         children: [_botaoDigito('7'), _botaoDigito('8'), _botaoDigito('9')],
       ),
-      const SizedBox(height: 5),
+      const SizedBox(height: _espacoEntreLinhas),
       Row(
         children: [_botaoApagar(), _botaoDigito('0'), _botaoConfirmar()],
       ),
@@ -106,31 +113,51 @@ class TecladoPesoWidget extends StatelessWidget {
   // overflow) em telas menores. Largura continua generosa (cada botão
   // ocupa 1/4 da largura da tela), que é o que mais importa pra acertar
   // o toque com a mão suja/luva.
+  //
+  // A célula inteira (sem "buracos" de padding) é a área clicável — quem
+  // desenha o respiro visual entre os botões é o _pill() de cada um,
+  // por dentro do InkWell, não um Padding por fora dele. Assim o botão
+  // continua com a MESMA aparência de antes, mas responde ao toque numa
+  // área maior (inclusive onde antes era só espaço morto entre um botão e
+  // o vizinho) — bug real relatado: toque não registrava e parecia que o
+  // teclado "não aceitava" o número, quando na real o dedo só não tinha
+  // caído em cima de nenhum botão.
   Widget _celula({required Widget child}) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(2),
-        child: SizedBox(height: 42, child: child),
+    return Expanded(child: SizedBox(height: 46, child: child));
+  }
+
+  /// Desenho visual do botão (cor, cantos arredondados) — sempre um pouco
+  /// menor que a célula inteira (ver _celula), porque tem um respiro
+  /// (Padding) por dentro do InkWell, não por fora. O InkWell (com o
+  /// mesmo borderRadius) ainda ocupa a célula toda, então o efeito de
+  /// toque (ripple) fica limitado a essa forma arredondada mesmo tocando
+  /// perto da borda da célula.
+  Widget _pill({required Widget child, required Color cor}) {
+    return Padding(
+      padding: const EdgeInsets.all(2),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: cor,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Center(child: child),
       ),
     );
   }
 
   Widget _botaoDigito(String texto) {
     return _celula(
-      child: Material(
-        color: Colors.white,
+      child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: () => onCaractere(texto),
-          child: Center(
-            child: Text(
-              texto,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w500,
-                color: _corDigito,
-              ),
+        onTap: () => onCaractere(texto),
+        child: _pill(
+          cor: Colors.white,
+          child: Text(
+            texto,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w500,
+              color: _corDigito,
             ),
           ),
         ),
@@ -140,20 +167,17 @@ class TecladoPesoWidget extends StatelessWidget {
 
   Widget _botaoOperador(String texto) {
     return _celula(
-      child: Material(
-        color: _fundoOperador,
+      child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: () => onCaractere(texto),
-          child: Center(
-            child: Text(
-              texto,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-                color: _corOperador,
-              ),
+        onTap: () => onCaractere(texto),
+        child: _pill(
+          cor: _fundoOperador,
+          child: Text(
+            texto,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+              color: _corOperador,
             ),
           ),
         ),
@@ -163,14 +187,15 @@ class TecladoPesoWidget extends StatelessWidget {
 
   Widget _botaoApagar() {
     return _celula(
-      child: Material(
-        color: Colors.white,
+      child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: onApagar,
-          child: const Center(
-            child: Icon(Icons.backspace_outlined, size: 22, color: Colors.grey),
+        onTap: onApagar,
+        child: _pill(
+          cor: Colors.white,
+          child: const Icon(
+            Icons.backspace_outlined,
+            size: 22,
+            color: Colors.grey,
           ),
         ),
       ),
@@ -179,20 +204,17 @@ class TecladoPesoWidget extends StatelessWidget {
 
   Widget _botaoConfirmar() {
     return _celula(
-      child: Material(
-        color: Colors.blue,
+      child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: onConfirmar,
-          child: const Center(
-            child: Text(
-              "OK",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+        onTap: onConfirmar,
+        child: _pill(
+          cor: Colors.blue,
+          child: const Text(
+            "OK",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
           ),
         ),

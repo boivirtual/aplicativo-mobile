@@ -93,6 +93,16 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   OverlayEntry? _overlayEntry;
   OverlayEntry? _tarjaPesoOverlay;
 
+  /// Faz a lista de sugestões do Nº do Animal flutuar presa embaixo do
+  /// campo (via Overlay), em vez de participar do layout normal da tela —
+  /// bug real: antes ela empurrava tudo abaixo dela, inclusive o teclado
+  /// numérico, bem no meio da digitação (o usuário mirava num dígito e o
+  /// teclado já tinha se deslocado quando o dedo tocava a tela).
+  final LayerLink _noAnimalLayerLink = LayerLink();
+  final GlobalKey _campoNoAnimalKey = GlobalKey();
+  OverlayEntry? _sugestoesOverlayEntry;
+  static const double _sugestoesOverlayMaxHeight = 220;
+
   /// Ouve a contagem geral de pendências de sincronização — quando ela
   /// DIMINUI (algo terminou de sincronizar em segundo plano, aqui ou em
   /// qualquer outra pesagem), releva a lista desta tela pra pegar o que

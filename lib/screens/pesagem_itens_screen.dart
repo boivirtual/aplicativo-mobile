@@ -2306,12 +2306,18 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
                   onCaractere: _inserirCaractereAnimal,
                   onApagar: _apagarCaractereAnimal,
                   onConfirmar: _confirmarTecladoAnimal,
+                  onFechar: () {
+                    _debounce?.cancel();
+                    _timerTeclado?.cancel();
+                    _focoNoAnimal.unfocus();
+                  },
                 ),
               if (mostrarTecladoPeso)
                 TecladoPesoWidget(
                   onCaractere: _inserirCaracterePeso,
                   onApagar: _apagarCaracterePeso,
                   onConfirmar: _confirmarTecladoPeso,
+                  onFechar: () => _focoNoPeso.unfocus(),
                 ),
             ],
           ),

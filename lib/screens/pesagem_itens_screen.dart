@@ -1801,6 +1801,13 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
       mostrandoSugestoes = false;
       _destacarCampoAnimal = true; // <- destaca o Nº do Animal
     });
+
+    // Volta o foco (e com ele o teclado numérico) pro Nº do Animal sozinho
+    // — antes só destacava visualmente e esperava o usuário tocar de novo
+    // pra abrir o teclado; pedido do George pra digitar o próximo animal
+    // direto após confirmar um peso ou excluir um item, sem esse toque
+    // extra.
+    _focarNoAnimalComDelay();
   }
 
   Future<void> _executarAcaoPrincipal() async {

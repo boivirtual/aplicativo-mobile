@@ -388,12 +388,18 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     // engano.
     _pesoAtualUsouFormula = false;
     final texto = _pesoController.text + caractere;
-    setState(() {
-      _pesoController.value = TextEditingValue(
-        text: texto,
-        selection: TextSelection.collapsed(offset: texto.length),
-      );
-    });
+    // SEM setState aqui de propósito — bug real: setState nesse nível
+    // reconstrói a tela inteira (lista de animais já pesados incluída) a
+    // cada dígito, e numa pesagem com muitos itens isso pode atrasar o
+    // suficiente pra perder um toque em digitação rápida. O campo Peso já
+    // atualiza sozinho (TextEditingController notifica o TextFormField
+    // ligado a ele diretamente) e o único outro trecho que reage ao texto
+    // (o Container azul de "modo fórmula") já escuta o controller sozinho
+    // via ValueListenableBuilder, em formulario_pesagem_topo_widget.dart.
+    _pesoController.value = TextEditingValue(
+      text: texto,
+      selection: TextSelection.collapsed(offset: texto.length),
+    );
   }
 
   void _apagarCaracterePeso() {
@@ -401,12 +407,11 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     final texto = _pesoController.text;
     if (texto.isEmpty) return;
     final novoTexto = texto.substring(0, texto.length - 1);
-    setState(() {
-      _pesoController.value = TextEditingValue(
-        text: novoTexto,
-        selection: TextSelection.collapsed(offset: novoTexto.length),
-      );
-    });
+    // Mesmo motivo de _inserirCaracterePeso: sem setState de propósito.
+    _pesoController.value = TextEditingValue(
+      text: novoTexto,
+      selection: TextSelection.collapsed(offset: novoTexto.length),
+    );
   }
 
   /// Mesma lógica que já existia no onChanged nativo do campo Nº do Animal

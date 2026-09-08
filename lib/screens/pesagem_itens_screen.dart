@@ -358,6 +358,9 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     });
 
     _focoNoPeso.addListener(() {
+      debugPrint(
+        "[TARJA-DEBUG] listener _focoNoPeso disparou: hasFocus=${_focoNoPeso.hasFocus}",
+      );
       if (mounted) setState(() => _focoPesoAtivo = _focoNoPeso.hasFocus);
 
       if (_focoNoPeso.hasFocus) {

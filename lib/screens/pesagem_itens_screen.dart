@@ -1733,19 +1733,15 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
       };
     });
 
-    _focoNoPeso.requestFocus();
-    debugPrint(
-      "[TARJA-DEBUG] logo apos requestFocus: hasFocus=${_focoNoPeso.hasFocus}",
-    );
+    // Pedir foco AQUI, direto após o setState acima, não pegava — bug real
+    // confirmado com log: nesse instante a tela ainda não tinha reconstruído
+    // com o campo já liberado (setState só agenda a reconstrução pro
+    // próximo frame, não acontece na hora), então o pedido de foco era
+    // ignorado silenciosamente. Esperar esse frame terminar de desenhar
+    // (postFrameCallback) resolve — só então o campo já está pronto pra
+    // focar de verdade.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      debugPrint(
-        "[TARJA-DEBUG] pos-frame: hasFocus=${_focoNoPeso.hasFocus}",
-      );
-    });
-    Future.delayed(const Duration(milliseconds: 50), () {
-      debugPrint(
-        "[TARJA-DEBUG] 50ms depois: hasFocus=${_focoNoPeso.hasFocus}",
-      );
+      if (mounted && _indexSendoEditado == index) _focoNoPeso.requestFocus();
     });
 
     // A data do último peso não fica guardada no item local (só o valor do
@@ -1753,21 +1749,12 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     // completar a tarja "Último Peso" que aparece com o foco no campo.
     // Pedido do George: essa referência também ajuda ao CORRIGIR um peso
     // já salvo, não só na digitação de um item novo.
-    debugPrint(
-      "[TARJA-DEBUG] indo buscar detalhes id=${item['id']} local=$fazendaSelecionada bd=$cnpjParaBanco",
-    );
     final detalhes = await AnimalRepository.instance.buscarDetalhes(
       id: item['id'].toString(),
       local: fazendaSelecionada,
       bd: cnpjParaBanco,
     );
-    debugPrint("[TARJA-DEBUG] detalhes voltou: $detalhes");
-    if (!mounted || _indexSendoEditado != index) {
-      debugPrint(
-        "[TARJA-DEBUG] saiu cedo: mounted=$mounted _indexSendoEditado=$_indexSendoEditado index=$index",
-      );
-      return;
-    }
+    if (!mounted || _indexSendoEditado != index) return;
     if (detalhes.isNotEmpty) {
       setState(() {
         infoAnimal = {
@@ -1777,13 +1764,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
         };
       });
     }
-    debugPrint(
-      "[TARJA-DEBUG] foco no peso? ${_focoNoPeso.hasFocus} infoAnimal=$infoAnimal",
-    );
-    if (_focoNoPeso.hasFocus) {
-      debugPrint("[TARJA-DEBUG] chamando _exibirTarjaPeso()");
-      _exibirTarjaPeso();
-    }
+    if (_focoNoPeso.hasFocus) _exibirTarjaPeso();
   }
 
   String _getNomeFazenda(String id) {

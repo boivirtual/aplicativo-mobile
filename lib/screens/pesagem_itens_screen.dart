@@ -474,33 +474,26 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     _focoNoAnimal.unfocus();
   }
 
-  /// Bug real (achado com log ao vivo): fechar o aviso remove o Overlay
-  /// DENTRO do próprio toque que o fecha — em alguns aparelhos, esse mesmo
+  /// Bug real (confirmado com log ao vivo): fechar o aviso remove o Overlay
+  /// DENTRO do próprio toque que o fecha — em alguns aparelhos esse mesmo
   /// toque "cai" pro que ficou exposto por trás um instante depois (padrão
-  /// bem próximo dos ~300ms que o Android usa pra decidir se foi toque
-  /// duplo), tirando o foco que a gente acabou de pedir. Por isso pede o
-  /// foco duas vezes: uma rápida (150ms, cobre o caso limpo) e outra depois
-  /// desse período crítico (550ms, rede de segurança) — só refaz o pedido
-  /// se ainda não tiver funcionado, pra não brigar com o usuário se ele já
-  /// estiver interagindo de novo por conta própria.
+  /// próximo dos ~300ms que o Android usa pra decidir se foi toque duplo),
+  /// tirando o foco que a gente acabou de pedir. Uma tentativa só (mesmo
+  /// depois desse período) não bastou em teste real — por isso tenta em
+  /// vários momentos (150ms a 2,5s), sempre checando antes se o foco ainda
+  /// não pegou, pra não brigar com o usuário se ele já estiver interagindo
+  /// de novo por conta própria.
   void _focarNoAnimalComDelay() {
-    final marca = DateTime.now().millisecondsSinceEpoch;
-    debugPrint("[FOCO-DEBUG] $marca _focarNoAnimalComDelay CHAMADO, hasFocus=${_focoNoAnimal.hasFocus} mostrandoSugestoes=$mostrandoSugestoes overlayEntry=${_overlayEntry != null}");
-    void tentar(String rotulo) {
-      final agora = DateTime.now().millisecondsSinceEpoch;
-      debugPrint(
-        "[FOCO-DEBUG] $agora tentar($rotulo) mounted=$mounted hasFocus=${_focoNoAnimal.hasFocus} canRequestFocus=${_focoNoAnimal.canRequestFocus}",
-      );
+    void tentar() {
       if (mounted && !_focoNoAnimal.hasFocus && _focoNoAnimal.canRequestFocus) {
         _focoNoAnimal.requestFocus();
-        debugPrint("[FOCO-DEBUG] $agora tentar($rotulo) CHAMOU requestFocus, hasFocus agora=${_focoNoAnimal.hasFocus}");
       }
     }
 
-    Future.delayed(const Duration(milliseconds: 150), () => tentar('150ms'));
-    Future.delayed(const Duration(milliseconds: 550), () => tentar('550ms'));
-    Future.delayed(const Duration(milliseconds: 1200), () => tentar('1200ms'));
-    Future.delayed(const Duration(milliseconds: 2500), () => tentar('2500ms'));
+    Future.delayed(const Duration(milliseconds: 150), tentar);
+    Future.delayed(const Duration(milliseconds: 550), tentar);
+    Future.delayed(const Duration(milliseconds: 1200), tentar);
+    Future.delayed(const Duration(milliseconds: 2500), tentar);
   }
 
   void _confirmarTecladoPeso() {

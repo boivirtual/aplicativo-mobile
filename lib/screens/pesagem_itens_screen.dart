@@ -1347,6 +1347,9 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
         bd: cnpjParaBanco,
       );
       if (lista.isEmpty) {
+        debugPrint(
+          "[FOCO-DEBUG] ${DateTime.now().millisecondsSinceEpoch} '$termo' nao encontrado -> exibirMensagemErro",
+        );
         // onClose: ao fechar o aviso, volta o foco (e o teclado) pro Nº do
         // Animal sozinho — pedido do George, antes precisava tocar no
         // campo de novo pra reabrir o teclado e tentar outro número.

@@ -939,9 +939,6 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
   void _removerErroOverlay() {
     if (_overlayEntry != null) {
-      debugPrint(
-        "[BUSCA-DEBUG] _removerErroOverlay removendo, vai chamar onClose=${_onOverlayClose != null}",
-      );
       _overlayEntry!.remove();
       _overlayEntry = null;
 

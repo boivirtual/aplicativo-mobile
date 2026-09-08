@@ -159,7 +159,6 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
                         ),
                       ),
                     ),
-                  ),
                 const SizedBox(width: 10),
                 Expanded(
                   flex: 1,

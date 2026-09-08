@@ -1329,6 +1329,9 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   }
 
   Future<void> _buscarAnimal(String termo) async {
+    debugPrint(
+      "[FOCO-DEBUG] ${DateTime.now().millisecondsSinceEpoch} _buscarAnimal('$termo')",
+    );
     if (termo.trim().isEmpty) {
       setState(() {
         infoAnimal = null;

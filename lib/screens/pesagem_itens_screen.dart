@@ -478,16 +478,24 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     _focoNoAnimal.unfocus();
   }
 
+  /// Bug real (achado com log ao vivo): fechar o aviso remove o Overlay
+  /// DENTRO do próprio toque que o fecha — em alguns aparelhos, esse mesmo
+  /// toque "cai" pro que ficou exposto por trás um instante depois (padrão
+  /// bem próximo dos ~300ms que o Android usa pra decidir se foi toque
+  /// duplo), tirando o foco que a gente acabou de pedir. Por isso pede o
+  /// foco duas vezes: uma rápida (150ms, cobre o caso limpo) e outra depois
+  /// desse período crítico (550ms, rede de segurança) — só refaz o pedido
+  /// se ainda não tiver funcionado, pra não brigar com o usuário se ele já
+  /// estiver interagindo de novo por conta própria.
   void _focarNoAnimalComDelay() {
-    debugPrint("[BUSCA-DEBUG] _focarNoAnimalComDelay AGENDADO");
-    Future.delayed(const Duration(milliseconds: 150), () {
-      debugPrint(
-        "[BUSCA-DEBUG] _focarNoAnimalComDelay DISPAROU: mounted=$mounted canRequestFocus=${_focoNoAnimal.canRequestFocus} hasFocus=${_focoNoAnimal.hasFocus}",
-      );
-      if (mounted && _focoNoAnimal.canRequestFocus) {
+    void tentar() {
+      if (mounted && !_focoNoAnimal.hasFocus && _focoNoAnimal.canRequestFocus) {
         _focoNoAnimal.requestFocus();
       }
-    });
+    }
+
+    Future.delayed(const Duration(milliseconds: 150), tentar);
+    Future.delayed(const Duration(milliseconds: 550), tentar);
   }
 
   void _confirmarTecladoPeso() {

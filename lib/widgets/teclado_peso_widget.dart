@@ -11,12 +11,20 @@ class TecladoPesoWidget extends StatelessWidget {
   final VoidCallback onConfirmar;
   final bool mostrarOperadores;
 
+  /// Fecha o teclado sem confirmar nem cancelar nada — só tira o foco do
+  /// campo. Pedido do George: começar a digitar um número, mudar de ideia
+  /// (ex: quer editar um item que ficou escondido embaixo do teclado) e não
+  /// ter um jeito óbvio de simplesmente esconder o teclado sem precisar
+  /// digitar algo primeiro. `null` esconde o botão (uso opcional).
+  final VoidCallback? onFechar;
+
   const TecladoPesoWidget({
     super.key,
     required this.onCaractere,
     required this.onApagar,
     required this.onConfirmar,
     this.mostrarOperadores = true,
+    this.onFechar,
   });
 
   static const _corOperador = Color(0xFF185FA5);

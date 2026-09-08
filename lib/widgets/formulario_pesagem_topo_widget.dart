@@ -40,7 +40,6 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
     required this.focoNoAnimal,
     required this.carregandoAnimal,
     required this.onNoAnimalChanged,
-    required this.noAnimalLayerLink,
     required this.campoNoAnimalKey,
     required this.infoAnimal,
     required this.pesoBloqueado,

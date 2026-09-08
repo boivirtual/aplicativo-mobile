@@ -512,8 +512,6 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, thickness: 1, color: Color(0xFFE0E0E0)),
-          const SizedBox(height: 8),
           _buildLinhaResumo(),
         ],
       ),

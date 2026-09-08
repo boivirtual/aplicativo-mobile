@@ -463,6 +463,9 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   }
 
   void _confirmarTecladoAnimal() {
+    debugPrint(
+      "[FOCO-DEBUG] ${DateTime.now().millisecondsSinceEpoch} _confirmarTecladoAnimal texto='${_noAnimalController.text}'",
+    );
     final texto = _noAnimalController.text.trim();
     if (texto.isEmpty) {
       _exibirMensagemErro(

@@ -34,16 +34,44 @@ class TecladoPesoWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+      padding: const EdgeInsets.fromLTRB(6, 0, 6, 6),
       decoration: BoxDecoration(
         color: Colors.grey[100],
         border: Border(top: BorderSide(color: Colors.grey.shade300)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: mostrarOperadores
-            ? _linhasComOperadores()
-            : _linhasApenasDigitos(),
+        children: [
+          if (onFechar != null) _linhaFechar(),
+          ...mostrarOperadores ? _linhasComOperadores() : _linhasApenasDigitos(),
+        ],
+      ),
+    );
+  }
+
+  /// Linha fininha só com o botão de fechar, acima da grade de dígitos —
+  /// não some espaço dos botões grandes, só ocupa uma tira estreita em
+  /// cima.
+  Widget _linhaFechar() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onFechar,
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.keyboard_hide_outlined, size: 18, color: Colors.grey),
+              SizedBox(width: 4),
+              Text(
+                "Fechar",
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

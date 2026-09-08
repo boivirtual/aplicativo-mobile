@@ -97,8 +97,9 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   /// campo (via Overlay), em vez de participar do layout normal da tela —
   /// bug real: antes ela empurrava tudo abaixo dela, inclusive o teclado
   /// numérico, bem no meio da digitação (o usuário mirava num dígito e o
-  /// teclado já tinha se deslocado quando o dedo tocava a tela).
-  final LayerLink _noAnimalLayerLink = LayerLink();
+  /// teclado já tinha se deslocado quando o dedo tocava a tela). A key dá
+  /// acesso à posição/tamanho do campo pra desenhar o painel exatamente
+  /// embaixo dele (ver _construirPainelSugestoes).
   final GlobalKey _campoNoAnimalKey = GlobalKey();
   OverlayEntry? _sugestoesOverlayEntry;
   static const double _sugestoesOverlayMaxHeight = 220;

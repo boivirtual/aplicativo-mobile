@@ -484,14 +484,23 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   /// se ainda não tiver funcionado, pra não brigar com o usuário se ele já
   /// estiver interagindo de novo por conta própria.
   void _focarNoAnimalComDelay() {
-    void tentar() {
+    final marca = DateTime.now().millisecondsSinceEpoch;
+    debugPrint("[FOCO-DEBUG] $marca _focarNoAnimalComDelay CHAMADO, hasFocus=${_focoNoAnimal.hasFocus} mostrandoSugestoes=$mostrandoSugestoes overlayEntry=${_overlayEntry != null}");
+    void tentar(String rotulo) {
+      final agora = DateTime.now().millisecondsSinceEpoch;
+      debugPrint(
+        "[FOCO-DEBUG] $agora tentar($rotulo) mounted=$mounted hasFocus=${_focoNoAnimal.hasFocus} canRequestFocus=${_focoNoAnimal.canRequestFocus}",
+      );
       if (mounted && !_focoNoAnimal.hasFocus && _focoNoAnimal.canRequestFocus) {
         _focoNoAnimal.requestFocus();
+        debugPrint("[FOCO-DEBUG] $agora tentar($rotulo) CHAMOU requestFocus, hasFocus agora=${_focoNoAnimal.hasFocus}");
       }
     }
 
-    Future.delayed(const Duration(milliseconds: 150), tentar);
-    Future.delayed(const Duration(milliseconds: 550), tentar);
+    Future.delayed(const Duration(milliseconds: 150), () => tentar('150ms'));
+    Future.delayed(const Duration(milliseconds: 550), () => tentar('550ms'));
+    Future.delayed(const Duration(milliseconds: 1200), () => tentar('1200ms'));
+    Future.delayed(const Duration(milliseconds: 2500), () => tentar('2500ms'));
   }
 
   void _confirmarTecladoPeso() {

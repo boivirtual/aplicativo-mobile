@@ -1314,7 +1314,6 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   }
 
   Future<void> _buscarAnimal(String termo) async {
-    debugPrint("[BUSCA-DEBUG] _buscarAnimal chamado com termo='$termo'");
     if (termo.trim().isEmpty) {
       setState(() {
         infoAnimal = null;

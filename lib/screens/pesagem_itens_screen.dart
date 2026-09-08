@@ -2025,6 +2025,15 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Roda depois deste frame terminar de desenhar — garante que o Overlay
+    // da lista de sugestões (ver _sincronizarOverlaySugestoes) sempre
+    // reflita mostrandoSugestoes/sugestoesAnimais atuais, sem precisar
+    // tocar em cada um dos vários pontos do arquivo que alteram esses dois
+    // campos.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _sincronizarOverlaySugestoes(),
+    );
+
     final bool camposLiberados = infoAnimal != null && !_pesoBloqueado;
     // O campo Peso nunca abre o teclado do sistema (TecladoPesoWidget cobre
     // esse papel) — por isso tecladoVisivel também considera o foco nele,

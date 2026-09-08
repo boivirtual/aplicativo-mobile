@@ -551,6 +551,12 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   /// (mostrandoSugestoes/sugestoesAnimais) — chamado a cada build (ver
   /// final do método build), então cobre todos os pontos do arquivo que
   /// alteram esses dois campos sem precisar tocar em cada um deles.
+  ///
+  /// Usa Positioned com coordenadas globais calculadas na hora (mesma
+  /// técnica já comprovada em _exibirTarjaPeso, só que com a posição do
+  /// campo Nº do Animal em vez de uma fração fixa da tela) — tentativa
+  /// anterior com CompositedTransformFollower não respeitava a largura do
+  /// campo (a lista saía esticada, cobrindo a tela toda).
   void _sincronizarOverlaySugestoes() {
     if (!mounted) return;
     final bool deveMostrar = mostrandoSugestoes && sugestoesAnimais.isNotEmpty;
@@ -559,55 +565,58 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
       return;
     }
 
-    final RenderBox? caixaCampo =
-        _campoNoAnimalKey.currentContext?.findRenderObject() as RenderBox?;
-    if (caixaCampo == null) return; // campo ainda não desenhado nesta frame
-    final double largura = caixaCampo.size.width;
-    final double deslocamentoY = caixaCampo.size.height + 2;
-
     if (_sugestoesOverlayEntry == null) {
-      _sugestoesOverlayEntry = OverlayEntry(
-        builder: (context) => CompositedTransformFollower(
-          link: _noAnimalLayerLink,
-          showWhenUnlinked: false,
-          offset: Offset(0, deslocamentoY),
-          child: SizedBox(
-            width: largura,
-            child: Material(
-              elevation: 4,
-              borderRadius: BorderRadius.circular(8),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxHeight: _sugestoesOverlayMaxHeight,
-                ),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  padding: EdgeInsets.zero,
-                  itemCount: sugestoesAnimais.length,
-                  itemBuilder: (context, index) {
-                    final animal = sugestoesAnimais[index];
-                    return ListTile(
-                      dense: true,
-                      title: Text(
-                        animal['exibicao'] ?? 'Sem ID',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      onTap: () => _onSugestaoAnimalTap(animal),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
+      _sugestoesOverlayEntry = OverlayEntry(builder: _construirPainelSugestoes);
       Overlay.of(context).insert(_sugestoesOverlayEntry!);
     } else {
       _sugestoesOverlayEntry!.markNeedsBuild();
     }
+  }
+
+  /// Builder do OverlayEntry — roda de novo a cada markNeedsBuild(), então
+  /// sempre lê a posição/tamanho do campo e a lista de sugestões atuais
+  /// (nunca um valor "congelado" de quando o Overlay foi criado).
+  Widget _construirPainelSugestoes(BuildContext context) {
+    final RenderBox? caixaCampo =
+        _campoNoAnimalKey.currentContext?.findRenderObject() as RenderBox?;
+    if (caixaCampo == null) return const SizedBox.shrink();
+
+    final Offset posicaoGlobal = caixaCampo.localToGlobal(Offset.zero);
+    final double largura = caixaCampo.size.width;
+
+    return Positioned(
+      left: posicaoGlobal.dx,
+      top: posicaoGlobal.dy + caixaCampo.size.height + 2,
+      width: largura,
+      child: Material(
+        elevation: 4,
+        borderRadius: BorderRadius.circular(8),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxHeight: _sugestoesOverlayMaxHeight,
+          ),
+          child: ListView.builder(
+            shrinkWrap: true,
+            padding: EdgeInsets.zero,
+            itemCount: sugestoesAnimais.length,
+            itemBuilder: (context, index) {
+              final animal = sugestoesAnimais[index];
+              return ListTile(
+                dense: true,
+                title: Text(
+                  animal['exibicao'] ?? 'Sem ID',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                onTap: () => _onSugestaoAnimalTap(animal),
+              );
+            },
+          ),
+        ),
+      ),
+    );
   }
 
   void _removerSugestoesOverlay() {

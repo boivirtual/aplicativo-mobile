@@ -1737,12 +1737,21 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     // completar a tarja "Último Peso" que aparece com o foco no campo.
     // Pedido do George: essa referência também ajuda ao CORRIGIR um peso
     // já salvo, não só na digitação de um item novo.
+    debugPrint(
+      "[TARJA-DEBUG] indo buscar detalhes id=${item['id']} local=$fazendaSelecionada bd=$cnpjParaBanco",
+    );
     final detalhes = await AnimalRepository.instance.buscarDetalhes(
       id: item['id'].toString(),
       local: fazendaSelecionada,
       bd: cnpjParaBanco,
     );
-    if (!mounted || _indexSendoEditado != index) return;
+    debugPrint("[TARJA-DEBUG] detalhes voltou: $detalhes");
+    if (!mounted || _indexSendoEditado != index) {
+      debugPrint(
+        "[TARJA-DEBUG] saiu cedo: mounted=$mounted _indexSendoEditado=$_indexSendoEditado index=$index",
+      );
+      return;
+    }
     if (detalhes.isNotEmpty) {
       setState(() {
         infoAnimal = {
@@ -1752,7 +1761,13 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
         };
       });
     }
-    if (_focoNoPeso.hasFocus) _exibirTarjaPeso();
+    debugPrint(
+      "[TARJA-DEBUG] foco no peso? ${_focoNoPeso.hasFocus} infoAnimal=$infoAnimal",
+    );
+    if (_focoNoPeso.hasFocus) {
+      debugPrint("[TARJA-DEBUG] chamando _exibirTarjaPeso()");
+      _exibirTarjaPeso();
+    }
   }
 
   String _getNomeFazenda(String id) {

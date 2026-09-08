@@ -76,23 +76,24 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
               children: [
                 Expanded(
                   flex: 1,
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: indexSendoEditado != null
-                              ? Colors.grey[200]
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: destacarCampoAnimal
-                              ? Border.all(
-                                  color: Colors.lightBlue.shade200,
-                                  width: 1,
-                                )
-                              : null,
-                        ),
-                        child: Stack(
+                  child: CompositedTransformTarget(
+                    link: noAnimalLayerLink,
+                    child: Container(
+                      key: campoNoAnimalKey,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: indexSendoEditado != null
+                            ? Colors.grey[200]
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: destacarCampoAnimal
+                            ? Border.all(
+                                color: Colors.lightBlue.shade200,
+                                width: 1,
+                              )
+                            : null,
+                      ),
+                      child: Stack(
                           children: [
                             TextField(
                               controller: noAnimalController,

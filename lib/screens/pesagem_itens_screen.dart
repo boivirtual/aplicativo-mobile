@@ -1317,7 +1317,13 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
         bd: cnpjParaBanco,
       );
       if (lista.isEmpty) {
-        _exibirMensagemErro("Cód $termo não encontrado!");
+        // onClose: ao fechar o aviso, volta o foco (e o teclado) pro Nº do
+        // Animal sozinho — pedido do George, antes precisava tocar no
+        // campo de novo pra reabrir o teclado e tentar outro número.
+        _exibirMensagemErro(
+          "Cód $termo não encontrado!",
+          onClose: _focarNoAnimalComDelay,
+        );
         _noAnimalController.clear();
         setState(() {
           sugestoesAnimais = [];

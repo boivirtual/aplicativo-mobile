@@ -882,9 +882,6 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
                         )
                       : TextButton(
                           onPressed: () {
-                            debugPrint(
-                              "[FOCO-DEBUG] ${DateTime.now().millisecondsSinceEpoch} botao FECHAR tocado",
-                            );
                             // Já dispara onClose (via _onOverlayClose), se
                             // quem chamou tiver passado um. Só cai no
                             // comportamento padrão (limpar Nº do Animal e

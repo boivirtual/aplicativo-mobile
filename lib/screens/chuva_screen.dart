@@ -571,37 +571,29 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
     );
   }
 
-  /// Card cinza (mesmo padrão do de "Registrar Precipitação") envolvendo o
-  /// seletor de ano e os dois gráficos, cada um numa caixa branca.
-  Widget _buildCardGraficos() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(8, 4, 8, 10),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          _buildSeletorAno(),
-          const SizedBox(height: 2),
-          if (_mensal != null)
-            GraficoChuvaWidget(
-              titulo: 'Precipitação x Dias Chuvosos ($_anoGrafico)',
-              rotulos: _mesesAbrev,
-              mm: _mensal!.map((e) => e['mm']!.toDouble()).toList(),
-              dias: _mensal!.map((e) => e['dias']!.toDouble()).toList(),
-            ),
-          const SizedBox(height: 10),
-          if (_anual != null)
-            GraficoChuvaWidget(
-              titulo: 'Histórico últimos 5 anos',
-              rotulos: _anual!.map((e) => e['ano'].toString()).toList(),
-              mm: _anual!.map((e) => e['mm']!.toDouble()).toList(),
-              dias: _anual!.map((e) => e['dias']!.toDouble()).toList(),
-            ),
-        ],
-      ),
-    );
+  /// Seletor de ano + os dois gráficos, direto sobre o fundo branco da
+  /// tela (cada gráfico já é uma caixa branca com sombra própria — não
+  /// precisa de card cinza em volta).
+  List<Widget> _buildGraficos() {
+    return [
+      const SizedBox(height: 10),
+      _buildSeletorAno(),
+      const SizedBox(height: 4),
+      if (_mensal != null)
+        GraficoChuvaWidget(
+          titulo: 'Precipitação x Dias Chuvosos ($_anoGrafico)',
+          rotulos: _mesesAbrev,
+          mm: _mensal!.map((e) => e['mm']!.toDouble()).toList(),
+          dias: _mensal!.map((e) => e['dias']!.toDouble()).toList(),
+        ),
+      const SizedBox(height: 12),
+      if (_anual != null)
+        GraficoChuvaWidget(
+          titulo: 'Histórico últimos 5 anos',
+          rotulos: _anual!.map((e) => e['ano'].toString()).toList(),
+          mm: _anual!.map((e) => e['mm']!.toDouble()).toList(),
+          dias: _anual!.map((e) => e['dias']!.toDouble()).toList(),
+        ),
+    ];
   }
 }

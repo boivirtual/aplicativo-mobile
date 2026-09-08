@@ -32,12 +32,6 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
   final bool mostrarCursorFake;
   final VoidCallback onTapNoAnimal;
 
-  /// Altura máxima da lista de sugestões — precisa ser bem menor quando o
-  /// teclado numérico customizado também está na tela, senão os dois juntos
-  /// não cabem e o teclado estoura (RenderFlex overflow), cortando os
-  /// botões de baixo.
-  final double sugestoesMaxHeight;
-
   const FormularioPesagemTopoWidget({
     super.key,
     required this.filtroAtivoWidget,
@@ -46,10 +40,8 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
     required this.focoNoAnimal,
     required this.carregandoAnimal,
     required this.onNoAnimalChanged,
-    required this.mostrandoSugestoes,
-    required this.sugestoesAnimais,
-    required this.itensPesados,
-    required this.onSugestaoTap,
+    required this.noAnimalLayerLink,
+    required this.campoNoAnimalKey,
     required this.infoAnimal,
     required this.pesoBloqueado,
     required this.camposLiberados,
@@ -62,7 +54,6 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
     required this.destacarCampoAnimal,
     required this.mostrarCursorFake,
     required this.onTapNoAnimal,
-    this.sugestoesMaxHeight = 220,
   });
 
   @override

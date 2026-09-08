@@ -547,6 +547,76 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     super.dispose();
   }
 
+  /// Garante que o Overlay da lista de sugestões reflita o estado atual
+  /// (mostrandoSugestoes/sugestoesAnimais) — chamado a cada build (ver
+  /// final do método build), então cobre todos os pontos do arquivo que
+  /// alteram esses dois campos sem precisar tocar em cada um deles.
+  void _sincronizarOverlaySugestoes() {
+    if (!mounted) return;
+    final bool deveMostrar = mostrandoSugestoes && sugestoesAnimais.isNotEmpty;
+    if (!deveMostrar) {
+      _removerSugestoesOverlay();
+      return;
+    }
+
+    final RenderBox? caixaCampo =
+        _campoNoAnimalKey.currentContext?.findRenderObject() as RenderBox?;
+    if (caixaCampo == null) return; // campo ainda não desenhado nesta frame
+    final double largura = caixaCampo.size.width;
+    final double deslocamentoY = caixaCampo.size.height + 2;
+
+    if (_sugestoesOverlayEntry == null) {
+      _sugestoesOverlayEntry = OverlayEntry(
+        builder: (context) => CompositedTransformFollower(
+          link: _noAnimalLayerLink,
+          showWhenUnlinked: false,
+          offset: Offset(0, deslocamentoY),
+          child: SizedBox(
+            width: largura,
+            child: Material(
+              elevation: 4,
+              borderRadius: BorderRadius.circular(8),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxHeight: _sugestoesOverlayMaxHeight,
+                ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  itemCount: sugestoesAnimais.length,
+                  itemBuilder: (context, index) {
+                    final animal = sugestoesAnimais[index];
+                    return ListTile(
+                      dense: true,
+                      title: Text(
+                        animal['exibicao'] ?? 'Sem ID',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      onTap: () => _onSugestaoAnimalTap(animal),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      Overlay.of(context).insert(_sugestoesOverlayEntry!);
+    } else {
+      _sugestoesOverlayEntry!.markNeedsBuild();
+    }
+  }
+
+  void _removerSugestoesOverlay() {
+    if (_sugestoesOverlayEntry != null) {
+      _sugestoesOverlayEntry!.remove();
+      _sugestoesOverlayEntry = null;
+    }
+  }
+
   void _exibirTarjaPeso() {
     _removerTarjaPeso();
     String rawPeso = infoAnimal?['ultimoPeso']?.toString() ?? "0";

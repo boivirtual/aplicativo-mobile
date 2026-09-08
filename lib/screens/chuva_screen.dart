@@ -512,16 +512,18 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                     ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
+          const Divider(height: 1, thickness: 1, color: Color(0xFFE0E0E0)),
+          const SizedBox(height: 8),
           _buildLinhaResumo(),
         ],
       ),
     );
   }
 
-  /// Resumo do mês/ano — fica dentro do mesmo card de "Registrar
-  /// Precipitação" (caixa branca sobre o cinza, igual aos inputs), porque
-  /// os números pertencem a esse contexto.
+  /// Resumo do mês/ano — parte do mesmo card cinza de "Registrar
+  /// Precipitação" (rodapé do card, separado por um traço), porque os
+  /// números pertencem a esse contexto.
   Widget _buildLinhaResumo() {
     final mesAtual = DateTime.now().month;
     final dadosMes = _mensal?.firstWhere(

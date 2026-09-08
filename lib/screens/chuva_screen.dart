@@ -316,7 +316,6 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                             padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
                             children: [
                               _buildCardRegistro(),
-                              const SizedBox(height: 6),
                               if (_carregandoGrafico && _mensal == null)
                                 const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 30),
@@ -325,7 +324,7 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                                   ),
                                 )
                               else
-                                _buildCardGraficos(),
+                                ..._buildGraficos(),
                               const SizedBox(height: 20),
                             ],
                           ),

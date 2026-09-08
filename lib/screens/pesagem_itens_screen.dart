@@ -1706,7 +1706,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     );
   }
 
-  void _prepararEdicao(int index) {
+  Future<void> _prepararEdicao(int index) async {
     final item = _itensPesados[index];
     setState(() {
       _indexSendoEditado = index;
@@ -1726,10 +1726,33 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
         'raca': item['raca'],
         'pelagem': item['pelagem'],
         'brincoMae': item['maeBrinco'],
+        'ultimoPeso': item['ultimoPeso'] ?? 0,
       };
     });
 
     _focoNoPeso.requestFocus();
+
+    // A data do último peso não fica guardada no item local (só o valor do
+    // peso em si) — busca de novo no cache (offline, rápido) só pra
+    // completar a tarja "Último Peso" que aparece com o foco no campo.
+    // Pedido do George: essa referência também ajuda ao CORRIGIR um peso
+    // já salvo, não só na digitação de um item novo.
+    final detalhes = await AnimalRepository.instance.buscarDetalhes(
+      id: item['id'].toString(),
+      local: fazendaSelecionada,
+      bd: cnpjParaBanco,
+    );
+    if (!mounted || _indexSendoEditado != index) return;
+    if (detalhes.isNotEmpty) {
+      setState(() {
+        infoAnimal = {
+          ...?infoAnimal,
+          'ultimoPeso': detalhes['ultimoPeso'] ?? infoAnimal?['ultimoPeso'],
+          'DataUltimo': detalhes['DataUltimo'],
+        };
+      });
+    }
+    if (_focoNoPeso.hasFocus) _exibirTarjaPeso();
   }
 
   String _getNomeFazenda(String id) {

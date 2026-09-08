@@ -48,7 +48,9 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   _buildMenuCard("Dashboard", 'dashboard.png', 1, onNavigate),
                   _buildMenuCard("Pesagem", 'pesagem.png', 2, onNavigate),
-                  _buildMenuCard("Chuva", 'chuva.png', 3, onNavigate),
+                  // TEMPORÁRIO (2026-09-08): Chuva escondida do menu inicial
+                  // enquanto testam a Pesagem — reverter recolocando esta
+                  // linha: _buildMenuCard("Chuva", 'chuva.png', 3, onNavigate)
                   _buildMenuCard("Agenda", 'agenda.png', 4, onNavigate),
                 ],
               ),

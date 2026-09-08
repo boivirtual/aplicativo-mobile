@@ -548,11 +548,13 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                 color: destaque ? Colors.blue[300] : const Color(0xFF18385F),
               ),
             ),
-            const SizedBox(height: 1),
-            Text(
-              rotulo,
-              style: const TextStyle(fontSize: 9, color: Colors.grey),
-            ),
+            if (rotulo.isNotEmpty) ...[
+              const SizedBox(height: 1),
+              Text(
+                rotulo,
+                style: const TextStyle(fontSize: 9, color: Colors.grey),
+              ),
+            ],
           ],
         ),
       );
@@ -562,7 +564,8 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Row(
         children: [
-          item('Mês', _mesesCompletos[mesAtual - 1]),
+          // Sem rótulo — o próprio nome do mês já diz o que é.
+          item('', _mesesCompletos[mesAtual - 1]),
           item('Dias Chuva', diasMes.toString()),
           item('mm Mês', mmMes.toStringAsFixed(0)),
           item('mm Ano', mmAno.toStringAsFixed(0), destaque: true),

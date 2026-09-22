@@ -123,18 +123,23 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
   void _aoAlterarTexto(String val) {
     _timerTeclado?.cancel();
     if (val.isNotEmpty) {
-      // 4s (era 2s) — mesmo ajuste de pesagem_itens_screen.dart: o teclado
-      // numérico customizado é mais lento de digitar que o do sistema, 2s
-      // fechava no meio de um código de vários dígitos.
+      // 4s (era 2s) — o teclado numérico customizado é mais lento de
+      // digitar que o do sistema, 2s fechava o teclado sozinho antes do
+      // usuário terminar.
       _timerTeclado = Timer(const Duration(seconds: 4), () {
         if (mounted && _focoBusca.hasFocus) {
           _focoBusca.unfocus();
         }
       });
     }
+    // 800ms (era 400ms) — mesmo motivo: quem realmente disparava a busca
+    // (e a mensagem de "não encontrado"/lista de sugestões) no meio da
+    // digitação era este debounce, não o timer acima. Visar cada botão do
+    // teclado customizado é mais lento que digitar de cabeça no teclado do
+    // sistema, e 400ms era pouco pro intervalo natural entre dois toques.
     _debounce?.cancel();
     _debounce = Timer(
-      const Duration(milliseconds: 400),
+      const Duration(milliseconds: 800),
       () => _buscarAnimal(val),
     );
   }

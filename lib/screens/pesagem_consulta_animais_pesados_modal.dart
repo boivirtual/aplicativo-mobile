@@ -384,7 +384,7 @@ class _PesagemConsultaAnimaisPesadosModalState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                lote,
+                "Lote: $lote",
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

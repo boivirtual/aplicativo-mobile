@@ -430,7 +430,13 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
     _timerTeclado?.cancel();
     if (val.isNotEmpty) {
-      _timerTeclado = Timer(const Duration(seconds: 2), () {
+      // 4s (era 2s) — pedido do George: na versão com teclado do sistema
+      // (antes dos ajustes offline) 2s bastava, mas o teclado numérico
+      // customizado (botões grandes, pensado pra digitação no curral) é
+      // naturalmente mais lento de tocar; 2s fechava o teclado e disparava
+      // a busca no meio de um código de 4+ dígitos (ex: "1106" virava
+      // "110").
+      _timerTeclado = Timer(const Duration(seconds: 4), () {
         if (mounted && _focoNoAnimal.hasFocus) {
           FocusScope.of(context).unfocus();
         }

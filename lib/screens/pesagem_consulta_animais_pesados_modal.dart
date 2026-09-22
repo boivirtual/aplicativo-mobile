@@ -121,7 +121,10 @@ class _PesagemConsultaAnimaisPesadosModalState
   void _aoAlterarTexto(String val) {
     _timerTeclado?.cancel();
     if (val.isNotEmpty) {
-      _timerTeclado = Timer(const Duration(seconds: 2), () {
+      // 4s (era 2s) — mesmo ajuste de pesagem_itens_screen.dart: o teclado
+      // numérico customizado é mais lento de digitar que o do sistema, 2s
+      // fechava no meio de um código de vários dígitos.
+      _timerTeclado = Timer(const Duration(seconds: 4), () {
         if (mounted && _focoBusca.hasFocus) {
           _focoBusca.unfocus();
         }

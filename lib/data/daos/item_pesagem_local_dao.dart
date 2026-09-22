@@ -163,6 +163,30 @@ class ItemPesagemLocalDao {
     return linhas.isEmpty ? null : linhas.first;
   }
 
+  /// Todas as pesagens ainda abertas (finalizada='N') deste bd em que o
+  /// animal já tem peso lançado — base da "Consultar Animais Pesados" na
+  /// tela inicial de Pesagem. Mesmo raciocínio 100% local de
+  /// buscarPesagemAbertaPorAnimal: os lotes em aberto de todas as fazendas
+  /// do usuário já estão neste aparelho, sem precisar de rede.
+  Future<List<Map<String, dynamic>>> buscarPesagensAbertasPorAnimal(
+    String idAnimal, {
+    required String bd,
+  }) async {
+    final db = await LocalDatabase.instance.database;
+    return db.rawQuery(
+      '''
+      SELECT p.id_local, p.id_servidor, p.lote, p.fazenda_id, i.peso
+      FROM itens_pesagem_locais i
+      JOIN pesagens_locais p ON p.id_local = i.pesagem_id_local
+      WHERE i.id_animal = ?
+        AND p.bd = ?
+        AND p.finalizada = 'N'
+      ORDER BY p.id_local DESC, i.numero_item_local DESC
+      ''',
+      [idAnimal, bd],
+    );
+  }
+
   /// Item mais recente deste animal, com apartação preenchida, em alguma
   /// pesagem ainda aberta neste aparelho — base dos alertas de "mãe/bezerro
   /// já com apartação em lote aberto" (ver AnimalRepository). Mesmo

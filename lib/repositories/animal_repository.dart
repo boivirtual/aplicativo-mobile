@@ -251,6 +251,18 @@ class AnimalRepository {
     return [];
   }
 
+  /// Busca de qualquer animal (sem filtro de sexo/idade) em todas as
+  /// fazendas do usuário — usado pela "Consultar Animais Pesados" na tela
+  /// inicial de Pesagem. Só cache, sempre: a lista de pesagens em aberto
+  /// que essa consulta cruza (ver
+  /// ItemPesagemLocalDao.buscarPesagensAbertasPorAnimal) já é 100% deste
+  /// aparelho, então um round-trip de rede só pra achar o animal não
+  /// agregaria nada.
+  Future<List<dynamic>> buscarPorCodigoGlobal({required String termo}) async {
+    final linhas = await AnimalCacheDao.instance.buscarPorCodigoGlobal(termo);
+    return linhas.map(_cacheParaAutocompleteMae).toList();
+  }
+
   /// Ficha da mãe (só os filhos, que é tudo que o modal usa) — cache
   /// primeiro, entre todas as fazendas.
   Future<Map<String, dynamic>> buscarDetalhesMae({

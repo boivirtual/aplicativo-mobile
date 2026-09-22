@@ -361,6 +361,10 @@ class _PesagemConsultaAnimaisPesadosModalState
       );
     }
 
+    // Mesma configuração visual da lista de filhos da "Consulta Mãe"
+    // (_buildResultadosFilhos em pesagem_consulta_mae_modal.dart): descrição
+    // em negrito à esquerda, fazenda em negrito à direita, e uma linha de
+    // subtítulo cinza embaixo, separadas por um traço.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: resultadosLotes!.map<Widget>((l) {
@@ -375,9 +379,7 @@ class _PesagemConsultaAnimaisPesadosModalState
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade300),
+            border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -387,28 +389,29 @@ class _PesagemConsultaAnimaisPesadosModalState
                 children: [
                   Expanded(
                     child: Text(
-                      "Lote: $lote",
+                      lote,
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   Text(
-                    "$pesoInteiro Kg",
+                    fazenda,
                     style: const TextStyle(
-                      fontSize: 15,
+                      fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF18385F),
+                      color: Colors.black54,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 4),
               Text(
-                fazenda,
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                "Peso: $pesoInteiro Kg",
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
               ),
             ],
           ),

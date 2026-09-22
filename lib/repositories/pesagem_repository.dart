@@ -714,6 +714,20 @@ class PesagemRepository {
     );
   }
 
+  /// Todos os lotes em aberto (qualquer fazenda deste bd) em que o animal
+  /// já tem peso lançado neste aparelho — base da "Consultar Animais
+  /// Pesados" na tela inicial de Pesagem. Ver
+  /// ItemPesagemLocalDao.buscarPesagensAbertasPorAnimal.
+  Future<List<Map<String, dynamic>>> buscarLotesAbertosPorAnimal({
+    required String idAnimal,
+    required String bd,
+  }) {
+    return ItemPesagemLocalDao.instance.buscarPesagensAbertasPorAnimal(
+      idAnimal,
+      bd: bd,
+    );
+  }
+
   // ---------------------------------------------------------------------
   // Pendências de revisão (operações que o servidor recusou)
   // ---------------------------------------------------------------------

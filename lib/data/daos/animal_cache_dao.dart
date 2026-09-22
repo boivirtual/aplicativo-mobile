@@ -109,6 +109,14 @@ class AnimalCacheDao {
   /// cache da fazenda, comparando os códigos já sem traço/zeros à esquerda
   /// para tolerar o jeito como o usuário realmente digita (ver
   /// _normalizarCodigo), e ordenando pelo número (ver _parteNumerica).
+  ///
+  /// Só animais ativos — o cache também guarda fêmeas inativas (só pra
+  /// "Consultar Mãe" achar filhos ativos, ver AnimalCacheService), mas
+  /// essas não podem aparecer aqui pra serem pesadas. `ativo != 'N'` (em
+  /// vez de `ativo == 'S'`) de propósito: enquanto o cache não tiver sido
+  /// baixado de novo depois desta versão, a coluna fica NULL pros animais
+  /// já salvos, e tratar NULL como ativo evita esconder o cadastro inteiro
+  /// até o próximo download completo.
   Future<List<Map<String, dynamic>>> buscarPorCodigo(
     String fazendaId,
     String termo,
@@ -116,7 +124,7 @@ class AnimalCacheDao {
     final db = await LocalDatabase.instance.database;
     final todos = await db.query(
       'animais_cache',
-      where: 'fazenda_id = ?',
+      where: "fazenda_id = ? AND (ativo IS NULL OR ativo != 'N')",
       whereArgs: [fazendaId],
     );
 

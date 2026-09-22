@@ -361,10 +361,9 @@ class _PesagemConsultaAnimaisPesadosModalState
       );
     }
 
-    // Mesma configuração visual da lista de filhos da "Consulta Mãe"
-    // (_buildResultadosFilhos em pesagem_consulta_mae_modal.dart): descrição
-    // em negrito à esquerda, fazenda em negrito à direita, e uma linha de
-    // subtítulo cinza embaixo, separadas por um traço.
+    // Descrição do lote é a informação principal, sozinha na primeira linha
+    // (negrito, igual ao código na lista de filhos da "Consulta Mãe");
+    // peso e fazenda vão juntos na linha de baixo.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: resultadosLotes!.map<Widget>((l) {
@@ -384,34 +383,38 @@ class _PesagemConsultaAnimaisPesadosModalState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text(
+                lote,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 4),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  Text(
+                    "Peso: $pesoInteiro Kg",
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF18385F),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      lote,
+                      fazenda,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: Colors.black54,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Text(
-                    fazenda,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black54,
-                    ),
-                  ),
                 ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                "Peso: $pesoInteiro Kg",
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
               ),
             ],
           ),

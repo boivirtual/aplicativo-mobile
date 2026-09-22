@@ -215,6 +215,17 @@ class LocalDatabase {
       // desta versão.
       await _criarTabelaChuvaCache(db);
     }
+    if (versaoAntiga < 6) {
+      // Se o animal está ativo ou não (S/N) — precisa pra tirar da busca
+      // de "Nº do Animal" (tela de pesagem) as fêmeas inativas que o cache
+      // guarda só pra "Consultar Mãe" achar filhos ativos (ver
+      // AnimalCacheService). Enquanto esta coluna estiver NULL (cache
+      // baixado antes desta versão), buscarPorCodigo trata como ativo —
+      // só passa a filtrar de verdade depois do próximo download completo
+      // do cadastro (garantirCacheCompleto roda de novo a cada reabertura
+      // do app).
+      await db.execute('ALTER TABLE animais_cache ADD COLUMN ativo TEXT');
+    }
   }
 
   /// Só para os testes/roteiro de verificação manual — apaga todos os dados

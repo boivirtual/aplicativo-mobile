@@ -2178,6 +2178,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
                 onNoAnimalChanged: _aoAlterarTextoAnimal,
 
                 campoNoAnimalKey: _campoNoAnimalKey,
+                campoPesoKey: _campoPesoKey,
 
                 infoAnimal: infoAnimal,
                 pesoBloqueado: _pesoBloqueado,

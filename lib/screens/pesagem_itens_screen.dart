@@ -709,6 +709,22 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
   void _exibirTarjaPeso() {
     _removerTarjaPeso();
+
+    // Ancorado na posição REAL do campo Peso (RenderBox), nunca num
+    // percentual fixo da tela — percentual fixo (ex: size.height * 0.34)
+    // dava posições diferentes em aparelhos com proporção de tela
+    // diferente do S10/S22 Ultra (bug real: no Moto G15 o balão descia
+    // demais e tampava o Nº da Mãe). Mesma técnica já usada pra ancorar a
+    // lista de sugestões no campo Nº do Animal (ver
+    // _construirPainelSugestoes).
+    final RenderBox? campoPeso =
+        _campoPesoKey.currentContext?.findRenderObject() as RenderBox?;
+    if (campoPeso == null) return;
+
+    final Offset posicaoGlobal = campoPeso.localToGlobal(Offset.zero);
+    final double alturaCampo = campoPeso.size.height;
+    final double larguraCampo = campoPeso.size.width;
+
     String rawPeso = infoAnimal?['ultimoPeso']?.toString() ?? "0";
     String pesoLimpo = double.tryParse(rawPeso)?.toInt().toString() ?? "0";
     String rawData = infoAnimal?['DataUltimo']?.toString() ?? "";
@@ -724,9 +740,9 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
 
     _tarjaPesoOverlay = OverlayEntry(
       builder: (context) => Positioned(
-        top: MediaQuery.of(context).size.height * 0.34,
-        right: 17,
-        width: MediaQuery.of(context).size.width * 0.45,
+        top: posicaoGlobal.dy + alturaCampo + 6,
+        left: posicaoGlobal.dx,
+        width: larguraCampo,
         child: Material(
           elevation: 20,
           borderRadius: BorderRadius.circular(8),

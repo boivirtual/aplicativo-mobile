@@ -130,6 +130,7 @@ class LocalDatabase {
         lote_aberto TEXT,
         pesagem_id_lote_aberto TEXT,
         peso_desmama TEXT,
+        ativo TEXT,
         atualizado_em TEXT NOT NULL
       )
     ''');

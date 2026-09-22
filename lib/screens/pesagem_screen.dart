@@ -9,6 +9,7 @@ import '../widgets/indicador_conectividade_widget.dart';
 import 'pesagem_itens_screen.dart';
 import 'pesagem_consulta_screen.dart';
 import 'pesagem_pendencias_revisao_screen.dart';
+import 'pesagem_consulta_animais_pesados_modal.dart';
 import 'package:boivirtual/utils/app_alert.dart';
 
 class PesagemScreen extends StatefulWidget {

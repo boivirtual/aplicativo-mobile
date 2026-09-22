@@ -5,42 +5,9 @@ import 'screens/atualizando_dados_screen.dart';
 import 'main_container.dart';
 import 'services/sync_service.dart';
 import 'services/chuva_sync_service.dart';
-import 'data/local_database.dart';
 
-// TEMPORÁRIO (2026-09-22) — limpeza pontual a pedido do George de uma
-// pesagem fantasma (lote Desmama de 27/08/2026) que só aparecia offline —
-// causa raiz já documentada (PesagemLocalDao.listarPendentesLocais não
-// filtra por fazenda). Remover esta função e a chamada em main() assim que
-// confirmado que a pesagem sumiu do aparelho.
-Future<void> _limpezaTemporariaPesagemFantasma() async {
-  final db = await LocalDatabase.instance.database;
-  final achadas = await db.query(
-    'pesagens_locais',
-    where: 'criado_em LIKE ?',
-    whereArgs: ['2026-08-27%'],
-  );
-  debugPrint('LIMPEZA_TEMP: encontradas ${achadas.length} pesagem(ns): $achadas');
-  for (final p in achadas) {
-    final idLocal = p['id_local'] as int;
-    await db.delete(
-      'itens_pesagem_locais',
-      where: 'pesagem_id_local = ?',
-      whereArgs: [idLocal],
-    );
-    await db.delete(
-      'pesagens_locais',
-      where: 'id_local = ?',
-      whereArgs: [idLocal],
-    );
-    debugPrint(
-      'LIMPEZA_TEMP: removida pesagem id_local=$idLocal lote=${p['lote']}',
-    );
-  }
-}
-
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await _limpezaTemporariaPesagemFantasma();
   // Liga o motor de sincronização offline assim que o app abre — ele fica
   // ouvindo conectividade e reprocessando a fila local durante toda a vida
   // do app, independente de qual tela está em primeiro plano.

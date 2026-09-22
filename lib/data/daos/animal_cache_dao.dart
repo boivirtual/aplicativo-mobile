@@ -168,6 +168,28 @@ class AnimalCacheDao {
     return encontrados.take(10).toList();
   }
 
+  /// Busca por código em TODAS as fazendas cacheadas, sem filtro de sexo ou
+  /// idade — usado pela "Consultar Animais Pesados" (tela inicial de
+  /// Pesagem), que precisa achar qualquer animal, não só fêmeas adultas
+  /// como a "Consultar Mãe".
+  Future<List<Map<String, dynamic>>> buscarPorCodigoGlobal(
+    String termo,
+  ) async {
+    final db = await LocalDatabase.instance.database;
+    final todos = await db.query('animais_cache');
+
+    final termoNormalizado = _normalizarCodigo(termo.trim());
+    final encontrados = todos.where((linha) {
+      final codigo = linha['codigo']?.toString() ?? '';
+      return _normalizarCodigo(codigo).contains(termoNormalizado);
+    }).toList();
+
+    encontrados.sort((a, b) => _parteNumerica(a['codigo']?.toString() ?? '')
+        .compareTo(_parteNumerica(b['codigo']?.toString() ?? '')));
+
+    return encontrados.take(10).toList();
+  }
+
   /// Todos os filhos (de qualquer fazenda) de um animal, pela ficha da mãe.
   Future<List<Map<String, dynamic>>> buscarFilhosPorIdMae(String idMae) async {
     final db = await LocalDatabase.instance.database;

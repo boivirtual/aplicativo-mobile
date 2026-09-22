@@ -903,27 +903,39 @@ class _PesagemScreenState extends State<PesagemScreen> {
   }
 
   Widget _buildConsultarAnimaisPesadosLink() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 4, bottom: 8),
-      child: Center(
+    const Color corDestaque = Color(0xFF18385F);
+    // Mesmo padrão visual do RodapeApartacaoWidget (traço no topo separando
+    // da lista + texto azul escuro em negrito), só que alinhado à esquerda
+    // e dentro do conteúdo rolável — não é um rodapé fixo como o da tela de
+    // itens, é a última linha da lista de "Pesagens sem Finalizar".
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Colors.grey[200]!)),
+      ),
+      child: Align(
+        alignment: Alignment.centerLeft,
         child: InkWell(
           onTap: _abrirConsultaAnimaisPesados,
           borderRadius: BorderRadius.circular(8),
           child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   Icons.search_outlined,
-                  color: Color(0xFF18385F),
+                  color: corDestaque,
                   size: 18,
                 ),
                 SizedBox(width: 4),
                 Text(
                   "Consultar Animais Pesados",
                   style: TextStyle(
-                    color: Color(0xFF18385F),
+                    color: corDestaque,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),

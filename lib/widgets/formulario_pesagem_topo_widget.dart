@@ -17,6 +17,14 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
   /// o teclado numérico pra baixo bem no meio da digitação (bug real).
   final GlobalKey campoNoAnimalKey;
 
+  /// Preso ao container do campo Peso — a tela-mãe usa essa key pra achar
+  /// a posição/tamanho real do campo e ancorar o balão "Último Peso"
+  /// exatamente embaixo dele (ver _exibirTarjaPeso), em vez de um
+  /// percentual fixo do tamanho da tela (bug real: em aparelhos com
+  /// proporção de tela diferente do S10/S22 Ultra, ex. Moto G15, o
+  /// percentual fixo tampava o Nº da Mãe).
+  final GlobalKey campoPesoKey;
+
   final Map<String, dynamic>? infoAnimal;
   final bool pesoBloqueado;
   final bool camposLiberados;

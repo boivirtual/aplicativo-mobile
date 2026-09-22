@@ -32,6 +32,7 @@ class AnimalCacheDao {
         'ultimo_peso': a['ultimoPeso']?.toString(),
         'data_ultimo_peso': a['DataUltimo']?.toString(),
         'peso_desmama': a['pesoDesmama']?.toString(),
+        'ativo': a['ativo']?.toString(),
         'atualizado_em': agora,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
     }

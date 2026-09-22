@@ -518,12 +518,13 @@ class _PesagemScreenState extends State<PesagemScreen> {
                     exibirFinalizadas
                         ? _buildListaFinalizadas()
                         : _buildListaPendentes(),
-                    if (!exibirFinalizadas) _buildConsultarAnimaisPesadosLink(),
                   ],
                 ],
               ),
             ),
           ),
+          if (!exibirFinalizadas && !_mostrarFormulario)
+            _buildConsultarAnimaisPesadosLink(),
         ],
       ),
           if (carregandoPendentes || _baixandoAnimais || _baixandoItensPendentes)

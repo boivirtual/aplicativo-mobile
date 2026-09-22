@@ -892,6 +892,50 @@ class _PesagemScreenState extends State<PesagemScreen> {
     );
   }
 
+  void _abrirConsultaAnimaisPesados() {
+    showDialog(
+      context: context,
+      builder: (context) => PesagemConsultaAnimaisPesadosModal(
+        bd: _cnpjCarregado ?? '',
+        fazendasCarregadas: fazendasCarregadas,
+      ),
+    );
+  }
+
+  Widget _buildConsultarAnimaisPesadosLink() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 8),
+      child: Center(
+        child: InkWell(
+          onTap: _abrirConsultaAnimaisPesados,
+          borderRadius: BorderRadius.circular(8),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.search_outlined,
+                  color: Color(0xFF18385F),
+                  size: 18,
+                ),
+                SizedBox(width: 4),
+                Text(
+                  "Consultar Animais Pesados",
+                  style: TextStyle(
+                    color: Color(0xFF18385F),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildListaFinalizadas() {
     if (carregandoFinalizadas) {
       return const Center(

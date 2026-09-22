@@ -176,6 +176,7 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
                     builder: (context, valor, _) {
                       final emModoFormula = valor.text.trim().startsWith('=');
                       return Container(
+                        key: campoPesoKey,
                         height: 80,
                         decoration: BoxDecoration(
                           color: emModoFormula

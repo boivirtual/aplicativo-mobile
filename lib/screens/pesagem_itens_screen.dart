@@ -101,6 +101,11 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   /// acesso à posição/tamanho do campo pra desenhar o painel exatamente
   /// embaixo dele (ver _construirPainelSugestoes).
   final GlobalKey _campoNoAnimalKey = GlobalKey();
+  /// Mesma ideia da key acima, só que presa ao campo Peso — usada por
+  /// _exibirTarjaPeso pra ancorar o balão "Último Peso" na posição real
+  /// desse campo (ver comentário na definição de campoPesoKey em
+  /// formulario_pesagem_topo_widget.dart).
+  final GlobalKey _campoPesoKey = GlobalKey();
   OverlayEntry? _sugestoesOverlayEntry;
   static const double _sugestoesOverlayMaxHeight = 220;
 

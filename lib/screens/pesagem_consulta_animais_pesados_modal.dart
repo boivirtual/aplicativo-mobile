@@ -35,6 +35,7 @@ class _PesagemConsultaAnimaisPesadosModalState
   bool mostrandoSugestoes = false;
   bool carregando = false;
   bool _semCache = false;
+  bool _naoEncontrado = false;
   List<Map<String, dynamic>>? resultadosLotes;
   Timer? _debounce;
   Timer? _timerTeclado;

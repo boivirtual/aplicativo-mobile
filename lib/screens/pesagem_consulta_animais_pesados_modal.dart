@@ -310,6 +310,31 @@ class _PesagemConsultaAnimaisPesadosModalState
                               ],
                             ),
                           ),
+                        if (_naoEncontrado)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.search_off,
+                                  color: Colors.grey.shade400,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    "Cód ${_buscaController.text} não encontrado.",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: Colors.grey.shade400,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         const SizedBox(height: 15),
                         if (carregando) const CircularProgressIndicator(),
                         if (resultadosLotes != null && !mostrandoSugestoes)

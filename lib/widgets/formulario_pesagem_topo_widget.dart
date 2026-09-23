@@ -40,6 +40,13 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
   final bool mostrarCursorFake;
   final VoidCallback onTapNoAnimal;
 
+  /// TESTE (pedido do George, 2026-09-23): true faz o campo Nº do Animal
+  /// usar o teclado do SISTEMA em vez do TecladoPesoWidget customizado —
+  /// só pra comparação lado a lado. Não apaga nada do teclado customizado
+  /// (continua existindo/funcionando normalmente quando este parâmetro for
+  /// false, que é o padrão). Reverter para false quando o teste terminar.
+  final bool testeTecladoSistemaAnimal;
+
   const FormularioPesagemTopoWidget({
     super.key,
     required this.filtroAtivoWidget,

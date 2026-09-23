@@ -2145,8 +2145,12 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     final bool mostrarTecladoPeso = _focoPesoAtivo && camposLiberados;
     // Mesma ideia pro Nº do Animal: só faz sentido digitar quando não está
     // editando um item já existente (nesse caso o campo é readOnly).
+    // Com _testeTecladoSistemaAnimal, o teclado do sistema já cuida disso
+    // sozinho (via viewInsets.bottom acima) — nunca mostra os dois juntos.
     final bool mostrarTecladoAnimal =
-        _focoAnimalAtivo && _indexSendoEditado == null;
+        !_testeTecladoSistemaAnimal &&
+        _focoAnimalAtivo &&
+        _indexSendoEditado == null;
     bool tecladoVisivel =
         MediaQuery.of(context).viewInsets.bottom > 0 ||
         mostrarTecladoPeso ||

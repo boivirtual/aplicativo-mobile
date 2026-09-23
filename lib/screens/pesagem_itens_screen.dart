@@ -106,6 +106,14 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   /// desse campo (ver comentário na definição de campoPesoKey em
   /// formulario_pesagem_topo_widget.dart).
   final GlobalKey _campoPesoKey = GlobalKey();
+
+  /// TESTE (pedido do George, 2026-09-23): true volta o teclado do SISTEMA
+  /// só no campo Nº do Animal, pra comparar lado a lado com o
+  /// TecladoPesoWidget customizado. Não apaga o teclado customizado — só
+  /// troca qual dos dois fica ativo. Reverter para false (ou remover) ao
+  /// fim do teste.
+  static const bool _testeTecladoSistemaAnimal = true;
+
   OverlayEntry? _sugestoesOverlayEntry;
   static const double _sugestoesOverlayMaxHeight = 220;
 

@@ -86,6 +86,7 @@ class _PesagemConsultaAnimaisPesadosModalState
         sugestoesAnimais = [];
         mostrandoSugestoes = false;
         _semCache = false;
+        _naoEncontrado = false;
       });
       return;
     }
@@ -96,6 +97,7 @@ class _PesagemConsultaAnimaisPesadosModalState
         sugestoesAnimais = [];
         mostrandoSugestoes = false;
         _semCache = true;
+        _naoEncontrado = false;
       });
       return;
     }
@@ -113,6 +115,10 @@ class _PesagemConsultaAnimaisPesadosModalState
           return mapa;
         }).toList();
         mostrandoSugestoes = sugestoesAnimais.isNotEmpty;
+        // Sem isso, um código que não existe no cadastro deixava a tela
+        // parada sem nenhum retorno — igual acontece quando existe (abre a
+        // lista), precisa de um feedback também quando não existe.
+        _naoEncontrado = sugestoesAnimais.isEmpty;
       });
     } catch (e) {
       debugPrint("Erro busca: $e");

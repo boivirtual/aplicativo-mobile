@@ -124,14 +124,19 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
                               // durante edição de item já é garantido à
                               // parte, nos métodos que inserem/apagam
                               // caractere (_indexSendoEditado != null).
-                              readOnly: true,
+                              readOnly: !testeTecladoSistemaAnimal,
                               // Igual ao campo Peso: nunca abre o teclado do
                               // sistema — a digitação acontece pelo
                               // TecladoPesoWidget (modo apenas dígitos), que
                               // fica idêntico no Android e no iOS.
                               // inputFormatters é trava extra contra colar
-                              // texto por fora.
-                              keyboardType: TextInputType.none,
+                              // texto por fora. TESTE: com
+                              // testeTecladoSistemaAnimal, volta a abrir o
+                              // teclado numérico do sistema (ver comentário
+                              // no campo da classe).
+                              keyboardType: testeTecladoSistemaAnimal
+                                  ? TextInputType.number
+                                  : TextInputType.none,
                               inputFormatters: [
                                 FilteringTextInputFormatter.digitsOnly,
                               ],

@@ -283,6 +283,8 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
                                 infoMae = null;
                                 sugestoesAnimais = [];
                                 mostrandoSugestoes = false;
+                                _naoEncontrado = false;
+                                _semFilhosAtivos = false;
                               });
                             },
                             onChanged: _aoAlterarTexto,

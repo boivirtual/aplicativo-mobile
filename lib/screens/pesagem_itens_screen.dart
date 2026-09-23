@@ -112,7 +112,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
   /// TecladoPesoWidget customizado. Não apaga o teclado customizado — só
   /// troca qual dos dois fica ativo. Reverter para false (ou remover) ao
   /// fim do teste.
-  static const bool _testeTecladoSistemaAnimal = true;
+  static const bool _testeTecladoSistemaAnimal = false;
 
   OverlayEntry? _sugestoesOverlayEntry;
   static const double _sugestoesOverlayMaxHeight = 220;

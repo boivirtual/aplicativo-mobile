@@ -188,6 +188,7 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
       carregando = true;
       mostrandoSugestoes = false;
       infoMae = null;
+      _semFilhosAtivos = false;
       _buscaController.text = animal['codigo_limpo'];
     });
     try {
@@ -195,7 +196,11 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
         id: animal['id'].toString(),
         bd: cnpjSeguro,
       );
-      setState(() => infoMae = resultado);
+      setState(() {
+        infoMae = resultado;
+        final filhos = resultado['filhos'] as List?;
+        _semFilhosAtivos = filhos == null || filhos.isEmpty;
+      });
     } finally {
       setState(() => carregando = false);
     }

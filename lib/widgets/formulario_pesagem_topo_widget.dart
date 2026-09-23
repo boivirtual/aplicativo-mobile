@@ -69,6 +69,7 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
     required this.destacarCampoAnimal,
     required this.mostrarCursorFake,
     required this.onTapNoAnimal,
+    this.testeTecladoSistemaAnimal = false,
   });
 
   @override

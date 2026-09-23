@@ -262,6 +262,7 @@ class _PesagemConsultaAnimaisPesadosModalState
                                 resultadosLotes = null;
                                 sugestoesAnimais = [];
                                 mostrandoSugestoes = false;
+                                _naoEncontrado = false;
                               });
                             },
                             onChanged: _aoAlterarTexto,

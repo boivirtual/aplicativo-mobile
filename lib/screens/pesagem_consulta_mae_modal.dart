@@ -31,6 +31,8 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
   bool mostrandoSugestoes = false;
   bool carregando = false;
   bool _semInternet = false;
+  bool _naoEncontrado = false;
+  bool _semFilhosAtivos = false;
   Map<String, dynamic>? infoMae;
   String? cnpjSeguro;
   Timer? _debounce;

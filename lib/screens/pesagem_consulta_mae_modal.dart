@@ -332,9 +332,61 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
                               ],
                             ),
                           ),
+                        if (_naoEncontrado)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.search_off,
+                                  color: Colors.grey.shade400,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    "Cód ${_buscaController.text} não encontrado.",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: Colors.grey.shade400,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (_semFilhosAtivos && infoMae != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.search_off,
+                                  color: Colors.grey.shade400,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    "Esta mãe não tem filhos ativos.",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: Colors.grey.shade400,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         const SizedBox(height: 15),
                         if (carregando) const CircularProgressIndicator(),
-                        if (infoMae != null && !mostrandoSugestoes)
+                        if (infoMae != null &&
+                            !mostrandoSugestoes &&
+                            !_semFilhosAtivos)
                           _buildResultadosFilhos(),
                       ],
                     ),

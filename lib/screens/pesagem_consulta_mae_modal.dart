@@ -340,7 +340,7 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
                               children: [
                                 Icon(
                                   Icons.search_off,
-                                  color: Colors.grey.shade400,
+                                  color: Colors.grey.shade600,
                                   size: 18,
                                 ),
                                 const SizedBox(width: 8),
@@ -349,7 +349,7 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
                                     "Cód ${_buscaController.text} não encontrado.",
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      color: Colors.grey.shade400,
+                                      color: Colors.grey.shade700,
                                       fontSize: 13,
                                     ),
                                   ),
@@ -365,7 +365,7 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
                               children: [
                                 Icon(
                                   Icons.search_off,
-                                  color: Colors.grey.shade400,
+                                  color: Colors.grey.shade600,
                                   size: 18,
                                 ),
                                 const SizedBox(width: 8),
@@ -374,7 +374,7 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
                                     "Esta mãe não tem filhos ativos.",
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      color: Colors.grey.shade400,
+                                      color: Colors.grey.shade700,
                                       fontSize: 13,
                                     ),
                                   ),

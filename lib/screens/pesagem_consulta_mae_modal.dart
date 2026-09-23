@@ -83,6 +83,7 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
         sugestoesAnimais = [];
         mostrandoSugestoes = false;
         _semInternet = false;
+        _naoEncontrado = false;
       });
       return;
     }
@@ -98,6 +99,7 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
         sugestoesAnimais = [];
         mostrandoSugestoes = false;
         _semInternet = true;
+        _naoEncontrado = false;
       });
       return;
     }
@@ -116,6 +118,10 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
           return mapa;
         }).toList();
         mostrandoSugestoes = sugestoesAnimais.isNotEmpty;
+        // Sem isso, uma mãe que não existe no cadastro deixava a tela
+        // parada sem retorno nenhum — igual acontece quando existe (abre a
+        // lista), precisa de um feedback também quando não existe.
+        _naoEncontrado = sugestoesAnimais.isEmpty;
       });
     } catch (e) {
       debugPrint("Erro busca: $e");

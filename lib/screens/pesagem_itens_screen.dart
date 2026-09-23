@@ -2275,6 +2275,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
                     _destacarCampoAnimal = false;
                   });
                 },
+                testeTecladoSistemaAnimal: _testeTecladoSistemaAnimal,
 
               ),
               ResumoPesagemWidget(

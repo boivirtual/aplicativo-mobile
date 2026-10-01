@@ -1,11 +1,33 @@
+import 'dart:convert';
+
 import 'package:sqflite/sqflite.dart';
 import '../../utils/mapa_tabuleiro_calculo.dart';
 import '../local_database.dart';
 
-/// DAO do cache do Mapa de Gado (Tabuleiro) — pastos, animais no pasto e
-/// faixas de categoria das fazendas do usuário, replicados localmente para
-/// a tela funcionar offline. Por enquanto somente leitura: cada download
-/// substitui por inteiro o que havia da fazenda.
+/// Tipos de ação da fila do Mapa de Gado (mapa_outbox).
+class AcaoMapa {
+  AcaoMapa._();
+
+  /// Mover TODOS os animais de um pasto para outro.
+  /// payload: {origem, destino, usuario, data_hora}
+  static const transferirTudo = 'transferir_tudo';
+
+  /// Nova Descrição do Lote num pasto.
+  /// payload: {pasto, descricao_lote, lotes[6], usuario, data_hora}
+  static const descricaoLote = 'descricao_lote';
+}
+
+/// DAO do cache do Mapa de Gado (Tabuleiro) — pastos, animais no pasto,
+/// faixas de categoria e opções de descrição do lote das fazendas do
+/// usuário, replicados localmente para a tela funcionar offline — e da
+/// fila das ações feitas no mapa (mapa_outbox).
+///
+/// Toda ação é aplicada no cache NA HORA (o tabuleiro já mostra o
+/// resultado, com ou sem internet) e fica na fila até o servidor
+/// confirmar. Como cada download substitui o cache pelo que está no
+/// servidor, as ações ainda pendentes são reaplicadas por cima logo depois
+/// (ver [salvarDoServidor]) — senão um download feito antes do envio
+/// "desfaria" na tela o que o usuário acabou de mover.
 class MapaGadoDao {
   MapaGadoDao._();
   static final MapaGadoDao instance = MapaGadoDao._();
@@ -17,6 +39,7 @@ class MapaGadoDao {
     required String bd,
     required List<int> fazendasConsultadas,
     required List<Map<String, dynamic>> categorias,
+    required List<Map<String, dynamic>> descricoesLote,
     required List<Map<String, dynamic>> pastos,
     required List<Map<String, dynamic>> animais,
   }) async {
@@ -42,6 +65,19 @@ class MapaGadoDao {
         }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
 
+      batch.delete(
+        'mapa_descricoes_lote_cache',
+        where: 'bd = ?',
+        whereArgs: [bd],
+      );
+      for (final d in descricoesLote) {
+        batch.insert('mapa_descricoes_lote_cache', {
+          'bd': bd,
+          'id': _int(d['id']),
+          'descricao': (d['descricao'] ?? '').toString(),
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+
       for (final fazenda in fazendasConsultadas) {
         batch.delete(
           'mapa_pastos_cache',
@@ -61,6 +97,7 @@ class MapaGadoDao {
       }
 
       for (final p in pastos) {
+        final lotes = (p['lotes'] as List?)?.map((e) => e.toString()).toList();
         batch.insert('mapa_pastos_cache', {
           'bd': bd,
           'id': _int(p['id']),
@@ -70,6 +107,8 @@ class MapaGadoDao {
           'capim': (p['capim'] ?? '').toString(),
           'categorias': (p['categorias'] ?? '').toString(),
           'ordem': _int(p['ordem']),
+          'descricao_lote': (p['descricao_lote'] ?? '').toString(),
+          'lotes_json': json.encode(lotes ?? List.filled(6, '')),
         }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
 
@@ -89,8 +128,29 @@ class MapaGadoDao {
       }
 
       await batch.commit(noResult: true);
+
+      // Ações ainda não confirmadas pelo servidor voltam a valer por cima
+      // do que acabou de ser baixado (ver docblock da classe).
+      final pendentes = await txn.query(
+        'mapa_outbox',
+        where: "bd = ? AND status = 'pendente'",
+        whereArgs: [bd],
+        orderBy: 'id',
+      );
+      for (final p in pendentes) {
+        await _aplicarNoCache(
+          txn,
+          bd,
+          p['tipo'] as String,
+          json.decode(p['payload_json'] as String) as Map<String, dynamic>,
+        );
+      }
     });
   }
+
+  // ---------------------------------------------------------------------
+  // Leitura
+  // ---------------------------------------------------------------------
 
   Future<Map<int, CategoriaIdadeMapa>> categorias(String bd) async {
     final db = await LocalDatabase.instance.database;
@@ -110,6 +170,22 @@ class MapaGadoDao {
     };
   }
 
+  /// Opções de "Descrição do Lote", na ordem do código (igual ao select
+  /// do web).
+  Future<List<MapEntry<int, String>>> descricoesLote(String bd) async {
+    final db = await LocalDatabase.instance.database;
+    final linhas = await db.query(
+      'mapa_descricoes_lote_cache',
+      columns: ['id', 'descricao'],
+      where: 'bd = ?',
+      whereArgs: [bd],
+      orderBy: 'id',
+    );
+    return linhas
+        .map((l) => MapEntry(l['id'] as int, (l['descricao'] ?? '').toString()))
+        .toList();
+  }
+
   Future<List<PastoMapa>> pastos(String bd, int fazendaId) async {
     final db = await LocalDatabase.instance.database;
     final linhas = await db.query(
@@ -122,6 +198,7 @@ class MapaGadoDao {
         'capim',
         'categorias',
         'ordem',
+        'descricao_lote',
       ],
       where: 'bd = ? AND fazenda_id = ?',
       whereArgs: [bd, fazendaId],
@@ -137,6 +214,7 @@ class MapaGadoDao {
             capim: (l['capim'] ?? '').toString(),
             categorias: (l['categorias'] ?? '').toString(),
             ordem: l['ordem'] as int,
+            descricaoLote: (l['descricao_lote'] ?? '').toString(),
           ),
         )
         .toList();
@@ -173,6 +251,180 @@ class MapaGadoDao {
     );
     if (linhas.isEmpty) return null;
     return DateTime.tryParse(linhas.first['atualizado_em'].toString());
+  }
+
+  // ---------------------------------------------------------------------
+  // Fila de ações (mapa_outbox)
+  // ---------------------------------------------------------------------
+
+  /// Grava a ação na fila e já aplica no cache, na mesma transação.
+  Future<void> registrarAcao({
+    required String bd,
+    required String uuid,
+    required String tipo,
+    required Map<String, dynamic> payload,
+  }) async {
+    final db = await LocalDatabase.instance.database;
+    await db.transaction((txn) async {
+      await txn.insert('mapa_outbox', {
+        'bd': bd,
+        'uuid': uuid,
+        'tipo': tipo,
+        'payload_json': json.encode(payload),
+        'status': 'pendente',
+        'tentativas': 0,
+        'criado_em': DateTime.now().toIso8601String(),
+      });
+      await _aplicarNoCache(txn, bd, tipo, payload);
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> listarPendentes(String bd) async {
+    final db = await LocalDatabase.instance.database;
+    return db.query(
+      'mapa_outbox',
+      where: "bd = ? AND status = 'pendente'",
+      whereArgs: [bd],
+      orderBy: 'id',
+    );
+  }
+
+  Future<int> contar(String bd, String status) async {
+    final db = await LocalDatabase.instance.database;
+    final r = await db.rawQuery(
+      'SELECT COUNT(*) AS qtd FROM mapa_outbox WHERE bd = ? AND status = ?',
+      [bd, status],
+    );
+    return (r.first['qtd'] as int?) ?? 0;
+  }
+
+  /// Ações que o servidor recusou (mensagem de cada uma).
+  Future<List<String>> mensagensDeErro(String bd) async {
+    final db = await LocalDatabase.instance.database;
+    final linhas = await db.query(
+      'mapa_outbox',
+      columns: ['ultimo_erro'],
+      where: "bd = ? AND status = 'erro'",
+      whereArgs: [bd],
+      orderBy: 'id',
+    );
+    return linhas.map((l) => (l['ultimo_erro'] ?? '').toString()).toList();
+  }
+
+  Future<void> removerAcao(int id) async {
+    final db = await LocalDatabase.instance.database;
+    await db.delete('mapa_outbox', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> marcarErro(int id, String mensagem) async {
+    final db = await LocalDatabase.instance.database;
+    await db.rawUpdate(
+      "UPDATE mapa_outbox SET status = 'erro', ultimo_erro = ?, tentativas = tentativas + 1 WHERE id = ?",
+      [mensagem, id],
+    );
+  }
+
+  Future<void> contarTentativa(int id, String mensagem) async {
+    final db = await LocalDatabase.instance.database;
+    await db.rawUpdate(
+      'UPDATE mapa_outbox SET ultimo_erro = ?, tentativas = tentativas + 1 WHERE id = ?',
+      [mensagem, id],
+    );
+  }
+
+  Future<void> limparErros(String bd) async {
+    final db = await LocalDatabase.instance.database;
+    await db.delete(
+      'mapa_outbox',
+      where: "bd = ? AND status = 'erro'",
+      whereArgs: [bd],
+    );
+  }
+
+  // ---------------------------------------------------------------------
+  // Aplicação local das ações (mesma regra do servidor)
+  // ---------------------------------------------------------------------
+
+  Future<void> _aplicarNoCache(
+    DatabaseExecutor txn,
+    String bd,
+    String tipo,
+    Map<String, dynamic> payload,
+  ) async {
+    if (tipo == AcaoMapa.transferirTudo) {
+      await _aplicarTransferencia(
+        txn,
+        bd,
+        _int(payload['origem']),
+        _int(payload['destino']),
+      );
+    } else if (tipo == AcaoMapa.descricaoLote) {
+      final lotes = ((payload['lotes'] as List?) ?? const [])
+          .map((e) => e.toString())
+          .toList();
+      await txn.update(
+        'mapa_pastos_cache',
+        {
+          'descricao_lote': (payload['descricao_lote'] ?? '').toString(),
+          'lotes_json': json.encode(lotes),
+        },
+        where: 'bd = ? AND id = ?',
+        whereArgs: [bd, _int(payload['pasto'])],
+      );
+    }
+  }
+
+  /// Premissas 1 e 6 de transferir_tudo_mapa_gados.php: a descrição do
+  /// lote da origem vai para o destino só se o destino não tiver nenhuma;
+  /// a origem sempre fica sem. Os animais passam para o destino.
+  Future<void> _aplicarTransferencia(
+    DatabaseExecutor txn,
+    String bd,
+    int origem,
+    int destino,
+  ) async {
+    Future<Map<String, Object?>?> pasto(int id) async {
+      final l = await txn.query(
+        'mapa_pastos_cache',
+        columns: ['fazenda_id', 'descricao_lote', 'lotes_json'],
+        where: 'bd = ? AND id = ?',
+        whereArgs: [bd, id],
+        limit: 1,
+      );
+      return l.isEmpty ? null : l.first;
+    }
+
+    final pOrigem = await pasto(origem);
+    final pDestino = await pasto(destino);
+    if (pOrigem == null || pDestino == null) return;
+
+    final descOrigem = (pOrigem['descricao_lote'] ?? '').toString();
+    final descDestino = (pDestino['descricao_lote'] ?? '').toString();
+
+    if (descOrigem.isNotEmpty && descDestino.isEmpty) {
+      await txn.update(
+        'mapa_pastos_cache',
+        {
+          'descricao_lote': descOrigem,
+          'lotes_json': pOrigem['lotes_json'],
+        },
+        where: 'bd = ? AND id = ?',
+        whereArgs: [bd, destino],
+      );
+    }
+    await txn.update(
+      'mapa_pastos_cache',
+      {'descricao_lote': '', 'lotes_json': json.encode(List.filled(6, ''))},
+      where: 'bd = ? AND id = ?',
+      whereArgs: [bd, origem],
+    );
+
+    await txn.update(
+      'mapa_animais_pasto_cache',
+      {'pasto_id': destino, 'fazenda_id': pDestino['fazenda_id']},
+      where: 'bd = ? AND pasto_id = ?',
+      whereArgs: [bd, origem],
+    );
   }
 
   static int _int(dynamic v) => int.tryParse(v?.toString() ?? '') ?? 0;

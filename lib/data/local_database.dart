@@ -208,6 +208,9 @@ class LocalDatabase {
         ordem INTEGER NOT NULL,
         descricao_lote TEXT,
         lotes_json TEXT,
+        tabuleiro INTEGER NOT NULL DEFAULT 1,
+        data_com_animais TEXT,
+        data_sem_animais TEXT,
         PRIMARY KEY (bd, id)
       )
     ''');

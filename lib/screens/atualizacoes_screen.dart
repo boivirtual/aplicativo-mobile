@@ -102,6 +102,7 @@ class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
       _fazendas = fazendas;
       _totalAnimaisCache = totalAnimais;
       _ultimaAtualizacaoCache = ultimaAtualizacao;
+      _ultimaAtualizacaoMapa = ultimaAtualizacaoMapa;
       _carregando = false;
     });
   }

@@ -27,6 +27,9 @@ class PastoMapa {
   final String categorias;
   final int ordem;
 
+  /// tbl_pasto_descricao_lote — "" quando o pasto não tem descrição.
+  final String descricaoLote;
+
   const PastoMapa({
     required this.id,
     required this.fazendaId,
@@ -35,6 +38,7 @@ class PastoMapa {
     required this.capim,
     required this.categorias,
     required this.ordem,
+    this.descricaoLote = '',
   });
 }
 

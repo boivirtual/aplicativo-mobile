@@ -109,6 +109,10 @@ class MapaGadoDao {
           'ordem': _int(p['ordem']),
           'descricao_lote': (p['descricao_lote'] ?? '').toString(),
           'lotes_json': json.encode(lotes ?? List.filled(6, '')),
+          // servidor antigo (sem o campo) = todos no tabuleiro
+          'tabuleiro': p['tabuleiro'] == false ? 0 : 1,
+          'data_com_animais': p['data_com_animais']?.toString(),
+          'data_sem_animais': p['data_sem_animais']?.toString(),
         }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
 

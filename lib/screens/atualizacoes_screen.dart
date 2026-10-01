@@ -34,6 +34,7 @@ class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
   List<dynamic> _fazendas = [];
   int _totalAnimaisCache = 0;
   String? _ultimaAtualizacaoCache;
+  String? _ultimaAtualizacaoMapa;
 
   @override
   void initState() {

@@ -507,15 +507,17 @@ class _MapaScreenState extends State<MapaScreen> {
         children: [
           Row(
             children: [
-              Text(
-                'Total de animais: $_totalFazenda',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF455A64),
-                ),
+              // Troca para o Mapa Satélite (igual ao web) — o clique fica
+              // para a etapa do mapa satélite.
+              IconButton(
+                tooltip: 'Mapa Satélite',
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                icon: const Icon(Icons.map_outlined, color: Colors.grey, size: 24),
+                onPressed: () {},
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 6),
               Expanded(
                 child: SizedBox(
                   height: 38,

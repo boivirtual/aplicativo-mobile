@@ -6,12 +6,25 @@ class CabecalhoFazendaWidget extends StatelessWidget {
   final ValueChanged<String?> onChanged;
   final String labelSelect;
 
+  /// Ícone de localização à esquerda do nome (as telas antigas usam).
+  final bool mostrarIcone;
+
+  /// Texto exibido enquanto nenhuma fazenda foi escolhida.
+  final String textoVazio;
+
+  /// Widget exibido à direita do select, na mesma linha (o select encolhe
+  /// para caber) — ex: total de animais no Mapa de Gado.
+  final Widget? complemento;
+
   const CabecalhoFazendaWidget({
     super.key,
     required this.fazendaSelecionada,
     required this.fazendasCarregadas,
     required this.onChanged,
     this.labelSelect = 'Fazenda',
+    this.mostrarIcone = true,
+    this.textoVazio = 'Selecione',
+    this.complemento,
   });
 
   String _getNomeFazenda(String id) {

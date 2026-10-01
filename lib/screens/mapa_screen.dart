@@ -342,6 +342,18 @@ class _MapaScreenState extends State<MapaScreen> {
                   fazendaSelecionada: fazendaSelecionada,
                   fazendasCarregadas: fazendasCarregadas,
                   onChanged: _selecionarFazenda,
+                  mostrarIcone: false,
+                  textoVazio: '...',
+                  complemento: fazendaSelecionada != null && _cards.isNotEmpty
+                      ? Text(
+                          '$_totalFazenda Animais',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF455A64),
+                          ),
+                        )
+                      : null,
                 ),
                 if (_baixando)
                   const LinearProgressIndicator(

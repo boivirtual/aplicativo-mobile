@@ -259,7 +259,9 @@ class _MapaScreenState extends State<MapaScreen> {
       return;
     }
 
-    final origem = _cards.firstWhere((c) => c.pasto.id == _origemToque);
+    // _cardsTodos: no satélite a origem pode ser um pasto dos módulos
+    // 1006/1007, que não está no tabuleiro.
+    final origem = _cardsTodos.firstWhere((c) => c.pasto.id == _origemToque);
     setState(() => _origemToque = null);
     _moverTudo(origem, card);
   }

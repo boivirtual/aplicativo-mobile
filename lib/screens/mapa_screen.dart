@@ -556,7 +556,6 @@ class _MapaScreenState extends State<MapaScreen> {
               ),
               const SizedBox(width: 8),
               SizedBox(
-                height: 32,
                 height: 38,
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(

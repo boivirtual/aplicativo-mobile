@@ -120,6 +120,8 @@ class _AtualizandoDadosScreenState extends State<AtualizandoDadosScreen> {
       // mesmo ponto onde o cadastro de animais é atualizado, isolado do
       // resto (ver ChuvaSyncService).
       ChuvaSyncService.instance.sincronizarInicial(cnpj, idsFazendas),
+      // Mapa de Gado (Tabuleiro): cache para a tela funcionar offline.
+      MapaGadoSyncService.instance.baixar(cnpj, idsFazendas),
     ]);
   }
 

@@ -303,11 +303,6 @@ class _MapaScreenState extends State<MapaScreen> {
         .toList();
   }
 
-  String _formatarDataHora(DateTime d) {
-    String dois(int n) => n.toString().padLeft(2, '0');
-    return '${dois(d.day)}/${dois(d.month)}/${d.year} ${dois(d.hour)}:${dois(d.minute)}';
-  }
-
   /// Mesmas quebras do web: col-xs-3 (4 por linha), 3 por linha até 459px,
   /// 2 por linha até 375px; telas maiores (tablet) seguem col-md-2/col-lg-1.
   int _colunasPorLargura(double largura) {

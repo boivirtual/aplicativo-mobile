@@ -15,6 +15,9 @@ void main() {
   // Motor de sincronização da chuva — isolado do de cima de propósito (ver
   // ChuvaSyncService), não mexe na fila/lógica da pesagem.
   ChuvaSyncService.instance.iniciar();
+  // Fila do Mapa de Gado (mover animais, descrição do lote) — também
+  // isolada da pesagem (ver MapaGadoSyncService).
+  MapaGadoSyncService.instance.iniciar();
   runApp(const MyApp());
 }
 

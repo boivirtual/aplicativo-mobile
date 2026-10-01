@@ -335,23 +335,19 @@ class _MapaScreenState extends State<MapaScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                CabecalhoFazendaWidget(
-                  fazendaSelecionada: fazendaSelecionada,
-                  fazendasCarregadas: fazendasCarregadas,
-                  onChanged: _selecionarFazenda,
-                  mostrarIcone: false,
-                  textoVazio: '...',
-                  complemento: fazendaSelecionada != null && _cards.isNotEmpty
-                      ? Text(
-                          '$_totalFazenda Animais',
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF455A64),
-                          ),
-                        )
-                      : null,
-                ),
+                // Antes de escolher: o select. Depois: tarja azul com a
+                // fazenda e o total (mesmo visual da tarja da Pesagem) e o
+                // ícone de edição para trocar de fazenda.
+                if (fazendaSelecionada == null)
+                  CabecalhoFazendaWidget(
+                    fazendaSelecionada: fazendaSelecionada,
+                    fazendasCarregadas: fazendasCarregadas,
+                    onChanged: _selecionarFazenda,
+                    mostrarIcone: false,
+                    textoVazio: '...',
+                  )
+                else
+                  _buildTarjaFazenda(),
                 if (_baixando)
                   const LinearProgressIndicator(
                     minHeight: 2,

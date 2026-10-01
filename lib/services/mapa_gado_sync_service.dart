@@ -233,6 +233,40 @@ class MapaGadoSyncService {
   }
 }
 
+extension on MapaGadoSyncService {
+  /// Mapa Satélite (GeoJSON + cores dos módulos). Melhor esforço e à parte
+  /// do tabuleiro: se falhar (ex: servidor ainda sem o endpoint), o
+  /// tabuleiro baixado continua valendo.
+  Future<void> _baixarSatelite(String bd, List<int> ids) async {
+    try {
+      final versoes = await MapaGadoDao.instance.versoesSatelite(bd);
+      final response = await http
+          .post(
+            Uri.parse("${ApiConfig.baseUrl}/rest/mapa-gado/satelite.php"),
+            headers: {"Content-Type": "application/json"},
+            body: json.encode({"bd": bd, "fazendas": ids, "versoes": versoes}),
+          )
+          .timeout(const Duration(seconds: 30));
+      if (response.statusCode != 200) return;
+      final data = json.decode(response.body);
+      if (data is! Map || data['success'] != true) return;
+
+      List<Map<String, dynamic>> lista(String chave) =>
+          ((data[chave] as List?) ?? const [])
+              .map((e) => e as Map<String, dynamic>)
+              .toList();
+
+      await MapaGadoDao.instance.salvarSatelite(
+        bd: bd,
+        modulos: lista('modulos'),
+        mapas: lista('mapas'),
+      );
+    } catch (e) {
+      debugPrint('[MapaGadoSync] satélite: falhou -> $e');
+    }
+  }
+}
+
 class _Resposta {
   final bool sucesso;
   final bool redeFalhou;

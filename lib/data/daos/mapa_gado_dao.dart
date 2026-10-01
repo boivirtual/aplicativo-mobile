@@ -253,6 +253,17 @@ class MapaGadoDao {
     return DateTime.tryParse(linhas.first['atualizado_em'].toString());
   }
 
+  /// Último download do mapa neste aparelho, de qualquer fazenda da conta
+  /// (ISO 8601; null = nunca) — exibido na tela "Atualizações".
+  Future<String?> ultimaAtualizacao(String bd) async {
+    final db = await LocalDatabase.instance.database;
+    final r = await db.rawQuery(
+      'SELECT MAX(atualizado_em) AS ultima FROM mapa_fazendas_cache WHERE bd = ?',
+      [bd],
+    );
+    return r.first['ultima'] as String?;
+  }
+
   // ---------------------------------------------------------------------
   // Fila de ações (mapa_outbox)
   // ---------------------------------------------------------------------

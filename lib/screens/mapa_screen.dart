@@ -97,9 +97,12 @@ class _MapaScreenState extends State<MapaScreen> {
   Future<void> _carregarContexto() async {
     final prefs = await SharedPreferences.getInstance();
     final fazendasJson = prefs.getString('userFazendas');
+    final pastaCache = p.join(await getDatabasesPath(), 'mapa_satelite_imagens');
     setState(() {
       _bd = prefs.getString('userCNPJ');
       _usuario = prefs.getString('userName');
+      _satelite = prefs.getString(_chaveTipoMapa) == 'M';
+      _pastaCacheImagens = pastaCache;
       if (fazendasJson != null) {
         fazendasCarregadas = json.decode(fazendasJson);
         // Uma fazenda só: já vem selecionada e o tabuleiro carrega direto.

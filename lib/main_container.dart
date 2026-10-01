@@ -22,8 +22,8 @@ class MainContainer extends StatefulWidget {
 
 class _MainContainerState extends State<MainContainer>
     with WidgetsBindingObserver {
-  // REGRA: O programa abre direto na Pesagem (Index 2)
-  int _currentIndex = 2;
+  // REGRA: O programa abre na tela inicial (Home, Index 5)
+  int _currentIndex = 5;
   String _userName = "Usuário";
 
   /// Android normalmente não fecha o app quando o vaqueiro sai (Home,

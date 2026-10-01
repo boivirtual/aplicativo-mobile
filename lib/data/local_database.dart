@@ -143,6 +143,41 @@ class LocalDatabase {
 
     await _criarTabelaChuvaCache(db);
     await _criarTabelasMapaGado(db);
+    await _criarTabelasMovimentacaoMapa(db);
+  }
+
+  Future<void> _criarTabelasMovimentacaoMapa(Database db) async {
+    // Opções de "Descrição do Lote" (tbl_descricao_lote_animais) para
+    // montar a descrição ao mover animais, sem internet.
+    await db.execute('''
+      CREATE TABLE mapa_descricoes_lote_cache (
+        bd TEXT NOT NULL,
+        id INTEGER NOT NULL,
+        descricao TEXT NOT NULL,
+        PRIMARY KEY (bd, id)
+      )
+    ''');
+    // Fila das ações feitas no Mapa de Gado (mover todos os animais, nova
+    // descrição do lote) — isolada da fila da pesagem, mesmo motivo da
+    // chuva. Cada ação já é aplicada no cache na hora; fica aqui até o
+    // servidor confirmar. status: 'pendente' (aguardando envio) ou 'erro'
+    // (servidor recusou — não é reenviada, fica para o usuário ver).
+    await db.execute('''
+      CREATE TABLE mapa_outbox (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        bd TEXT NOT NULL,
+        uuid TEXT NOT NULL UNIQUE,
+        tipo TEXT NOT NULL,
+        payload_json TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pendente',
+        tentativas INTEGER NOT NULL DEFAULT 0,
+        ultimo_erro TEXT,
+        criado_em TEXT NOT NULL
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX idx_mapa_outbox_status ON mapa_outbox (bd, status)',
+    );
   }
 
   Future<void> _criarTabelasMapaGado(Database db) async {

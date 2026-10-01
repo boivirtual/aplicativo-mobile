@@ -372,6 +372,24 @@ class LocalDatabase {
       }
       await _criarTabelasMovimentacaoMapa(db);
     }
+    if (versaoAntiga < 9) {
+      // Mapa Satélite: pastos dos módulos 1006/1007 (só no satélite),
+      // datas com/sem animais (balão de informações), GeoJSON e cores.
+      // Quem vem de antes da v7 acabou de criar mapa_pastos_cache já com
+      // as colunas novas (acima).
+      if (versaoAntiga >= 7) {
+        await db.execute(
+          'ALTER TABLE mapa_pastos_cache ADD COLUMN tabuleiro INTEGER NOT NULL DEFAULT 1',
+        );
+        await db.execute(
+          'ALTER TABLE mapa_pastos_cache ADD COLUMN data_com_animais TEXT',
+        );
+        await db.execute(
+          'ALTER TABLE mapa_pastos_cache ADD COLUMN data_sem_animais TEXT',
+        );
+      }
+      await _criarTabelasMapaSatelite(db);
+    }
   }
 
   /// Só para os testes/roteiro de verificação manual — apaga todos os dados

@@ -286,6 +286,11 @@ class LocalDatabase {
       // do app).
       await db.execute('ALTER TABLE animais_cache ADD COLUMN ativo TEXT');
     }
+    if (versaoAntiga < 7) {
+      // Mapa de Gado (Tabuleiro) offline — mesmas tabelas novas de quem
+      // instala do zero.
+      await _criarTabelasMapaGado(db);
+    }
   }
 
   /// Só para os testes/roteiro de verificação manual — apaga todos os dados

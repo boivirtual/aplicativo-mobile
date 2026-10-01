@@ -44,8 +44,9 @@ class ChuvaDao {
   /// mesmo vai sobrescrever o servidor assim que conseguir subir.
   Future<void> salvarLoteDoServidor(
     String bd,
-    List<Map<String, dynamic>> chuvas,
-  ) async {
+    List<Map<String, dynamic>> chuvas, {
+    List<int> fazendasConsultadas = const [],
+  }) async {
     final db = await LocalDatabase.instance.database;
 
     final pendentes = await db.query(
@@ -59,10 +60,17 @@ class ChuvaDao {
         .toSet();
 
     final agora = DateTime.now().toIso8601String();
+    // Toda fazenda consultada entra aqui, mesmo sem nenhum registro vindo
+    // do servidor (fazenda sem chuva nenhuma nos últimos 5 anos) — senão a
+    // limpeza abaixo pulava essa fazenda inteira.
+    final datasValidasPorFazenda = <String, Set<String>>{
+      for (final f in fazendasConsultadas) f.toString(): {},
+    };
     final batch = db.batch();
     for (final c in chuvas) {
       final fazendaId = c['local'].toString();
       final data = c['data'].toString();
+      datasValidasPorFazenda.putIfAbsent(fazendaId, () => {}).add(data);
       if (chavesPendentes.contains('$fazendaId|$data')) continue;
 
       batch.insert('chuva_cache', {
@@ -76,6 +84,33 @@ class ChuvaDao {
         'atualizado_em': agora,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
+
+    // Remove do cache local registros já confirmados (sincronizado = 1) que
+    // não vieram mais na resposta do servidor pra essa fazenda — senão um
+    // lançamento excluído/corrigido no sistema web (ou outro aparelho)
+    // continua contando no total local pra sempre (bug real confirmado em
+    // 2026-10-01: "mm Ano" do app mostrando 939 contra 807 no sistema web,
+    // a diferença batendo exatamente com registros órfãos que o servidor já
+    // não tinha mais).
+    //
+    // list.php só exporta os últimos 5 anos (ver docblock do endpoint) — a
+    // limpeza fica restrita a esse período: fora dele o servidor nunca se
+    // pronuncia (nem confirma nem nega), então nunca apagamos.
+    final anoLimite = DateTime.now().year - 5;
+    final dataLimite = '$anoLimite-01-01';
+    for (final entry in datasValidasPorFazenda.entries) {
+      final datasValidas = entry.value;
+      final placeholders = datasValidas.isEmpty
+          ? "''"
+          : datasValidas.map((_) => '?').join(',');
+      batch.delete(
+        'chuva_cache',
+        where:
+            'bd = ? AND fazenda_id = ? AND sincronizado = 1 AND data >= ? AND data NOT IN ($placeholders)',
+        whereArgs: [bd, entry.key, dataLimite, ...datasValidas],
+      );
+    }
+
     await batch.commit(noResult: true);
   }
 

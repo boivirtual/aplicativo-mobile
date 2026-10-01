@@ -554,34 +554,7 @@ class _MapaScreenState extends State<MapaScreen> {
                   ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (_atualizadoEm != null)
-                      Text(
-                        'Dados de ${_formatarDataHora(_atualizadoEm!)}',
-                        style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-                      ),
-                    if (_pendentes > 0)
-                      Text(
-                        _pendentes == 1
-                            ? '1 movimentação aguardando envio'
-                            : '$_pendentes movimentações aguardando envio',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFFE65100),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+              const SizedBox(width: 8),
               SizedBox(
                 height: 32,
                 child: OutlinedButton.icon(

@@ -5,6 +5,7 @@ import 'screens/atualizando_dados_screen.dart';
 import 'main_container.dart';
 import 'services/sync_service.dart';
 import 'services/chuva_sync_service.dart';
+import 'services/mapa_gado_sync_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

@@ -30,6 +30,15 @@ class PastoMapa {
   /// tbl_pasto_descricao_lote — "" quando o pasto não tem descrição.
   final String descricaoLote;
 
+  /// false = módulos 1006 (NÃO UTILIZADO) / 1007 (ÁREA COMUM): não entram
+  /// no Tabuleiro, só no Mapa Satélite (igual ao web).
+  final bool tabuleiro;
+
+  /// tbl_pasto_data_com_animais / _sem_animais — balão de informações do
+  /// Mapa Satélite ("Animais no pasto há N dia(s)").
+  final String? dataComAnimais;
+  final String? dataSemAnimais;
+
   const PastoMapa({
     required this.id,
     required this.fazendaId,
@@ -39,6 +48,9 @@ class PastoMapa {
     required this.categorias,
     required this.ordem,
     this.descricaoLote = '',
+    this.tabuleiro = true,
+    this.dataComAnimais,
+    this.dataSemAnimais,
   });
 }
 

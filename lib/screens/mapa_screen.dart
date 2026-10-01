@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -6,6 +7,7 @@ import '../services/mapa_gado_sync_service.dart';
 import '../utils/mapa_tabuleiro_calculo.dart';
 import '../widgets/cabecalho_fazenda_widget.dart';
 import '../widgets/indicador_conectividade_widget.dart';
+import 'composicao_descricao_lote_screen.dart';
 
 /// Mapa de Gado — visão Tabuleiro, igual à primeira tela do sistema web
 /// (form_mapa_gados.php + ler_mapa_gados.php): um card por pasto, pastos
@@ -13,9 +15,16 @@ import '../widgets/indicador_conectividade_widget.dart';
 /// módulo, com bezerros/fêmeas/machos, total do pasto, tipo de capim,
 /// total de animais da fazenda e busca por nome do pasto.
 ///
+/// Mover TODOS os animais de um pasto para outro, igual ao web: segurar e
+/// arrastar o card (no web, arrastar com o mouse) ou "Mover por toque"
+/// (toca na origem, depois no destino). Se o pasto destino já tinha
+/// descrição do lote, abre a "Composição da Descrição do Lote" (manter ou
+/// criar nova).
+///
 /// Offline-first: a tela sempre lê do cache local (ver MapaGadoDao) e as
-/// contagens são calculadas na hora (MapaTabuleiroCalculo), então continua
-/// funcionando sem internet. O cache é atualizado na abertura do app
+/// contagens são calculadas na hora (MapaTabuleiroCalculo). Mover animais
+/// aplica no cache na hora e entra numa fila que sobe sozinha quando houver
+/// internet (MapaGadoSyncService). O cache é atualizado na abertura do app
 /// (AtualizandoDadosScreen), ao abrir esta tela e no "puxar pra atualizar".
 class MapaScreen extends StatefulWidget {
   final VoidCallback onBack;
@@ -26,36 +35,60 @@ class MapaScreen extends StatefulWidget {
 }
 
 class _MapaScreenState extends State<MapaScreen> {
+  static const _azul = Color(0xFF18385F);
+
   String? fazendaSelecionada;
   List<dynamic> fazendasCarregadas = [];
   bool carregando = true;
 
   String? _bd;
+  String? _usuario;
   List<PastoTabuleiro> _cards = [];
   DateTime? _atualizadoEm;
   bool _lendoCache = false;
   bool _baixando = false;
 
+  int _pendentes = 0;
+  List<String> _erros = [];
+
   final _buscaController = TextEditingController();
   String _termoBusca = '';
+
+  // Mover por toque (alternativa ao arrastar, igual ao web).
+  bool _modoToque = false;
+  int? _origemToque;
+
+  // Arrastar.
+  int? _pastoSobArraste;
+  final _scrollController = ScrollController();
+  final _gridKey = GlobalKey();
+  Timer? _autoScroll;
+  double _velocidadeAutoScroll = 0;
 
   @override
   void initState() {
     super.initState();
+    MapaGadoSyncService.instance.versaoFila.addListener(_aoMudarFila);
     _carregarContexto();
   }
 
   @override
   void dispose() {
+    MapaGadoSyncService.instance.versaoFila.removeListener(_aoMudarFila);
     _buscaController.dispose();
+    _scrollController.dispose();
+    _autoScroll?.cancel();
     super.dispose();
   }
+
+  void _aoMudarFila() => _atualizarFila();
 
   Future<void> _carregarContexto() async {
     final prefs = await SharedPreferences.getInstance();
     final fazendasJson = prefs.getString('userFazendas');
     setState(() {
       _bd = prefs.getString('userCNPJ');
+      _usuario = prefs.getString('userName');
       if (fazendasJson != null) {
         fazendasCarregadas = json.decode(fazendasJson);
         // Uma fazenda só: já vem selecionada e o tabuleiro carrega direto.
@@ -66,6 +99,7 @@ class _MapaScreenState extends State<MapaScreen> {
       carregando = false;
     });
     await _lerDoCache();
+    await _atualizarFila();
     await _baixarEAtualizar();
   }
 
@@ -84,12 +118,14 @@ class _MapaScreenState extends State<MapaScreen> {
       fazendaSelecionada = id;
       _cards = [];
       _atualizadoEm = null;
+      _origemToque = null;
     });
     _lerDoCache();
   }
 
-  /// Baixa o tabuleiro do servidor (melhor esforço — offline ou erro
-  /// mantém o cache) e relê. Ao abrir a tela e no "puxar pra atualizar".
+  /// Envia pendências, baixa o tabuleiro do servidor (melhor esforço —
+  /// offline ou erro mantém o cache) e relê. Ao abrir a tela e no "puxar
+  /// pra atualizar".
   Future<void> _baixarEAtualizar() async {
     if (_bd == null || _idsFazendas.isEmpty) return;
     setState(() => _baixando = true);
@@ -97,6 +133,18 @@ class _MapaScreenState extends State<MapaScreen> {
     if (!mounted) return;
     setState(() => _baixando = false);
     if (ok) await _lerDoCache();
+    await _atualizarFila();
+  }
+
+  Future<void> _atualizarFila() async {
+    if (_bd == null) return;
+    final pendentes = await MapaGadoDao.instance.contar(_bd!, 'pendente');
+    final erros = await MapaGadoDao.instance.mensagensDeErro(_bd!);
+    if (!mounted) return;
+    setState(() {
+      _pendentes = pendentes;
+      _erros = erros;
+    });
   }
 
   Future<void> _lerDoCache() async {
@@ -123,6 +171,127 @@ class _MapaScreenState extends State<MapaScreen> {
       _lendoCache = false;
     });
   }
+
+  // ---------------------------------------------------------------------
+  // Mover todos os animais
+  // ---------------------------------------------------------------------
+
+  void _alternarModoToque() {
+    setState(() {
+      _modoToque = !_modoToque;
+      _origemToque = null;
+    });
+  }
+
+  /// Toque no card: no modo toque escolhe origem/destino; fora dele, abrir
+  /// as funcionalidades do pasto fica para a próxima etapa.
+  void _tocarCard(PastoTabuleiro card) {
+    if (!_modoToque) return;
+
+    if (_origemToque == null) {
+      // Pasto vazio não pode ser origem, igual ao arrastar.
+      if (card.total == 0) return;
+      setState(() => _origemToque = card.pasto.id);
+      return;
+    }
+    if (_origemToque == card.pasto.id) {
+      // Tocar de novo na origem cancela a seleção.
+      setState(() => _origemToque = null);
+      return;
+    }
+
+    final origem = _cards.firstWhere((c) => c.pasto.id == _origemToque);
+    setState(() => _origemToque = null);
+    _moverTudo(origem, card);
+  }
+
+  Future<void> _moverTudo(PastoTabuleiro origem, PastoTabuleiro destino) async {
+    if (_bd == null || origem.pasto.id == destino.pasto.id) return;
+
+    final confirmou = await perguntarSimNao(
+      context,
+      titulo: 'Mapa de Gado - Mensagem',
+      mensagem:
+          'Mover TODOS os animais do pasto ${origem.pasto.descricao} para o pasto ${destino.pasto.descricao}?',
+    );
+    if (!confirmou || !mounted) return;
+
+    // Como no web: decide pela descrição do lote do destino ANTES de mover.
+    final descricaoDestinoAntes = destino.pasto.descricaoLote;
+
+    await MapaGadoSyncService.instance.transferirTudo(
+      bd: _bd!,
+      origem: origem.pasto.id,
+      destino: destino.pasto.id,
+      usuario: _usuario,
+    );
+    await _lerDoCache();
+    if (!mounted) return;
+
+    // Destino sem descrição: não precisa fazer mais nada (se a origem
+    // tinha, ela já foi junto — Premissa 1).
+    if (descricaoDestinoAntes.isEmpty) return;
+
+    final descricoes = await MapaGadoDao.instance.descricoesLote(_bd!);
+    if (!mounted) return;
+    final resultado = await Navigator.of(context).push<NovaDescricaoLote>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => ComposicaoDescricaoLoteScreen(
+          nomePasto: destino.pasto.descricao,
+          descricaoAtual: descricaoDestinoAntes,
+          descricoes: descricoes,
+        ),
+      ),
+    );
+    if (resultado == null || !mounted) return; // Manter
+
+    await MapaGadoSyncService.instance.gravarDescricaoLote(
+      bd: _bd!,
+      pasto: destino.pasto.id,
+      descricaoLote: resultado.descricao,
+      lotes: resultado.lotes,
+      usuario: _usuario,
+    );
+    await _lerDoCache();
+  }
+
+  // Rolagem automática enquanto arrasta perto do topo/rodapé do tabuleiro.
+  void _aoArrastar(DragUpdateDetails d) {
+    final box = _gridKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    final local = box.globalToLocal(d.globalPosition);
+    const margem = 70.0;
+    double v = 0;
+    if (local.dy < margem) {
+      v = -((margem - local.dy) / margem) * 18;
+    } else if (local.dy > box.size.height - margem) {
+      v = ((local.dy - (box.size.height - margem)) / margem) * 18;
+    }
+    _velocidadeAutoScroll = v;
+    if (v == 0) {
+      _autoScroll?.cancel();
+      _autoScroll = null;
+    } else {
+      _autoScroll ??= Timer.periodic(const Duration(milliseconds: 16), (_) {
+        if (!_scrollController.hasClients) return;
+        final pos = _scrollController.position;
+        final alvo = (pos.pixels + _velocidadeAutoScroll)
+            .clamp(pos.minScrollExtent, pos.maxScrollExtent);
+        _scrollController.jumpTo(alvo);
+      });
+    }
+  }
+
+  void _fimArraste() {
+    _autoScroll?.cancel();
+    _autoScroll = null;
+    if (_pastoSobArraste != null) setState(() => _pastoSobArraste = null);
+  }
+
+  // ---------------------------------------------------------------------
+  // Tela
+  // ---------------------------------------------------------------------
 
   int get _totalFazenda => _cards.fold(0, (soma, c) => soma + c.total);
 
@@ -158,7 +327,7 @@ class _MapaScreenState extends State<MapaScreen> {
           'Mapa de Gado',
           style: TextStyle(fontSize: 18, color: Colors.white),
         ),
-        backgroundColor: const Color(0xFF18385F),
+        backgroundColor: _azul,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: widget.onBack, // Volta para a Home
@@ -177,7 +346,7 @@ class _MapaScreenState extends State<MapaScreen> {
                 if (_baixando)
                   const LinearProgressIndicator(
                     minHeight: 2,
-                    color: Color(0xFF18385F),
+                    color: _azul,
                     backgroundColor: Color(0xFFF1F3F6),
                   ),
                 Expanded(child: _buildConteudo()),
@@ -225,13 +394,19 @@ class _MapaScreenState extends State<MapaScreen> {
     return Column(
       children: [
         _buildBarraTotalEBusca(),
+        if (_modoToque) _buildAvisoModoToque(),
+        if (_erros.isNotEmpty) _buildAvisoErros(),
         Expanded(
           child: RefreshIndicator(
             onRefresh: _baixarEAtualizar,
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final colunas = _colunasPorLargura(constraints.maxWidth);
+                final largura =
+                    (constraints.maxWidth - 16 - (colunas - 1) * 6) / colunas;
                 return GridView.builder(
+                  key: _gridKey,
+                  controller: _scrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -241,13 +416,73 @@ class _MapaScreenState extends State<MapaScreen> {
                     mainAxisSpacing: 6,
                   ),
                   itemCount: filtrados.length,
-                  itemBuilder: (context, i) => _CardPasto(card: filtrados[i]),
+                  itemBuilder: (context, i) =>
+                      _buildCardInterativo(filtrados[i], largura),
                 );
               },
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCardInterativo(PastoTabuleiro card, double largura) {
+    final destaque = _pastoSobArraste == card.pasto.id
+        ? _Destaque.destino
+        : _origemToque == card.pasto.id
+        ? _Destaque.origem
+        : _Destaque.nenhum;
+
+    Widget conteudo = _CardPasto(
+      card: card,
+      destaque: destaque,
+      onTap: () => _tocarCard(card),
+    );
+
+    // Pasto vazio não pode ser arrastado (igual ao web); no modo toque o
+    // arrastar fica desligado.
+    if (card.total > 0 && !_modoToque) {
+      conteudo = LongPressDraggable<PastoTabuleiro>(
+        data: card,
+        hapticFeedbackOnStart: true,
+        onDragUpdate: _aoArrastar,
+        onDragEnd: (_) => _fimArraste(),
+        onDraggableCanceled: (_, _) => _fimArraste(),
+        feedback: Material(
+          color: Colors.transparent,
+          child: Opacity(
+            opacity: 0.85,
+            child: SizedBox(
+              width: largura,
+              height: 120,
+              child: _CardPasto(card: card, destaque: _Destaque.origem),
+            ),
+          ),
+        ),
+        childWhenDragging: Opacity(opacity: 0.35, child: conteudo),
+        child: conteudo,
+      );
+    }
+
+    return DragTarget<PastoTabuleiro>(
+      onWillAcceptWithDetails: (d) {
+        final aceita = d.data.pasto.id != card.pasto.id;
+        if (aceita && _pastoSobArraste != card.pasto.id) {
+          setState(() => _pastoSobArraste = card.pasto.id);
+        }
+        return aceita;
+      },
+      onLeave: (_) {
+        if (_pastoSobArraste == card.pasto.id) {
+          setState(() => _pastoSobArraste = null);
+        }
+      },
+      onAcceptWithDetails: (d) {
+        _fimArraste();
+        _moverTudo(d.data, card);
+      },
+      builder: (context, _, _) => conteudo,
     );
   }
 
@@ -307,40 +542,146 @@ class _MapaScreenState extends State<MapaScreen> {
               ),
             ],
           ),
-          if (_atualizadoEm != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                'Dados de ${_formatarDataHora(_atualizadoEm!)}',
-                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_atualizadoEm != null)
+                      Text(
+                        'Dados de ${_formatarDataHora(_atualizadoEm!)}',
+                        style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      ),
+                    if (_pendentes > 0)
+                      Text(
+                        _pendentes == 1
+                            ? '1 movimentação aguardando envio'
+                            : '$_pendentes movimentações aguardando envio',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFFE65100),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                  ],
+                ),
               ),
+              SizedBox(
+                height: 32,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: _modoToque ? const Color(0xFF2E7D32) : Colors.white,
+                    foregroundColor: _modoToque ? Colors.white : const Color(0xFF455A64),
+                    side: BorderSide(
+                      color: _modoToque ? const Color(0xFF2E7D32) : const Color(0xFFCFD8DC),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  ),
+                  onPressed: _alternarModoToque,
+                  icon: Icon(_modoToque ? Icons.open_with : Icons.touch_app, size: 16),
+                  label: Text(
+                    _modoToque ? 'Voltar para arrastar' : 'Mover por toque',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvisoModoToque() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(8, 6, 8, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFD9EDF7),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: const Text.rich(
+        TextSpan(
+          style: TextStyle(fontSize: 13, color: Color(0xFF31708F)),
+          children: [
+            TextSpan(text: 'Modo toque ativado: toque no pasto de '),
+            TextSpan(text: 'origem', style: TextStyle(fontWeight: FontWeight.bold)),
+            TextSpan(text: ' (fica com borda laranja), depois toque no pasto de '),
+            TextSpan(text: 'destino', style: TextStyle(fontWeight: FontWeight.bold)),
+            TextSpan(text: '.'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvisoErros() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(8, 6, 8, 0),
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2DEDE),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '${_erros.length == 1 ? 'Uma movimentação não foi aceita' : '${_erros.length} movimentações não foram aceitas'} pelo servidor: ${_erros.last}',
+              style: const TextStyle(fontSize: 13, color: Color(0xFFA94442)),
             ),
+          ),
+          IconButton(
+            tooltip: 'Fechar',
+            icon: const Icon(Icons.close, size: 18, color: Color(0xFFA94442)),
+            onPressed: () async {
+              await MapaGadoDao.instance.limparErros(_bd!);
+              await _baixarEAtualizar();
+            },
+          ),
         ],
       ),
     );
   }
 }
 
+enum _Destaque { nenhum, origem, destino }
+
 /// Card de um pasto — mesma composição do web: nome no topo, à esquerda
 /// os ícones de bezerro/vaca/boi com as quantidades (só os que têm
 /// animal), linha vertical, total do pasto à direita e o tipo de capim no
-/// canto inferior direito.
+/// canto inferior direito. Borda azul = destino do arraste; laranja
+/// tracejada no web (aqui contínua) = origem escolhida no modo toque.
 class _CardPasto extends StatelessWidget {
   final PastoTabuleiro card;
-  const _CardPasto({required this.card});
+  final _Destaque destaque;
+  final VoidCallback? onTap;
+  const _CardPasto({required this.card, this.destaque = _Destaque.nenhum, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final temAnimais = card.total > 0;
+    final borda = switch (destaque) {
+      _Destaque.destino => const BorderSide(color: Color(0xFF128CB8), width: 3),
+      _Destaque.origem => const BorderSide(color: Color(0xFFFF8F00), width: 3),
+      _Destaque.nenhum => BorderSide.none,
+    };
 
     return Material(
       color: card.cor,
       elevation: 2,
-      borderRadius: BorderRadius.circular(5),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(5),
+        side: borda,
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(5),
-        // Abrir as funcionalidades do pasto: próxima etapa.
-        onTap: () {},
+        onTap: onTap,
         child: Stack(
           children: [
             Column(

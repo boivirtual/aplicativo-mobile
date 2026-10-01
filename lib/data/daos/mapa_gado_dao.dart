@@ -190,7 +190,14 @@ class MapaGadoDao {
         .toList();
   }
 
-  Future<List<PastoMapa>> pastos(String bd, int fazendaId) async {
+  /// Pastos da fazenda na ordem do Tabuleiro. Por padrão só os do
+  /// Tabuleiro; [incluirForaTabuleiro] traz também os módulos 1006/1007
+  /// (Mapa Satélite).
+  Future<List<PastoMapa>> pastos(
+    String bd,
+    int fazendaId, {
+    bool incluirForaTabuleiro = false,
+  }) async {
     final db = await LocalDatabase.instance.database;
     final linhas = await db.query(
       'mapa_pastos_cache',
@@ -203,8 +210,13 @@ class MapaGadoDao {
         'categorias',
         'ordem',
         'descricao_lote',
+        'tabuleiro',
+        'data_com_animais',
+        'data_sem_animais',
       ],
-      where: 'bd = ? AND fazenda_id = ?',
+      where: incluirForaTabuleiro
+          ? 'bd = ? AND fazenda_id = ?'
+          : 'bd = ? AND fazenda_id = ? AND tabuleiro = 1',
       whereArgs: [bd, fazendaId],
       orderBy: 'ordem',
     );

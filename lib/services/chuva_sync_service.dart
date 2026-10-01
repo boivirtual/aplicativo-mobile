@@ -75,7 +75,11 @@ class ChuvaSyncService {
         final chuvas = (data['chuvas'] as List)
             .map((e) => e as Map<String, dynamic>)
             .toList();
-        await ChuvaDao.instance.salvarLoteDoServidor(bd, chuvas);
+        await ChuvaDao.instance.salvarLoteDoServidor(
+          bd,
+          chuvas,
+          fazendasConsultadas: fazendas,
+        );
       }
     } catch (e) {
       // best-effort — mesmo padrão do AnimalCacheService, não deve travar

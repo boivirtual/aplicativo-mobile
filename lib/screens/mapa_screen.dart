@@ -491,6 +491,101 @@ class _MapaScreenState extends State<MapaScreen> {
     );
   }
 
+  String get _nomeFazendaSelecionada {
+    final f = fazendasCarregadas.firstWhere(
+      (f) => (f as Map)['id'].toString() == fazendaSelecionada,
+      orElse: () => {'nome': ''},
+    );
+    return (f as Map)['nome'].toString().toUpperCase();
+  }
+
+  Widget _buildTarjaFazenda() {
+    final temOutras = fazendasCarregadas.length > 1;
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFFF1F3F6),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      child: Container(
+        padding: EdgeInsets.fromLTRB(10, 8, temOutras ? 0 : 10, 8),
+        decoration: BoxDecoration(
+          color: Colors.blue.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                _cards.isEmpty
+                    ? _nomeFazendaSelecionada
+                    : '$_nomeFazendaSelecionada ➔ $_totalFazenda Animais',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.blue,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            // Uma fazenda só: não há outra para escolher.
+            if (temOutras)
+              IconButton(
+                onPressed: _escolherOutraFazenda,
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.edit_note, color: Colors.blue, size: 22),
+                tooltip: 'Trocar de fazenda',
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Modal para escolher outra fazenda; ao escolher, recarrega o tabuleiro.
+  Future<void> _escolherOutraFazenda() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final escolhida = await showDialog<String>(
+      context: context,
+      requestFocus: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text(
+          'Selecione a Fazenda',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        contentPadding: const EdgeInsets.fromLTRB(0, 12, 0, 0),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              for (final f in fazendasCarregadas)
+                ListTile(
+                  dense: true,
+                  selected: (f as Map)['id'].toString() == fazendaSelecionada,
+                  selectedTileColor: Colors.grey.shade200,
+                  title: Text(
+                    f['nome'].toString().toUpperCase(),
+                    style: const TextStyle(fontSize: 14, color: Color(0xFF455A64)),
+                  ),
+                  onTap: () => Navigator.pop(ctx, f['id'].toString()),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+        ],
+      ),
+    );
+    if (escolhida != null && escolhida != fazendaSelecionada) {
+      _buscaController.clear();
+      _termoBusca = '';
+      _selecionarFazenda(escolhida);
+    }
+  }
+
   Widget _buildBarraTotalEBusca() {
     return Container(
       color: const Color(0xFFF1F3F6),

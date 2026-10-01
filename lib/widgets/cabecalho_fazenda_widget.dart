@@ -93,7 +93,7 @@ class CabecalhoFazendaWidget extends StatelessWidget {
 
     final String textoExibido = fazendaSelecionada != null
         ? _getNomeFazenda(fazendaSelecionada!)
-        : 'Selecione';
+        : textoVazio;
 
     final Color textoCor = fazendaSelecionada != null
         ? const Color(0xFF455A64)

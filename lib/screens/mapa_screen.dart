@@ -44,6 +44,16 @@ class _MapaScreenState extends State<MapaScreen> {
   String? _bd;
   String? _usuario;
   List<PastoTabuleiro> _cards = [];
+
+  // Mapa Satélite
+  static const _chaveTipoMapa = 'mapaGadoTipo';
+  bool _satelite = false;
+  bool _sateliteBaixado = false;
+  List<PastoTabuleiro> _cardsTodos = [];
+  List<PoligonoPasto> _poligonos = [];
+  LatLng? _centroFazenda;
+  Map<int, String> _coresModulos = {};
+  String? _pastaCacheImagens;
   DateTime? _atualizadoEm;
   bool _lendoCache = false;
   bool _baixando = false;

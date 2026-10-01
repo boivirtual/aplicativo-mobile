@@ -302,5 +302,9 @@ class LocalDatabase {
     await db.delete('pesagens_locais');
     await db.delete('animais_cache');
     await db.delete('chuva_cache');
+    await db.delete('mapa_categorias_cache');
+    await db.delete('mapa_pastos_cache');
+    await db.delete('mapa_animais_pasto_cache');
+    await db.delete('mapa_fazendas_cache');
   }
 }

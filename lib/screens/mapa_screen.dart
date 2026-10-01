@@ -495,6 +495,9 @@ class _MapaScreenState extends State<MapaScreen> {
         _buildBarraTotalEBusca(),
         if (_modoToque) _buildAvisoModoToque(),
         if (_erros.isNotEmpty) _buildAvisoErros(),
+        if (_satelite)
+          Expanded(child: _buildSatelite())
+        else
         Expanded(
           child: RefreshIndicator(
             onRefresh: _baixarEAtualizar,

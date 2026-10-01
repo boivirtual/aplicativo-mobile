@@ -147,7 +147,21 @@ class CabecalhoFazendaWidget extends StatelessWidget {
             ],
           ),
         ),
-      ),
+    );
+
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFFF1F3F6),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+      child: complemento == null
+          ? select
+          : Row(
+              children: [
+                Expanded(child: select),
+                const SizedBox(width: 12),
+                complemento!,
+              ],
+            ),
     );
   }
 }

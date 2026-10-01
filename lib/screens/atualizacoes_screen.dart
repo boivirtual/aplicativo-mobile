@@ -176,6 +176,12 @@ class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
                       _formatarData(_ultimaAtualizacaoCache),
                     ),
                   ]),
+                  _secao("Mapa de Gado (cache local)", [
+                    _linha(
+                      "Última atualização",
+                      _formatarData(_ultimaAtualizacaoMapa),
+                    ),
+                  ]),
                   const SizedBox(height: 12),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 4),

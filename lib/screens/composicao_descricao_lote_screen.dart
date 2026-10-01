@@ -42,6 +42,7 @@ Future<bool> perguntarSimNao(
       ],
     ),
   );
+  FocusManager.instance.primaryFocus?.unfocus();
   return r == true;
 }
 

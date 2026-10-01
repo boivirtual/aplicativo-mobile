@@ -554,7 +554,19 @@ class _MapaScreenState extends State<MapaScreen> {
                       const TextSpan(text: '  ➔  '),
                       TextSpan(
                         text: '$_totalFazenda Animais',
-                        style: const TextStyle(fontWeight: FontWeight.w900),
+                        // A fonte do app (FuturaStd) só tem a versão Light,
+                        // então fontWeight quase não muda nada: o traço é
+                        // engrossado com "sombras" da mesma cor coladas no
+                        // texto.
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          shadows: [
+                            Shadow(color: Colors.blue, offset: Offset(0.5, 0)),
+                            Shadow(color: Colors.blue, offset: Offset(-0.5, 0)),
+                            Shadow(color: Colors.blue, offset: Offset(0, 0.5)),
+                            Shadow(color: Colors.blue, offset: Offset(0, -0.5)),
+                          ],
+                        ),
                       ),
                     ],
                   ],

@@ -529,6 +529,44 @@ class _MapaScreenState extends State<MapaScreen> {
     );
   }
 
+  Widget _buildSatelite() {
+    if (!_sateliteBaixado || _pastaCacheImagens == null) {
+      return _mensagemSatelite(
+        "O mapa satélite desta fazenda ainda não foi baixado neste aparelho.\nConecte-se à internet e abra o Mapa de Gado novamente.",
+      );
+    }
+    if (_poligonos.isEmpty && _centroFazenda == null) {
+      return _mensagemSatelite(
+        "Esta fazenda ainda não tem os pastos desenhados no mapa.\nO desenho é feito no Editor de Mapa do sistema web.",
+      );
+    }
+    return MapaSateliteWidget(
+      // novo mapa (e novo enquadramento) ao trocar de fazenda
+      key: ValueKey('satelite-$fazendaSelecionada'),
+      poligonos: _poligonos,
+      pastoPorNome: _pastoPorNome,
+      coresModulos: _coresModulos,
+      centroFazenda: _centroFazenda,
+      termoBusca: _termoBusca,
+      modoToque: _modoToque,
+      origemToqueId: _origemToque,
+      pastaCacheImagens: _pastaCacheImagens!,
+      onTocarPasto: _tocarCard,
+      onMover: _moverTudo,
+    );
+  }
+
+  Widget _mensagemSatelite(String texto) => Center(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 30),
+      child: Text(
+        texto,
+        textAlign: TextAlign.center,
+        style: TextStyle(color: Colors.grey[600], fontStyle: FontStyle.italic),
+      ),
+    ),
+  );
+
   Widget _buildCardInterativo(PastoTabuleiro card, double largura) {
     final destaque = _pastoSobArraste == card.pasto.id
         ? _Destaque.destino

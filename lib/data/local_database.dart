@@ -206,6 +206,8 @@ class LocalDatabase {
         capim TEXT,
         categorias TEXT,
         ordem INTEGER NOT NULL,
+        descricao_lote TEXT,
+        lotes_json TEXT,
         PRIMARY KEY (bd, id)
       )
     ''');

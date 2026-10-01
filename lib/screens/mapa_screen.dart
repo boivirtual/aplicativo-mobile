@@ -155,22 +155,62 @@ class _MapaScreenState extends State<MapaScreen> {
 
     final dao = MapaGadoDao.instance;
     final categorias = await dao.categorias(_bd!);
-    final pastos = await dao.pastos(_bd!, fazendaId);
+    final todosPastos = await dao.pastos(
+      _bd!,
+      fazendaId,
+      incluirForaTabuleiro: true,
+    );
     final animais = await dao.animais(_bd!, fazendaId);
     final atualizadoEm = await dao.atualizadoEm(_bd!, fazendaId);
+    final satelite = await dao.mapaSatelite(_bd!, fazendaId);
+    final cores = await dao.coresModulos(_bd!);
 
+    // Tabuleiro: sem os módulos 1006/1007 (as cores dos cards dependem da
+    // sequência dos módulos, então calcula só com os do tabuleiro).
     final cards = MapaTabuleiroCalculo.calcular(
-      pastos: pastos,
+      pastos: todosPastos.where((p) => p.tabuleiro).toList(),
       animais: animais,
       categorias: categorias,
     );
+    // Satélite: todos os pastos da fazenda (igual ao web).
+    final cardsTodos = MapaTabuleiroCalculo.calcular(
+      pastos: todosPastos,
+      animais: animais,
+      categorias: categorias,
+    );
+    final poligonos = MapaSateliteGeo.lerGeojson(satelite?.geojson);
+    final lat = satelite?.latitude, lng = satelite?.longitude;
+    final centro = lat != null && lng != null && (lat != 0 || lng != 0)
+        ? LatLng(lat, lng)
+        : null;
 
     if (!mounted || _fazendaId != fazendaId) return;
     setState(() {
       _cards = cards;
+      _cardsTodos = cardsTodos;
       _atualizadoEm = atualizadoEm;
+      _sateliteBaixado = satelite != null;
+      _poligonos = poligonos;
+      _centroFazenda = centro;
+      _coresModulos = cores;
       _lendoCache = false;
     });
+  }
+
+  /// Pastos cadastrados pelo nome em maiúsculas (ligação do desenho do
+  /// satélite com o cadastro, igual ao web).
+  Map<String, PastoTabuleiro> get _pastoPorNome => {
+    for (final c in _cardsTodos) c.pasto.descricao.toUpperCase(): c,
+  };
+
+  Future<void> _alternarTipoMapa() async {
+    setState(() {
+      _satelite = !_satelite;
+      _origemToque = null;
+    });
+    // Lembra a última escolha, como o web (marcar_tipo_mapa_sessao.php).
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_chaveTipoMapa, _satelite ? 'M' : 'T');
   }
 
   // ---------------------------------------------------------------------

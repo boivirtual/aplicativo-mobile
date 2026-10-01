@@ -358,5 +358,7 @@ class LocalDatabase {
     await db.delete('mapa_pastos_cache');
     await db.delete('mapa_animais_pasto_cache');
     await db.delete('mapa_fazendas_cache');
+    await db.delete('mapa_descricoes_lote_cache');
+    await db.delete('mapa_outbox');
   }
 }

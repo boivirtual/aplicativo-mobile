@@ -222,6 +222,7 @@ class MapaGadoSyncService {
         pastos: lista('pastos'),
         animais: lista('animais'),
       );
+      await _baixarSatelite(bd, ids);
       return true;
     } catch (e) {
       debugPrint('[MapaGadoSync] baixar: falhou -> $e');

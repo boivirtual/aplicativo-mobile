@@ -382,7 +382,10 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
           MarkerLayer(markers: [for (final p in widget.poligonos) _rotulo(p)]),
           if (balao != null) MarkerLayer(markers: [balao]),
           const SimpleAttributionWidget(
-            source: Text('Imagens © Esri, Maxar, Earthstar Geographics'),
+            source: Text(
+              'Esri, Maxar, Earthstar Geographics',
+              style: TextStyle(fontSize: 9),
+            ),
           ),
         ],
       ),

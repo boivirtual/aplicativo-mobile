@@ -466,6 +466,7 @@ class _MapaScreenState extends State<MapaScreen> {
       conteudo = LongPressDraggable<PastoTabuleiro>(
         data: card,
         hapticFeedbackOnStart: true,
+        onDragStarted: () => _arrastando = true,
         onDragUpdate: _aoArrastar,
         onDragEnd: (_) => _fimArraste(),
         onDraggableCanceled: (_, _) => _fimArraste(),

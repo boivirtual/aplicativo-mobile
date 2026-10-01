@@ -99,11 +99,7 @@ class CabecalhoFazendaWidget extends StatelessWidget {
         ? const Color(0xFF455A64)
         : const Color(0xFF607D8B);
 
-    return Container(
-      width: double.infinity,
-      color: const Color(0xFFF1F3F6),
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
-      child: GestureDetector(
+    final select = GestureDetector(
         onTap: temMaisDeUma ? () => _abrirMenu(context, campoKey) : null,
         child: Container(
           key: campoKey,

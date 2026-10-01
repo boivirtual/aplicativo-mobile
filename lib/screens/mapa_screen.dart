@@ -260,11 +260,17 @@ class _MapaScreenState extends State<MapaScreen> {
   }
 
   // Rolagem automática enquanto arrasta perto do topo/rodapé do tabuleiro.
-  void _aoArrastar(DragUpdateDetails d) {
+  //
+  // A posição do dedo vem do Listener da tela (onPointerMove), e não do
+  // onDragUpdate do card: quando a lista rola, o card que está sendo
+  // arrastado sai da tela e é descartado pela GridView, e a partir daí o
+  // Flutter não chama mais o onDragUpdate dele — a rolagem ficava presa na
+  // direção em que começou, sem conseguir voltar.
+  void _aoMoverDedo(Offset posicaoGlobal) {
     if (!_arrastando) return;
     final box = _gridKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null) return;
-    final local = box.globalToLocal(d.globalPosition);
+    final local = box.globalToLocal(posicaoGlobal);
     const margem = 80.0;
     double v = 0;
     if (local.dy < margem) {

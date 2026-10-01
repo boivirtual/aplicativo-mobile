@@ -231,9 +231,111 @@ class MapaGadoDao {
             categorias: (l['categorias'] ?? '').toString(),
             ordem: l['ordem'] as int,
             descricaoLote: (l['descricao_lote'] ?? '').toString(),
+            tabuleiro: (l['tabuleiro'] as int? ?? 1) == 1,
+            dataComAnimais: l['data_com_animais'] as String?,
+            dataSemAnimais: l['data_sem_animais'] as String?,
           ),
         )
         .toList();
+  }
+
+  // ---------------------------------------------------------------------
+  // Mapa Satélite
+  // ---------------------------------------------------------------------
+
+  /// Versão (md5) do mapa que este aparelho já tem, por fazenda — enviada
+  /// ao servidor para ele só devolver o GeoJSON que mudou.
+  Future<Map<String, String>> versoesSatelite(String bd) async {
+    final db = await LocalDatabase.instance.database;
+    final linhas = await db.query(
+      'mapa_satelite_cache',
+      columns: ['fazenda_id', 'versao'],
+      where: 'bd = ?',
+      whereArgs: [bd],
+    );
+    return {
+      for (final l in linhas) l['fazenda_id'].toString(): l['versao'] as String,
+    };
+  }
+
+  /// Grava o que veio de api/rest/mapa-gado/satelite.php. geojson null com
+  /// versão não vazia = o mapa guardado continua valendo (só atualiza a
+  /// coordenada); versão vazia = fazenda sem mapa desenhado.
+  Future<void> salvarSatelite({
+    required String bd,
+    required List<Map<String, dynamic>> modulos,
+    required List<Map<String, dynamic>> mapas,
+  }) async {
+    final db = await LocalDatabase.instance.database;
+    await db.transaction((txn) async {
+      final batch = txn.batch();
+      batch.delete('mapa_modulos_cache', where: 'bd = ?', whereArgs: [bd]);
+      for (final m in modulos) {
+        batch.insert('mapa_modulos_cache', {
+          'bd': bd,
+          'id': _int(m['id']),
+          'cor': (m['cor'] ?? '').toString(),
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+
+      for (final m in mapas) {
+        final fazenda = _int(m['local']);
+        final versao = (m['versao'] ?? '').toString();
+        final latitude = (m['latitude'] as num?)?.toDouble();
+        final longitude = (m['longitude'] as num?)?.toDouble();
+
+        if (m['geojson'] == null && versao.isNotEmpty) {
+          batch.update(
+            'mapa_satelite_cache',
+            {'latitude': latitude, 'longitude': longitude},
+            where: 'bd = ? AND fazenda_id = ?',
+            whereArgs: [bd, fazenda],
+          );
+          continue;
+        }
+        batch.insert('mapa_satelite_cache', {
+          'bd': bd,
+          'fazenda_id': fazenda,
+          'versao': versao,
+          'geojson': m['geojson'] == null ? null : json.encode(m['geojson']),
+          'latitude': latitude,
+          'longitude': longitude,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+      await batch.commit(noResult: true);
+    });
+  }
+
+  /// GeoJSON (texto) e coordenada da fazenda; null = nunca baixado.
+  Future<({String? geojson, double? latitude, double? longitude})?>
+  mapaSatelite(String bd, int fazendaId) async {
+    final db = await LocalDatabase.instance.database;
+    final linhas = await db.query(
+      'mapa_satelite_cache',
+      columns: ['geojson', 'latitude', 'longitude'],
+      where: 'bd = ? AND fazenda_id = ?',
+      whereArgs: [bd, fazendaId],
+      limit: 1,
+    );
+    if (linhas.isEmpty) return null;
+    final l = linhas.first;
+    return (
+      geojson: l['geojson'] as String?,
+      latitude: (l['latitude'] as num?)?.toDouble(),
+      longitude: (l['longitude'] as num?)?.toDouble(),
+    );
+  }
+
+  /// Cor de cada módulo ("#RRGGBB"), por id.
+  Future<Map<int, String>> coresModulos(String bd) async {
+    final db = await LocalDatabase.instance.database;
+    final linhas = await db.query(
+      'mapa_modulos_cache',
+      columns: ['id', 'cor'],
+      where: 'bd = ?',
+      whereArgs: [bd],
+    );
+    return {for (final l in linhas) l['id'] as int: l['cor'] as String};
   }
 
   Future<List<AnimalPastoMapa>> animais(String bd, int fazendaId) async {

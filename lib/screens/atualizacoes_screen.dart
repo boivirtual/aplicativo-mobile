@@ -83,6 +83,9 @@ class _AtualizacoesScreenState extends State<AtualizacoesScreen> {
     final totalAnimais = await AnimalCacheDao.instance.contarTotal();
     final ultimaAtualizacao = await AnimalCacheDao.instance
         .buscarUltimaAtualizacao();
+    final ultimaAtualizacaoMapa = await MapaGadoDao.instance.ultimaAtualizacao(
+      cnpj,
+    );
 
     if (!mounted) return;
     final partes = _partesDoBuild(packageInfo.buildNumber);

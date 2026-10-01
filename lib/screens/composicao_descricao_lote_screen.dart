@@ -16,9 +16,13 @@ Future<bool> perguntarSimNao(
   required String titulo,
   required String mensagem,
 }) async {
+  // Sem isso, ao fechar a pergunta o Flutter devolve o foco ao último
+  // campo de texto da tela (a busca do mapa) e abre o teclado sozinho.
+  FocusManager.instance.primaryFocus?.unfocus();
   final r = await showDialog<bool>(
     context: context,
     barrierDismissible: false,
+    requestFocus: false,
     builder: (ctx) => AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),

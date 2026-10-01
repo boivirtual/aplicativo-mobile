@@ -70,7 +70,7 @@ void main() {
       categorias: _categorias,
       hoje: hoje,
     );
-    final cores = MapaTabuleiroCalculo.cores;
+    const cores = MapaTabuleiroCalculo.cores;
     expect(cards[0].cor, Colors.white);
     expect(cards[1].cor, cores[0]);
     expect(cards[2].cor, cores[0]);

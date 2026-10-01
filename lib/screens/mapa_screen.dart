@@ -751,15 +751,19 @@ class _MapaScreenState extends State<MapaScreen> {
         children: [
           Row(
             children: [
-              // Troca para o Mapa Satélite (igual ao web) — o clique fica
-              // para a etapa do mapa satélite.
+              // Troca Tabuleiro <-> Mapa Satélite (igual ao web: mostra o
+              // ícone do OUTRO modo).
               IconButton(
-                tooltip: 'Mapa Satélite',
+                tooltip: _satelite ? 'Mapa Tabuleiro' : 'Mapa Satélite',
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                icon: const Icon(Icons.map_outlined, color: Colors.grey, size: 24),
-                onPressed: () {},
+                icon: Icon(
+                  _satelite ? Icons.grid_view : Icons.map_outlined,
+                  color: Colors.grey,
+                  size: 24,
+                ),
+                onPressed: _alternarTipoMapa,
               ),
               const SizedBox(width: 6),
               Expanded(

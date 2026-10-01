@@ -577,6 +577,20 @@ class _MapaScreenState extends State<MapaScreen> {
               ),
             ],
           ),
+          if (_pendentes > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                _pendentes == 1
+                    ? '1 movimentação aguardando envio'
+                    : '$_pendentes movimentações aguardando envio',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFFE65100),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
         ],
       ),
     );

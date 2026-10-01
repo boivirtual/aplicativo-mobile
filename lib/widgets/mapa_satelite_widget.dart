@@ -220,7 +220,7 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
       borderColor: borda,
       borderStrokeWidth: largura,
       pattern: tracejado
-          ? const StrokePattern.dashed(segments: [8, 6])
+          ? StrokePattern.dashed(segments: const [8, 6])
           : const StrokePattern.solid(),
     );
   }

@@ -102,7 +102,10 @@ class _MapaScreenState extends State<MapaScreen> {
   Future<void> _carregarContexto() async {
     final prefs = await SharedPreferences.getInstance();
     final fazendasJson = prefs.getString('userFazendas');
-    final pastaCache = p.join(await getDatabasesPath(), 'mapa_satelite_imagens');
+    final pastaCache = p.join(
+      await getDatabasesPath(),
+      'mapa_satelite_imagens',
+    );
     setState(() {
       _bd = prefs.getString('userCNPJ');
       _usuario = prefs.getString('userName');
@@ -350,8 +353,10 @@ class _MapaScreenState extends State<MapaScreen> {
           return;
         }
         final pos = _scrollController.position;
-        final alvo = (pos.pixels + _velocidadeAutoScroll)
-            .clamp(pos.minScrollExtent, pos.maxScrollExtent);
+        final alvo = (pos.pixels + _velocidadeAutoScroll).clamp(
+          pos.minScrollExtent,
+          pos.maxScrollExtent,
+        );
         _scrollController.jumpTo(alvo);
       });
     }
@@ -459,7 +464,10 @@ class _MapaScreenState extends State<MapaScreen> {
       return Center(
         child: Text(
           "Selecione uma fazenda para visualizar o mapa.",
-          style: TextStyle(color: Colors.grey[600], fontStyle: FontStyle.italic),
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontStyle: FontStyle.italic,
+          ),
         ),
       );
     }
@@ -480,7 +488,10 @@ class _MapaScreenState extends State<MapaScreen> {
                     ? "O mapa desta fazenda ainda não foi baixado neste aparelho.\nConecte-se à internet e puxe a tela para baixo para atualizar."
                     : "Nenhum pasto cadastrado para esta fazenda.",
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey[600], fontStyle: FontStyle.italic),
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ),
           ],
@@ -498,33 +509,33 @@ class _MapaScreenState extends State<MapaScreen> {
         if (_satelite)
           Expanded(child: _buildSatelite())
         else
-        Expanded(
-          child: RefreshIndicator(
-            onRefresh: _baixarEAtualizar,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final colunas = _colunasPorLargura(constraints.maxWidth);
-                final largura =
-                    (constraints.maxWidth - 16 - (colunas - 1) * 6) / colunas;
-                return GridView.builder(
-                  key: _gridKey,
-                  controller: _scrollController,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: colunas,
-                    mainAxisExtent: 120,
-                    crossAxisSpacing: 6,
-                    mainAxisSpacing: 6,
-                  ),
-                  itemCount: filtrados.length,
-                  itemBuilder: (context, i) =>
-                      _buildCardInterativo(filtrados[i], largura),
-                );
-              },
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _baixarEAtualizar,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final colunas = _colunasPorLargura(constraints.maxWidth);
+                  final largura =
+                      (constraints.maxWidth - 16 - (colunas - 1) * 6) / colunas;
+                  return GridView.builder(
+                    key: _gridKey,
+                    controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: colunas,
+                      mainAxisExtent: 120,
+                      crossAxisSpacing: 6,
+                      mainAxisSpacing: 6,
+                    ),
+                    itemCount: filtrados.length,
+                    itemBuilder: (context, i) =>
+                        _buildCardInterativo(filtrados[i], largura),
+                  );
+                },
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -720,7 +731,10 @@ class _MapaScreenState extends State<MapaScreen> {
                   selectedTileColor: Colors.grey.shade200,
                   title: Text(
                     f['nome'].toString().toUpperCase(),
-                    style: const TextStyle(fontSize: 14, color: Color(0xFF455A64)),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF455A64),
+                    ),
                   ),
                   onTap: () => Navigator.pop(ctx, f['id'].toString()),
                 ),
@@ -807,16 +821,27 @@ class _MapaScreenState extends State<MapaScreen> {
                 height: 38,
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    backgroundColor: _modoToque ? const Color(0xFF2E7D32) : Colors.white,
-                    foregroundColor: _modoToque ? Colors.white : const Color(0xFF455A64),
+                    backgroundColor: _modoToque
+                        ? const Color(0xFF2E7D32)
+                        : Colors.white,
+                    foregroundColor: _modoToque
+                        ? Colors.white
+                        : const Color(0xFF455A64),
                     side: BorderSide(
-                      color: _modoToque ? const Color(0xFF2E7D32) : const Color(0xFFCFD8DC),
+                      color: _modoToque
+                          ? const Color(0xFF2E7D32)
+                          : const Color(0xFFCFD8DC),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                   ),
                   onPressed: _alternarModoToque,
-                  icon: Icon(_modoToque ? Icons.open_with : Icons.touch_app, size: 16),
+                  icon: Icon(
+                    _modoToque ? Icons.open_with : Icons.touch_app,
+                    size: 16,
+                  ),
                   label: Text(
                     _modoToque ? 'Voltar para arrastar' : 'Mover por toque',
                     style: const TextStyle(fontSize: 12),
@@ -858,9 +883,17 @@ class _MapaScreenState extends State<MapaScreen> {
           style: TextStyle(fontSize: 13, color: Color(0xFF31708F)),
           children: [
             TextSpan(text: 'Modo toque ativado: toque no pasto de '),
-            TextSpan(text: 'origem', style: TextStyle(fontWeight: FontWeight.bold)),
-            TextSpan(text: ' (fica com borda laranja), depois toque no pasto de '),
-            TextSpan(text: 'destino', style: TextStyle(fontWeight: FontWeight.bold)),
+            TextSpan(
+              text: 'origem',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            TextSpan(
+              text: ' (fica com borda laranja), depois toque no pasto de ',
+            ),
+            TextSpan(
+              text: 'destino',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             TextSpan(text: '.'),
           ],
         ),
@@ -910,7 +943,11 @@ class _CardPasto extends StatelessWidget {
   final PastoTabuleiro card;
   final _Destaque destaque;
   final VoidCallback? onTap;
-  const _CardPasto({required this.card, this.destaque = _Destaque.nenhum, this.onTap});
+  const _CardPasto({
+    required this.card,
+    this.destaque = _Destaque.nenhum,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {

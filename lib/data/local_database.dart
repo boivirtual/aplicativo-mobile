@@ -328,6 +328,21 @@ class LocalDatabase {
       // instala do zero.
       await _criarTabelasMapaGado(db);
     }
+    if (versaoAntiga < 8) {
+      // Mover animais no Mapa de Gado: descrição do lote de cada pasto,
+      // opções de descrição e a fila de ações offline. Quem veio da v7 já
+      // tem mapa_pastos_cache sem as colunas novas (quem vem de antes da
+      // v7 acabou de criar a tabela já com elas, acima).
+      if (versaoAntiga >= 7) {
+        await db.execute(
+          'ALTER TABLE mapa_pastos_cache ADD COLUMN descricao_lote TEXT',
+        );
+        await db.execute(
+          'ALTER TABLE mapa_pastos_cache ADD COLUMN lotes_json TEXT',
+        );
+      }
+      await _criarTabelasMovimentacaoMapa(db);
+    }
   }
 
   /// Só para os testes/roteiro de verificação manual — apaga todos os dados

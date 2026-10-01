@@ -514,14 +514,27 @@ class _MapaScreenState extends State<MapaScreen> {
         child: Row(
           children: [
             Expanded(
-              child: Text(
-                _cards.isEmpty
-                    ? _nomeFazendaSelecionada
-                    : '$_nomeFazendaSelecionada ➔ $_totalFazenda Animais',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.blue,
-                  fontWeight: FontWeight.bold,
+              child: Text.rich(
+                TextSpan(
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.blue,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  children: [
+                    TextSpan(text: _nomeFazendaSelecionada),
+                    if (_cards.isNotEmpty) ...[
+                      const TextSpan(text: '  ➔  '),
+                      TextSpan(
+                        text: '$_totalFazenda Animais',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF0D47A1),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),

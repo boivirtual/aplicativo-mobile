@@ -375,9 +375,11 @@ class _MapaScreenState extends State<MapaScreen> {
                     color: _azul,
                     backgroundColor: Color(0xFFF1F3F6),
                   ),
-                // Dedo saiu da tela = arraste terminou (ver _fimArraste).
+                // Acompanha o dedo durante o arraste (ver _aoMoverDedo) e
+                // dedo saiu da tela = arraste terminou (ver _fimArraste).
                 Expanded(
                   child: Listener(
+                    onPointerMove: (e) => _aoMoverDedo(e.position),
                     onPointerUp: (_) {
                       if (_arrastando) _fimArraste();
                     },

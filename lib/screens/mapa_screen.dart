@@ -63,6 +63,7 @@ class _MapaScreenState extends State<MapaScreen> {
   final _scrollController = ScrollController();
   final _gridKey = GlobalKey();
   Timer? _autoScroll;
+  bool _arrastando = false;
   double _velocidadeAutoScroll = 0;
 
   @override

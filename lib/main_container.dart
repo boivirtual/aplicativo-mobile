@@ -223,15 +223,7 @@ class _MainContainerState extends State<MainContainer>
           ? null
           : BottomNavigationBar(
               currentIndex: _currentIndex > 4 ? 0 : _currentIndex,
-              // TEMPORÁRIO (2026-09-08): o ícone da Chuva (posição 3)
-              // continua aparecendo no rodapé, mas o toque nele é ignorado
-              // enquanto o George testa a Pesagem — pra não confundir o
-              // testador. Para REVERTER: trocar por
-              // `onTap: (index) => setState(() => _currentIndex = index)`.
-              onTap: (index) {
-                if (index == 3) return; // Chuva: clique inibido
-                setState(() => _currentIndex = index);
-              },
+              onTap: (index) => setState(() => _currentIndex = index),
               type: BottomNavigationBarType.fixed,
               backgroundColor: Colors.white,
               selectedItemColor: azulBarra,

@@ -142,6 +142,66 @@ class LocalDatabase {
     );
 
     await _criarTabelaChuvaCache(db);
+    await _criarTabelasMapaGado(db);
+  }
+
+  Future<void> _criarTabelasMapaGado(Database db) async {
+    // Cache do Mapa de Gado (Tabuleiro) — somente leitura por enquanto,
+    // baixado inteiro por fazenda (api/rest/mapa-gado/tabuleiro.php) e
+    // substituído a cada download. Guarda os dados "crus" (pastos, animais
+    // no pasto e faixas de categoria) em vez das contagens prontas: as
+    // contagens dependem da idade do animal no dia, então são calculadas
+    // na hora (ver MapaTabuleiroCalculo) e continuam certas offline.
+    await db.execute('''
+      CREATE TABLE mapa_categorias_cache (
+        bd TEXT NOT NULL,
+        id INTEGER NOT NULL,
+        idade_de INTEGER NOT NULL,
+        idade_ate INTEGER NOT NULL,
+        PRIMARY KEY (bd, id)
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE mapa_pastos_cache (
+        bd TEXT NOT NULL,
+        id INTEGER NOT NULL,
+        fazenda_id INTEGER NOT NULL,
+        descricao TEXT NOT NULL,
+        modulo INTEGER NOT NULL,
+        capim TEXT,
+        categorias TEXT,
+        ordem INTEGER NOT NULL,
+        PRIMARY KEY (bd, id)
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX idx_mapa_pastos_fazenda ON mapa_pastos_cache (bd, fazenda_id)',
+    );
+    await db.execute('''
+      CREATE TABLE mapa_animais_pasto_cache (
+        bd TEXT NOT NULL,
+        fazenda_id INTEGER NOT NULL,
+        local INTEGER NOT NULL,
+        numero_item INTEGER NOT NULL,
+        pasto_id INTEGER NOT NULL,
+        sexo TEXT,
+        nascimento TEXT
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX idx_mapa_animais_fazenda ON mapa_animais_pasto_cache (bd, fazenda_id)',
+    );
+    // Hora do último download bem-sucedido de cada fazenda — exibida na
+    // tela para o usuário saber de quando são os dados quando estiver
+    // offline.
+    await db.execute('''
+      CREATE TABLE mapa_fazendas_cache (
+        bd TEXT NOT NULL,
+        fazenda_id INTEGER NOT NULL,
+        atualizado_em TEXT NOT NULL,
+        PRIMARY KEY (bd, fazenda_id)
+      )
+    ''');
   }
 
   Future<void> _criarTabelaChuvaCache(Database db) async {

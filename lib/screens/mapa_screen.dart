@@ -260,23 +260,28 @@ class _MapaScreenState extends State<MapaScreen> {
 
   // Rolagem automática enquanto arrasta perto do topo/rodapé do tabuleiro.
   void _aoArrastar(DragUpdateDetails d) {
+    if (!_arrastando) return;
     final box = _gridKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null) return;
     final local = box.globalToLocal(d.globalPosition);
-    const margem = 70.0;
+    const margem = 80.0;
     double v = 0;
     if (local.dy < margem) {
       v = -((margem - local.dy) / margem) * 18;
     } else if (local.dy > box.size.height - margem) {
       v = ((local.dy - (box.size.height - margem)) / margem) * 18;
     }
-    _velocidadeAutoScroll = v;
+    _velocidadeAutoScroll = v.clamp(-24.0, 24.0);
     if (v == 0) {
       _autoScroll?.cancel();
       _autoScroll = null;
     } else {
-      _autoScroll ??= Timer.periodic(const Duration(milliseconds: 16), (_) {
-        if (!_scrollController.hasClients) return;
+      _autoScroll ??= Timer.periodic(const Duration(milliseconds: 16), (t) {
+        if (!_arrastando || !_scrollController.hasClients) {
+          t.cancel();
+          _autoScroll = null;
+          return;
+        }
         final pos = _scrollController.position;
         final alvo = (pos.pixels + _velocidadeAutoScroll)
             .clamp(pos.minScrollExtent, pos.maxScrollExtent);
@@ -285,10 +290,19 @@ class _MapaScreenState extends State<MapaScreen> {
     }
   }
 
+  /// Fim do arraste. Também é chamado quando o dedo sai da tela (ver o
+  /// Listener em build): o card que está sendo arrastado pode rolar para
+  /// fora da tela e ser descartado pela GridView — aí o Flutter não chama
+  /// mais o onDragEnd dele, e a rolagem automática ficava ligada para
+  /// sempre (empurrando a lista e impedindo rolar no sentido contrário).
   void _fimArraste() {
+    _arrastando = false;
     _autoScroll?.cancel();
     _autoScroll = null;
-    if (_pastoSobArraste != null) setState(() => _pastoSobArraste = null);
+    _velocidadeAutoScroll = 0;
+    if (mounted && _pastoSobArraste != null) {
+      setState(() => _pastoSobArraste = null);
+    }
   }
 
   // ---------------------------------------------------------------------

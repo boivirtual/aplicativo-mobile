@@ -527,11 +527,7 @@ class _MapaScreenState extends State<MapaScreen> {
                       const TextSpan(text: '  ➔  '),
                       TextSpan(
                         text: '$_totalFazenda Animais',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF0D47A1),
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w900),
                       ),
                     ],
                   ],

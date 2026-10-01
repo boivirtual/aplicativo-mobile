@@ -1,12 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart' show getDatabasesPath;
 import '../data/daos/mapa_gado_dao.dart';
 import '../services/mapa_gado_sync_service.dart';
+import '../utils/mapa_satelite_geo.dart';
 import '../utils/mapa_tabuleiro_calculo.dart';
 import '../widgets/cabecalho_fazenda_widget.dart';
 import '../widgets/indicador_conectividade_widget.dart';
+import '../widgets/mapa_satelite_widget.dart';
 import 'composicao_descricao_lote_screen.dart';
 
 /// Mapa de Gado — visão Tabuleiro, igual à primeira tela do sistema web

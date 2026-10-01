@@ -144,6 +144,32 @@ class LocalDatabase {
     await _criarTabelaChuvaCache(db);
     await _criarTabelasMapaGado(db);
     await _criarTabelasMovimentacaoMapa(db);
+    await _criarTabelasMapaSatelite(db);
+  }
+
+  Future<void> _criarTabelasMapaSatelite(Database db) async {
+    // Mapa Satélite: GeoJSON dos pastos de cada fazenda (mesmo mapa do
+    // Editor de Mapa do web) e a cor de cada módulo. "versao" é o md5 do
+    // servidor — o GeoJSON só é baixado de novo quando muda.
+    await db.execute('''
+      CREATE TABLE mapa_satelite_cache (
+        bd TEXT NOT NULL,
+        fazenda_id INTEGER NOT NULL,
+        versao TEXT NOT NULL,
+        geojson TEXT,
+        latitude REAL,
+        longitude REAL,
+        PRIMARY KEY (bd, fazenda_id)
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE mapa_modulos_cache (
+        bd TEXT NOT NULL,
+        id INTEGER NOT NULL,
+        cor TEXT NOT NULL,
+        PRIMARY KEY (bd, id)
+      )
+    ''');
   }
 
   Future<void> _criarTabelasMovimentacaoMapa(Database db) async {

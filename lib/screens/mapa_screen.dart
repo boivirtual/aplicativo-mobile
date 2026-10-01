@@ -793,7 +793,7 @@ class _CardPasto extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(4, 4, 4, 3),
                   decoration: const BoxDecoration(
                     border: Border(
-                      bottom: BorderSide(color: Color(0x4D808080), width: 1),
+                      bottom: BorderSide(color: Color(0x1F808080), width: 1),
                     ),
                   ),
                   child: Text(

@@ -244,6 +244,8 @@ class _MapaScreenState extends State<MapaScreen> {
         ),
       ),
     );
+    // Ao voltar da composição, não devolver o foco para a busca.
+    FocusManager.instance.primaryFocus?.unfocus();
     if (resultado == null || !mounted) return; // Manter
 
     await MapaGadoSyncService.instance.gravarDescricaoLote(

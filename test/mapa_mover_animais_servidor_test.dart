@@ -14,8 +14,13 @@ import 'package:boivirtual/data/daos/mapa_gado_dao.dart';
 import 'package:boivirtual/services/connectivity_service.dart';
 import 'package:boivirtual/services/mapa_gado_sync_service.dart';
 
+/// TestWidgetsFlutterBinding bloqueia HTTP real (tudo vira 400) — mesmo
+/// contorno de sync_rede_ruim_test.dart.
+class _HttpOverridesReais extends HttpOverrides {}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  HttpOverrides.global = _HttpOverridesReais();
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfiNoIsolate;
   LocalDatabase.nomeArquivo = 'test_mapa_mover_servidor.db';

@@ -111,8 +111,10 @@ class CabecalhoFazendaWidget extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(Icons.location_on, color: Color(0xFF18385F), size: 20),
-              const SizedBox(width: 10),
+              if (mostrarIcone) ...[
+                const Icon(Icons.location_on, color: Color(0xFF18385F), size: 20),
+                const SizedBox(width: 10),
+              ],
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,

@@ -134,7 +134,7 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
         padding: const EdgeInsets.fromLTRB(6, 6, 6, 16),
         children: [
           _cabecalho(pasto),
-          const SizedBox(height: 10),
+          const SizedBox(height: 22),
           _tabela(),
           const SizedBox(height: 12),
           _formulario(),

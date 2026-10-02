@@ -368,24 +368,14 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
           Row(
             children: [
               Expanded(
-                child: _campo(
-                  DropdownButtonFormField<int>(
-                    initialValue: _novoPasto,
-                    isExpanded: true,
-                    decoration: _decoracao('Novo Pasto'),
-                    items: _pastosDestino
-                        .map(
-                          (p) => DropdownMenuItem(
-                            value: p.id,
-                            child: Text(
-                              p.descricao,
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (v) => setState(() => _novoPasto = v),
-                  ),
+                child: _SeletorCampo<int>(
+                  rotulo: 'Novo Pasto',
+                  corRotulo: _corRotulo,
+                  valor: _novoPasto,
+                  opcoes: [
+                    for (final p in _pastosDestino) MapEntry(p.id, p.descricao),
+                  ],
+                  onChanged: (v) => setState(() => _novoPasto = v),
                 ),
               ),
               const SizedBox(width: 8),

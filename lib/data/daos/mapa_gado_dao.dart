@@ -113,6 +113,26 @@ class MapaGadoDao {
           'tabuleiro': p['tabuleiro'] == false ? 0 : 1,
           'data_com_animais': p['data_com_animais']?.toString(),
           'data_sem_animais': p['data_sem_animais']?.toString(),
+          'area': (p['area'] as num?)?.toDouble() ?? 0,
+          'id_lote': _int(p['id_lote']),
+          'ano_lote': _int(p['ano_lote']),
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+
+      for (final fazenda in fazendasConsultadas) {
+        batch.delete(
+          'mapa_pesos_medios_cache',
+          where: 'bd = ? AND fazenda_id = ?',
+          whereArgs: [bd, fazenda],
+        );
+      }
+      for (final pm in pesosMedios) {
+        batch.insert('mapa_pesos_medios_cache', {
+          'bd': bd,
+          'fazenda_id': _int(pm['local']),
+          'categoria': _int(pm['categoria']),
+          'sexo': (pm['sexo'] ?? '').toString(),
+          'peso': _int(pm['peso']),
         }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
 

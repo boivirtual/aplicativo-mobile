@@ -300,8 +300,9 @@ class _ComposicaoDescricaoLoteScreenState
 
   Widget _opcaoLote(String valor, String texto) {
     final marcado = _opcao == valor;
+    // Fundo transparente (sem cara de card): só o círculo e o texto.
     return Material(
-      color: Colors.white,
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         borderRadius: BorderRadius.circular(8),

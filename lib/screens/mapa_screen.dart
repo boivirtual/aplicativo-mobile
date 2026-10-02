@@ -920,19 +920,29 @@ class _MapaScreenState extends State<MapaScreen> {
               ),
             ],
           ),
+          // Situação da fila do mapa: enviando (com internet), aguardando
+          // internet (sem) e, depois de gravado, a confirmação por 4s.
           if (_pendentes > 0)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                _pendentes == 1
-                    ? '1 movimentação aguardando envio'
-                    : '$_pendentes movimentações aguardando envio',
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFFE65100),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+            _avisoFila(
+              ConnectivityService.instance.temInternetReal
+                  ? (_pendentes == 1
+                        ? 'Enviando 1 movimentação ao servidor...'
+                        : 'Enviando $_pendentes movimentações ao servidor...')
+                  : (_pendentes == 1
+                        ? '1 movimentação aguardando internet para enviar'
+                        : '$_pendentes movimentações aguardando internet para enviar'),
+              ConnectivityService.instance.temInternetReal
+                  ? const Color(0xFF1565C0)
+                  : const Color(0xFFE65100),
+              ConnectivityService.instance.temInternetReal
+                  ? Icons.cloud_upload_outlined
+                  : Icons.cloud_off,
+            )
+          else if (_mostrarEnviado)
+            _avisoFila(
+              'Movimentação gravada no servidor',
+              const Color(0xFF2E7D32),
+              Icons.check_circle_outline,
             ),
         ],
       ),

@@ -486,6 +486,25 @@ class MapaGadoDao {
     return linhas.map((l) => (l['ultimo_erro'] ?? '').toString()).toList();
   }
 
+  /// Número/ano do lote gerado pelo servidor para a nova descrição — só se
+  /// o pasto ainda estiver com essa mesma descrição (outra ação pendente
+  /// pode já ter trocado).
+  Future<void> atualizarNumeroLote({
+    required String bd,
+    required int pastoId,
+    required String descricaoLote,
+    required int idLote,
+    required int anoLote,
+  }) async {
+    final db = await LocalDatabase.instance.database;
+    await db.update(
+      'mapa_pastos_cache',
+      {'id_lote': idLote, 'ano_lote': anoLote},
+      where: 'bd = ? AND id = ? AND descricao_lote = ?',
+      whereArgs: [bd, pastoId, descricaoLote],
+    );
+  }
+
   Future<void> removerAcao(int id) async {
     final db = await LocalDatabase.instance.database;
     await db.delete('mapa_outbox', where: 'id = ?', whereArgs: [id]);

@@ -340,33 +340,65 @@ class _ComposicaoDescricaoLoteScreenState
     );
   }
 
-  List<Widget> _buildLinhasIncluidas() {
-    return [
-      for (var i = 0; i < _linhas.length; i++)
-        Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.only(left: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(_linhas[i], style: const TextStyle(fontSize: 14)),
+  /// Um card só com os lotes já montados (cada um com a lixeira, separados
+  /// por um traço) e o Confirmar dentro dele.
+  Widget _cardLotesEConfirmar() {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < _linhas.length; i++)
+            Container(
+              padding: const EdgeInsets.only(left: 4),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
               ),
-              IconButton(
-                tooltip: 'Excluir esse lote',
-                icon: const Icon(
-                  Icons.delete_outline,
-                  color: Color(0xFF128CB8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _linhas[i],
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Excluir esse lote',
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Color(0xFF128CB8),
+                    ),
+                    onPressed: () => setState(() => _linhas.removeAt(i)),
+                  ),
+                ],
+              ),
+            ),
+          if (_linhas.isNotEmpty) const SizedBox(height: 10),
+          SizedBox(
+            height: 45,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _verde,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                onPressed: () => setState(() => _linhas.removeAt(i)),
               ),
-            ],
+              onPressed: _confirmar,
+              child: const Text(
+                'Confirmar',
+                style: TextStyle(fontSize: 15, color: Colors.white),
+              ),
+            ),
           ),
-        ),
-    ];
+        ],
+      ),
+    );
   }
 
   Widget _buildEditor() {

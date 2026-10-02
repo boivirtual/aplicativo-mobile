@@ -375,7 +375,10 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
           const SizedBox(height: 8),
           Row(
             children: [
+              // Mesmas proporções da linha de cima (5/3): Novo Pasto com a
+              // largura de Qual Categoria e Confirma com a de Quantidade.
               Expanded(
+                flex: 5,
                 child: SeletorCampoWidget<int>(
                   rotulo: 'Novo Pasto',
                   corRotulo: _corRotulo,

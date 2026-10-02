@@ -241,7 +241,6 @@ class _ComposicaoDescricaoLoteScreenState
                 _opcaoLote('N', 'Criar nova Descrição do Lote'),
                 if (_opcao == 'N') ...[
                   const SizedBox(height: 14),
-                  ..._buildLinhasIncluidas(),
                   _buildEditor(),
                   Align(
                     alignment: Alignment.centerLeft,
@@ -254,24 +253,8 @@ class _ComposicaoDescricaoLoteScreenState
                       ),
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  SizedBox(
-                    height: 45,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _verde,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      onPressed: _confirmar,
-                      child: const Text(
-                        'Confirmar',
-                        style: TextStyle(fontSize: 15, color: Colors.white),
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 4),
+                  _cardLotesEConfirmar(),
                 ],
               ],
             ),

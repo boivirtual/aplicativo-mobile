@@ -145,6 +145,22 @@ class LocalDatabase {
     await _criarTabelasMapaGado(db);
     await _criarTabelasMovimentacaoMapa(db);
     await _criarTabelasMapaSatelite(db);
+    await _criarTabelaPesosMedios(db);
+  }
+
+  Future<void> _criarTabelaPesosMedios(Database db) async {
+    // Peso médio dos animais da fazenda por categoria + sexo (mesma conta de
+    // funcao_kg_ha_pasto.php do web) — Lotação (Kg/Ha) da tela do pasto.
+    await db.execute('''
+      CREATE TABLE mapa_pesos_medios_cache (
+        bd TEXT NOT NULL,
+        fazenda_id INTEGER NOT NULL,
+        categoria INTEGER NOT NULL,
+        sexo TEXT NOT NULL,
+        peso INTEGER NOT NULL,
+        PRIMARY KEY (bd, fazenda_id, categoria, sexo)
+      )
+    ''');
   }
 
   Future<void> _criarTabelasMapaSatelite(Database db) async {

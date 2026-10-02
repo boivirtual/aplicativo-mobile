@@ -172,10 +172,21 @@ class _MapaScreenState extends State<MapaScreen> {
     final pendentes = await MapaGadoDao.instance.contar(_bd!, 'pendente');
     final erros = await MapaGadoDao.instance.mensagensDeErro(_bd!);
     if (!mounted) return;
+    // Saiu da fila sem virar erro = o servidor gravou: mostra a confirmação
+    // por alguns segundos (o aviso "enviando" some em ~1s com internet boa,
+    // rápido demais para ler).
+    final enviou = pendentes < _pendentes && erros.length <= _erros.length;
     setState(() {
       _pendentes = pendentes;
       _erros = erros;
+      if (enviou && pendentes == 0) _mostrarEnviado = true;
     });
+    if (enviou && pendentes == 0) {
+      _timerEnviado?.cancel();
+      _timerEnviado = Timer(const Duration(seconds: 4), () {
+        if (mounted) setState(() => _mostrarEnviado = false);
+      });
+    }
   }
 
   Future<void> _lerDoCache() async {

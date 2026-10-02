@@ -141,12 +141,34 @@ class MapaGadoSyncService {
         }
 
         final _Resposta r = await _post(endpoint, {'bd': bd, ...payload});
+        // Rastro no log do aparelho (adb logcat) de cada envio da fila.
+        debugPrint(
+          '[MapaGadoSync] $tipo #$id -> '
+          '${r.sucesso ? 'ok' : (r.redeFalhou ? 'falha de rede' : 'recusado')} '
+          '${r.mensagem}',
+        );
         if (r.redeFalhou) {
           await MapaGadoDao.instance.contarTentativa(id, r.mensagem);
           break; // tenta de novo depois, mantendo a ordem
         }
         if (r.sucesso) {
           await MapaGadoDao.instance.removerAcao(id);
+          // Nova descrição do lote: o servidor devolve o número gerado
+          // ("L-0031/26") — grava no cache na hora, sem esperar o próximo
+          // download da fazenda.
+          if (tipo == AcaoMapa.descricaoLote) {
+            final idLote = int.tryParse('${r.dados['id_lote'] ?? ''}') ?? 0;
+            final anoLote = int.tryParse('${r.dados['ano_lote'] ?? ''}') ?? 0;
+            if (idLote > 0) {
+              await MapaGadoDao.instance.atualizarNumeroLote(
+                bd: bd,
+                pastoId: int.tryParse('${payload['pasto']}') ?? 0,
+                descricaoLote: '${payload['descricao_lote'] ?? ''}',
+                idLote: idLote,
+                anoLote: anoLote,
+              );
+            }
+          }
         } else {
           await MapaGadoDao.instance.marcarErro(id, r.mensagem);
         }

@@ -238,6 +238,11 @@ class _MapaScreenState extends State<MapaScreen> {
   // Mover todos os animais
   // ---------------------------------------------------------------------
 
+  void _abrirPasto(PastoTabuleiro card) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() => _pastoAberto = card);
+  }
+
   void _alternarModoToque() {
     setState(() {
       _modoToque = !_modoToque;

@@ -278,34 +278,44 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
   Marker _rotulo(PoligonoPasto p) {
     final pasto = widget.pastoPorNome[p.nome];
     final temAnimais = pasto != null && pasto.total > 0;
+    // Mesma regra do CSS do web: max(7px, 10px * escala).
+    final estilo = _textoBranco(math.max(7, 10 * _escala));
+    final alturaNome = estilo.fontSize! * 1.3;
+    const meio = 130.0; // centro do Marker = centro do pasto
     return Marker(
       point: p.centro,
-      width: 180,
-      height: 140,
+      width: 260,
+      height: meio * 2,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          Positioned(
-            left: 0,
-            right: 0,
-            top: 62,
-            child: IgnorePointer(
-              child: Text(
-                p.nome,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.visible,
-                softWrap: false,
-                style: _textoBranco(10),
+          if (_nomeCabe(p, estilo))
+            Positioned(
+              left: 0,
+              right: 0,
+              top: meio - alturaNome / 2,
+              child: IgnorePointer(
+                child: Text(
+                  p.nome,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.visible,
+                  softWrap: false,
+                  style: estilo,
+                ),
               ),
             ),
-          ),
           if (temAnimais)
             Positioned(
               left: 0,
               right: 0,
-              top: 78,
-              child: Center(child: _seloArrastavel(pasto)),
+              top: meio + alturaNome / 2,
+              // Igual ao web: scale(--sat-escala) a partir do topo/centro.
+              child: Transform.scale(
+                scale: _escala,
+                alignment: Alignment.topCenter,
+                child: Center(child: _seloArrastavel(pasto)),
+              ),
             ),
         ],
       ),
@@ -313,7 +323,7 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
   }
 
   Widget _seloArrastavel(PastoTabuleiro pasto) {
-    final selo = _Selo(pasto: pasto);
+    final selo = _Selo(pasto: pasto, apenasTotal: _zoomBaixo);
     // No modo toque o selo não arrasta (igual ao Tabuleiro).
     if (widget.modoToque) return IgnorePointer(child: selo);
     return LongPressDraggable<PastoTabuleiro>(

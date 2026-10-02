@@ -537,6 +537,9 @@ class MapaGadoDao {
         {
           'descricao_lote': (payload['descricao_lote'] ?? '').toString(),
           'lotes_json': json.encode(lotes),
+          // número do lote novo só existe depois que o servidor gravar
+          'id_lote': 0,
+          'ano_lote': 0,
         },
         where: 'bd = ? AND id = ?',
         whereArgs: [bd, _int(payload['pasto'])],
@@ -556,7 +559,7 @@ class MapaGadoDao {
     Future<Map<String, Object?>?> pasto(int id) async {
       final l = await txn.query(
         'mapa_pastos_cache',
-        columns: ['fazenda_id', 'descricao_lote', 'lotes_json'],
+        columns: ['fazenda_id', 'descricao_lote', 'lotes_json', 'id_lote', 'ano_lote'],
         where: 'bd = ? AND id = ?',
         whereArgs: [bd, id],
         limit: 1,
@@ -577,6 +580,8 @@ class MapaGadoDao {
         {
           'descricao_lote': descOrigem,
           'lotes_json': pOrigem['lotes_json'],
+          'id_lote': pOrigem['id_lote'],
+          'ano_lote': pOrigem['ano_lote'],
         },
         where: 'bd = ? AND id = ?',
         whereArgs: [bd, destino],
@@ -584,7 +589,12 @@ class MapaGadoDao {
     }
     await txn.update(
       'mapa_pastos_cache',
-      {'descricao_lote': '', 'lotes_json': json.encode(List.filled(6, ''))},
+      {
+        'descricao_lote': '',
+        'lotes_json': json.encode(List.filled(6, '')),
+        'id_lote': 0,
+        'ano_lote': 0,
+      },
       where: 'bd = ? AND id = ?',
       whereArgs: [bd, origem],
     );

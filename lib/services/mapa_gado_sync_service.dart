@@ -221,6 +221,7 @@ class MapaGadoSyncService {
         descricoesLote: lista('descricoes_lote'),
         pastos: lista('pastos'),
         animais: lista('animais'),
+        pesosMedios: lista('pesos_medios'),
       );
       await _baixarSatelite(bd, ids);
       return true;

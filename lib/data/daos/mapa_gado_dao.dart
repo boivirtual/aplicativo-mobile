@@ -258,9 +258,26 @@ class MapaGadoDao {
             tabuleiro: (l['tabuleiro'] as int? ?? 1) == 1,
             dataComAnimais: l['data_com_animais'] as String?,
             dataSemAnimais: l['data_sem_animais'] as String?,
+            area: (l['area'] as num?)?.toDouble() ?? 0,
+            idLote: l['id_lote'] as int? ?? 0,
+            anoLote: l['ano_lote'] as int? ?? 0,
           ),
         )
         .toList();
+  }
+
+  /// Peso médio da fazenda por "categoria|sexo" (ex: "2|F") — Lotação.
+  Future<Map<String, int>> pesosMedios(String bd, int fazendaId) async {
+    final db = await LocalDatabase.instance.database;
+    final linhas = await db.query(
+      'mapa_pesos_medios_cache',
+      columns: ['categoria', 'sexo', 'peso'],
+      where: 'bd = ? AND fazenda_id = ?',
+      whereArgs: [bd, fazendaId],
+    );
+    return {
+      for (final l in linhas) '${l['categoria']}|${l['sexo']}': l['peso'] as int,
+    };
   }
 
   // ---------------------------------------------------------------------

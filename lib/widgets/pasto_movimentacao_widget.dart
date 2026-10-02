@@ -303,40 +303,15 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Transferir animais de pasto?',
-                  style: TextStyle(fontSize: 15, color: _corRotulo),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _campo(
-                  DropdownButtonFormField<int>(
-                    initialValue: _novoPasto,
-                    isExpanded: true,
-                    decoration: _decoracao('Novo Pasto'),
-                    items: _pastosDestino
-                        .map(
-                          (p) => DropdownMenuItem(
-                            value: p.id,
-                            child: Text(
-                              p.descricao,
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (v) => setState(() => _novoPasto = v),
-                  ),
-                ),
-              ),
-            ],
+          Padding(
+            padding: const EdgeInsets.only(left: 2, bottom: 8),
+            child: Text(
+              'Transferir animais de pasto?',
+              style: TextStyle(fontSize: 15, color: _corRotulo),
+            ),
           ),
-          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
@@ -345,7 +320,7 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
                   DropdownButtonFormField<String>(
                     initialValue: _categoria,
                     isExpanded: true,
-                    decoration: _decoracao('Categoria e Sexo'),
+                    decoration: _decoracao('Qual Categoria'),
                     items: _opcoesCategoria
                         .map(
                           (c) => DropdownMenuItem(

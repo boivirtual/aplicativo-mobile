@@ -274,8 +274,13 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
     child: child,
   );
 
-  Widget _botao(String texto, Color cor, {double fonte = 18}) => SizedBox(
-    height: 54,
+  Widget _botao(
+    String texto,
+    Color cor, {
+    double fonte = 18,
+    double altura = 54,
+  }) => SizedBox(
+    height: altura,
     child: ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: cor,

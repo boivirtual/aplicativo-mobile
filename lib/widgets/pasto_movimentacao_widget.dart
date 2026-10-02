@@ -282,7 +282,9 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
     labelText: rotulo,
     labelStyle: TextStyle(fontSize: 14, color: _corRotulo),
     border: InputBorder.none,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+    // compacto para o rótulo flutuante + o valor caberem nos 56 de altura
+    isDense: true,
+    contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
   );
 
   Widget _campo(Widget child) => Container(

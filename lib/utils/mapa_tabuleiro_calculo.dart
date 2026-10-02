@@ -59,6 +59,9 @@ class PastoMapa {
     this.tabuleiro = true,
     this.dataComAnimais,
     this.dataSemAnimais,
+    this.area = 0,
+    this.idLote = 0,
+    this.anoLote = 0,
   });
 }
 

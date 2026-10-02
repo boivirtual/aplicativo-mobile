@@ -42,6 +42,7 @@ class MapaGadoDao {
     required List<Map<String, dynamic>> descricoesLote,
     required List<Map<String, dynamic>> pastos,
     required List<Map<String, dynamic>> animais,
+    List<Map<String, dynamic>> pesosMedios = const [],
   }) async {
     final db = await LocalDatabase.instance.database;
     final agora = DateTime.now().toIso8601String();

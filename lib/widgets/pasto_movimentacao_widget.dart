@@ -342,24 +342,12 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
             children: [
               Expanded(
                 flex: 5,
-                child: _campo(
-                  DropdownButtonFormField<String>(
-                    initialValue: _categoria,
-                    isExpanded: true,
-                    decoration: _decoracao('Qual Categoria'),
-                    items: _opcoesCategoria
-                        .map(
-                          (c) => DropdownMenuItem(
-                            value: c,
-                            child: Text(
-                              c,
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (v) => setState(() => _categoria = v),
-                  ),
+                child: _SeletorCampo<String>(
+                  rotulo: 'Qual Categoria',
+                  corRotulo: _corRotulo,
+                  valor: _categoria,
+                  opcoes: [for (final c in _opcoesCategoria) MapEntry(c, c)],
+                  onChanged: (v) => setState(() => _categoria = v),
                 ),
               ),
               const SizedBox(width: 8),

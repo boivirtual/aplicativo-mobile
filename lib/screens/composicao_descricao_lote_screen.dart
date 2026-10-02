@@ -237,7 +237,6 @@ class _ComposicaoDescricaoLoteScreenState
                 _caixaPasto(),
                 const SizedBox(height: 10),
                 _opcaoLote('M', 'Manter a Descrição do Lote'),
-                const SizedBox(height: 8),
                 _opcaoLote('N', 'Criar nova Descrição do Lote'),
                 if (_opcao == 'N') ...[
                   const SizedBox(height: 14),
@@ -318,7 +317,7 @@ class _ComposicaoDescricaoLoteScreenState
           }
         },
         child: Container(
-          height: 50,
+          height: 42,
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Row(
             children: [

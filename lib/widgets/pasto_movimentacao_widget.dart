@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/daos/mapa_gado_dao.dart';
+import '../services/mapa_gado_sync_service.dart';
 import '../utils/mapa_tabuleiro_calculo.dart';
 import '../utils/pasto_movimentacao_calculo.dart';
 import 'seletor_campo_widget.dart';

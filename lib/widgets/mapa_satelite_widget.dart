@@ -150,6 +150,15 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
       return;
     }
 
+    // Pasto cadastrado: abre a tela do pasto (no web é o duplo clique;
+    // aqui um toque, como no Tabuleiro). Desenho sem cadastro: balão
+    // "Este pasto não existe no sistema", igual ao web.
+    final pasto = poligono == null ? null : widget.pastoPorNome[poligono.nome];
+    if (pasto != null) {
+      setState(() => _balaoPoligono = null);
+      widget.onAbrirPasto(pasto);
+      return;
+    }
     setState(() {
       _balaoPoligono = poligono;
       _balaoPonto = poligono == null ? null : ponto;

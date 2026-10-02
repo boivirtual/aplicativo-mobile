@@ -12,6 +12,7 @@ import '../utils/mapa_tabuleiro_calculo.dart';
 import '../widgets/cabecalho_fazenda_widget.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 import '../widgets/mapa_satelite_widget.dart';
+import '../widgets/pasto_movimentacao_widget.dart';
 import 'composicao_descricao_lote_screen.dart';
 
 /// Mapa de Gado — visão Tabuleiro, igual à primeira tela do sistema web

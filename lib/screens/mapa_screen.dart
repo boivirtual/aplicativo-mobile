@@ -603,6 +603,7 @@ class _MapaScreenState extends State<MapaScreen> {
       origemToqueId: _origemToque,
       pastaCacheImagens: _pastaCacheImagens!,
       onTocarPasto: _tocarCard,
+      onAbrirPasto: _abrirPasto,
       onMover: _moverTudo,
     );
   }

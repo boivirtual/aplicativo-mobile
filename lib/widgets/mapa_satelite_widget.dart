@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -333,7 +335,10 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
         _origemArraste = pasto;
         _balaoPoligono = null;
       }),
-      feedback: Material(color: Colors.transparent, child: selo),
+      feedback: Material(
+        color: Colors.transparent,
+        child: Transform.scale(scale: _escala, child: selo),
+      ),
       childWhenDragging: Opacity(opacity: 0.35, child: selo),
       child: selo,
     );
@@ -427,6 +432,7 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
             flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
           ),
           onMapReady: _enquadrarFazenda,
+          onPositionChanged: (camera, _) => _aoMudarZoom(camera.zoom),
           onTap: (_, ponto) => _aoTocarMapa(ponto),
         ),
         children: [
@@ -476,10 +482,14 @@ TextStyle _textoBranco(double tamanho) => TextStyle(
 /// divisor e o total.
 class _Selo extends StatelessWidget {
   final PastoTabuleiro pasto;
-  const _Selo({required this.pasto});
+
+  /// Zoom afastado: só o total (web: .satelite-zoom-baixo).
+  final bool apenasTotal;
+  const _Selo({required this.pasto, this.apenasTotal = false});
 
   @override
   Widget build(BuildContext context) {
+    if (apenasTotal) return Text('${pasto.total}', style: _textoBranco(22));
     return IntrinsicHeight(
       child: Row(
         mainAxisSize: MainAxisSize.min,

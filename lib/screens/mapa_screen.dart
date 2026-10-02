@@ -101,7 +101,12 @@ class _MapaScreenState extends State<MapaScreen> {
     super.dispose();
   }
 
-  void _aoMudarFila() => _atualizarFila();
+  /// A fila mudou (enviou, falhou, nova ação): atualiza os avisos e relê o
+  /// cache — o envio pode ter trazido dados novos (ex: número do lote).
+  void _aoMudarFila() {
+    _atualizarFila();
+    _lerDoCache();
+  }
 
   Future<void> _carregarContexto() async {
     final prefs = await SharedPreferences.getInstance();

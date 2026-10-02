@@ -409,6 +409,20 @@ class LocalDatabase {
       }
       await _criarTabelasMapaSatelite(db);
     }
+    if (versaoAntiga < 10) {
+      // Tela do pasto: área (Lotação Kg/Ha), número/ano do lote
+      // ("L-0012/26") e pesos médios por categoria/sexo.
+      if (versaoAntiga >= 7) {
+        await db.execute('ALTER TABLE mapa_pastos_cache ADD COLUMN area REAL');
+        await db.execute(
+          'ALTER TABLE mapa_pastos_cache ADD COLUMN id_lote INTEGER',
+        );
+        await db.execute(
+          'ALTER TABLE mapa_pastos_cache ADD COLUMN ano_lote INTEGER',
+        );
+      }
+      await _criarTabelaPesosMedios(db);
+    }
   }
 
   /// Só para os testes/roteiro de verificação manual — apaga todos os dados

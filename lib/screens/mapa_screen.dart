@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart' show getDatabasesPath;
 import '../data/daos/mapa_gado_dao.dart';
+import '../services/connectivity_service.dart';
 import '../services/mapa_gado_sync_service.dart';
 import '../utils/mapa_satelite_geo.dart';
 import '../utils/mapa_tabuleiro_calculo.dart';
@@ -100,6 +101,7 @@ class _MapaScreenState extends State<MapaScreen> {
     _buscaController.dispose();
     _scrollController.dispose();
     _autoScroll?.cancel();
+    _timerEnviado?.cancel();
     super.dispose();
   }
 

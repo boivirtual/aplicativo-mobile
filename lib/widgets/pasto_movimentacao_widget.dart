@@ -65,11 +65,15 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
   @override
   void initState() {
     super.initState();
+    // Relê quando a fila do mapa envia algo (ex: o número do lote chega do
+    // servidor com a tela aberta).
+    MapaGadoSyncService.instance.versaoFila.addListener(_carregar);
     _carregar();
   }
 
   @override
   void dispose() {
+    MapaGadoSyncService.instance.versaoFila.removeListener(_carregar);
     _qtdController.dispose();
     _loteController.dispose();
     super.dispose();

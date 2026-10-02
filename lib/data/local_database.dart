@@ -237,6 +237,9 @@ class LocalDatabase {
         tabuleiro INTEGER NOT NULL DEFAULT 1,
         data_com_animais TEXT,
         data_sem_animais TEXT,
+        area REAL,
+        id_lote INTEGER,
+        ano_lote INTEGER,
         PRIMARY KEY (bd, id)
       )
     ''');

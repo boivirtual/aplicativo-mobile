@@ -234,6 +234,9 @@ class MapaGadoDao {
         'tabuleiro',
         'data_com_animais',
         'data_sem_animais',
+        'area',
+        'id_lote',
+        'ano_lote',
       ],
       where: incluirForaTabuleiro
           ? 'bd = ? AND fazenda_id = ?'

@@ -7,9 +7,9 @@ import '../utils/pasto_movimentacao_calculo.dart';
 /// "Mapa de Gado - Movimentações" — tela do pasto aberta pelo toque no
 /// pasto (Tabuleiro ou Satélite). Mesmos dados de
 /// form_mapa_gados_movimentacao.php (sistema web), no layout do modelo do
-/// app: fazenda, pasto - capim, total de animais, há quantos dias, lotação
-/// (Kg/Ha), tabela por faixa de idade, transferência, descrição do lote e
-/// as outras atividades.
+/// app e no padrão visual da Pesagem: tarja azul (fazenda, pasto - capim,
+/// animais há quantos dias, lotação Kg/Ha), tabela por faixa de idade,
+/// transferência, descrição do lote e as outras atividades.
 ///
 /// Por enquanto só exibe: Confirma da transferência, o lote e os botões
 /// Nutrição/Nascimento/Morte ainda não fazem nada (próximas etapas).
@@ -38,9 +38,13 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
   static const _azul = Color(0xFF1E6FB5);
   static const _laranja = Color(0xFFD5641C);
   static const _cinza = Color(0xFF6B6B6B);
-  static const _verde = Color(0xFF4CD964);
-  static const _azulBotao = Color(0xFF0A7AFF);
-  static const _textoClaro = Color(0xFF7A7A7A);
+
+  /// Cores dos botões da Pesagem (ConfirmButtonPesagemWidget).
+  static const _verdeBotao = Color(0xFF4CAF50);
+  static const _azulBotao = Color(0xFF4BBAEB);
+
+  /// Cor do rótulo dos campos da Pesagem (corDoRotulo).
+  static final Color _corRotulo = Colors.blueGrey[800]!;
 
   bool _carregando = true;
   PastoMapa? _pasto;
@@ -124,24 +128,24 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
     }
 
     return Container(
-      color: const Color(0xFFF5F5F5),
+      color: Colors.white,
       child: ListView(
-        padding: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.fromLTRB(6, 6, 6, 16),
         children: [
           _cabecalho(pasto),
           const SizedBox(height: 10),
           _tabela(),
-          const SizedBox(height: 14),
-          _transferencia(),
-          const SizedBox(height: 14),
-          _lote(),
-          const SizedBox(height: 26),
+          const SizedBox(height: 12),
+          _formulario(),
+          const SizedBox(height: 22),
           _outrasAtividades(),
         ],
       ),
     );
   }
 
+  /// Tarja azul no mesmo padrão da Pesagem (FiltroAtivoPesagemWidget),
+  /// sem o ícone de edição.
   Widget _cabecalho(PastoMapa pasto) {
     final dias = _total > 0
         ? PastoMovimentacaoCalculo.dias(pasto.dataComAnimais)
@@ -149,34 +153,39 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
     final titulo = pasto.capim.isEmpty
         ? pasto.descricao
         : '${pasto.descricao} - ${pasto.capim}';
+    // "77 Animais há 5 dia(s)  -  Lotação: 3.306 Kg/Ha" (o web só mostra a
+    // lotação quando tem animal e peso)
+    final lotacao = _kgHa == null
+        ? ''
+        : '  -  Lotação: ${PastoMovimentacaoCalculo.milhar(_kgHa!)} Kg/Ha';
+    final situacao = _total > 0
+        ? '$_total Animais há $dias dia(s)$lotacao'
+        : 'Pasto vazio há $dias dia(s)';
+
+    TextStyle estilo(double tamanho) => TextStyle(
+      fontSize: tamanho,
+      color: Colors.blue,
+      fontWeight: FontWeight.bold,
+    );
 
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.blue.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Column(
         children: [
           Text(
             widget.nomeFazenda,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 11, color: _textoClaro),
+            style: estilo(11),
           ),
           const SizedBox(height: 2),
-          Text(
-            titulo,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, color: _textoClaro),
-          ),
-          const SizedBox(height: 4),
-          // "77 Animais há 5 dia(s)  -  Lotação: 3.306 Kg/Ha" (igual ao web,
-          // que só mostra a lotação quando tem animal e peso)
-          Text(
-            _total > 0
-                ? '$_total Animais há $dias dia(s)'
-                      '${_kgHa == null ? '' : '  -  Lotação: ${PastoMovimentacaoCalculo.milhar(_kgHa!)} Kg/Ha'}'
-                : 'Pasto vazio há $dias dia(s)',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF333333)),
-          ),
+          Text(titulo, textAlign: TextAlign.center, style: estilo(14)),
+          const SizedBox(height: 2),
+          Text(situacao, textAlign: TextAlign.center, style: estilo(12)),
         ],
       ),
     );
@@ -185,13 +194,13 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
   /// Negrito de verdade: a fonte do app (FuturaStd) só tem a versão Light,
   /// então o traço é engrossado com "sombras" da mesma cor (mesmo recurso
   /// da tarja do Mapa de Gado).
-  static TextStyle _negrito(Color cor) => TextStyle(
-    fontSize: 13,
+  static TextStyle _negrito(Color cor, double tamanho) => TextStyle(
+    fontSize: tamanho,
     color: cor,
     fontWeight: FontWeight.bold,
     shadows: [
-      Shadow(color: cor, offset: const Offset(0.4, 0)),
-      Shadow(color: cor, offset: const Offset(-0.4, 0)),
+      Shadow(color: cor, offset: const Offset(0.35, 0)),
+      Shadow(color: cor, offset: const Offset(-0.35, 0)),
     ],
   );
 
@@ -205,13 +214,13 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
           maxLines: 1,
           softWrap: false,
           overflow: TextOverflow.visible,
-          style: TextStyle(fontSize: 9.5, color: cor),
+          style: _negrito(cor, 9.5),
         ),
       ),
     );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 18),
       child: Column(
         children: [
           Container(
@@ -219,9 +228,13 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
             decoration: const BoxDecoration(border: Border(bottom: divisor)),
             child: Row(
               children: [
-                Expanded(child: Text('MACHOS', style: _negrito(_azul))),
-                Expanded(child: Text('FÊMEAS', style: _negrito(_laranja))),
-                Expanded(child: Text('BEZERROS', style: _negrito(_cinza))),
+                Expanded(child: Text('MACHOS', style: _negrito(_azul, 13))),
+                Expanded(
+                  child: Text('FÊMEAS', style: _negrito(_laranja, 13)),
+                ),
+                Expanded(
+                  child: Text('BEZERROS', style: _negrito(_cinza, 13)),
+                ),
               ],
             ),
           ),
@@ -241,76 +254,88 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
     );
   }
 
-  InputDecoration _decoracao(String dica) => InputDecoration(
-    hintText: dica,
-    hintStyle: const TextStyle(fontSize: 13, color: Color(0xFFAAAAAA)),
-    isDense: true,
-    filled: true,
-    fillColor: Colors.white,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-    border: const OutlineInputBorder(
-      borderSide: BorderSide(color: Color(0xFFDDDDDD)),
-    ),
-    enabledBorder: const OutlineInputBorder(
-      borderSide: BorderSide(color: Color(0xFFDDDDDD)),
-    ),
+  // ---------------------------------------------------------------------
+  // Campos e botões no padrão da Pesagem (InputMinimalPesagemWidget /
+  // ConfirmButtonPesagemWidget): fundo branco, sem borda, cantos 8, rótulo
+  // azul acinzentado, dentro de um bloco cinza claro com cantos 12; botões
+  // com cantos 10 e texto branco.
+  // ---------------------------------------------------------------------
+
+  InputDecoration _decoracao(String rotulo) => InputDecoration(
+    labelText: rotulo,
+    labelStyle: TextStyle(fontSize: 14, color: _corRotulo),
+    border: InputBorder.none,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
   );
 
-  Widget _botaoConfirma() => SizedBox(
-    height: 40,
+  Widget _campo(Widget child) => Container(
+    height: 56,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: child,
+  );
+
+  Widget _botao(String texto, Color cor, {double fonte = 18}) => SizedBox(
+    height: 54,
     child: ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: _verde,
+        backgroundColor: cor,
         foregroundColor: Colors.white,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
-      // Funcionalidade: próxima etapa.
+      // Funcionalidades: próximas etapas.
       onPressed: () {},
-      child: const Text('Confirma', style: TextStyle(fontSize: 14)),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          texto,
+          style: TextStyle(color: Colors.white, fontSize: fonte),
+        ),
+      ),
     ),
   );
 
-  Widget _transferencia() {
+  Widget _formulario() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFDDDDDD)),
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Transferir animais de pasto?',
-                  style: TextStyle(fontSize: 15, color: Color(0xFF555555)),
+                  style: TextStyle(fontSize: 15, color: _corRotulo),
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Expanded(
-                child: DropdownButtonFormField<int>(
-                  initialValue: _novoPasto,
-                  isExpanded: true,
-                  decoration: _decoracao('Novo Pasto'),
-                  hint: const Text(
-                    'Novo Pasto',
-                    style: TextStyle(fontSize: 13),
-                  ),
-                  items: _pastosDestino
-                      .map(
-                        (p) => DropdownMenuItem(
-                          value: p.id,
-                          child: Text(
-                            p.descricao,
-                            style: const TextStyle(fontSize: 13),
+                child: _campo(
+                  DropdownButtonFormField<int>(
+                    initialValue: _novoPasto,
+                    isExpanded: true,
+                    decoration: _decoracao('Novo Pasto'),
+                    items: _pastosDestino
+                        .map(
+                          (p) => DropdownMenuItem(
+                            value: p.id,
+                            child: Text(
+                              p.descricao,
+                              style: const TextStyle(fontSize: 14),
+                            ),
                           ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (v) => setState(() => _novoPasto = v),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => _novoPasto = v),
+                  ),
                 ),
               ),
             ],
@@ -320,97 +345,77 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
             children: [
               Expanded(
                 flex: 5,
-                child: DropdownButtonFormField<String>(
-                  initialValue: _categoria,
-                  isExpanded: true,
-                  decoration: _decoracao('Categoria e Sexo'),
-                  hint: const Text(
-                    'Categoria e Sexo',
-                    style: TextStyle(fontSize: 13),
+                child: _campo(
+                  DropdownButtonFormField<String>(
+                    initialValue: _categoria,
+                    isExpanded: true,
+                    decoration: _decoracao('Categoria e Sexo'),
+                    items: _opcoesCategoria
+                        .map(
+                          (c) => DropdownMenuItem(
+                            value: c,
+                            child: Text(
+                              c,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => _categoria = v),
                   ),
-                  items: _opcoesCategoria
-                      .map(
-                        (c) => DropdownMenuItem(
-                          value: c,
-                          child: Text(c, style: const TextStyle(fontSize: 13)),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (v) => setState(() => _categoria = v),
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Expanded(
                 flex: 3,
-                child: TextField(
-                  controller: _qtdController,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(fontSize: 13),
-                  decoration: _decoracao('Quantidade'),
+                child: _campo(
+                  TextFormField(
+                    controller: _qtdController,
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(fontSize: 16),
+                    decoration: _decoracao('Quantidade'),
+                  ),
                 ),
               ),
-              const SizedBox(width: 6),
-              _botaoConfirma(),
             ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: _botao('Confirma', _verdeBotao),
+          ),
+          const SizedBox(height: 10),
+          // Lote: só exibe (a montagem da descrição abre em outra tela,
+          // próxima etapa).
+          _campo(
+            TextFormField(
+              controller: _loteController,
+              readOnly: true,
+              style: const TextStyle(fontSize: 15),
+              decoration: _decoracao('Descrição do Lote'),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _lote() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      // Sem Confirma: a montagem da descrição do lote abre em outra tela
-      // (próxima etapa).
-      child: TextField(
-        controller: _loteController,
-        readOnly: true,
-        style: const TextStyle(fontSize: 13),
-        decoration: _decoracao('Dê um nome para este lote de animais'),
-      ),
-    );
-  }
-
   Widget _outrasAtividades() {
-    Widget botao(String texto) => Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 5),
-        child: SizedBox(
-          height: 62,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _azulBotao,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-            // Cada atividade será feita numa etapa separada.
-            onPressed: () {},
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(texto, style: const TextStyle(fontSize: 18)),
-            ),
-          ),
-        ),
-      ),
-    );
-
     return Column(
       children: [
-        const Text(
+        Text(
           'Outras Atividades',
-          style: TextStyle(fontSize: 14, color: Color(0xFF666666)),
+          style: TextStyle(fontSize: 14, color: _corRotulo),
         ),
         const Divider(indent: 8, endIndent: 8, color: Color(0xFFDDDDDD)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          child: Row(
-            children: [botao('Nutrição'), botao('Nascimento'), botao('Morte')],
-          ),
+        Row(
+          children: [
+            Expanded(child: _botao('Nutrição', _azulBotao, fonte: 16)),
+            const SizedBox(width: 8),
+            Expanded(child: _botao('Nascimento', _azulBotao, fonte: 16)),
+            const SizedBox(width: 8),
+            Expanded(child: _botao('Morte', _azulBotao, fonte: 16)),
+          ],
         ),
       ],
     );

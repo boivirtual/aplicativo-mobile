@@ -88,6 +88,13 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
   PoligonoPasto? _balaoPoligono;
   LatLng? _balaoPonto;
 
+  // Zoom atual (arredondado em 0.1) — nomes e selos acompanham o zoom.
+  double _zoom = 13;
+
+  // Largura (em graus de longitude) de cada desenho, para saber se o nome
+  // cabe dentro do pasto na tela.
+  final _larguraGraus = Expando<double>();
+
   @override
   void didUpdateWidget(covariant MapaSateliteWidget antigo) {
     super.didUpdateWidget(antigo);
@@ -102,9 +109,10 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
   // Câmera
   // ---------------------------------------------------------------------
 
-  /// Igual ao web: enquadra todos os pastos; se isso deixar o zoom muito
-  /// aberto (pasto isolado longe do resto), fica no zoom 15 para continuar
-  /// legível. Sem pastos desenhados, centraliza na fazenda (zoom 13).
+  /// Enquadra todos os pastos e afasta um pouco (0.75 de zoom), para a
+  /// fazenda inteira aparecer com folga — os nomes e selos diminuem com o
+  /// zoom (igual ao web), então não embolam. Sem pastos desenhados,
+  /// centraliza na fazenda (zoom 13).
   void _enquadrarFazenda() {
     final pontos = [for (final p in widget.poligonos) ...p.pontos];
     if (pontos.isNotEmpty) {
@@ -116,11 +124,41 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
         ),
       );
       final camera = _mapController.camera;
-      if (camera.zoom < 15) _mapController.move(camera.center, 15);
+      _mapController.move(camera.center, camera.zoom - 0.75);
     } else if (widget.centroFazenda != null) {
       _mapController.move(widget.centroFazenda!, 13);
     }
+    _aoMudarZoom(_mapController.camera.zoom);
     _zoomNaBusca();
+  }
+
+  void _aoMudarZoom(double zoom) {
+    final arredondado = (zoom * 10).roundToDouble() / 10;
+    if (arredondado != _zoom && mounted) setState(() => _zoom = arredondado);
+  }
+
+  /// Igual ao web (aplicar_escala_zoom): zoom 16 = tamanho original; cada
+  /// nível de zoom varia 25%, limitado entre 0.45 e 1.6.
+  double get _escala => (1 + (_zoom - 16) * 0.25).clamp(0.45, 1.6);
+
+  /// Visão geral (zoom afastado): o selo mostra só o total.
+  bool get _zoomBaixo => _zoom < 16;
+
+  /// Igual ao web (atualizar_rotulos_zoom): o nome só aparece se couber em
+  /// 80% da largura do pasto na tela, senão vira uma pilha de textos.
+  bool _nomeCabe(PoligonoPasto p, TextStyle estilo) {
+    final graus = _larguraGraus[p] ??= () {
+      final lons = p.pontos.map((e) => e.longitude);
+      return lons.reduce((a, b) => a > b ? a : b) -
+          lons.reduce((a, b) => a < b ? a : b);
+    }();
+    final larguraTela = graus / 360 * 256 * math.pow(2, _zoom);
+    final texto = TextPainter(
+      text: TextSpan(text: p.nome, style: estilo),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout();
+    return texto.width <= larguraTela * 0.8;
   }
 
   void _zoomNaBusca() {

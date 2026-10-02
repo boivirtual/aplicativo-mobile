@@ -351,9 +351,35 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
             ],
           ),
           const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: _botao('Confirma', _verdeBotao),
+          Row(
+            children: [
+              Expanded(
+                child: _campo(
+                  DropdownButtonFormField<int>(
+                    initialValue: _novoPasto,
+                    isExpanded: true,
+                    decoration: _decoracao('Novo Pasto'),
+                    items: _pastosDestino
+                        .map(
+                          (p) => DropdownMenuItem(
+                            value: p.id,
+                            child: Text(
+                              p.descricao,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => _novoPasto = v),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 120,
+                child: _botao('Confirma', _verdeBotao, altura: 56),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
           // Lote: só exibe (a montagem da descrição abre em outra tela,

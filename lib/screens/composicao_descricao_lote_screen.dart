@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/app_alert.dart';
 import '../utils/descricao_lote_composicao.dart';
+import '../widgets/seletor_campo_widget.dart';
 
 /// Resultado de "Criar nova Descrição do Lote".
 class NovaDescricaoLote {
@@ -72,7 +73,7 @@ class ComposicaoDescricaoLoteScreen extends StatefulWidget {
 
 class _ComposicaoDescricaoLoteScreenState
     extends State<ComposicaoDescricaoLoteScreen> {
-  static const _azul = Color(0xFF18385F);
+
 
   /// 'M' manter, 'N' nova (mesmos valores do web).
   String? _opcao;
@@ -175,99 +176,162 @@ class _ComposicaoDescricaoLoteScreenState
     if (d != null) setState(() => _datas.add(d));
   }
 
+  // ---------------------------------------------------------------------
+  // Layout no padrão do modal "Editar Pesagem" (pesagem_edicao_modal.dart):
+  // caixa cinza claro com cantos 12, título azul em negrito, campos brancos
+  // sem borda (cantos 8, rótulo azul acinzentado) e botão com cantos 8.
+  // ---------------------------------------------------------------------
+
+  static const _azulTitulo = Color(0xFF18385F);
+  static const _verde = Color(0xFF4CAF50);
+  static final Color _corRotulo = Colors.blueGrey.shade800;
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          backgroundColor: _azul,
-          title: const Text(
-            'Composição da Descrição do Lote',
-            style: TextStyle(fontSize: 17, color: Colors.white),
-          ),
-        ),
-        body: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Text(
-              widget.nomePasto,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-                color: Color(0x99000000),
-              ),
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: SingleChildScrollView(
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(12),
             ),
-            if (widget.descricaoAtual.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text(
-                widget.descricaoAtual,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 15, color: Color(0xFF455A64)),
-              ),
-            ],
-            const SizedBox(height: 12),
-            RadioGroup<String>(
-              groupValue: _opcao,
-              onChanged: (v) {
-                if (v == 'M') {
-                  _escolherManter();
-                } else if (v == 'N') {
-                  setState(() {
-                    _opcao = 'N';
-                    _linhas.clear();
-                    _limparEditor();
-                  });
-                }
-              },
-              child: const Column(
-                children: [
-                  RadioListTile<String>(
-                    value: 'M',
-                    dense: true,
-                    title: Text('Manter a Descrição do Lote'),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Composição da Descrição do Lote',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: _azulTitulo,
                   ),
-                  RadioListTile<String>(
-                    value: 'N',
-                    dense: true,
-                    title: Text('Criar nova Descrição do Lote'),
-                  ),
-                ],
-              ),
-            ),
-            if (_opcao == 'N') ...[
-              const Divider(height: 24),
-              ..._buildLinhasIncluidas(),
-              _buildEditor(),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: _incluirMaisLote,
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Incluir mais lote'),
                 ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 46,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _azul,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                const SizedBox(height: 10),
+                _caixaPasto(),
+                const SizedBox(height: 10),
+                _opcaoLote('M', 'Manter a Descrição do Lote'),
+                const SizedBox(height: 8),
+                _opcaoLote('N', 'Criar nova Descrição do Lote'),
+                if (_opcao == 'N') ...[
+                  const SizedBox(height: 14),
+                  ..._buildLinhasIncluidas(),
+                  _buildEditor(),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: _incluirMaisLote,
+                      icon: const Icon(Icons.add, size: 18, color: _azulTitulo),
+                      label: const Text(
+                        'Incluir mais lote',
+                        style: TextStyle(color: _azulTitulo),
+                      ),
                     ),
                   ),
-                  onPressed: _confirmar,
-                  child: const Text('Confirmar', style: TextStyle(fontSize: 16)),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    height: 45,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _verde,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: _confirmar,
+                      child: const Text(
+                        'Confirmar',
+                        style: TextStyle(fontSize: 15, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Pasto e a descrição atual — tarja azul no padrão da Pesagem.
+  Widget _caixaPasto() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.blue.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Text(
+            widget.nomePasto,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.blue,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (widget.descricaoAtual.isNotEmpty)
+            Text(
+              widget.descricaoAtual,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.blue,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _opcaoLote(String valor, String texto) {
+    final marcado = _opcao == valor;
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () {
+          if (valor == 'M') {
+            _escolherManter();
+          } else if (_opcao != 'N') {
+            setState(() {
+              _opcao = 'N';
+              _linhas.clear();
+              _limparEditor();
+            });
+          }
+        },
+        child: Container(
+          height: 50,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Row(
+            children: [
+              Icon(
+                marcado ? Icons.radio_button_checked : Icons.radio_button_off,
+                color: marcado ? _azulTitulo : Colors.grey,
+                size: 22,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  texto,
+                  style: TextStyle(fontSize: 14, color: _corRotulo),
                 ),
               ),
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -277,15 +341,17 @@ class _ComposicaoDescricaoLoteScreenState
     return [
       for (var i = 0; i < _linhas.length; i++)
         Container(
-          margin: const EdgeInsets.only(bottom: 6),
+          margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.only(left: 12),
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F3F6),
-            borderRadius: BorderRadius.circular(6),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             children: [
-              Expanded(child: Text(_linhas[i], style: const TextStyle(fontSize: 14))),
+              Expanded(
+                child: Text(_linhas[i], style: const TextStyle(fontSize: 14)),
+              ),
               IconButton(
                 tooltip: 'Excluir esse lote',
                 icon: const Icon(Icons.delete_outline, color: Color(0xFF128CB8)),
@@ -301,7 +367,8 @@ class _ComposicaoDescricaoLoteScreenState
     final opcoes2 = _descricaoId == null
         ? const <MapEntry<int, String>>[]
         : DescricaoLoteComposicao.opcoesParametro2(_descricaoId!);
-    final mostraPergunta = _descricaoId != null &&
+    final mostraPergunta =
+        _descricaoId != null &&
         DescricaoLoteComposicao.perguntaData(_descricaoId!, _parametro2);
     final rotuloData = _descricaoId == null
         ? 'Parição'
@@ -310,15 +377,11 @@ class _ComposicaoDescricaoLoteScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        DropdownButtonFormField<int>(
-          key: ValueKey('desc-${_linhas.length}-$_descricaoId'),
-          initialValue: _descricaoId,
-          isExpanded: true,
-          decoration: _decoracao('* Descrição do Lote'),
-          hint: const Text('Selecione'),
-          items: widget.descricoes
-              .map((d) => DropdownMenuItem(value: d.key, child: Text(d.value)))
-              .toList(),
+        SeletorCampoWidget<int>(
+          rotulo: '* Descrição do Lote',
+          corRotulo: _corRotulo,
+          valor: _descricaoId,
+          opcoes: widget.descricoes,
           onChanged: (v) => setState(() {
             _descricaoId = v;
             _parametro2 = null;
@@ -327,18 +390,12 @@ class _ComposicaoDescricaoLoteScreenState
           }),
         ),
         if (opcoes2.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          DropdownButtonFormField<int>(
-            key: ValueKey('p2-$_descricaoId-${_linhas.length}'),
-            initialValue: _parametro2,
-            isExpanded: true,
-            decoration: _decoracao(
-              '* ${DescricaoLoteComposicao.rotuloParametro2(_descricaoId!)}',
-            ),
-            hint: const Text('Selecione'),
-            items: opcoes2
-                .map((o) => DropdownMenuItem(value: o.key, child: Text(o.value)))
-                .toList(),
+          const SizedBox(height: 8),
+          SeletorCampoWidget<int>(
+            rotulo: '* ${DescricaoLoteComposicao.rotuloParametro2(_descricaoId!)}',
+            corRotulo: _corRotulo,
+            valor: _parametro2,
+            opcoes: opcoes2,
             onChanged: (v) => setState(() {
               _parametro2 = v;
               _comData = false;
@@ -346,19 +403,32 @@ class _ComposicaoDescricaoLoteScreenState
             }),
           ),
         ],
-        if (mostraPergunta)
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            controlAffinity: ListTileControlAffinity.leading,
-            dense: true,
-            value: _comData,
-            title: Text('Informar Data da $rotuloData?'),
-            onChanged: (v) => setState(() {
-              _comData = v ?? false;
-              if (!_comData) _datas.clear();
-            }),
+        if (mostraPergunta) ...[
+          const SizedBox(height: 8),
+          Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            child: CheckboxListTile(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              controlAffinity: ListTileControlAffinity.leading,
+              dense: true,
+              activeColor: _azulTitulo,
+              value: _comData,
+              title: Text(
+                'Informar Data da $rotuloData?',
+                style: TextStyle(fontSize: 14, color: _corRotulo),
+              ),
+              onChanged: (v) => setState(() {
+                _comData = v ?? false;
+                if (!_comData) _datas.clear();
+              }),
+            ),
           ),
+        ],
         if (mostraPergunta && _comData) ...[
+          const SizedBox(height: 6),
           Wrap(
             spacing: 8,
             runSpacing: 6,
@@ -366,35 +436,43 @@ class _ComposicaoDescricaoLoteScreenState
             children: [
               for (var i = 0; i < _datas.length; i++)
                 InputChip(
-                  label: Text(DescricaoLoteComposicao.formatarMesAno(_datas[i])),
+                  backgroundColor: Colors.white,
+                  label: Text(
+                    DescricaoLoteComposicao.formatarMesAno(_datas[i]),
+                  ),
                   onDeleted: () => setState(() => _datas.removeAt(i)),
                 ),
               TextButton.icon(
                 onPressed: _adicionarData,
-                icon: const Icon(Icons.calendar_month, size: 18),
+                icon: const Icon(
+                  Icons.calendar_month,
+                  size: 18,
+                  color: _azulTitulo,
+                ),
                 label: Text(
-                  _datas.isEmpty ? 'Mês/Ano da $rotuloData' : 'Incluir mais Data',
+                  _datas.isEmpty
+                      ? 'Mês/Ano da $rotuloData'
+                      : 'Incluir mais Data',
+                  style: const TextStyle(color: _azulTitulo),
                 ),
               ),
             ],
           ),
         ],
         if (_linhaAtual.trim().isNotEmpty) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Text(
             _linhaAtual,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.blue,
+            ),
           ),
         ],
       ],
     );
   }
-
-  InputDecoration _decoracao(String rotulo) => InputDecoration(
-    labelText: rotulo,
-    isDense: true,
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-  );
 }
 
 /// Seletor simples de mês/ano (equivalente ao <input type="month"> do web).

@@ -310,14 +310,16 @@ class _MapaScreenState extends State<MapaScreen> {
 
     final descricoes = await MapaGadoDao.instance.descricoesLote(_bd!);
     if (!mounted) return;
-    final resultado = await Navigator.of(context).push<NovaDescricaoLote>(
-      MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) => ComposicaoDescricaoLoteScreen(
-          nomePasto: destino.pasto.descricao,
-          descricaoAtual: descricaoDestinoAntes,
-          descricoes: descricoes,
-        ),
+    // Modal no padrão do "Editar Pesagem"; não fecha tocando fora (no web
+    // o modal também é estático — tem que escolher Manter ou Criar nova).
+    final resultado = await showDialog<NovaDescricaoLote>(
+      context: context,
+      barrierDismissible: false,
+      requestFocus: false,
+      builder: (_) => ComposicaoDescricaoLoteScreen(
+        nomePasto: destino.pasto.descricao,
+        descricaoAtual: descricaoDestinoAntes,
+        descricoes: descricoes,
       ),
     );
     // Ao voltar da composição, não devolver o foco para a busca.

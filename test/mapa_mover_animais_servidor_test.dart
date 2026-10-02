@@ -84,7 +84,12 @@ void main() {
         lotes: ['BOIS '],
         usuario: 'Teste App',
       );
-      await MapaGadoSyncService.instance.enviarPendentes(bd);
+      // o envio já começou sozinho em segundo plano (online): espera a fila
+      for (var i = 0; i < 50; i++) {
+        if (await MapaGadoDao.instance.contar(bd, 'pendente') == 0) break;
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+      await Future.delayed(const Duration(milliseconds: 200));
       final pasto = (await MapaGadoDao.instance.pastos(
         bd,
         fazenda,

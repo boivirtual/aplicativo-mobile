@@ -361,20 +361,13 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
   Widget _lote() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _loteController,
-              // Montagem da descrição do lote: próxima etapa.
-              readOnly: true,
-              style: const TextStyle(fontSize: 13),
-              decoration: _decoracao('Dê um nome para este lote de animais'),
-            ),
-          ),
-          const SizedBox(width: 6),
-          _botaoConfirma(),
-        ],
+      // Sem Confirma: a montagem da descrição do lote abre em outra tela
+      // (próxima etapa).
+      child: TextField(
+        controller: _loteController,
+        readOnly: true,
+        style: const TextStyle(fontSize: 13),
+        decoration: _decoracao('Dê um nome para este lote de animais'),
       ),
     );
   }

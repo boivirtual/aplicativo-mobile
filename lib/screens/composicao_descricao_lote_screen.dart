@@ -26,7 +26,10 @@ Future<bool> perguntarSimNao(
     requestFocus: false,
     builder: (ctx) => AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+      title: Text(
+        titulo,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+      ),
       content: Text(mensagem),
       actions: [
         TextButton(
@@ -37,7 +40,10 @@ Future<bool> perguntarSimNao(
           onPressed: () => Navigator.pop(ctx, true),
           child: const Text(
             'Sim',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2E7D32),
+            ),
           ),
         ),
       ],
@@ -73,8 +79,6 @@ class ComposicaoDescricaoLoteScreen extends StatefulWidget {
 
 class _ComposicaoDescricaoLoteScreenState
     extends State<ComposicaoDescricaoLoteScreen> {
-
-
   /// 'M' manter, 'N' nova (mesmos valores do web).
   String? _opcao;
 
@@ -97,7 +101,10 @@ class _ComposicaoDescricaoLoteScreenState
   String? get _parametro2Texto {
     if (_descricaoId == null || _parametro2 == null) return null;
     return DescricaoLoteComposicao.opcoesParametro2(_descricaoId!)
-        .firstWhere((o) => o.key == _parametro2, orElse: () => const MapEntry(0, ''))
+        .firstWhere(
+          (o) => o.key == _parametro2,
+          orElse: () => const MapEntry(0, ''),
+        )
         .value;
   }
 
@@ -121,7 +128,8 @@ class _ComposicaoDescricaoLoteScreenState
     final ok = await perguntarSimNao(
       context,
       titulo: 'Composição da Descrição do Lote',
-      mensagem: 'Confirma Manter a Descrição do Lote do Pasto ${widget.nomePasto}',
+      mensagem:
+          'Confirma Manter a Descrição do Lote do Pasto ${widget.nomePasto}',
     );
     if (!mounted) return;
     if (ok) {
@@ -132,13 +140,19 @@ class _ComposicaoDescricaoLoteScreenState
   }
 
   Future<void> _incluirMaisLote() async {
-    final erro = DescricaoLoteComposicao.validarLinha(_descricaoId, _parametro2);
+    final erro = DescricaoLoteComposicao.validarLinha(
+      _descricaoId,
+      _parametro2,
+    );
     if (erro != null) {
       await AppAlert.erro(context, erro);
       return;
     }
     if (_linhas.length >= DescricaoLoteComposicao.maxLotes) {
-      await AppAlert.erro(context, 'Só é possível incluir seis lotes de animais.');
+      await AppAlert.erro(
+        context,
+        'Só é possível incluir seis lotes de animais.',
+      );
       return;
     }
     setState(() {
@@ -150,13 +164,19 @@ class _ComposicaoDescricaoLoteScreenState
   Future<void> _confirmar() async {
     final linhas = [..._linhas];
     if (_descricaoId != null || linhas.isEmpty) {
-      final erro = DescricaoLoteComposicao.validarLinha(_descricaoId, _parametro2);
+      final erro = DescricaoLoteComposicao.validarLinha(
+        _descricaoId,
+        _parametro2,
+      );
       if (erro != null) {
         await AppAlert.erro(context, erro);
         return;
       }
       if (linhas.length >= DescricaoLoteComposicao.maxLotes) {
-        await AppAlert.erro(context, 'Só é possível incluir seis lotes de animais.');
+        await AppAlert.erro(
+          context,
+          'Só é possível incluir seis lotes de animais.',
+        );
         return;
       }
       linhas.add(_linhaAtual);
@@ -354,7 +374,10 @@ class _ComposicaoDescricaoLoteScreenState
               ),
               IconButton(
                 tooltip: 'Excluir esse lote',
-                icon: const Icon(Icons.delete_outline, color: Color(0xFF128CB8)),
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: Color(0xFF128CB8),
+                ),
                 onPressed: () => setState(() => _linhas.removeAt(i)),
               ),
             ],
@@ -392,7 +415,8 @@ class _ComposicaoDescricaoLoteScreenState
         if (opcoes2.isNotEmpty) ...[
           const SizedBox(height: 8),
           SeletorCampoWidget<int>(
-            rotulo: '* ${DescricaoLoteComposicao.rotuloParametro2(_descricaoId!)}',
+            rotulo:
+                '* ${DescricaoLoteComposicao.rotuloParametro2(_descricaoId!)}',
             corRotulo: _corRotulo,
             valor: _parametro2,
             opcoes: opcoes2,
@@ -478,8 +502,18 @@ class _ComposicaoDescricaoLoteScreenState
 /// Seletor simples de mês/ano (equivalente ao <input type="month"> do web).
 Future<DateTime?> _escolherMesAno(BuildContext context) {
   const meses = [
-    'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-    'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
+    'Jan',
+    'Fev',
+    'Mar',
+    'Abr',
+    'Mai',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Set',
+    'Out',
+    'Nov',
+    'Dez',
   ];
   var ano = DateTime.now().year;
   return showDialog<DateTime>(

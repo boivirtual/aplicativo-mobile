@@ -425,4 +425,3 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
     );
   }
 }
-

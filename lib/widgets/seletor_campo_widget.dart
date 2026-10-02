@@ -14,6 +14,7 @@ class SeletorCampoWidget<T> extends StatelessWidget {
   final ValueChanged<T> onChanged;
 
   const SeletorCampoWidget({
+    super.key,
     required this.rotulo,
     required this.corRotulo,
     required this.valor,

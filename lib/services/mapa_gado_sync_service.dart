@@ -295,8 +295,17 @@ class _Resposta {
   final bool redeFalhou;
   final String mensagem;
 
-  const _Resposta._(this.sucesso, this.redeFalhou, this.mensagem);
-  factory _Resposta.ok() => const _Resposta._(true, false, '');
+  /// Corpo da resposta de sucesso (ex: id_lote/ano_lote da descrição).
+  final Map<String, dynamic> dados;
+
+  const _Resposta._(
+    this.sucesso,
+    this.redeFalhou,
+    this.mensagem, [
+    this.dados = const {},
+  ]);
+  factory _Resposta.ok(Map<String, dynamic> dados) =>
+      _Resposta._(true, false, '', dados);
   factory _Resposta.rede(String m) => _Resposta._(false, true, m);
   factory _Resposta.recusada(String m) => _Resposta._(false, false, m);
 }

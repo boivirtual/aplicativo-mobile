@@ -949,6 +949,26 @@ class _MapaScreenState extends State<MapaScreen> {
     );
   }
 
+  Widget _avisoFila(String texto, Color cor, IconData icone) => Padding(
+    padding: const EdgeInsets.only(top: 6),
+    child: Row(
+      children: [
+        Icon(icone, size: 15, color: cor),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            texto,
+            style: TextStyle(
+              fontSize: 12,
+              color: cor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
   Widget _buildAvisoModoToque() {
     return Container(
       width: double.infinity,

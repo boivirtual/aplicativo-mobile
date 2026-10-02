@@ -41,7 +41,8 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
 
   /// Cores dos botões da Pesagem (ConfirmButtonPesagemWidget).
   static const _verdeBotao = Color(0xFF4CAF50);
-  static const _azulBotao = Color(0xFF4BBAEB);
+  /// Azul escuro padrão do sistema (barra do app).
+  static const _azulBotao = Color(0xFF18385F);
 
   /// Cor do rótulo dos campos da Pesagem (corDoRotulo).
   static final Color _corRotulo = Colors.blueGrey[800]!;

@@ -59,6 +59,9 @@ class _MapaScreenState extends State<MapaScreen> {
   LatLng? _centroFazenda;
   Map<int, String> _coresModulos = {};
   String? _pastaCacheImagens;
+
+  /// Pasto com a tela "Mapa de Gado - Movimentações" aberta (null = mapa).
+  PastoTabuleiro? _pastoAberto;
   DateTime? _atualizadoEm;
   bool _lendoCache = false;
   bool _baixando = false;

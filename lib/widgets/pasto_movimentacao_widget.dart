@@ -159,9 +159,6 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
     final lotacao = _kgHa == null
         ? ''
         : '  -  Lotação: ${PastoMovimentacaoCalculo.milhar(_kgHa!)} Kg/Ha';
-    final situacao = _total > 0
-        ? '$_total Animais há $dias dia(s)$lotacao'
-        : 'Pasto vazio há $dias dia(s)';
 
     TextStyle estilo(double tamanho) => TextStyle(
       fontSize: tamanho,

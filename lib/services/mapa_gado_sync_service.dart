@@ -195,7 +195,9 @@ class MapaGadoSyncService {
       if (dados is! Map) return _Resposta.rede('Resposta inválida do servidor');
       return dados['success'] == true
           ? _Resposta.ok(Map<String, dynamic>.from(dados))
-          : _Resposta.recusada((dados['message'] ?? 'Erro no servidor').toString());
+          : _Resposta.recusada(
+              (dados['message'] ?? 'Erro no servidor').toString(),
+            );
     } catch (e) {
       return _Resposta.rede(e.toString());
     }

@@ -74,6 +74,24 @@ void main() {
       expect(await MapaGadoDao.instance.contar(bd, 'erro'), 0);
       expect(await qtd(origem), 0);
       expect(await qtd(destino), antesDestino + antesOrigem);
+
+      // Nova descrição do lote com internet: o número gerado pelo servidor
+      // já vem para o cache no envio (sem esperar o próximo download).
+      await MapaGadoSyncService.instance.gravarDescricaoLote(
+        bd: bd,
+        pasto: destino,
+        descricaoLote: 'BOIS ',
+        lotes: ['BOIS '],
+        usuario: 'Teste App',
+      );
+      await MapaGadoSyncService.instance.enviarPendentes(bd);
+      final pasto = (await MapaGadoDao.instance.pastos(
+        bd,
+        fazenda,
+      )).firstWhere((p) => p.id == destino);
+      expect(pasto.descricaoLote, 'BOIS ');
+      expect(pasto.idLote, greaterThan(0));
+      expect(pasto.anoLote, DateTime.now().year);
     },
     skip: api == null ? 'defina MAPA_API_LOCAL (ver topo do arquivo)' : false,
   );

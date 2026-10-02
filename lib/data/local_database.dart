@@ -442,5 +442,6 @@ class LocalDatabase {
     await db.delete('mapa_outbox');
     await db.delete('mapa_satelite_cache');
     await db.delete('mapa_modulos_cache');
+    await db.delete('mapa_pesos_medios_cache');
   }
 }

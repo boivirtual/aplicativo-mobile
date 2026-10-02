@@ -17,7 +17,8 @@ import '../utils/mapa_tabuleiro_calculo.dart';
 ///   - Mover por toque: com [modoToque], tocar no pasto chama
 ///     [onTocarPasto] (a tela decide origem/destino, igual ao Tabuleiro);
 ///     a origem fica com a borda laranja tracejada.
-///   - Toque fora do modo toque: balão com as informações do pasto.
+///   - Toque fora do modo toque: abre a tela do pasto ([onAbrirPasto]);
+///     desenho sem pasto cadastrado mostra o balão do web.
 ///
 /// Offline: os desenhos vêm do cache local; as imagens de satélite já
 /// vistas ficam guardadas em [pastaCacheImagens] (ver build do TileLayer).

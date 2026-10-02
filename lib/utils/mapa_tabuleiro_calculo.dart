@@ -39,6 +39,14 @@ class PastoMapa {
   final String? dataComAnimais;
   final String? dataSemAnimais;
 
+  /// tbl_pasto_area (ha) — Lotação Kg/Ha.
+  final double area;
+
+  /// Número e ano do lote (tbl_pasto_id_lote/_ano_lote) — "L-0012/26";
+  /// 0 = sem número (ex: descrição nova ainda não enviada ao servidor).
+  final int idLote;
+  final int anoLote;
+
   const PastoMapa({
     required this.id,
     required this.fazendaId,

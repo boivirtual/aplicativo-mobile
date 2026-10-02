@@ -68,6 +68,8 @@ class _MapaScreenState extends State<MapaScreen> {
   bool _baixando = false;
 
   int _pendentes = 0;
+  bool _mostrarEnviado = false;
+  Timer? _timerEnviado;
   List<String> _erros = [];
 
   final _buscaController = TextEditingController();

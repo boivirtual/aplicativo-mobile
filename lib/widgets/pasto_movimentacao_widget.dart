@@ -204,26 +204,11 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
           Container(
             padding: const EdgeInsets.only(bottom: 6),
             decoration: const BoxDecoration(border: Border(bottom: divisor)),
-            child: const Row(
+            child: Row(
               children: [
-                Expanded(
-                  child: Text(
-                    'MACHOS',
-                    style: TextStyle(fontSize: 14, color: _azul),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    'FÊMEAS',
-                    style: TextStyle(fontSize: 14, color: _laranja),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    'BEZERROS M/F',
-                    style: TextStyle(fontSize: 14, color: _cinza),
-                  ),
-                ),
+                Expanded(child: Text('MACHOS', style: _negrito(_azul))),
+                Expanded(child: Text('FÊMEAS', style: _negrito(_laranja))),
+                Expanded(child: Text('BEZERROS', style: _negrito(_cinza))),
               ],
             ),
           ),

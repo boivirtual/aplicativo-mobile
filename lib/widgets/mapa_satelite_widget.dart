@@ -118,13 +118,20 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
   void _enquadrarFazenda() {
     final pontos = [for (final p in widget.poligonos) ...p.pontos];
     if (pontos.isNotEmpty) {
-      _mapController.fitCamera(
-        CameraFit.bounds(
-          bounds: LatLngBounds.fromPoints(pontos),
-          padding: const EdgeInsets.all(12),
-          maxZoom: 17,
-        ),
-      );
+      final alvo = CameraFit.bounds(
+        bounds: LatLngBounds.fromPoints(pontos),
+        padding: const EdgeInsets.all(12),
+        maxZoom: 17,
+      ).fit(_mapController.camera);
+      // Aplicado no quadro seguinte: enquadrando direto no onMapReady o
+      // TileLayer não pedia as imagens (fundo ficava preto até mexer).
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _mapController.move(alvo.center, alvo.zoom);
+        _aoMudarZoom(alvo.zoom);
+        _zoomNaBusca();
+      });
+      return;
     } else if (widget.centroFazenda != null) {
       _mapController.move(widget.centroFazenda!, 13);
     }

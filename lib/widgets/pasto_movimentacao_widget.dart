@@ -229,12 +229,8 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
             child: Row(
               children: [
                 Expanded(child: Text('MACHOS', style: _negrito(_azul, 13))),
-                Expanded(
-                  child: Text('FÊMEAS', style: _negrito(_laranja, 13)),
-                ),
-                Expanded(
-                  child: Text('BEZERROS', style: _negrito(_cinza, 13)),
-                ),
+                Expanded(child: Text('FÊMEAS', style: _negrito(_laranja, 13))),
+                Expanded(child: Text('BEZERROS', style: _negrito(_cinza, 13))),
               ],
             ),
           ),

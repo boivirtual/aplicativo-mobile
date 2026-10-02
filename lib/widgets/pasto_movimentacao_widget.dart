@@ -189,7 +189,10 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
         padding: const EdgeInsets.symmetric(vertical: 7),
         child: Text(
           faixa == null ? '' : '$faixa - $qtd',
-          style: TextStyle(fontSize: 11, color: cor),
+          maxLines: 1,
+          softWrap: false,
+          overflow: TextOverflow.visible,
+          style: TextStyle(fontSize: 9.5, color: cor),
         ),
       ),
     );

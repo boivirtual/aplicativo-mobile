@@ -53,6 +53,7 @@ class MapaSateliteWidget extends StatefulWidget {
     required this.origemToqueId,
     required this.pastaCacheImagens,
     required this.onTocarPasto,
+    required this.onAbrirPasto,
     required this.onMover,
   });
 

@@ -39,6 +39,7 @@ class MapaSateliteWidget extends StatefulWidget {
   final int? origemToqueId;
   final String pastaCacheImagens;
   final ValueChanged<PastoTabuleiro> onTocarPasto;
+  final ValueChanged<PastoTabuleiro> onAbrirPasto;
   final void Function(PastoTabuleiro origem, PastoTabuleiro destino) onMover;
 
   const MapaSateliteWidget({

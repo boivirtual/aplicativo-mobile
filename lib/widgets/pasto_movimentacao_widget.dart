@@ -183,7 +183,29 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
           const SizedBox(height: 2),
           Text(titulo, textAlign: TextAlign.center, style: estilo(14)),
           const SizedBox(height: 2),
-          Text(situacao, textAlign: TextAlign.center, style: estilo(12)),
+          Text.rich(
+            textAlign: TextAlign.center,
+            TextSpan(
+              style: estilo(12),
+              children: _total > 0
+                  ? [
+                      // quantidade em destaque (mesmo negrito engrossado
+                      // do total da tarja do Mapa de Gado)
+                      TextSpan(
+                        text: '$_total Animais',
+                        style: const TextStyle(
+                          shadows: [
+                            Shadow(color: Colors.blue, offset: Offset(0.5, 0)),
+                            Shadow(color: Colors.blue, offset: Offset(-0.5, 0)),
+                            Shadow(color: Colors.blue, offset: Offset(0, 0.5)),
+                          ],
+                        ),
+                      ),
+                      TextSpan(text: ' há $dias dia(s)$lotacao'),
+                    ]
+                  : [TextSpan(text: 'Pasto vazio há $dias dia(s)')],
+            ),
+          ),
         ],
       ),
     );

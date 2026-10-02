@@ -111,9 +111,9 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
   // Câmera
   // ---------------------------------------------------------------------
 
-  /// Enquadra todos os pastos e afasta um pouco (0.75 de zoom), para a
-  /// fazenda inteira aparecer com folga — os nomes e selos diminuem com o
-  /// zoom (igual ao web), então não embolam. Sem pastos desenhados,
+  /// Enquadra todos os pastos ocupando a tela (fazenda inteira visível) —
+  /// os nomes e selos diminuem com o zoom (igual ao web), então não
+  /// embolam. Sem pastos desenhados,
   /// centraliza na fazenda (zoom 13).
   void _enquadrarFazenda() {
     final pontos = [for (final p in widget.poligonos) ...p.pontos];
@@ -121,12 +121,10 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
       _mapController.fitCamera(
         CameraFit.bounds(
           bounds: LatLngBounds.fromPoints(pontos),
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(12),
           maxZoom: 17,
         ),
       );
-      final camera = _mapController.camera;
-      _mapController.move(camera.center, camera.zoom - 0.75);
     } else if (widget.centroFazenda != null) {
       _mapController.move(widget.centroFazenda!, 13);
     }
@@ -443,6 +441,8 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
             maxZoom: 20,
             userAgentPackageName: 'com.example.boivirtual',
             tileProvider: _tileProvider,
+            errorTileCallback: (tile, erro, _) =>
+                debugPrint('[MapaSat] tile ${tile.coordinates} -> $erro'),
           ),
           PolygonLayer(polygons: [for (final p in widget.poligonos) _poligono(p)]),
           MarkerLayer(markers: [for (final p in widget.poligonos) _rotulo(p)]),

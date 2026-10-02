@@ -164,44 +164,18 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
           Text(
             titulo,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 19, color: _textoClaro),
+            style: const TextStyle(fontSize: 16, color: _textoClaro),
           ),
           const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Text(
-                  _kgHa == null
-                      ? ''
-                      : 'Lotação: ${PastoMovimentacaoCalculo.milhar(_kgHa!)} Kg/Ha',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFF333333),
-                  ),
-                ),
-              ),
-              Text(
-                '$_total animais',
-                style: const TextStyle(
-                  fontSize: 18,
-                  color: Color(0xFF333333),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  _total > 0
-                      ? 'Animais no pasto há $dias dia(s)'
-                      : 'Pasto vazio há $dias dia(s)',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFF333333),
-                  ),
-                ),
-              ),
-            ],
+          // "77 Animais há 5 dia(s)  -  Lotação: 3.306 Kg/Ha" (igual ao web,
+          // que só mostra a lotação quando tem animal e peso)
+          Text(
+            _total > 0
+                ? '$_total Animais há $dias dia(s)'
+                      '${_kgHa == null ? '' : '  -  Lotação: ${PastoMovimentacaoCalculo.milhar(_kgHa!)} Kg/Ha'}'
+                : 'Pasto vazio há $dias dia(s)',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 13, color: Color(0xFF333333)),
           ),
         ],
       ),

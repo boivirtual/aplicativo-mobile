@@ -493,8 +493,7 @@ class _MapaScreenState extends State<MapaScreen> {
                   ),
                 ),
               ],
-            ),
-    );
+            );
   }
 
   Widget _buildConteudo() {

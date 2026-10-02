@@ -390,8 +390,8 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
                 ),
               ),
               const SizedBox(width: 8),
-              SizedBox(
-                width: 120,
+              Expanded(
+                flex: 3,
                 child: _botao('Confirma', _verdeBotao, altura: 56),
               ),
             ],

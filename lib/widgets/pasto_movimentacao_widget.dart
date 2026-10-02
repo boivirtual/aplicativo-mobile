@@ -182,6 +182,19 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
     );
   }
 
+  /// Negrito de verdade: a fonte do app (FuturaStd) só tem a versão Light,
+  /// então o traço é engrossado com "sombras" da mesma cor (mesmo recurso
+  /// da tarja do Mapa de Gado).
+  static TextStyle _negrito(Color cor) => TextStyle(
+    fontSize: 13,
+    color: cor,
+    fontWeight: FontWeight.bold,
+    shadows: [
+      Shadow(color: cor, offset: const Offset(0.4, 0)),
+      Shadow(color: cor, offset: const Offset(-0.4, 0)),
+    ],
+  );
+
   Widget _tabela() {
     const divisor = BorderSide(color: Color(0xFFDDDDDD));
     Widget celula(String? faixa, int? qtd, Color cor) => Expanded(

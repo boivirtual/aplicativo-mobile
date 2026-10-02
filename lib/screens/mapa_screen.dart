@@ -401,23 +401,61 @@ class _MapaScreenState extends State<MapaScreen> {
     return 12;
   }
 
+  /// Fecha a tela do pasto e volta ao mapa (relendo o cache — a tela do
+  /// pasto vai passar a gravar coisas nas próximas etapas).
+  void _fecharPasto() {
+    setState(() => _pastoAberto = null);
+    _lerDoCache();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text(
-          'Mapa de Gado',
-          style: TextStyle(fontSize: 18, color: Colors.white),
+    final pastoAberto = _pastoAberto;
+    return PopScope(
+      // Voltar do Android na tela do pasto volta para o mapa.
+      canPop: pastoAberto == null,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _pastoAberto != null) _fecharPasto();
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          title: Text(
+            pastoAberto == null
+                ? 'Mapa de Gado'
+                : 'Mapa de Gado - Movimentações',
+            style: const TextStyle(fontSize: 18, color: Colors.white),
+          ),
+          backgroundColor: _azul,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            // Na tela do pasto volta para o mapa; no mapa, para a Home.
+            onPressed: pastoAberto == null ? widget.onBack : _fecharPasto,
+          ),
+          actions: const [IndicadorConectividadeWidget(), SizedBox(width: 8)],
         ),
-        backgroundColor: _azul,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: widget.onBack, // Volta para a Home
+        // O mapa continua montado por baixo (Offstage) enquanto a tela do
+        // pasto está aberta, para voltar exatamente onde estava (rolagem do
+        // tabuleiro / posição e zoom do satélite).
+        body: Stack(
+          children: [
+            Offstage(offstage: pastoAberto != null, child: _buildMapa()),
+            if (pastoAberto != null && _bd != null)
+              PastoMovimentacaoWidget(
+                key: ValueKey('pasto-${pastoAberto.pasto.id}'),
+                bd: _bd!,
+                fazendaId: pastoAberto.pasto.fazendaId,
+                nomeFazenda: _nomeFazendaSelecionada,
+                pastoId: pastoAberto.pasto.id,
+              ),
+          ],
         ),
-        actions: const [IndicadorConectividadeWidget(), SizedBox(width: 8)],
       ),
-      body: carregando
+    );
+  }
+
+  Widget _buildMapa() {
+    return carregando
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [

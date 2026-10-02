@@ -166,7 +166,9 @@ class PastoMovimentacaoCalculo {
     final id = p.idLote != 0
         ? 'L-${p.idLote.toString().padLeft(4, '0')}/${(p.anoLote % 100).toString().padLeft(2, '0')}'
         : '';
-    return '${p.descricaoLote} $id'.trim().isEmpty ? '' : '${p.descricaoLote} $id';
+    return '${p.descricaoLote} $id'.trim().isEmpty
+        ? ''
+        : '${p.descricaoLote} $id';
   }
 
   /// Opções de "Categoria e Sexo" (popular_select_categoria_sexo.php):

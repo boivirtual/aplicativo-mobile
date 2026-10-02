@@ -72,11 +72,15 @@ class MapaGadoDao {
         whereArgs: [bd],
       );
       for (final d in descricoesLote) {
-        batch.insert('mapa_descricoes_lote_cache', {
-          'bd': bd,
-          'id': _int(d['id']),
-          'descricao': (d['descricao'] ?? '').toString(),
-        }, conflictAlgorithm: ConflictAlgorithm.replace);
+        batch.insert(
+          'mapa_descricoes_lote_cache',
+          {
+            'bd': bd,
+            'id': _int(d['id']),
+            'descricao': (d['descricao'] ?? '').toString(),
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
       }
 
       for (final fazenda in fazendasConsultadas) {
@@ -276,7 +280,8 @@ class MapaGadoDao {
       whereArgs: [bd, fazendaId],
     );
     return {
-      for (final l in linhas) '${l['categoria']}|${l['sexo']}': l['peso'] as int,
+      for (final l in linhas)
+        '${l['categoria']}|${l['sexo']}': l['peso'] as int,
     };
   }
 
@@ -559,7 +564,13 @@ class MapaGadoDao {
     Future<Map<String, Object?>?> pasto(int id) async {
       final l = await txn.query(
         'mapa_pastos_cache',
-        columns: ['fazenda_id', 'descricao_lote', 'lotes_json', 'id_lote', 'ano_lote'],
+        columns: [
+          'fazenda_id',
+          'descricao_lote',
+          'lotes_json',
+          'id_lote',
+          'ano_lote',
+        ],
         where: 'bd = ? AND id = ?',
         whereArgs: [bd, id],
         limit: 1,

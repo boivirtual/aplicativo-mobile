@@ -468,44 +468,44 @@ class _MapaScreenState extends State<MapaScreen> {
 
   Widget _buildMapa() {
     return carregando
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                // Antes de escolher: o select. Depois: tarja azul com a
-                // fazenda e o total (mesmo visual da tarja da Pesagem) e o
-                // ícone de edição para trocar de fazenda.
-                if (fazendaSelecionada == null)
-                  CabecalhoFazendaWidget(
-                    fazendaSelecionada: fazendaSelecionada,
-                    fazendasCarregadas: fazendasCarregadas,
-                    onChanged: _selecionarFazenda,
-                    mostrarIcone: false,
-                    textoVazio: '...',
-                  )
-                else
-                  _buildTarjaFazenda(),
-                if (_baixando)
-                  const LinearProgressIndicator(
-                    minHeight: 2,
-                    color: _azul,
-                    backgroundColor: Color(0xFFF1F3F6),
-                  ),
-                // Acompanha o dedo durante o arraste (ver _aoMoverDedo) e
-                // dedo saiu da tela = arraste terminou (ver _fimArraste).
-                Expanded(
-                  child: Listener(
-                    onPointerMove: (e) => _aoMoverDedo(e.position),
-                    onPointerUp: (_) {
-                      if (_arrastando) _fimArraste();
-                    },
-                    onPointerCancel: (_) {
-                      if (_arrastando) _fimArraste();
-                    },
-                    child: _buildConteudo(),
-                  ),
+        ? const Center(child: CircularProgressIndicator())
+        : Column(
+            children: [
+              // Antes de escolher: o select. Depois: tarja azul com a
+              // fazenda e o total (mesmo visual da tarja da Pesagem) e o
+              // ícone de edição para trocar de fazenda.
+              if (fazendaSelecionada == null)
+                CabecalhoFazendaWidget(
+                  fazendaSelecionada: fazendaSelecionada,
+                  fazendasCarregadas: fazendasCarregadas,
+                  onChanged: _selecionarFazenda,
+                  mostrarIcone: false,
+                  textoVazio: '...',
+                )
+              else
+                _buildTarjaFazenda(),
+              if (_baixando)
+                const LinearProgressIndicator(
+                  minHeight: 2,
+                  color: _azul,
+                  backgroundColor: Color(0xFFF1F3F6),
                 ),
-              ],
-            );
+              // Acompanha o dedo durante o arraste (ver _aoMoverDedo) e
+              // dedo saiu da tela = arraste terminou (ver _fimArraste).
+              Expanded(
+                child: Listener(
+                  onPointerMove: (e) => _aoMoverDedo(e.position),
+                  onPointerUp: (_) {
+                    if (_arrastando) _fimArraste();
+                  },
+                  onPointerCancel: (_) {
+                    if (_arrastando) _fimArraste();
+                  },
+                  child: _buildConteudo(),
+                ),
+              ),
+            ],
+          );
   }
 
   Widget _buildConteudo() {

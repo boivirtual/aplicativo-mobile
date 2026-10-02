@@ -30,7 +30,8 @@ class PastoMovimentacaoWidget extends StatefulWidget {
   });
 
   @override
-  State<PastoMovimentacaoWidget> createState() => _PastoMovimentacaoWidgetState();
+  State<PastoMovimentacaoWidget> createState() =>
+      _PastoMovimentacaoWidgetState();
 }
 
 class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
@@ -97,7 +98,9 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
           pesosMedios: pesos,
           area: pasto.area,
         );
-        _loteController.text = PastoMovimentacaoCalculo.descricaoLoteComId(pasto);
+        _loteController.text = PastoMovimentacaoCalculo.descricaoLoteComId(
+          pasto,
+        );
       }
       // "Novo Pasto": mesma lista/ordem do web (popular_select_pasto.php) —
       // pastos do Tabuleiro, sem o próprio pasto.
@@ -172,7 +175,10 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
                   _kgHa == null
                       ? ''
                       : 'Lotação: ${PastoMovimentacaoCalculo.milhar(_kgHa!)} Kg/Ha',
-                  style: const TextStyle(fontSize: 10, color: Color(0xFF333333)),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFF333333),
+                  ),
                 ),
               ),
               Text(
@@ -189,7 +195,10 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
                       ? 'Animais no pasto há $dias dia(s)'
                       : 'Pasto vazio há $dias dia(s)',
                   textAlign: TextAlign.right,
-                  style: const TextStyle(fontSize: 10, color: Color(0xFF333333)),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFF333333),
+                  ),
                 ),
               ),
             ],
@@ -221,10 +230,16 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
             child: const Row(
               children: [
                 Expanded(
-                  child: Text('MACHOS', style: TextStyle(fontSize: 14, color: _azul)),
+                  child: Text(
+                    'MACHOS',
+                    style: TextStyle(fontSize: 14, color: _azul),
+                  ),
                 ),
                 Expanded(
-                  child: Text('FÊMEAS', style: TextStyle(fontSize: 14, color: _laranja)),
+                  child: Text(
+                    'FÊMEAS',
+                    style: TextStyle(fontSize: 14, color: _laranja),
+                  ),
                 ),
                 Expanded(
                   child: Text(
@@ -305,12 +320,18 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
                   initialValue: _novoPasto,
                   isExpanded: true,
                   decoration: _decoracao('Novo Pasto'),
-                  hint: const Text('Novo Pasto', style: TextStyle(fontSize: 13)),
+                  hint: const Text(
+                    'Novo Pasto',
+                    style: TextStyle(fontSize: 13),
+                  ),
                   items: _pastosDestino
                       .map(
                         (p) => DropdownMenuItem(
                           value: p.id,
-                          child: Text(p.descricao, style: const TextStyle(fontSize: 13)),
+                          child: Text(
+                            p.descricao,
+                            style: const TextStyle(fontSize: 13),
+                          ),
                         ),
                       )
                       .toList(),
@@ -328,7 +349,10 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
                   initialValue: _categoria,
                   isExpanded: true,
                   decoration: _decoracao('Categoria e Sexo'),
-                  hint: const Text('Categoria e Sexo', style: TextStyle(fontSize: 13)),
+                  hint: const Text(
+                    'Categoria e Sexo',
+                    style: TextStyle(fontSize: 13),
+                  ),
                   items: _opcoesCategoria
                       .map(
                         (c) => DropdownMenuItem(
@@ -392,7 +416,9 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
               foregroundColor: Colors.white,
               elevation: 0,
               padding: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
             ),
             // Cada atividade será feita numa etapa separada.
             onPressed: () {},

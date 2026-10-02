@@ -245,10 +245,13 @@ class _MapaScreenState extends State<MapaScreen> {
     });
   }
 
-  /// Toque no card: no modo toque escolhe origem/destino; fora dele, abrir
-  /// as funcionalidades do pasto fica para a próxima etapa.
+  /// Toque no card: no modo toque escolhe origem/destino; fora dele, abre a
+  /// tela do pasto ("Mapa de Gado - Movimentações").
   void _tocarCard(PastoTabuleiro card) {
-    if (!_modoToque) return;
+    if (!_modoToque) {
+      _abrirPasto(card);
+      return;
+    }
 
     if (_origemToque == null) {
       // Pasto vazio não pode ser origem, igual ao arrastar.

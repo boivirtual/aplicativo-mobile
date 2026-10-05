@@ -585,9 +585,7 @@ class _MapaScreenState extends State<MapaScreen> {
     }
 
     if (_cards.isEmpty) {
-      if (_lendoCache || _baixando) {
-        return const Center(child: CircularProgressIndicator());
-      }
+      if (_lendoCache || _baixando) return _buildAguarde();
       return RefreshIndicator(
         onRefresh: _baixarEAtualizar,
         child: ListView(

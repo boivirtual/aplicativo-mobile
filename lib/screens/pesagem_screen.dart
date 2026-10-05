@@ -121,49 +121,35 @@ class _PesagemScreenState extends State<PesagemScreen> {
     final mensagem = "Baixando ${partes.join(', ')}...";
     return IgnorePointer(
       child: Align(
-        alignment: const Alignment(0, -0.5),
+        alignment: const Alignment(0, -0.3),
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth: MediaQuery.of(context).size.width * 0.85,
           ),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.18),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+          // Mesmo visual do "Aguarde" das telas de Chuva e Mapa de Gado.
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(
+                color: _corIndicador,
+                strokeWidth: 5,
+              ),
+              const SizedBox(height: 25),
+              const Text(
+                'Aguarde',
+                style: TextStyle(
+                  color: _corIndicador,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: _corIndicador,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Flexible(
-                  child: Text(
-                    mensagem,
-                    style: const TextStyle(
-                      color: _corIndicador,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                mensagem,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: _corIndicador, fontSize: 13),
+              ),
+            ],
           ),
         ),
       ),

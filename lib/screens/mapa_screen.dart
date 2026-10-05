@@ -549,8 +549,30 @@ class _MapaScreenState extends State<MapaScreen> {
           );
   }
 
+  /// Ícone girando + "Aguarde" (mesmo visual da tela "Atualizando os dados").
+  Widget _buildAguarde() {
+    return const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircularProgressIndicator(color: _azul, strokeWidth: 5),
+          SizedBox(height: 25),
+          Text(
+            'Aguarde',
+            style: TextStyle(
+              color: _azul,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildConteudo() {
     if (fazendaSelecionada == null) {
+      if (_baixando) return _buildAguarde();
       return Center(
         child: Text(
           "Selecione uma fazenda para visualizar o mapa.",

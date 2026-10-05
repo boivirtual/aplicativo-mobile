@@ -502,15 +502,34 @@ class _MapaScreenState extends State<MapaScreen> {
                   fazendasCarregadas: fazendasCarregadas,
                   onChanged: _selecionarFazenda,
                   mostrarIcone: false,
-                  textoVazio: '...',
+                  textoVazio: 'Selecione uma Fazenda',
                 )
               else
                 _buildTarjaFazenda(),
-              if (_baixando)
-                const LinearProgressIndicator(
-                  minHeight: 2,
-                  color: _azul,
-                  backgroundColor: Color(0xFFF1F3F6),
+              // Atualizando por baixo de um mapa que já está na tela (cache):
+              // aviso discreto, sem cobrir o mapa. Sem nada na tela, o
+              // "Aguarde" grande aparece no centro (ver _buildConteudo).
+              if (_baixando && fazendaSelecionada != null && _cards.isNotEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: _azul,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Aguarde',
+                        style: TextStyle(fontSize: 13, color: _azul),
+                      ),
+                    ],
+                  ),
                 ),
               // Acompanha o dedo durante o arraste (ver _aoMoverDedo) e
               // dedo saiu da tela = arraste terminou (ver _fimArraste).

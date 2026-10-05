@@ -14,6 +14,7 @@ import '../widgets/cabecalho_fazenda_widget.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 import '../widgets/mapa_satelite_widget.dart';
 import '../widgets/pasto_movimentacao_widget.dart';
+import '../widgets/tarja_fazenda_widget.dart';
 import 'composicao_descricao_lote_screen.dart';
 
 /// Mapa de Gado — visão Tabuleiro, igual à primeira tela do sistema web
@@ -757,108 +758,40 @@ class _MapaScreenState extends State<MapaScreen> {
   }
 
   Widget _buildTarjaFazenda() {
-    final temOutras = fazendasCarregadas.length > 1;
-    return Container(
-      width: double.infinity,
-      color: const Color(0xFFF1F3F6),
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
-      child: Container(
-        padding: EdgeInsets.fromLTRB(10, 8, temOutras ? 0 : 10, 8),
-        decoration: BoxDecoration(
-          color: Colors.blue.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text.rich(
-                TextSpan(
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.blue,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  children: [
-                    TextSpan(text: _nomeFazendaSelecionada),
-                    if (_cards.isNotEmpty) ...[
-                      const TextSpan(text: '  ➔  '),
-                      TextSpan(
-                        text: '$_totalFazenda Animais',
-                        // A fonte do app (FuturaStd) só tem a versão Light,
-                        // então fontWeight quase não muda nada: o traço é
-                        // engrossado com "sombras" da mesma cor coladas no
-                        // texto.
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          shadows: [
-                            Shadow(color: Colors.blue, offset: Offset(0.5, 0)),
-                            Shadow(color: Colors.blue, offset: Offset(-0.5, 0)),
-                            Shadow(color: Colors.blue, offset: Offset(0, 0.5)),
-                            Shadow(color: Colors.blue, offset: Offset(0, -0.5)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+    return TarjaFazendaWidget(
+      nomeFazenda: _nomeFazendaSelecionada,
+      temOutras: fazendasCarregadas.length > 1,
+      onTrocar: _escolherOutraFazenda,
+      complemento: [
+        if (_cards.isNotEmpty) ...[
+          const TextSpan(text: '  ➔  '),
+          TextSpan(
+            text: '$_totalFazenda Animais',
+            // A fonte do app (FuturaStd) só tem a versão Light,
+            // então fontWeight quase não muda nada: o traço é
+            // engrossado com 'sombras' da mesma cor coladas no
+            // texto.
+            style: const TextStyle(
+              fontWeight: FontWeight.w900,
+              shadows: [
+                Shadow(color: Colors.blue, offset: Offset(0.5, 0)),
+                Shadow(color: Colors.blue, offset: Offset(-0.5, 0)),
+                Shadow(color: Colors.blue, offset: Offset(0, 0.5)),
+                Shadow(color: Colors.blue, offset: Offset(0, -0.5)),
+              ],
             ),
-            // Uma fazenda só: não há outra para escolher.
-            if (temOutras)
-              IconButton(
-                onPressed: _escolherOutraFazenda,
-                visualDensity: VisualDensity.compact,
-                icon: const Icon(Icons.edit_note, color: Colors.blue, size: 22),
-                tooltip: 'Trocar de fazenda',
-              ),
-          ],
-        ),
-      ),
+          ),
+        ],
+      ],
     );
   }
 
   /// Modal para escolher outra fazenda; ao escolher, recarrega o tabuleiro.
   Future<void> _escolherOutraFazenda() async {
-    FocusManager.instance.primaryFocus?.unfocus();
-    final escolhida = await showDialog<String>(
-      context: context,
-      requestFocus: false,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text(
-          'Selecione a Fazenda',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        contentPadding: const EdgeInsets.fromLTRB(0, 12, 0, 0),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              for (final f in fazendasCarregadas)
-                ListTile(
-                  dense: true,
-                  selected: (f as Map)['id'].toString() == fazendaSelecionada,
-                  selectedTileColor: Colors.grey.shade200,
-                  title: Text(
-                    f['nome'].toString().toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF455A64),
-                    ),
-                  ),
-                  onTap: () => Navigator.pop(ctx, f['id'].toString()),
-                ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
-          ),
-        ],
-      ),
+    final escolhida = await escolherFazendaModal(
+      context,
+      fazendas: fazendasCarregadas,
+      fazendaSelecionada: fazendaSelecionada,
     );
     if (escolhida != null && escolhida != fazendaSelecionada) {
       _buscaController.clear();

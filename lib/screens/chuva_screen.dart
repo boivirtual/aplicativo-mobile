@@ -8,6 +8,7 @@ import '../utils/app_alert.dart';
 import '../widgets/cabecalho_fazenda_widget.dart';
 import '../widgets/grafico_chuva_widget.dart';
 import '../widgets/indicador_conectividade_widget.dart';
+import '../widgets/tarja_fazenda_widget.dart';
 
 const _mesesAbrev = [
   'Jan',
@@ -63,6 +64,7 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
   String? fazendaSelecionada;
   List<dynamic> fazendasCarregadas = [];
   bool carregando = true;
+  bool _sincronizando = false;
 
   String? _bd;
   String? _usuario;
@@ -108,8 +110,53 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
   }
 
   void _selecionarFazenda(String? id) {
-    setState(() => fazendaSelecionada = id);
+    setState(() {
+      fazendaSelecionada = id;
+      _mensal = null;
+      _anual = null;
+    });
     _recarregarGraficos();
+  }
+
+  String get _nomeFazendaSelecionada {
+    final f = fazendasCarregadas.firstWhere(
+      (f) => (f as Map)['id'].toString() == fazendaSelecionada,
+      orElse: () => {'nome': ''},
+    );
+    return (f as Map)['nome'].toString().toUpperCase();
+  }
+
+  /// Modal para escolher outra fazenda; ao escolher, recarrega os gráficos.
+  Future<void> _escolherOutraFazenda() async {
+    final escolhida = await escolherFazendaModal(
+      context,
+      fazendas: fazendasCarregadas,
+      fazendaSelecionada: fazendaSelecionada,
+    );
+    if (escolhida != null && escolhida != fazendaSelecionada) {
+      _selecionarFazenda(escolhida);
+    }
+  }
+
+  /// Ícone girando + "Aguarde" (mesmo visual do Mapa de Gado).
+  Widget _buildAguarde() {
+    return const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircularProgressIndicator(color: Color(0xFF18385F), strokeWidth: 5),
+          SizedBox(height: 25),
+          Text(
+            'Aguarde',
+            style: TextStyle(
+              color: Color(0xFF18385F),
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Tenta subir pendências + baixar o cache mais recente do servidor
@@ -118,6 +165,7 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
   /// e no "puxar pra atualizar".
   Future<void> _sincronizarEAtualizar() async {
     if (_bd != null && _bd!.isNotEmpty && fazendasCarregadas.isNotEmpty) {
+      if (mounted) setState(() => _sincronizando = true);
       final idsFazendas = fazendasCarregadas
           .map((f) => int.tryParse((f as Map)['id'].toString()) ?? 0)
           .where((id) => id > 0)
@@ -125,6 +173,7 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
       if (idsFazendas.isNotEmpty) {
         await ChuvaSyncService.instance.sincronizarInicial(_bd, idsFazendas);
       }
+      if (mounted) setState(() => _sincronizando = false);
     }
     await _recarregarGraficos();
   }
@@ -291,17 +340,28 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                Container(
-                  color: Colors.white,
-                  child: CabecalhoFazendaWidget(
+                // Antes de escolher: o select. Depois: tarja azul com a
+                // fazenda e o ícone de edição para trocar (igual ao Mapa
+                // de Gado).
+                if (fazendaSelecionada == null)
+                  CabecalhoFazendaWidget(
                     fazendaSelecionada: fazendaSelecionada,
                     fazendasCarregadas: fazendasCarregadas,
                     onChanged: _selecionarFazenda,
+                    mostrarIcone: false,
+                    textoVazio: 'Selecione uma Fazenda',
+                  )
+                else
+                  TarjaFazendaWidget(
+                    nomeFazenda: _nomeFazendaSelecionada,
+                    temOutras: fazendasCarregadas.length > 1,
+                    onTrocar: _escolherOutraFazenda,
                   ),
-                ),
                 Expanded(
                   child: fazendaSelecionada == null
-                      ? Center(
+                      ? _sincronizando
+                      ? _buildAguarde()
+                      : Center(
                           child: Text(
                             'Selecione uma fazenda.',
                             style: TextStyle(
@@ -317,11 +377,11 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                             children: [
                               _buildCardRegistro(),
                               if (_carregandoGrafico && _mensal == null)
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 30),
-                                  child: Center(
-                                    child: CircularProgressIndicator(),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 30,
                                   ),
+                                  child: _buildAguarde(),
                                 )
                               else
                                 ..._buildGraficos(),

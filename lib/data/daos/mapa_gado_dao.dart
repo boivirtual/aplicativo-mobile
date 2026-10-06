@@ -625,8 +625,7 @@ class MapaGadoDao {
         where: 'bd = ? AND id = ?',
         whereArgs: [bd, _int(payload['pasto'])],
       );
-    }
-  }
+//@@NOVO@@
 
   /// Premissas 1 e 6 de transferir_tudo_mapa_gados.php: a descrição do
   /// lote da origem vai para o destino só se o destino não tiver nenhuma;

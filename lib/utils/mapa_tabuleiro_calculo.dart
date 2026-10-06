@@ -68,11 +68,15 @@ class PastoMapa {
 /// Animal ativo num pasto (tbl_animal_pasto).
 class AnimalPastoMapa {
   final int pastoId;
+
+  /// tbl_animal_pasto_numero_item (0 quando ausente).
+  final int item;
   final String? sexo;
   final String? nascimento;
 
   const AnimalPastoMapa({
     required this.pastoId,
+    this.item = 0,
     required this.sexo,
     required this.nascimento,
   });

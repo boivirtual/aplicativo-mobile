@@ -105,6 +105,56 @@ class MapaGadoSyncService {
     _depoisDeRegistrar(bd);
   }
 
+  /// Transferir [quantidade] animais de uma categoria do pasto [origem]
+  /// para o [destino] (Confirma da tela do pasto). [sexo]: 'M', 'F' ou ''
+  /// (bezerros, os dois sexos).
+  Future<void> transferirCategoria({
+    required String bd,
+    required int origem,
+    required int destino,
+    required int categoria,
+    required String sexo,
+    required int quantidade,
+    required String? usuario,
+  }) async {
+    await MapaGadoDao.instance.registrarAcao(
+      bd: bd,
+      uuid: _uuid.v4(),
+      tipo: AcaoMapa.transferirCategoria,
+      payload: {
+        'origem': origem,
+        'destino': destino,
+        'categoria': categoria,
+        'sexo': sexo,
+        'quantidade': quantidade,
+        'usuario': usuario ?? '',
+        'data_hora': _agora(),
+      },
+    );
+    _depoisDeRegistrar(bd);
+  }
+
+  /// "Levar a Descrição do Lote" do pasto [origem] para o [destino].
+  Future<void> levarDescricaoLote({
+    required String bd,
+    required int origem,
+    required int destino,
+    required String? usuario,
+  }) async {
+    await MapaGadoDao.instance.registrarAcao(
+      bd: bd,
+      uuid: _uuid.v4(),
+      tipo: AcaoMapa.levarDescricaoLote,
+      payload: {
+        'origem': origem,
+        'destino': destino,
+        'usuario': usuario ?? '',
+        'data_hora': _agora(),
+      },
+    );
+    _depoisDeRegistrar(bd);
+  }
+
   void _depoisDeRegistrar(String bd) {
     versaoFila.value++;
     if (ConnectivityService.instance.temInternetReal) {

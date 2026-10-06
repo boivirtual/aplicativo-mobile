@@ -510,12 +510,11 @@ class MapaGadoDao {
     );
     if (linhas.isEmpty) return const [];
     try {
-      final lista = json.decode((linhas.first['lotes_json'] ?? '[]').toString());
+      final lista = json.decode(
+        (linhas.first['lotes_json'] ?? '[]').toString(),
+      );
       if (lista is! List) return const [];
-      return lista
-          .map((e) => e.toString())
-          .where((e) => e.isNotEmpty)
-          .toList();
+      return lista.map((e) => e.toString()).where((e) => e.isNotEmpty).toList();
     } catch (_) {
       return const [];
     }
@@ -625,7 +624,203 @@ class MapaGadoDao {
         where: 'bd = ? AND id = ?',
         whereArgs: [bd, _int(payload['pasto'])],
       );
-//@@NOVO@@
+    } else if (tipo == AcaoMapa.transferirCategoria) {
+      await _aplicarTransferenciaCategoria(txn, bd, payload);
+    } else if (tipo == AcaoMapa.levarDescricaoLote) {
+      await _aplicarLevarDescricao(
+        txn,
+        bd,
+        _int(payload['origem']),
+        _int(payload['destino']),
+      );
+    }
+  }
+
+  Future<Map<String, Object?>?> _pastoDoCache(
+    DatabaseExecutor txn,
+    String bd,
+    int id,
+  ) async {
+    final l = await txn.query(
+      'mapa_pastos_cache',
+      columns: [
+        'fazenda_id',
+        'descricao_lote',
+        'lotes_json',
+        'id_lote',
+        'ano_lote',
+      ],
+      where: 'bd = ? AND id = ?',
+      whereArgs: [bd, id],
+      limit: 1,
+    );
+    return l.isEmpty ? null : l.first;
+  }
+
+  /// Transferência por categoria — mesma regra do servidor
+  /// (MapaGadoService::transferirCategoria): passa os primeiros animais
+  /// (ordem do número do item) da categoria/sexo, com a idade calculada na
+  /// data da ação; se a origem ficar vazia, valem as Premissas 1 e 6 da
+  /// Descrição do Lote.
+  Future<void> _aplicarTransferenciaCategoria(
+    DatabaseExecutor txn,
+    String bd,
+    Map<String, dynamic> payload,
+  ) async {
+    final origem = _int(payload['origem']);
+    final destino = _int(payload['destino']);
+    final categoria = _int(payload['categoria']);
+    final sexo = (payload['sexo'] ?? '').toString();
+    final quantidade = _int(payload['quantidade']);
+    final dataHora = (payload['data_hora'] ?? '').toString();
+    final dia =
+        DateTime.tryParse(dataHora.replaceFirst(' ', 'T')) ?? DateTime.now();
+
+    final pOrigem = await _pastoDoCache(txn, bd, origem);
+    final pDestino = await _pastoDoCache(txn, bd, destino);
+    if (pOrigem == null || pDestino == null || quantidade <= 0) return;
+
+    final faixa = await txn.query(
+      'mapa_categorias_cache',
+      columns: ['idade_de', 'idade_ate'],
+      where: 'bd = ? AND id = ?',
+      whereArgs: [bd, categoria],
+      limit: 1,
+    );
+    if (faixa.isEmpty) return;
+    final de = faixa.first['idade_de'] as int;
+    final ate = faixa.first['idade_ate'] as int;
+
+    final animais = await txn.query(
+      'mapa_animais_pasto_cache',
+      columns: ['numero_item', 'sexo', 'nascimento'],
+      where: 'bd = ? AND pasto_id = ?',
+      whereArgs: [bd, origem],
+      orderBy: 'numero_item',
+    );
+    final itens = <int>[];
+    for (final a in animais) {
+      if (itens.length >= quantidade) break;
+      if (sexo.isNotEmpty && a['sexo'] != sexo) continue;
+      final meses = MapaTabuleiroCalculo.idadeEmMeses(
+        a['nascimento'] as String?,
+        dia,
+      );
+      if (meses >= de && meses <= ate) itens.add(a['numero_item'] as int);
+    }
+    if (itens.isEmpty) return;
+
+    final noDestinoAntes =
+        Sqflite.firstIntValue(
+          await txn.rawQuery(
+            'SELECT COUNT(*) FROM mapa_animais_pasto_cache WHERE bd = ? AND pasto_id = ?',
+            [bd, destino],
+          ),
+        ) ??
+        0;
+
+    await txn.update(
+      'mapa_animais_pasto_cache',
+      {'pasto_id': destino, 'fazenda_id': pDestino['fazenda_id']},
+      where: 'bd = ? AND pasto_id = ? AND numero_item IN (${itens.join(',')})',
+      whereArgs: [bd, origem],
+    );
+
+    // Datas "há X dia(s)" da tela — aproximação até o próximo download
+    // (a regra completa das 24h fica no servidor).
+    if (noDestinoAntes == 0 && dataHora.isNotEmpty) {
+      await txn.update(
+        'mapa_pastos_cache',
+        {'data_com_animais': dataHora},
+        where: 'bd = ? AND id = ?',
+        whereArgs: [bd, destino],
+      );
+    }
+
+    if (animais.length == itens.length) {
+      // a origem ficou vazia
+      if (dataHora.isNotEmpty) {
+        await txn.update(
+          'mapa_pastos_cache',
+          {'data_sem_animais': dataHora},
+          where: 'bd = ? AND id = ?',
+          whereArgs: [bd, origem],
+        );
+      }
+      await _aplicarPremissasLote(txn, bd, origem, destino, pOrigem, pDestino);
+    }
+  }
+
+  /// "Levar a Descrição do Lote": o destino recebe a descrição, os lotes
+  /// e o número do lote da origem; a origem continua com a descrição e
+  /// fica aguardando o número novo do servidor.
+  Future<void> _aplicarLevarDescricao(
+    DatabaseExecutor txn,
+    String bd,
+    int origem,
+    int destino,
+  ) async {
+    final pOrigem = await _pastoDoCache(txn, bd, origem);
+    if (pOrigem == null) return;
+    final descOrigem = (pOrigem['descricao_lote'] ?? '').toString();
+    if (descOrigem.isEmpty) return;
+    await txn.update(
+      'mapa_pastos_cache',
+      {
+        'descricao_lote': descOrigem,
+        'lotes_json': pOrigem['lotes_json'],
+        'id_lote': pOrigem['id_lote'],
+        'ano_lote': pOrigem['ano_lote'],
+      },
+      where: 'bd = ? AND id = ?',
+      whereArgs: [bd, destino],
+    );
+    await txn.update(
+      'mapa_pastos_cache',
+      {'id_lote': 0, 'ano_lote': 0},
+      where: 'bd = ? AND id = ?',
+      whereArgs: [bd, origem],
+    );
+  }
+
+  /// Premissa 1: destino SEM descrição do lote e origem COM -> a descrição
+  /// vai para o destino. Premissas 1 e 6: a origem sempre fica sem.
+  Future<void> _aplicarPremissasLote(
+    DatabaseExecutor txn,
+    String bd,
+    int origem,
+    int destino,
+    Map<String, Object?> pOrigem,
+    Map<String, Object?> pDestino,
+  ) async {
+    final descOrigem = (pOrigem['descricao_lote'] ?? '').toString();
+    final descDestino = (pDestino['descricao_lote'] ?? '').toString();
+
+    if (descOrigem.isNotEmpty && descDestino.isEmpty) {
+      await txn.update(
+        'mapa_pastos_cache',
+        {
+          'descricao_lote': descOrigem,
+          'lotes_json': pOrigem['lotes_json'],
+          'id_lote': pOrigem['id_lote'],
+          'ano_lote': pOrigem['ano_lote'],
+        },
+        where: 'bd = ? AND id = ?',
+        whereArgs: [bd, destino],
+      );
+    }
+    await txn.update(
+      'mapa_pastos_cache',
+      {
+        'descricao_lote': '',
+        'lotes_json': json.encode(List.filled(6, '')),
+        'id_lote': 0,
+        'ano_lote': 0,
+      },
+      where: 'bd = ? AND id = ?',
+      whereArgs: [bd, origem],
+    );
+  }
 
   /// Premissas 1 e 6 de transferir_tudo_mapa_gados.php: a descrição do
   /// lote da origem vai para o destino só se o destino não tiver nenhuma;

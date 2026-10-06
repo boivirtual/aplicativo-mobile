@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -84,6 +86,8 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
 
   // Arrastar
   PastoTabuleiro? _origemArraste;
+  Offset? _dedo; // posição do dedo durante o arraste
+  Timer? _timerBorda; // rola o mapa com o dedo perto da borda
   PoligonoPasto? _poligonoSobArraste;
 
   // Balão de informações
@@ -192,7 +196,9 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
     final poligono = MapaSateliteGeo.poligonoEm(widget.poligonos, ponto);
 
     if (widget.modoToque) {
-      final pasto = poligono == null ? null : widget.pastoPorNome[poligono.nome];
+      final pasto = poligono == null
+          ? null
+          : widget.pastoPorNome[poligono.nome];
       // pasto sem cadastro não participa (igual ao web)
       if (pasto != null) widget.onTocarPasto(pasto);
       return;
@@ -213,22 +219,88 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
     });
   }
 
+  /// Segurar o dedo em qualquer ponto de um pasto com animais começa o
+  /// arraste (antes era só em cima do selo).
+  void _aoSegurar(Offset posicao, LatLng ponto) {
+    if (widget.modoToque) return;
+    final poligono = MapaSateliteGeo.poligonoEm(widget.poligonos, ponto);
+    final pasto = poligono == null ? null : widget.pastoPorNome[poligono.nome];
+    if (pasto == null || pasto.total <= 0) return;
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _origemArraste = pasto;
+      _dedo = posicao;
+      _balaoPoligono = null;
+    });
+    _timerBorda ??= Timer.periodic(
+      const Duration(milliseconds: 16),
+      (_) => _rolarNaBorda(),
+    );
+  }
+
+  /// Com o dedo perto da borda, o mapa anda para aquele lado — dá para
+  /// soltar num pasto que não estava visível. Quanto mais perto da borda,
+  /// mais rápido.
+  void _rolarNaBorda() {
+    final dedo = _dedo;
+    final tamanho = context.size;
+    if (_origemArraste == null || dedo == null || tamanho == null) return;
+    const faixa = 56.0;
+    const maximo = 5.0; // pixels por quadro
+    double passo(double pos, double total) {
+      if (pos < faixa) return -maximo * (1 - math.max(pos, 0) / faixa);
+      if (pos > total - faixa) {
+        return maximo * (1 - math.max(total - pos, 0) / faixa);
+      }
+      return 0;
+    }
+
+    final dx = passo(dedo.dx, tamanho.width);
+    final dy = passo(dedo.dy, tamanho.height);
+    if (dx == 0 && dy == 0) return;
+    final camera = _mapController.camera;
+    final centro = Offset(tamanho.width / 2 + dx, tamanho.height / 2 + dy);
+    _mapController.move(camera.screenOffsetToLatLng(centro), camera.zoom);
+    _atualizarDestino(dedo);
+  }
+
   void _aoMoverDedo(PointerMoveEvent e) {
     if (_origemArraste == null) return;
-    final ponto = _mapController.camera.screenOffsetToLatLng(e.localPosition);
+    setState(() => _dedo = e.localPosition);
+    _atualizarDestino(e.localPosition);
+  }
+
+  void _atualizarDestino(Offset posicao) {
+    final ponto = _mapController.camera.screenOffsetToLatLng(posicao);
     final poligono = MapaSateliteGeo.poligonoEm(widget.poligonos, ponto);
-    final destino = poligono == null ? null : widget.pastoPorNome[poligono.nome];
-    final valido = destino != null && destino.pasto.id != _origemArraste!.pasto.id;
+    final destino = poligono == null
+        ? null
+        : widget.pastoPorNome[poligono.nome];
+    final valido =
+        destino != null && destino.pasto.id != _origemArraste!.pasto.id;
     final novo = valido ? poligono : null;
     if (novo != _poligonoSobArraste) setState(() => _poligonoSobArraste = novo);
+  }
+
+  void _pararRolagem() {
+    _timerBorda?.cancel();
+    _timerBorda = null;
+  }
+
+  @override
+  void dispose() {
+    _pararRolagem();
+    super.dispose();
   }
 
   void _aoSoltarDedo() {
     final origem = _origemArraste;
     final alvo = _poligonoSobArraste;
+    _pararRolagem();
     if (origem == null) return;
     setState(() {
       _origemArraste = null;
+      _dedo = null;
       _poligonoSobArraste = null;
     });
     final destino = alvo == null ? null : widget.pastoPorNome[alvo.nome];
@@ -259,7 +331,9 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
     double largura = 1;
     var tracejado = false;
 
-    if (pasto != null && widget.origemToqueId == pasto.pasto.id) {
+    if (pasto != null &&
+        (widget.origemToqueId == pasto.pasto.id ||
+            _origemArraste?.pasto.id == pasto.pasto.id)) {
       borda = _corOrigemToque;
       largura = 4;
       tracejado = true;
@@ -329,23 +403,13 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
     );
   }
 
+  /// O selo não tem gesto próprio: o arraste começa segurando o dedo em
+  /// qualquer ponto do pasto (ver _aoSegurar).
   Widget _seloArrastavel(PastoTabuleiro pasto) {
     final selo = _Selo(pasto: pasto, apenasTotal: _zoomBaixo);
-    // No modo toque o selo não arrasta (igual ao Tabuleiro).
-    if (widget.modoToque) return IgnorePointer(child: selo);
-    return LongPressDraggable<PastoTabuleiro>(
-      data: pasto,
-      hapticFeedbackOnStart: true,
-      onDragStarted: () => setState(() {
-        _origemArraste = pasto;
-        _balaoPoligono = null;
-      }),
-      feedback: Material(
-        color: Colors.transparent,
-        child: Transform.scale(scale: _escala, child: selo),
-      ),
-      childWhenDragging: Opacity(opacity: 0.35, child: selo),
-      child: selo,
+    final arrastando = _origemArraste?.pasto.id == pasto.pasto.id;
+    return IgnorePointer(
+      child: Opacity(opacity: arrastando ? 0.35 : 1, child: selo),
     );
   }
 
@@ -361,9 +425,13 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
     } else {
       if (pasto.total != 0) {
         linhas.add('${pasto.total} animais');
-        linhas.add('Animais no pasto há ${_dias(pasto.pasto.dataComAnimais)} dia(s)');
+        linhas.add(
+          'Animais no pasto há ${_dias(pasto.pasto.dataComAnimais)} dia(s)',
+        );
       } else {
-        linhas.add('Pasto vazio há ${_dias(pasto.pasto.dataSemAnimais)} dia(s)');
+        linhas.add(
+          'Pasto vazio há ${_dias(pasto.pasto.dataSemAnimais)} dia(s)',
+        );
       }
       if (pasto.pasto.capim.isNotEmpty) linhas.add(pasto.pasto.capim);
     }
@@ -383,7 +451,9 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
-              boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 6)],
+              boxShadow: const [
+                BoxShadow(color: Colors.black38, blurRadius: 6),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -419,55 +489,90 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
         ? widget.poligonos.first.centro
         : (widget.centroFazenda ?? const LatLng(-15.8, -47.9));
 
+    final arrastado = _origemArraste;
+    final dedo = _dedo;
+
     return Listener(
       onPointerMove: _aoMoverDedo,
       onPointerUp: (_) => _aoSoltarDedo(),
-      onPointerCancel: (_) => setState(() {
-        _origemArraste = null;
-        _poligonoSobArraste = null;
-      }),
-      child: FlutterMap(
-        mapController: _mapController,
-        options: MapOptions(
-          initialCenter: inicio,
-          initialZoom: 13,
-          maxZoom: 20,
-          backgroundColor: const Color(0xFF263238),
-          interactionOptions: const InteractionOptions(
-            flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-          ),
-          onMapReady: _enquadrarFazenda,
-          onPositionChanged: (camera, _) => _aoMudarZoom(camera.zoom),
-          onTap: (_, ponto) => _aoTocarMapa(ponto),
-        ),
+      onPointerCancel: (_) {
+        _pararRolagem();
+        setState(() {
+          _origemArraste = null;
+          _poligonoSobArraste = null;
+          _dedo = null;
+        });
+      },
+      child: Stack(
         children: [
-          TileLayer(
-            urlTemplate:
-                'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-            maxNativeZoom: 18,
-            maxZoom: 20,
-            userAgentPackageName: 'com.example.boivirtual',
-            tileProvider: _tileProvider,
-            errorTileCallback: (tile, erro, _) =>
-                debugPrint('[MapaSat] tile ${tile.coordinates} -> $erro'),
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: inicio,
+              initialZoom: 13,
+              maxZoom: 20,
+              backgroundColor: const Color(0xFF263238),
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+              ),
+              onMapReady: _enquadrarFazenda,
+              onPositionChanged: (camera, _) => _aoMudarZoom(camera.zoom),
+              onTap: (_, ponto) => _aoTocarMapa(ponto),
+              onLongPress: (toque, ponto) =>
+                  _aoSegurar(toque.relative ?? Offset.zero, ponto),
+            ),
+            children: [
+              TileLayer(
+                urlTemplate:
+                    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                maxNativeZoom: 18,
+                maxZoom: 20,
+                userAgentPackageName: 'com.example.boivirtual',
+                tileProvider: _tileProvider,
+                errorTileCallback: (tile, erro, _) =>
+                    debugPrint('[MapaSat] tile ${tile.coordinates} -> $erro'),
+              ),
+              PolygonLayer(
+                polygons: [for (final p in widget.poligonos) _poligono(p)],
+              ),
+              MarkerLayer(
+                markers: [for (final p in widget.poligonos) _rotulo(p)],
+              ),
+              if (balao != null) MarkerLayer(markers: [balao]),
+              // Crédito das imagens (exigido pela Esri), discreto no canto.
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Container(
+                  color: const Color(0xB3FFFFFF),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 1,
+                  ),
+                  child: const Text(
+                    'Esri, Maxar, Earthstar Geographics',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 9, color: Color(0xFF333333)),
+                  ),
+                ),
+              ),
+            ],
           ),
-          PolygonLayer(polygons: [for (final p in widget.poligonos) _poligono(p)]),
-          MarkerLayer(markers: [for (final p in widget.poligonos) _rotulo(p)]),
-          if (balao != null) MarkerLayer(markers: [balao]),
-          // Crédito das imagens (exigido pela Esri), discreto no canto.
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Container(
-              color: const Color(0xB3FFFFFF),
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-              child: const Text(
-                'Esri, Maxar, Earthstar Geographics',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 9, color: Color(0xFF333333)),
+          // Selo acompanhando o dedo durante o arraste.
+          if (arrastado != null && dedo != null)
+            Positioned(
+              left: dedo.dx,
+              top: dedo.dy,
+              child: IgnorePointer(
+                child: FractionalTranslation(
+                  translation: const Offset(-0.5, -1.3),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: _Selo(pasto: arrastado),
+                  ),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -506,7 +611,11 @@ class _Selo extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (pasto.bezerros > 0)
-                _linha('mapa_bezerro.png', const Color(0xFF9C7239), pasto.bezerros),
+                _linha(
+                  'mapa_bezerro.png',
+                  const Color(0xFF9C7239),
+                  pasto.bezerros,
+                ),
               if (pasto.femeas > 0)
                 _linha('mapa_vaca.png', const Color(0xFFB71C1C), pasto.femeas),
               if (pasto.machos > 0)
@@ -542,10 +651,15 @@ class _Selo extends StatelessWidget {
               color: cor,
               shape: BoxShape.circle,
               border: Border.all(color: const Color(0xE6FFFFFF), width: 1.5),
-              boxShadow: const [BoxShadow(color: Color(0xD9000000), blurRadius: 2)],
+              boxShadow: const [
+                BoxShadow(color: Color(0xD9000000), blurRadius: 2),
+              ],
             ),
             child: ColorFiltered(
-              colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+              colorFilter: const ColorFilter.mode(
+                Colors.white,
+                BlendMode.srcIn,
+              ),
               child: Image.asset('assets/images/$imagem', width: 12),
             ),
           ),

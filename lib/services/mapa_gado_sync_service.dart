@@ -226,6 +226,24 @@ class MapaGadoSyncService {
               );
             }
           }
+          // Levar a descrição: a origem recebe um número novo (e o destino
+          // também, se a origem ainda não tinha número).
+          if (tipo == AcaoMapa.levarDescricaoLote) {
+            for (final lado in const ['origem', 'destino']) {
+              final idLote =
+                  int.tryParse('${r.dados['id_lote_$lado'] ?? ''}') ?? 0;
+              final anoLote =
+                  int.tryParse('${r.dados['ano_lote_$lado'] ?? ''}') ?? 0;
+              if (idLote > 0) {
+                await MapaGadoDao.instance.definirNumeroLote(
+                  bd: bd,
+                  pastoId: int.tryParse('${payload[lado]}') ?? 0,
+                  idLote: idLote,
+                  anoLote: anoLote,
+                );
+              }
+            }
+          }
         } else {
           await MapaGadoDao.instance.marcarErro(id, r.mensagem);
         }

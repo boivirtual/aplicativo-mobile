@@ -486,6 +486,30 @@ class MapaGadoDao {
     return linhas.map((l) => (l['ultimo_erro'] ?? '').toString()).toList();
   }
 
+  /// Os lotes (até 6) que compõem a Descrição do Lote do pasto
+  /// (tbl_pasto_descricao_lote_1..6), sem os vazios.
+  Future<List<String>> lotesDoPasto(String bd, int pastoId) async {
+    final db = await LocalDatabase.instance.database;
+    final linhas = await db.query(
+      'mapa_pastos_cache',
+      columns: ['lotes_json'],
+      where: 'bd = ? AND id = ?',
+      whereArgs: [bd, pastoId],
+      limit: 1,
+    );
+    if (linhas.isEmpty) return const [];
+    try {
+      final lista = json.decode((linhas.first['lotes_json'] ?? '[]').toString());
+      if (lista is! List) return const [];
+      return lista
+          .map((e) => e.toString())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
   /// Número/ano do lote gerado pelo servidor para a nova descrição — só se
   /// o pasto ainda estiver com essa mesma descrição (outra ação pendente
   /// pode já ter trocado).
@@ -561,9 +585,13 @@ class MapaGadoDao {
         {
           'descricao_lote': (payload['descricao_lote'] ?? '').toString(),
           'lotes_json': json.encode(lotes),
-          // número do lote novo só existe depois que o servidor gravar
-          'id_lote': 0,
-          'ano_lote': 0,
+          // Número do lote novo só existe depois que o servidor gravar;
+          // na edição pelo campo (manter_numero) o pasto fica com o que
+          // já tem.
+          if (payload['manter_numero'] != true) ...{
+            'id_lote': 0,
+            'ano_lote': 0,
+          },
         },
         where: 'bd = ? AND id = ?',
         whereArgs: [bd, _int(payload['pasto'])],

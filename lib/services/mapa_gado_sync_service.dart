@@ -83,6 +83,10 @@ class MapaGadoSyncService {
     required String descricaoLote,
     required List<String> lotes,
     required String? usuario,
+
+    /// Edição pelo campo "Descrição do Lote" da tela do pasto (novo_id =
+    /// 'N' no web): o pasto continua com o número de lote que já tem.
+    bool manterNumero = false,
   }) async {
     final seis = [...lotes.take(6), ...List.filled(6, '')].take(6).toList();
     await MapaGadoDao.instance.registrarAcao(
@@ -93,6 +97,7 @@ class MapaGadoSyncService {
         'pasto': pasto,
         'descricao_lote': descricaoLote,
         'lotes': seis,
+        if (manterNumero) 'manter_numero': true,
         'usuario': usuario ?? '',
         'data_hora': _agora(),
       },

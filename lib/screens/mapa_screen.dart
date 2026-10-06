@@ -482,6 +482,7 @@ class _MapaScreenState extends State<MapaScreen> {
                 fazendaId: pastoAberto.pasto.fazendaId,
                 nomeFazenda: _nomeFazendaSelecionada,
                 pastoId: pastoAberto.pasto.id,
+                usuario: _usuario,
               ),
           ],
         ),

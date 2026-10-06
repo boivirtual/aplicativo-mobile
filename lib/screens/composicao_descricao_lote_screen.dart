@@ -60,16 +60,25 @@ Future<bool> perguntarSimNao(
 ///   - Criar nova Descrição do Lote -> monta até 6 lotes e devolve
 ///     [NovaDescricaoLote].
 /// Não fecha sem uma escolha (no web o modal também é estático).
+///
+/// Com [edicao] (toque no campo "Descrição do Lote" da tela do pasto —
+/// abrir_modal_descricao_lote(0) no web): não pergunta Manter/Criar; já
+/// abre com os lotes atuais do pasto ([lotesAtuais]) para excluir ou
+/// incluir mais, e tem o botão Voltar (devolve null, nada muda).
 class ComposicaoDescricaoLoteScreen extends StatefulWidget {
   final String nomePasto;
   final String descricaoAtual;
   final List<MapEntry<int, String>> descricoes;
+  final bool edicao;
+  final List<String> lotesAtuais;
 
   const ComposicaoDescricaoLoteScreen({
     super.key,
     required this.nomePasto,
     required this.descricaoAtual,
     required this.descricoes,
+    this.edicao = false,
+    this.lotesAtuais = const [],
   });
 
   @override
@@ -90,6 +99,20 @@ class _ComposicaoDescricaoLoteScreenState
   int? _parametro2;
   bool _comData = false;
   final List<DateTime> _datas = [];
+
+  /// Na edição o editor começa fechado quando o pasto já tem lotes (igual
+  /// ao web); abre com "Incluir mais lote" ou ao excluir um lote.
+  bool _editorAberto = true;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.edicao) {
+      _opcao = 'N';
+      _linhas.addAll(widget.lotesAtuais.where((l) => l.isNotEmpty));
+      _editorAberto = _linhas.isEmpty;
+    }
+  }
 
   String get _descricaoTexto => widget.descricoes
       .firstWhere(
@@ -140,6 +163,17 @@ class _ComposicaoDescricaoLoteScreenState
   }
 
   Future<void> _incluirMaisLote() async {
+    if (!_editorAberto) {
+      if (_linhas.length >= DescricaoLoteComposicao.maxLotes) {
+        await AppAlert.erro(
+          context,
+          'Só é possível incluir seis lotes de animais.',
+        );
+        return;
+      }
+      setState(() => _editorAberto = true);
+      return;
+    }
     final erro = DescricaoLoteComposicao.validarLinha(
       _descricaoId,
       _parametro2,
@@ -163,7 +197,7 @@ class _ComposicaoDescricaoLoteScreenState
 
   Future<void> _confirmar() async {
     final linhas = [..._linhas];
-    if (_descricaoId != null || linhas.isEmpty) {
+    if (_editorAberto && (_descricaoId != null || linhas.isEmpty)) {
       final erro = DescricaoLoteComposicao.validarLinha(
         _descricaoId,
         _parametro2,
@@ -209,7 +243,7 @@ class _ComposicaoDescricaoLoteScreenState
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
+      canPop: widget.edicao,
       child: Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -236,11 +270,15 @@ class _ComposicaoDescricaoLoteScreenState
                 const SizedBox(height: 10),
                 _caixaPasto(),
                 const SizedBox(height: 10),
-                _opcaoLote('M', 'Manter a Descrição do Lote'),
-                _opcaoLote('N', 'Criar nova Descrição do Lote'),
+                if (!widget.edicao) ...[
+                  _opcaoLote('M', 'Manter a Descrição do Lote'),
+                  _opcaoLote('N', 'Criar nova Descrição do Lote'),
+                ],
                 if (_opcao == 'N') ...[
-                  const SizedBox(height: 14),
-                  _buildEditor(),
+                  if (_editorAberto) ...[
+                    SizedBox(height: widget.edicao ? 4 : 14),
+                    _buildEditor(),
+                  ],
                   Align(
                     alignment: Alignment.centerLeft,
                     child: TextButton.icon(
@@ -282,7 +320,7 @@ class _ComposicaoDescricaoLoteScreenState
               fontWeight: FontWeight.bold,
             ),
           ),
-          if (widget.descricaoAtual.isNotEmpty)
+          if (widget.descricaoAtual.isNotEmpty && !widget.edicao)
             Text(
               widget.descricaoAtual,
               textAlign: TextAlign.center,
@@ -373,7 +411,11 @@ class _ComposicaoDescricaoLoteScreenState
                       Icons.delete_outline,
                       color: Color(0xFF128CB8),
                     ),
-                    onPressed: () => setState(() => _linhas.removeAt(i)),
+                    onPressed: () => setState(() {
+                      _linhas.removeAt(i);
+                      // igual ao web: ao excluir, o editor aparece
+                      _editorAberto = true;
+                    }),
                   ),
                 ],
               ),
@@ -396,6 +438,23 @@ class _ComposicaoDescricaoLoteScreenState
               ),
             ),
           ),
+          if (widget.edicao) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 45,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _azulTitulo,
+                  side: const BorderSide(color: _azulTitulo),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Voltar', style: TextStyle(fontSize: 15)),
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -136,6 +136,50 @@ void main() {
     expect(await MapaGadoDao.instance.contar(bd, 'pendente'), 2);
   });
 
+  test('editar a Descrição do Lote pelo campo mantém o número do lote; '
+      'criar nova zera até o servidor gerar', () async {
+    await MapaGadoDao.instance.salvarDoServidor(
+      bd: bd,
+      fazendasConsultadas: [fazenda],
+      categorias: const [],
+      descricoesLote: const [],
+      pastos: [
+        {...pasto(1, 1, 'VACAS '), 'id_lote': 23, 'ano_lote': 2026},
+      ],
+      animais: [animal(1, 1)],
+    );
+    Future<PastoMapa> p1() async =>
+        (await MapaGadoDao.instance.pastos(bd, fazenda)).first;
+
+    expect(await MapaGadoDao.instance.lotesDoPasto(bd, 1), ['VACAS ']);
+
+    await MapaGadoSyncService.instance.gravarDescricaoLote(
+      bd: bd,
+      pasto: 1,
+      descricaoLote: 'VACAS -BOIS ',
+      lotes: ['VACAS ', 'BOIS '],
+      usuario: 'Teste',
+      manterNumero: true,
+    );
+    var p = await p1();
+    expect(p.descricaoLote, 'VACAS -BOIS ');
+    expect(p.idLote, 23);
+    expect(p.anoLote, 2026);
+    expect(await MapaGadoDao.instance.lotesDoPasto(bd, 1), ['VACAS ', 'BOIS ']);
+    expect(await MapaGadoDao.instance.contar(bd, 'pendente'), 1);
+
+    await MapaGadoSyncService.instance.gravarDescricaoLote(
+      bd: bd,
+      pasto: 1,
+      descricaoLote: 'TOUROS ',
+      lotes: ['TOUROS '],
+      usuario: 'Teste',
+    );
+    p = await p1();
+    expect(p.descricaoLote, 'TOUROS ');
+    expect(p.idLote, 0);
+  });
+
   group('montagem da Descrição do Lote (igual ao web)', () {
     test('linhas e descrição completa', () {
       expect(

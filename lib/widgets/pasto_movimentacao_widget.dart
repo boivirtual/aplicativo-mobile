@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/daos/mapa_gado_dao.dart';
+import '../screens/composicao_descricao_lote_screen.dart';
 import '../services/mapa_gado_sync_service.dart';
 import '../utils/mapa_tabuleiro_calculo.dart';
 import '../utils/pasto_movimentacao_calculo.dart';
@@ -13,8 +14,9 @@ import 'seletor_campo_widget.dart';
 /// animais há quantos dias, lotação Kg/Ha), tabela por faixa de idade,
 /// transferência, descrição do lote e as outras atividades.
 ///
-/// Por enquanto só exibe: Confirma da transferência, o lote e os botões
-/// Nutrição/Nascimento/Morte ainda não fazem nada (próximas etapas).
+/// O toque no campo "Descrição do Lote" abre a Composição da Descrição do
+/// Lote em modo de edição (igual ao web). Confirma da transferência e os
+/// botões Nutrição/Nascimento/Morte ainda não fazem nada (próximas etapas).
 ///
 /// Lê tudo do cache local (funciona offline).
 class PastoMovimentacaoWidget extends StatefulWidget {
@@ -22,6 +24,7 @@ class PastoMovimentacaoWidget extends StatefulWidget {
   final int fazendaId;
   final String nomeFazenda;
   final int pastoId;
+  final String? usuario;
 
   const PastoMovimentacaoWidget({
     super.key,
@@ -29,6 +32,7 @@ class PastoMovimentacaoWidget extends StatefulWidget {
     required this.fazendaId,
     required this.nomeFazenda,
     required this.pastoId,
+    required this.usuario,
   });
 
   @override
@@ -125,6 +129,43 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
       );
       _carregando = false;
     });
+  }
+
+  /// Toque no campo "Descrição do Lote" — igual ao web
+  /// (abrir_modal_descricao_lote(0) + gravar_alterar_descricao_lote.php
+  /// com novo_id = 'N'): edita os lotes do pasto e mantém o número do
+  /// lote. Grava no cache na hora e entra na fila (funciona offline).
+  Future<void> _editarDescricaoLote() async {
+    final pasto = _pasto;
+    if (pasto == null) return;
+    final dao = MapaGadoDao.instance;
+    final descricoes = await dao.descricoesLote(widget.bd);
+    final lotes = await dao.lotesDoPasto(widget.bd, pasto.id);
+    if (!mounted) return;
+    final resultado = await showDialog<NovaDescricaoLote>(
+      context: context,
+      barrierDismissible: false,
+      requestFocus: false,
+      builder: (_) => ComposicaoDescricaoLoteScreen(
+        nomePasto: pasto.descricao,
+        descricaoAtual: pasto.descricaoLote,
+        descricoes: descricoes,
+        edicao: true,
+        lotesAtuais: lotes,
+      ),
+    );
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (resultado == null || !mounted) return; // Voltar
+
+    await MapaGadoSyncService.instance.gravarDescricaoLote(
+      bd: widget.bd,
+      pasto: pasto.id,
+      descricaoLote: resultado.descricao,
+      lotes: resultado.lotes,
+      usuario: widget.usuario,
+      manterNumero: true,
+    );
+    await _carregar();
   }
 
   @override
@@ -397,12 +438,12 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
             ],
           ),
           const SizedBox(height: 10),
-          // Lote: só exibe (a montagem da descrição abre em outra tela,
-          // próxima etapa).
+          // Lote: o toque abre a Composição da Descrição do Lote.
           _campo(
             TextFormField(
               controller: _loteController,
               readOnly: true,
+              onTap: _editarDescricaoLote,
               style: const TextStyle(fontSize: 15),
               decoration: _decoracao('Descrição do Lote'),
             ),

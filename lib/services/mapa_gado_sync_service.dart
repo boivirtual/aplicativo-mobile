@@ -177,6 +177,7 @@ class MapaGadoSyncService {
   Future<void> enviarPendentes(String bd) async {
     if (_enviando) return;
     _enviando = true;
+    var enviou = false;
     try {
       final pendentes = await MapaGadoDao.instance.listarPendentes(bd);
       for (final acao in pendentes) {
@@ -209,6 +210,7 @@ class MapaGadoSyncService {
           break; // tenta de novo depois, mantendo a ordem
         }
         if (r.sucesso) {
+          enviou = true;
           await MapaGadoDao.instance.removerAcao(id);
           // Nova descrição do lote: o servidor devolve o número gerado
           // ("L-0031/26") — grava no cache na hora, sem esperar o próximo
@@ -251,6 +253,25 @@ class MapaGadoSyncService {
       }
     } finally {
       _enviando = false;
+    }
+    // O servidor aceitou alguma ação: busca o resultado de verdade (datas
+    // "há X dia(s)" pela regra das 24h, números de lote etc.) — o cache
+    // local só tinha uma aproximação. Sem await: a tela não espera.
+    if (enviou) _atualizarDepoisDoEnvio(bd);
+  }
+
+  Future<void> _atualizarDepoisDoEnvio(String bd) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final fazendasJson = prefs.getString('userFazendas');
+      if (fazendasJson == null) return;
+      final ids = (json.decode(fazendasJson) as List)
+          .map((f) => int.tryParse((f as Map)['id'].toString()) ?? 0)
+          .where((id) => id > 0)
+          .toList();
+      if (await baixar(bd, ids)) versaoFila.value++;
+    } catch (e) {
+      debugPrint('[MapaGadoSync] atualizar depois do envio: falhou -> $e');
     }
   }
 

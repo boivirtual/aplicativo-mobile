@@ -238,6 +238,7 @@ class _ComposicaoDescricaoLoteScreenState
 
   static const _azulTitulo = Color(0xFF18385F);
   static const _verde = Color(0xFF4CAF50);
+  static const _azulVoltar = Color(0xFF4BBAEB);
   static final Color _corRotulo = Colors.blueGrey.shade800;
 
   @override
@@ -261,11 +262,7 @@ class _ComposicaoDescricaoLoteScreenState
                 const Text(
                   'Composição da Descrição do Lote',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: _azulTitulo,
-                  ),
+                  style: TextStyle(fontSize: 18, color: _azulTitulo),
                 ),
                 const SizedBox(height: 10),
                 _caixaPasto(),
@@ -421,41 +418,42 @@ class _ComposicaoDescricaoLoteScreenState
               ),
             ),
           if (_linhas.isNotEmpty) const SizedBox(height: 10),
-          SizedBox(
-            height: 45,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _verde,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              onPressed: _confirmar,
-              child: const Text(
-                'Confirmar',
-                style: TextStyle(fontSize: 15, color: Colors.white),
-              ),
-            ),
-          ),
-          if (widget.edicao) ...[
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 45,
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _azulTitulo,
-                  side: const BorderSide(color: _azulTitulo),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+          Row(
+            children: [
+              Expanded(child: _botao('Confirmar', _verde, _confirmar)),
+              // Voltar só na edição (toque no campo Descrição do Lote),
+              // com o azul do "Voltar" da Pesagem.
+              if (widget.edicao) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _botao(
+                    'Voltar',
+                    _azulVoltar,
+                    () => Navigator.pop(context),
                   ),
                 ),
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Voltar', style: TextStyle(fontSize: 15)),
-              ),
-            ),
-          ],
+              ],
+            ],
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _botao(String texto, Color cor, VoidCallback aoTocar) {
+    return SizedBox(
+      height: 45,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: cor,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed: aoTocar,
+        child: Text(
+          texto,
+          style: const TextStyle(fontSize: 15, color: Colors.white),
+        ),
       ),
     );
   }

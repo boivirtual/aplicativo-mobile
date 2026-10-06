@@ -185,11 +185,13 @@ class MapaGadoSyncService {
         final payload =
             json.decode(acao['payload_json'] as String) as Map<String, dynamic>;
 
-        final endpoint = tipo == AcaoMapa.transferirTudo
-            ? 'transferir_tudo.php'
-            : tipo == AcaoMapa.descricaoLote
-            ? 'descricao_lote.php'
-            : null;
+        const endpoints = {
+          AcaoMapa.transferirTudo: 'transferir_tudo.php',
+          AcaoMapa.descricaoLote: 'descricao_lote.php',
+          AcaoMapa.transferirCategoria: 'transferir_categoria.php',
+          AcaoMapa.levarDescricaoLote: 'levar_descricao_lote.php',
+        };
+        final endpoint = endpoints[tipo];
         if (endpoint == null) {
           await MapaGadoDao.instance.marcarErro(id, 'Ação desconhecida: $tipo');
           continue;

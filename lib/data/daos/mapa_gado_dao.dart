@@ -398,7 +398,7 @@ class MapaGadoDao {
     final db = await LocalDatabase.instance.database;
     final linhas = await db.query(
       'mapa_animais_pasto_cache',
-      columns: ['pasto_id', 'sexo', 'nascimento'],
+      columns: ['pasto_id', 'numero_item', 'sexo', 'nascimento'],
       where: 'bd = ? AND fazenda_id = ?',
       whereArgs: [bd, fazendaId],
     );
@@ -406,6 +406,7 @@ class MapaGadoDao {
         .map(
           (l) => AnimalPastoMapa(
             pastoId: l['pasto_id'] as int,
+            item: l['numero_item'] as int? ?? 0,
             sexo: l['sexo'] as String?,
             nascimento: l['nascimento'] as String?,
           ),

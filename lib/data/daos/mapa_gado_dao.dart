@@ -540,6 +540,24 @@ class MapaGadoDao {
     );
   }
 
+  /// Número/ano do lote que o servidor gerou para um pasto que estava
+  /// aguardando número (id_lote = 0) — usado no "Levar a Descrição do
+  /// Lote". Não mexe em pasto sem descrição nem em quem já tem número.
+  Future<void> definirNumeroLote({
+    required String bd,
+    required int pastoId,
+    required int idLote,
+    required int anoLote,
+  }) async {
+    final db = await LocalDatabase.instance.database;
+    await db.update(
+      'mapa_pastos_cache',
+      {'id_lote': idLote, 'ano_lote': anoLote},
+      where: "bd = ? AND id = ? AND id_lote = 0 AND descricao_lote <> ''",
+      whereArgs: [bd, pastoId],
+    );
+  }
+
   Future<void> removerAcao(int id) async {
     final db = await LocalDatabase.instance.database;
     await db.delete('mapa_outbox', where: 'id = ?', whereArgs: [id]);

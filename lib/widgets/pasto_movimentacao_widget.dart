@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/daos/mapa_gado_dao.dart';
 import '../screens/composicao_descricao_lote_screen.dart';
 import '../services/mapa_gado_sync_service.dart';
+import '../utils/app_alert.dart';
 import '../utils/mapa_tabuleiro_calculo.dart';
 import '../utils/pasto_movimentacao_calculo.dart';
 import 'seletor_campo_widget.dart';
@@ -15,7 +16,9 @@ import 'seletor_campo_widget.dart';
 /// transferência, descrição do lote e as outras atividades.
 ///
 /// O toque no campo "Descrição do Lote" abre a Composição da Descrição do
-/// Lote em modo de edição (igual ao web). Confirma da transferência e os
+/// Lote em modo de edição (igual ao web). O Confirma transfere os animais
+/// da categoria para o Novo Pasto e abre a Composição da Descrição do Lote
+/// do pasto destino quando o web abre (ver [_confirmarTransferencia]). Os
 /// botões Nutrição/Nascimento/Morte ainda não fazem nada (próximas etapas).
 ///
 /// Lê tudo do cache local (funciona offline).
@@ -60,7 +63,7 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
   int? _kgHa;
   List<LinhaAnimaisPasto> _linhas = [];
   List<PastoMapa> _pastosDestino = [];
-  List<String> _opcoesCategoria = [];
+  List<OpcaoCategoriaSexo> _opcoesCategoria = [];
 
   int? _novoPasto;
   String? _categoria;
@@ -123,7 +126,7 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
       _pastosDestino = pastos
           .where((p) => p.tabuleiro && p.id != widget.pastoId)
           .toList();
-      _opcoesCategoria = PastoMovimentacaoCalculo.opcoesCategoriaSexo(
+      _opcoesCategoria = PastoMovimentacaoCalculo.opcoesTransferencia(
         animaisDoPasto: doPasto,
         categorias: categorias,
       );
@@ -165,6 +168,128 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
       usuario: widget.usuario,
       manterNumero: true,
     );
+    await _carregar();
+  }
+
+  /// Botão Confirma — igual ao web (retirar_por_categoria +
+  /// gravar_retirar_categoria + exibe_opcoes_desc_lote_pasto_destino):
+  ///   1. valida os campos, com as mesmas mensagens;
+  ///   2. pergunta "Mover TODOS os animais..." ou "Mover N animais da
+  ///      Categoria...";
+  ///   3. transfere (cache na hora + fila, funciona offline);
+  ///   4. origem ficou vazia e o destino não tinha descrição: nada mais a
+  ///      fazer (a descrição foi junto — Premissa 1);
+  ///   5. senão abre a Composição da Descrição do Lote do pasto destino:
+  ///      destino sem descrição -> Criar nova / Levar; com descrição ->
+  ///      Manter / Criar nova.
+  Future<void> _confirmarTransferencia() async {
+    final pasto = _pasto;
+    if (pasto == null) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    final opcao = _opcoesCategoria
+        .where((o) => o.rotulo == _categoria)
+        .firstOrNull;
+    final quantidade = int.tryParse(_qtdController.text.trim()) ?? 0;
+    final destino = _pastosDestino.where((p) => p.id == _novoPasto).firstOrNull;
+
+    String? erro;
+    if (opcao == null) {
+      erro = 'Selecione a Qual Categoria.';
+    } else if (quantidade <= 0) {
+      erro = 'Informe a Quantidade para transferir.';
+    } else if (destino == null) {
+      erro = 'Selecione o Novo Pasto.';
+    } else if (pasto.descricaoLote.trim().isEmpty) {
+      erro = 'Informe a Descrição do Lote.';
+    } else if (quantidade > opcao.quantidade) {
+      erro =
+          'A quantidade de animais para transferir da categoria '
+          '${opcao.rotulo} é insuficiente.';
+    }
+    if (erro != null || opcao == null || destino == null) {
+      await AppAlert.erro(context, erro ?? '');
+      return;
+    }
+
+    final todos = quantidade == _total;
+    final ok = await perguntarSimNao(
+      context,
+      titulo: 'Mapa de Gado - Mensagem',
+      mensagem: todos
+          ? 'Mover TODOS os animais do pasto ${pasto.descricao} para o '
+                'pasto ${destino.descricao}?'
+          : 'Mover $quantidade animais da Categoria ${opcao.rotulo} para o '
+                'Pasto ${destino.descricao}?',
+    );
+    if (!ok || !mounted) return;
+
+    final destinoSemDescricaoAntes = destino.descricaoLote.isEmpty;
+
+    await MapaGadoSyncService.instance.transferirCategoria(
+      bd: widget.bd,
+      origem: pasto.id,
+      destino: destino.id,
+      categoria: opcao.categoria,
+      sexo: opcao.sexo,
+      quantidade: quantidade,
+      usuario: widget.usuario,
+    );
+    if (!mounted) return;
+    setState(() {
+      _categoria = null;
+      _novoPasto = null;
+      _qtdController.clear();
+    });
+    await _carregar();
+    if (!mounted) return;
+
+    // Origem ficou vazia e o destino não tinha descrição: pronto.
+    if (todos && destinoSemDescricaoAntes) return;
+
+    // Descrição do destino DEPOIS da transferência (o web usa a que o
+    // servidor devolve).
+    final dao = MapaGadoDao.instance;
+    final destinoAgora = (await dao.pastos(
+      widget.bd,
+      widget.fazendaId,
+      incluirForaTabuleiro: true,
+    )).where((p) => p.id == destino.id).firstOrNull;
+    final descricaoDestino = destinoAgora?.descricaoLote ?? '';
+    final descricoes = await dao.descricoesLote(widget.bd);
+    if (!mounted) return;
+
+    final resultado = await showDialog<NovaDescricaoLote>(
+      context: context,
+      barrierDismissible: false,
+      requestFocus: false,
+      builder: (_) => ComposicaoDescricaoLoteScreen(
+        nomePasto: destino.descricao,
+        descricaoAtual: descricaoDestino,
+        descricoes: descricoes,
+        mostrarManter: descricaoDestino.isNotEmpty,
+        mostrarLevar: descricaoDestino.isEmpty,
+      ),
+    );
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (resultado == null || !mounted) return; // Manter
+
+    if (resultado.levar) {
+      await MapaGadoSyncService.instance.levarDescricaoLote(
+        bd: widget.bd,
+        origem: pasto.id,
+        destino: destino.id,
+        usuario: widget.usuario,
+      );
+    } else {
+      await MapaGadoSyncService.instance.gravarDescricaoLote(
+        bd: widget.bd,
+        pasto: destino.id,
+        descricaoLote: resultado.descricao,
+        lotes: resultado.lotes,
+        usuario: widget.usuario,
+      );
+    }
     await _carregar();
   }
 
@@ -349,6 +474,7 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
     Color cor, {
     double fonte = 18,
     double altura = 54,
+    VoidCallback? aoTocar,
   }) => SizedBox(
     height: altura,
     child: ElevatedButton(
@@ -358,8 +484,8 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
         padding: const EdgeInsets.symmetric(horizontal: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
-      // Funcionalidades: próximas etapas.
-      onPressed: () {},
+      // Sem [aoTocar]: funcionalidade das próximas etapas.
+      onPressed: aoTocar ?? () {},
       child: FittedBox(
         fit: BoxFit.scaleDown,
         child: Text(
@@ -395,7 +521,10 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
                   rotulo: 'Qual Categoria',
                   corRotulo: _corRotulo,
                   valor: _categoria,
-                  opcoes: [for (final c in _opcoesCategoria) MapEntry(c, c)],
+                  opcoes: [
+                    for (final c in _opcoesCategoria)
+                      MapEntry(c.rotulo, c.rotulo),
+                  ],
                   onChanged: (v) => setState(() => _categoria = v),
                 ),
               ),
@@ -433,7 +562,12 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
               const SizedBox(width: 8),
               Expanded(
                 flex: 3,
-                child: _botao('Confirma', _verdeBotao, altura: 56),
+                child: _botao(
+                  'Confirma',
+                  _verdeBotao,
+                  altura: 56,
+                  aoTocar: _confirmarTransferencia,
+                ),
               ),
             ],
           ),

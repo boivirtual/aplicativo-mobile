@@ -7,7 +7,14 @@ import '../widgets/seletor_campo_widget.dart';
 class NovaDescricaoLote {
   final String descricao;
   final List<String> lotes;
-  const NovaDescricaoLote(this.descricao, this.lotes);
+
+  /// Opção "Levar a Descrição do Lote" (do pasto origem para o destino).
+  final bool levar;
+  const NovaDescricaoLote(this.descricao, this.lotes) : levar = false;
+  const NovaDescricaoLote.levar()
+    : descricao = '',
+      lotes = const [],
+      levar = true;
 }
 
 /// Pergunta Sim/Não no padrão das mensagens do mapa no web
@@ -79,7 +86,15 @@ class ComposicaoDescricaoLoteScreen extends StatefulWidget {
     required this.descricoes,
     this.edicao = false,
     this.lotesAtuais = const [],
+    this.mostrarManter = true,
+    this.mostrarLevar = false,
   });
+
+  /// Opções exibidas (igual ao web, exibe_opcoes_desc_lote_pasto_destino):
+  /// destino COM descrição -> Manter + Criar nova; destino SEM descrição
+  /// (transferência parcial da tela do pasto) -> Criar nova + Levar.
+  final bool mostrarManter;
+  final bool mostrarLevar;
 
   @override
   State<ComposicaoDescricaoLoteScreen> createState() =>
@@ -157,6 +172,22 @@ class _ComposicaoDescricaoLoteScreenState
     if (!mounted) return;
     if (ok) {
       Navigator.pop(context);
+    } else {
+      setState(() => _opcao = null);
+    }
+  }
+
+  Future<void> _escolherLevar() async {
+    setState(() => _opcao = 'L');
+    final ok = await perguntarSimNao(
+      context,
+      titulo: 'Composição da Descrição do Lote',
+      mensagem:
+          'Confirma Levar a Descrição do Lote para o Pasto ${widget.nomePasto}',
+    );
+    if (!mounted) return;
+    if (ok) {
+      Navigator.pop(context, const NovaDescricaoLote.levar());
     } else {
       setState(() => _opcao = null);
     }
@@ -268,8 +299,11 @@ class _ComposicaoDescricaoLoteScreenState
                 _caixaPasto(),
                 const SizedBox(height: 10),
                 if (!widget.edicao) ...[
-                  _opcaoLote('M', 'Manter a Descrição do Lote'),
+                  if (widget.mostrarManter)
+                    _opcaoLote('M', 'Manter a Descrição do Lote'),
                   _opcaoLote('N', 'Criar nova Descrição do Lote'),
+                  if (widget.mostrarLevar)
+                    _opcaoLote('L', 'Levar a Descrição do Lote'),
                 ],
                 if (_opcao == 'N') ...[
                   if (_editorAberto) ...[
@@ -343,6 +377,8 @@ class _ComposicaoDescricaoLoteScreenState
         onTap: () {
           if (valor == 'M') {
             _escolherManter();
+          } else if (valor == 'L') {
+            _escolherLevar();
           } else if (_opcao != 'N') {
             setState(() {
               _opcao = 'N';

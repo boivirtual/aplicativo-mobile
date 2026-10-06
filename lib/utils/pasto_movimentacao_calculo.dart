@@ -178,6 +178,22 @@ class PastoMovimentacaoCalculo {
     required List<AnimalPastoMapa> animaisDoPasto,
     required Map<int, CategoriaIdadeMapa> categorias,
     DateTime? hoje,
+  }) => [
+    for (final o in opcoesTransferencia(
+      animaisDoPasto: animaisDoPasto,
+      categorias: categorias,
+      hoje: hoje,
+    ))
+      o.rotulo,
+  ];
+
+  /// As mesmas opções, com o que a transferência precisa: código da
+  /// categoria, sexo ('' nos bezerros) e quantos animais o pasto tem
+  /// (no web isso vai embutido no value do option: "F0030012").
+  static List<OpcaoCategoriaSexo> opcoesTransferencia({
+    required List<AnimalPastoMapa> animaisDoPasto,
+    required Map<int, CategoriaIdadeMapa> categorias,
+    DateTime? hoje,
   }) {
     final dia = hoje ?? DateTime.now();
     final machos = <int, int>{};
@@ -197,14 +213,40 @@ class PastoMovimentacaoCalculo {
       4: '25 a 36 meses',
       5: '> 36 meses',
     };
-    final opcoes = <String>[];
-    if ((femeas[1] ?? 0) + (machos[1] ?? 0) > 0) opcoes.add('00 a 07 meses');
-    for (var c = 2; c <= 5; c++) {
-      if ((machos[c] ?? 0) > 0) opcoes.add('${rotulos[c]} - Macho');
+    final opcoes = <OpcaoCategoriaSexo>[];
+    final bezerros = (femeas[1] ?? 0) + (machos[1] ?? 0);
+    if (bezerros > 0) {
+      opcoes.add(OpcaoCategoriaSexo(1, '', bezerros, '00 a 07 meses'));
     }
     for (var c = 2; c <= 5; c++) {
-      if ((femeas[c] ?? 0) > 0) opcoes.add('${rotulos[c]} - Fêmea');
+      final q = machos[c] ?? 0;
+      if (q > 0) {
+        opcoes.add(OpcaoCategoriaSexo(c, 'M', q, '${rotulos[c]} - Macho'));
+      }
+    }
+    for (var c = 2; c <= 5; c++) {
+      final q = femeas[c] ?? 0;
+      if (q > 0) {
+        opcoes.add(OpcaoCategoriaSexo(c, 'F', q, '${rotulos[c]} - Fêmea'));
+      }
     }
     return opcoes;
   }
+}
+
+/// Uma opção do select "Qual Categoria" da transferência.
+class OpcaoCategoriaSexo {
+  final int categoria;
+
+  /// 'M', 'F' ou '' (bezerros — os dois sexos).
+  final String sexo;
+  final int quantidade;
+  final String rotulo;
+
+  const OpcaoCategoriaSexo(
+    this.categoria,
+    this.sexo,
+    this.quantidade,
+    this.rotulo,
+  );
 }

@@ -15,6 +15,16 @@ class AcaoMapa {
   /// Nova Descrição do Lote num pasto.
   /// payload: {pasto, descricao_lote, lotes[6], usuario, data_hora}
   static const descricaoLote = 'descricao_lote';
+
+  /// Transferir animais de UMA categoria (Confirma da tela do pasto).
+  /// payload: {origem, destino, categoria, sexo ('M', 'F' ou '' =
+  /// bezerros), quantidade, usuario, data_hora}
+  static const transferirCategoria = 'transferir_categoria';
+
+  /// Levar a Descrição do Lote do pasto origem para o destino (depois de
+  /// transferir parte dos animais para um pasto sem descrição).
+  /// payload: {origem, destino, usuario, data_hora}
+  static const levarDescricaoLote = 'levar_descricao_lote';
 }
 
 /// DAO do cache do Mapa de Gado (Tabuleiro) — pastos, animais no pasto,

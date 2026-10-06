@@ -10,6 +10,7 @@ import 'package:boivirtual/data/daos/mapa_gado_dao.dart';
 import 'package:boivirtual/services/connectivity_service.dart';
 import 'package:boivirtual/services/mapa_gado_sync_service.dart';
 import 'package:boivirtual/utils/descricao_lote_composicao.dart';
+import 'package:boivirtual/utils/mapa_tabuleiro_calculo.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

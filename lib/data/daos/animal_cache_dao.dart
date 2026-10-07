@@ -134,10 +134,24 @@ class AnimalCacheDao {
       return _normalizarCodigo(codigo).contains(termoNormalizado);
     }).toList();
 
-    encontrados.sort((a, b) => _parteNumerica(a['codigo']?.toString() ?? '')
-        .compareTo(_parteNumerica(b['codigo']?.toString() ?? '')));
+    encontrados.sort(
+      (a, b) => _parteNumerica(
+        a['codigo']?.toString() ?? '',
+      ).compareTo(_parteNumerica(b['codigo']?.toString() ?? '')),
+    );
 
     return encontrados.take(10).toList();
+  }
+
+  /// Marca o animal como inativo no cadastro local (ex: morte já aceita
+  /// pelo servidor) — ele deixa de aparecer nas buscas por código.
+  Future<void> marcarInativo(int idAnimal) async {
+    if (idAnimal <= 0) return;
+    final db = await LocalDatabase.instance.database;
+    await db.rawUpdate(
+      "UPDATE animais_cache SET ativo = 'N' WHERE CAST(id_animal AS INTEGER) = ?",
+      [idAnimal],
+    );
   }
 
   /// true se o animal é uma fêmea com mais de 12 meses — mesma regra usada
@@ -171,8 +185,11 @@ class AnimalCacheDao {
       return _normalizarCodigo(codigo).contains(termoNormalizado);
     }).toList();
 
-    encontrados.sort((a, b) => _parteNumerica(a['codigo']?.toString() ?? '')
-        .compareTo(_parteNumerica(b['codigo']?.toString() ?? '')));
+    encontrados.sort(
+      (a, b) => _parteNumerica(
+        a['codigo']?.toString() ?? '',
+      ).compareTo(_parteNumerica(b['codigo']?.toString() ?? '')),
+    );
 
     return encontrados.take(10).toList();
   }
@@ -181,9 +198,7 @@ class AnimalCacheDao {
   /// idade — usado pela "Consultar Animais Pesados" (tela inicial de
   /// Pesagem), que precisa achar qualquer animal, não só fêmeas adultas
   /// como a "Consultar Mãe".
-  Future<List<Map<String, dynamic>>> buscarPorCodigoGlobal(
-    String termo,
-  ) async {
+  Future<List<Map<String, dynamic>>> buscarPorCodigoGlobal(String termo) async {
     final db = await LocalDatabase.instance.database;
     final todos = await db.query('animais_cache');
 
@@ -193,8 +208,11 @@ class AnimalCacheDao {
       return _normalizarCodigo(codigo).contains(termoNormalizado);
     }).toList();
 
-    encontrados.sort((a, b) => _parteNumerica(a['codigo']?.toString() ?? '')
-        .compareTo(_parteNumerica(b['codigo']?.toString() ?? '')));
+    encontrados.sort(
+      (a, b) => _parteNumerica(
+        a['codigo']?.toString() ?? '',
+      ).compareTo(_parteNumerica(b['codigo']?.toString() ?? '')),
+    );
 
     return encontrados.take(10).toList();
   }

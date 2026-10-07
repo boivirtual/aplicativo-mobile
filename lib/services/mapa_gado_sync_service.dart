@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../config/api_config.dart';
+import '../data/daos/animal_cache_dao.dart';
 import '../data/daos/mapa_gado_dao.dart';
 import 'connectivity_service.dart';
 
@@ -264,6 +265,14 @@ class MapaGadoSyncService {
                 anoLote: anoLote,
               );
             }
+          }
+          // Morte aceita: o animal fica inativo também no cadastro guardado
+          // no aparelho (some das buscas da Morte e da Pesagem na hora,
+          // sem esperar o próximo download do cadastro).
+          if (tipo == AcaoMapa.morte) {
+            await AnimalCacheDao.instance.marcarInativo(
+              int.tryParse('${payload['animal']}') ?? 0,
+            );
           }
           // Levar a descrição: a origem recebe um número novo (e o destino
           // também, se a origem ainda não tinha número).

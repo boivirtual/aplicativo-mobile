@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/daos/mapa_gado_dao.dart';
 import '../screens/composicao_descricao_lote_screen.dart';
 import '../screens/morte_animal_modal.dart';
+import '../screens/nutricao_pasto_modal.dart';
 import '../services/mapa_gado_sync_service.dart';
 import '../utils/app_alert.dart';
 import '../utils/mapa_tabuleiro_calculo.dart';
@@ -21,7 +22,8 @@ import 'seletor_campo_widget.dart';
 /// da categoria para o Novo Pasto e abre a Composição da Descrição do Lote
 /// do pasto destino quando o web abre (ver [_confirmarTransferencia]). O
 /// botão Morte abre o modal "Mapa de Gado - Morte" ([MorteAnimalModal]).
-/// Nutrição e Nascimento ainda não fazem nada (próximas etapas).
+/// O botão Nutrição abre "Mapa de Gado - Nutrição" ([NutricaoPastoModal]).
+/// Nascimento ainda não faz nada (próxima etapa).
 ///
 /// Lê tudo do cache local (funciona offline).
 class PastoMovimentacaoWidget extends StatefulWidget {
@@ -176,6 +178,26 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
       manterNumero: true,
     );
     await _carregar();
+  }
+
+  /// Botão Nutrição — modal "Mapa de Gado - Nutrição" do web.
+  Future<void> _abrirNutricao() async {
+    final pasto = _pasto;
+    if (pasto == null) return;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => NutricaoPastoModal(
+        bd: widget.bd,
+        fazendaId: widget.fazendaId,
+        nomeFazenda: widget.nomeFazenda,
+        pastoId: pasto.id,
+        nomePasto: pasto.descricao,
+        totalAnimais: _total,
+        usuario: widget.usuario,
+      ),
+    );
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   /// Botão Morte — modal "Mapa de Gado - Morte" do web. Por enquanto só o
@@ -636,7 +658,14 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
         const Divider(indent: 8, endIndent: 8, color: Color(0xFFDDDDDD)),
         Row(
           children: [
-            Expanded(child: _botao('Nutrição', _azulBotao, fonte: 16)),
+            Expanded(
+              child: _botao(
+                'Nutrição',
+                _azulBotao,
+                fonte: 16,
+                aoTocar: _abrirNutricao,
+              ),
+            ),
             const SizedBox(width: 8),
             Expanded(child: _botao('Nascimento', _azulBotao, fonte: 16)),
             const SizedBox(width: 8),

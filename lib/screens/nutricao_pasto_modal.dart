@@ -169,7 +169,10 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
       return;
     }
     if (_data.isAfter(_hoje())) {
-      await AppAlert.erro(context, 'A Data não pode ser maior que a data atual!');
+      await AppAlert.erro(
+        context,
+        'A Data não pode ser maior que a data atual!',
+      );
       return;
     }
 
@@ -322,10 +325,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
                   ),
                 ],
               ),
-              if (_itens.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                _tabela(),
-              ],
+              if (_itens.isNotEmpty) ...[const SizedBox(height: 12), _tabela()],
             ],
           ),
         ),
@@ -440,7 +440,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
 
   // Tabela: Data | Produto | Quantidade | Und | Qtd Animais | Média/Cabeças
   static const _larguras = <int, TableColumnWidth>{
-    0: FixedColumnWidth(58),
+    0: FixedColumnWidth(62),
     1: FlexColumnWidth(),
     2: FixedColumnWidth(50),
     3: FixedColumnWidth(26),

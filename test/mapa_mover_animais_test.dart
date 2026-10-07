@@ -468,6 +468,124 @@ void main() {
     });
   });
 
+  group('nutrição (botão Nutrição da tela do pasto)', () {
+    Map<String, dynamic> doServidor(int id, int pastoId, String data) => {
+      'id': id,
+      'data': data,
+      'local': fazenda,
+      'pasto': pastoId,
+      'produto': 2,
+      'produto_descricao': 'SAL MINERAL',
+      'unidade': 'Kg',
+      'quantidade': 10.0,
+      'qtd_animais': 52,
+      'media_cabeca': 0.0,
+    };
+
+    Future<void> baixar() => MapaGadoDao.instance.salvarNutricoes(
+      bd: bd,
+      fazendas: [fazenda],
+      desde: '2026-09-07',
+      nutricoes: [doServidor(100, 1, '2026-10-07')],
+    );
+
+    Future<void> incluir(double qtd) =>
+        MapaGadoSyncService.instance.incluirNutricao(
+          bd: bd,
+          fazenda: fazenda,
+          pasto: 1,
+          data: '2026-10-07',
+          produto: 3,
+          produtoDescricao: 'PROTEICO',
+          unidade: 'Kg',
+          quantidade: qtd,
+          qtdAnimais: 5,
+          cocho: 6,
+          usuario: 'Teste',
+        );
+
+    Future<List<String>> tabela() async => [
+      for (final n in await MapaGadoDao.instance.nutricoesDoPasto(
+        bd,
+        1,
+        '2026-10-07',
+      ))
+        '${n['produto']}|${n['quantidade']}|${n['qtd_animais']}|${n['id']}',
+    ];
+
+    test('incluir aparece na tabela na hora e sobrevive ao download', () async {
+      await baixar();
+      await incluir(12.5);
+      expect(await tabela(), ['SAL MINERAL|10.0|52|100', 'PROTEICO|12.5|5|0']);
+      expect(await MapaGadoDao.instance.contar(bd, 'pendente'), 1);
+
+      await baixar(); // servidor ainda sem a inclusão
+      expect(await tabela(), ['SAL MINERAL|10.0|52|100', 'PROTEICO|12.5|5|0']);
+    });
+
+    test('excluir uma inclusão ainda não enviada só tira da fila', () async {
+      await baixar();
+      await incluir(7);
+      final linha = (await MapaGadoDao.instance.nutricoesDoPasto(
+        bd,
+        1,
+        '2026-10-07',
+      )).last;
+      await MapaGadoSyncService.instance.excluirNutricao(
+        bd: bd,
+        chave: linha['chave'] as String,
+        id: linha['id'] as int,
+        usuario: 'Teste',
+      );
+      expect(await tabela(), ['SAL MINERAL|10.0|52|100']);
+      expect(await MapaGadoDao.instance.contar(bd, 'pendente'), 0);
+    });
+
+    test('excluir uma nutrição do servidor entra na fila e não volta no '
+        'download', () async {
+      await baixar();
+      await MapaGadoSyncService.instance.excluirNutricao(
+        bd: bd,
+        chave: 's100',
+        id: 100,
+        usuario: 'Teste',
+      );
+      expect(await tabela(), isEmpty);
+      expect(await MapaGadoDao.instance.contar(bd, 'pendente'), 1);
+      await baixar();
+      expect(await tabela(), isEmpty);
+    });
+
+    test('servidor confirma a inclusão: a linha ganha o id; listas do '
+        'tabuleiro', () async {
+      await incluir(3);
+      final chave =
+          (await MapaGadoDao.instance.nutricoesDoPasto(
+                bd,
+                1,
+                '2026-10-07',
+              )).single['chave']
+              as String;
+      await MapaGadoDao.instance.definirIdNutricao(bd, chave, 12089);
+      expect(await tabela(), ['PROTEICO|3.0|5|12089']);
+
+      await MapaGadoDao.instance.salvarExtras(
+        bd: bd,
+        scoresCocho: const [
+          {'id': 6, 'descricao': 'Iniciando Nutrição para este grupo'},
+        ],
+        produtosNutricao: const [
+          {'id': 2, 'descricao': 'SAL MINERAL', 'unidade': 'Kg'},
+        ],
+      );
+      expect((await MapaGadoDao.instance.scoresCocho(bd)).single.key, 6);
+      expect(
+        (await MapaGadoDao.instance.produtosNutricao(bd)).single['unidade'],
+        'Kg',
+      );
+    });
+  });
+
   group('montagem da Descrição do Lote (igual ao web)', () {
     test('linhas e descrição completa', () {
       expect(

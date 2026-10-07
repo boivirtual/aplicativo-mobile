@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -68,6 +70,11 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
   bool _gravando = false;
   int _buscaAtual = 0;
 
+  // "Cód X não encontrado!" — mesmo aviso vermelho da Pesagem, depois de
+  // 800 ms sem digitar (para não avisar com o número pela metade).
+  Timer? _esperaNaoEncontrado;
+  OverlayEntry? _avisoNaoEncontrado;
+
   static DateTime _hoje() {
     final a = DateTime.now();
     return DateTime(a.year, a.month, a.day);
@@ -81,6 +88,8 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
 
   @override
   void dispose() {
+    _esperaNaoEncontrado?.cancel();
+    _avisoNaoEncontrado?.remove();
     _animalController.dispose();
     _animalFoco.dispose();
     _obsController.dispose();
@@ -116,6 +125,7 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
 
   Future<void> _aoDigitarAnimal(String termo) async {
     final busca = ++_buscaAtual;
+    _esperaNaoEncontrado?.cancel();
     // Mexeu no número: o animal precisa ser escolhido de novo.
     setState(() {
       _animal = null;
@@ -144,6 +154,95 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
           .take(6)
           .toList();
     });
+    if (_sugestoes.isEmpty) {
+      _esperaNaoEncontrado = Timer(const Duration(milliseconds: 800), () {
+        if (!mounted || busca != _buscaAtual) return;
+        _animalController.clear();
+        _mostrarNaoEncontrado('Cód ${termo.trim()} não encontrado!');
+      });
+    }
+  }
+
+  /// Aviso vermelho no padrão da Pesagem (pesagem_itens_screen.dart): fica
+  /// na tela até tocar em FECHAR e devolve o foco ao Nº Animal.
+  void _mostrarNaoEncontrado(String mensagem) {
+    _fecharNaoEncontrado(focar: false);
+    FocusManager.instance.primaryFocus?.unfocus();
+    _avisoNaoEncontrado = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).size.height * 0.35,
+        left: 30,
+        right: 30,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(20, 25, 10, 10),
+            decoration: BoxDecoration(
+              color: Colors.red[900]!.withValues(alpha: 0.95),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: Text(
+                        mensagem,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 15),
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: TextButton(
+                    onPressed: _fecharNaoEncontrado,
+                    child: const Text(
+                      'FECHAR',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    Overlay.of(context, rootOverlay: true).insert(_avisoNaoEncontrado!);
+  }
+
+  void _fecharNaoEncontrado({bool focar = true}) {
+    _avisoNaoEncontrado?.remove();
+    _avisoNaoEncontrado = null;
+    if (focar && mounted) {
+      Future.delayed(const Duration(milliseconds: 150), () {
+        if (mounted && _animalFoco.canRequestFocus) _animalFoco.requestFocus();
+      });
+    }
   }
 
   Future<void> _escolherAnimal(Map<String, dynamic> animal) async {

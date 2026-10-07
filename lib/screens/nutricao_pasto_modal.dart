@@ -253,14 +253,25 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
               const SizedBox(height: 10),
               _tarja(),
               const SizedBox(height: 10),
-              SeletorCampoWidget<int>(
-                rotulo: '* Situação do Cocho',
-                corRotulo: _corRotulo,
-                valor: _cocho,
-                opcoes: _cochos,
-                onChanged: (v) => setState(() => _cocho = v),
+              // Linha 1: Situação do Cocho | Data
+              Row(
+                children: [
+                  Expanded(
+                    flex: 5,
+                    child: SeletorCampoWidget<int>(
+                      rotulo: '* Situação do Cocho',
+                      corRotulo: _corRotulo,
+                      valor: _cocho,
+                      opcoes: _cochos,
+                      onChanged: (v) => setState(() => _cocho = v),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(flex: 4, child: _campoData()),
+                ],
               ),
               const SizedBox(height: 8),
+              // Linha 2: Produto (mesma largura da Situação) | Qtde | Und
               Row(
                 children: [
                   Expanded(
@@ -277,30 +288,35 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Expanded(flex: 3, child: _campoData()),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
                   Expanded(
-                    flex: 5,
-                    child: _caixa(
-                      child: TextField(
-                        controller: _qtdController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
+                    flex: 4,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 11,
+                          child: _caixa(
+                            child: TextField(
+                              controller: _qtdController,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'[0-9.,]'),
+                                ),
+                              ],
+                              style: const TextStyle(fontSize: 15),
+                              decoration: _decoracao('* Qtde'),
+                            ),
+                          ),
                         ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-                        ],
-                        style: const TextStyle(fontSize: 15),
-                        decoration: _decoracao('* Quantidade'),
-                      ),
+                        const SizedBox(width: 6),
+                        // Und vem do produto — não é digitável.
+                        Expanded(flex: 8, child: _campoFixo('Und', _unidade)),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(flex: 3, child: _campoFixo('Und', _unidade)),
                 ],
               ),
               const SizedBox(height: 10),
@@ -440,13 +456,13 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
 
   // Tabela: Data | Produto | Quantidade | Und | Qtd Animais | Média/Cabeças
   static const _larguras = <int, TableColumnWidth>{
-    0: FixedColumnWidth(62),
+    0: FixedColumnWidth(54),
     1: FlexColumnWidth(),
-    2: FixedColumnWidth(50),
-    3: FixedColumnWidth(26),
-    4: FixedColumnWidth(44),
-    5: FixedColumnWidth(48),
-    6: FixedColumnWidth(30),
+    2: FixedColumnWidth(44),
+    3: FixedColumnWidth(22),
+    4: FixedColumnWidth(38),
+    5: FixedColumnWidth(42),
+    6: FixedColumnWidth(26),
   };
 
   Widget _tabela() {
@@ -456,18 +472,27 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
         t,
         textAlign: alinhamento,
         style: const TextStyle(
-          fontSize: 10,
+          fontSize: 9,
           color: Color(0xFF5B8A72),
           fontWeight: FontWeight.bold,
         ),
       ),
     );
-    Widget cel(String t, {TextAlign alinhamento = TextAlign.left}) => Padding(
+    // Fonte pequena e sem quebra de linha (só o Produto pode usar duas
+    // linhas, se o nome for comprido).
+    Widget cel(
+      String t, {
+      TextAlign alinhamento = TextAlign.left,
+      bool quebra = false,
+    }) => Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
       child: Text(
         t,
         textAlign: alinhamento,
-        style: const TextStyle(fontSize: 11, color: Color(0xFF444444)),
+        softWrap: quebra,
+        maxLines: quebra ? 2 : 1,
+        overflow: quebra ? TextOverflow.ellipsis : TextOverflow.visible,
+        style: const TextStyle(fontSize: 9.5, color: Color(0xFF444444)),
       ),
     );
 
@@ -490,8 +515,9 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
               cab('Produto'),
               cab('Quant.', alinhamento: TextAlign.right),
               cab('Und', alinhamento: TextAlign.center),
-              cab('Qtd Animais', alinhamento: TextAlign.center),
-              cab('Média/ Cabeças', alinhamento: TextAlign.right),
+              cab('Qtd\nAnimais', alinhamento: TextAlign.center),
+              cab('Média/
+Cabeças', alinhamento: TextAlign.right),
               const SizedBox.shrink(),
             ],
           ),
@@ -502,7 +528,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
               ),
               children: [
                 cel(_br(DateTime.tryParse('${item['data']}') ?? _data)),
-                cel('${item['produto'] ?? ''}'),
+                cel('${item['produto'] ?? ''}', quebra: true),
                 cel(
                   _decimal((item['quantidade'] as num?) ?? 0),
                   alinhamento: TextAlign.right,
@@ -522,7 +548,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
                     padding: EdgeInsets.symmetric(vertical: 6),
                     child: Icon(
                       Icons.delete_outline,
-                      size: 20,
+                      size: 18,
                       color: Color(0xFF128CB8),
                     ),
                   ),

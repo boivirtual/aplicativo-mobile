@@ -82,4 +82,43 @@ void main() {
     );
     expect(semResultado, isEmpty);
   });
+
+  test('download completo remove do aparelho os animais que saíram do '
+      'servidor; morte aceita inativa o animal na hora', () async {
+    Map<String, dynamic> animal(String id, String codigo) => {
+      'id': id,
+      'fazendaId': '57',
+      'codigo': codigo,
+      'sexo': 'F',
+      'nascimento': '2022-01-15',
+      'ativo': 'S',
+    };
+    Future<List<String>> codigos() async => [
+      for (final a in await AnimalCacheDao.instance.buscarPorCodigo('57', '105'))
+        a['codigo'].toString(),
+    ];
+
+    await AnimalCacheDao.instance.salvarLote([
+      animal('000006612', 'B-000001053'),
+      animal('000006613', 'B-000001054'),
+    ]);
+    expect(await codigos(), ['B-000001053', 'B-000001054']);
+
+    // Morte aceita pelo servidor: some da busca sem esperar o download.
+    await AnimalCacheDao.instance.marcarInativo(6612);
+    expect(await codigos(), ['B-000001054']);
+
+    // Próximo download completo já não traz o 1054 (vendido/baixado).
+    await Future.delayed(const Duration(milliseconds: 5));
+    await AnimalCacheDao.instance.salvarLote([
+      animal('000006614', 'B-000001055'),
+    ], removerAusentes: true);
+    expect(await codigos(), ['B-000001055']);
+    expect(await AnimalCacheDao.instance.contarTotal(), 1);
+
+    // Lote vazio (falha do servidor) não apaga o cadastro.
+    await AnimalCacheDao.instance.salvarLote([], removerAusentes: true);
+    expect(await AnimalCacheDao.instance.contarTotal(), 1);
+  });
 }
+

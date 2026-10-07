@@ -13,7 +13,17 @@ class AnimalCacheDao {
   /// própria fazenda (`fazendaId`/`fazendaNome`, ver
   /// AnimalDao::getAnimaisAtivosPorFazendaExport no servidor), não faz mais
   /// sentido receber uma fazenda fixa aqui pra todo o lote.
-  Future<void> salvarLote(List<Map<String, dynamic>> animais) async {
+  ///
+  /// [removerAusentes]: o lote é o cadastro COMPLETO do servidor — apaga do
+  /// aparelho os animais que não vieram nele (morreram, foram vendidos ou
+  /// excluídos e por isso saíram da exportação). Sem isso eles ficavam
+  /// para sempre no cache como ativos e continuavam aparecendo nas buscas
+  /// (caso real: B-1053 depois da morte). Não apaga nada se o lote vier
+  /// vazio.
+  Future<void> salvarLote(
+    List<Map<String, dynamic>> animais, {
+    bool removerAusentes = false,
+  }) async {
     final db = await LocalDatabase.instance.database;
     final agora = DateTime.now().toIso8601String();
     final batch = db.batch();
@@ -35,6 +45,13 @@ class AnimalCacheDao {
         'ativo': a['ativo']?.toString(),
         'atualizado_em': agora,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+    if (removerAusentes && animais.isNotEmpty) {
+      batch.delete(
+        'animais_cache',
+        where: 'atualizado_em <> ?',
+        whereArgs: [agora],
+      );
     }
     await batch.commit(noResult: true);
   }

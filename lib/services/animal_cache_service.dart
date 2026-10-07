@@ -73,7 +73,10 @@ class AnimalCacheService {
           final animais = (data['animais'] as List)
               .map((e) => e as Map<String, dynamic>)
               .toList();
-          await AnimalCacheDao.instance.salvarLote(animais);
+          await AnimalCacheDao.instance.salvarLote(
+            animais,
+            removerAusentes: true,
+          );
           // Só marca como "feito nesta sessão" em caso de sucesso de
           // verdade — se falhar (sem internet, timeout, erro do servidor),
           // a próxima chamada tenta de novo em vez de ficar presa sem

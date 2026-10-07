@@ -155,6 +155,42 @@ class MapaGadoSyncService {
     _depoisDeRegistrar(bd);
   }
 
+  /// Morte de um animal no [pasto] (botão Morte da tela do pasto, controle
+  /// de estoque por animal). [nascimento] e [dataMorte] em Y-m-d.
+  Future<void> registrarMorte({
+    required String bd,
+    required int fazenda,
+    required int pasto,
+    required int animal,
+    required String codigo,
+    required String sexo,
+    required String nascimento,
+    required int motivo,
+    required String dataMorte,
+    required String observacao,
+    required String? usuario,
+  }) async {
+    await MapaGadoDao.instance.registrarAcao(
+      bd: bd,
+      uuid: _uuid.v4(),
+      tipo: AcaoMapa.morte,
+      payload: {
+        'fazenda': fazenda,
+        'pasto': pasto,
+        'animal': animal,
+        'codigo': codigo,
+        'sexo': sexo,
+        'nascimento': nascimento,
+        'motivo': motivo,
+        'data_morte': dataMorte,
+        'observacao': observacao,
+        'usuario': usuario ?? '',
+        'data_hora': _agora(),
+      },
+    );
+    _depoisDeRegistrar(bd);
+  }
+
   void _depoisDeRegistrar(String bd) {
     versaoFila.value++;
     if (ConnectivityService.instance.temInternetReal) {
@@ -191,6 +227,7 @@ class MapaGadoSyncService {
           AcaoMapa.descricaoLote: 'descricao_lote.php',
           AcaoMapa.transferirCategoria: 'transferir_categoria.php',
           AcaoMapa.levarDescricaoLote: 'levar_descricao_lote.php',
+          AcaoMapa.morte: 'morte.php',
         };
         final endpoint = endpoints[tipo];
         if (endpoint == null) {
@@ -342,6 +379,12 @@ class MapaGadoSyncService {
         pastos: lista('pastos'),
         animais: lista('animais'),
         pesosMedios: lista('pesos_medios'),
+      );
+      await MapaGadoDao.instance.salvarExtras(
+        bd: bd,
+        controleEstoque: data['controle_estoque']?.toString(),
+        motivosMorte: data['motivos_morte'] as List?,
+        animaisEstacaoMonta: data['animais_estacao_monta'] as List?,
       );
       await _baixarSatelite(bd, ids);
       return true;

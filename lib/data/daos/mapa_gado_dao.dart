@@ -25,6 +25,25 @@ class AcaoMapa {
   /// transferir parte dos animais para um pasto sem descrição).
   /// payload: {origem, destino, usuario, data_hora}
   static const levarDescricaoLote = 'levar_descricao_lote';
+
+  /// Morte de um animal (botão Morte da tela do pasto).
+  /// payload: {fazenda, pasto, animal (id), codigo, sexo, nascimento
+  /// (Y-m-d), motivo, data_morte (Y-m-d), observacao, usuario, data_hora}
+  static const morte = 'morte';
+}
+
+/// Qual registro do pasto sai com a morte de um animal (ou o erro).
+class _PlanoMorte {
+  final int? excluir;
+  final int? trocarItem;
+  final String? trocarNascimento;
+  final String? erro;
+  const _PlanoMorte({
+    this.excluir,
+    this.trocarItem,
+    this.trocarNascimento,
+    this.erro,
+  });
 }
 
 /// DAO do cache do Mapa de Gado (Tabuleiro) — pastos, animais no pasto,
@@ -557,6 +576,286 @@ class MapaGadoDao {
     );
   }
 
+  // ---------------------------------------------------------------------
+  // Extras baixados com o tabuleiro (botão Morte)
+  // ---------------------------------------------------------------------
+
+  /// Motivos de morte, animais em estação de monta e tipo de controle de
+  /// estoque — só grava o que o servidor mandou (servidor antigo não manda
+  /// nada e o que já estava no aparelho continua valendo).
+  Future<void> salvarExtras({
+    required String bd,
+    String? controleEstoque,
+    List<dynamic>? motivosMorte,
+    List<dynamic>? animaisEstacaoMonta,
+  }) async {
+    final db = await LocalDatabase.instance.database;
+    Future<void> gravar(String chave, Object? valor) async {
+      if (valor == null) return;
+      await db.insert('mapa_extras_cache', {
+        'bd': bd,
+        'chave': chave,
+        'valor': json.encode(valor),
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+
+    await gravar('controle_estoque', controleEstoque);
+    await gravar('motivos_morte', motivosMorte);
+    await gravar('animais_estacao_monta', animaisEstacaoMonta);
+  }
+
+  Future<dynamic> _extra(String bd, String chave) async {
+    final db = await LocalDatabase.instance.database;
+    final l = await db.query(
+      'mapa_extras_cache',
+      columns: ['valor'],
+      where: 'bd = ? AND chave = ?',
+      whereArgs: [bd, chave],
+      limit: 1,
+    );
+    if (l.isEmpty || l.first['valor'] == null) return null;
+    try {
+      return json.decode(l.first['valor'] as String);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// 'I' (por animal), 'L' (por lote) ou null se ainda não foi baixado.
+  Future<String?> controleEstoque(String bd) async =>
+      (await _extra(bd, 'controle_estoque'))?.toString();
+
+  /// Opções do select "Motivo da Morte" (código, descrição).
+  Future<List<MapEntry<int, String>>> motivosMorte(String bd) async {
+    final lista = await _extra(bd, 'motivos_morte');
+    if (lista is! List) return const [];
+    return [
+      for (final m in lista)
+        if (m is Map)
+          MapEntry(_int(m['id']), (m['descricao'] ?? '').toString()),
+    ];
+  }
+
+  /// O animal está em Estação de Monta? (aviso do web ao informar o Nº)
+  Future<bool> animalEmEstacaoMonta(String bd, int idAnimal) async {
+    final lista = await _extra(bd, 'animais_estacao_monta');
+    return lista is List && lista.any((e) => _int(e) == idAnimal);
+  }
+
+  // ---------------------------------------------------------------------
+  // Morte de um animal — regra local (igual à do servidor)
+  // ---------------------------------------------------------------------
+
+  /// Confere, no cache, se a morte pode ser gravada nesse pasto — mesmas
+  /// mensagens de gravar_morte.php. null = pode.
+  Future<String?> validarMorte({
+    required String bd,
+    required int fazenda,
+    required int pasto,
+    required String sexo,
+    required String nascimento,
+    DateTime? hoje,
+  }) async {
+    final db = await LocalDatabase.instance.database;
+    final plano = await _planoDaMorte(
+      db,
+      bd: bd,
+      fazenda: fazenda,
+      pasto: pasto,
+      sexo: sexo,
+      nascimento: nascimento,
+      dia: hoje ?? DateTime.now(),
+    );
+    return plano.erro;
+  }
+
+  /// Decide qual registro do pasto sai com a morte do animal:
+  ///   - um registro do pasto com o mesmo sexo e nascimento; senão
+  ///   - o registro mais recente do pasto com o mesmo sexo e categoria,
+  ///     trocando a data de nascimento com um registro de outro pasto da
+  ///     fazenda que tenha o nascimento do animal.
+  Future<_PlanoMorte> _planoDaMorte(
+    DatabaseExecutor txn, {
+    required String bd,
+    required int fazenda,
+    required int pasto,
+    required String sexo,
+    required String nascimento,
+    required DateTime dia,
+  }) async {
+    final nasc = nascimento.length >= 10
+        ? nascimento.substring(0, 10)
+        : nascimento;
+    final doPasto = await txn.query(
+      'mapa_animais_pasto_cache',
+      columns: ['numero_item', 'sexo', 'nascimento'],
+      where: 'bd = ? AND pasto_id = ? AND sexo = ?',
+      whereArgs: [bd, pasto, sexo],
+      orderBy: 'numero_item DESC',
+    );
+    String data(Object? v) {
+      final s = (v ?? '').toString();
+      return s.length >= 10 ? s.substring(0, 10) : s;
+    }
+
+    for (final a in doPasto) {
+      if (data(a['nascimento']) == nasc) {
+        return _PlanoMorte(excluir: a['numero_item'] as int);
+      }
+    }
+
+    // Categoria (faixa de idade) do animal na data da ação.
+    final faixas = await txn.query(
+      'mapa_categorias_cache',
+      columns: ['id', 'idade_de', 'idade_ate'],
+      where: 'bd = ?',
+      whereArgs: [bd],
+    );
+    int? categoriaDe(String? nascimentoRegistro) {
+      final meses = MapaTabuleiroCalculo.idadeEmMeses(nascimentoRegistro, dia);
+      int? codigo;
+      for (final f in faixas) {
+        if (meses >= (f['idade_de'] as int) &&
+            meses <= (f['idade_ate'] as int)) {
+          codigo = f['id'] as int;
+        }
+      }
+      return codigo;
+    }
+
+    const rotulos = {
+      1: '00 a 07 meses',
+      2: '08 a 12 meses',
+      3: '13 a 24 meses',
+      4: '25 a 36 meses',
+      5: '> 36 meses',
+    };
+    final categoria = categoriaDe(nasc);
+    final descCategoria = rotulos[categoria] ?? '';
+
+    Map<String, Object?>? atual;
+    for (final a in doPasto) {
+      if (categoriaDe(a['nascimento'] as String?) == categoria) {
+        atual = a;
+        break;
+      }
+    }
+    if (atual == null) {
+      return _PlanoMorte(
+        erro:
+            'Não existe animais com o sexo $sexo, categoria $descCategoria '
+            'no pasto.',
+      );
+    }
+
+    final outros = await txn.query(
+      'mapa_animais_pasto_cache',
+      columns: ['numero_item', 'pasto_id', 'nascimento'],
+      where: 'bd = ? AND fazenda_id = ? AND sexo = ? AND nascimento LIKE ?',
+      whereArgs: [bd, fazenda, sexo, '$nasc%'],
+      orderBy: 'numero_item DESC',
+      limit: 1,
+    );
+    if (outros.isEmpty) {
+      return _PlanoMorte(
+        erro:
+            'Não existe animais com o sexo $sexo, categoria $descCategoria, '
+            'nascimento $nasc em outros pastos.',
+      );
+    }
+    return _PlanoMorte(
+      excluir: atual['numero_item'] as int,
+      trocarItem: outros.first['numero_item'] as int,
+      trocarNascimento: atual['nascimento'] as String?,
+    );
+  }
+
+  /// Aplica a morte no cache: tira o registro do pasto (com a troca de
+  /// nascimento, se precisar), limpa a Descrição do Lote se o pasto ficou
+  /// vazio. (O cadastro de animais não é alterado aqui: a busca da tela
+  /// de Morte esconde os animais com morte pendente — ver
+  /// [animaisComMortePendente].)
+  Future<void> _aplicarMorte(
+    DatabaseExecutor txn,
+    String bd,
+    Map<String, dynamic> payload,
+  ) async {
+    final fazenda = _int(payload['fazenda']);
+    final pasto = _int(payload['pasto']);
+    final dataHora = (payload['data_hora'] ?? '').toString();
+    final dia =
+        DateTime.tryParse(dataHora.replaceFirst(' ', 'T')) ?? DateTime.now();
+
+    final plano = await _planoDaMorte(
+      txn,
+      bd: bd,
+      fazenda: fazenda,
+      pasto: pasto,
+      sexo: (payload['sexo'] ?? '').toString(),
+      nascimento: (payload['nascimento'] ?? '').toString(),
+      dia: dia,
+    );
+    final excluir = plano.excluir;
+    if (excluir != null) {
+      if (plano.trocarItem != null) {
+        await txn.update(
+          'mapa_animais_pasto_cache',
+          {'nascimento': plano.trocarNascimento},
+          where: 'bd = ? AND fazenda_id = ? AND numero_item = ?',
+          whereArgs: [bd, fazenda, plano.trocarItem],
+        );
+      }
+      await txn.delete(
+        'mapa_animais_pasto_cache',
+        where: 'bd = ? AND pasto_id = ? AND numero_item = ?',
+        whereArgs: [bd, pasto, excluir],
+      );
+
+      final restantes =
+          Sqflite.firstIntValue(
+            await txn.rawQuery(
+              'SELECT COUNT(*) FROM mapa_animais_pasto_cache WHERE bd = ? AND pasto_id = ?',
+              [bd, pasto],
+            ),
+          ) ??
+          0;
+      if (restantes == 0) {
+        await txn.update(
+          'mapa_pastos_cache',
+          {
+            'descricao_lote': '',
+            'lotes_json': json.encode(List.filled(6, '')),
+            'id_lote': 0,
+            'ano_lote': 0,
+            if (dataHora.isNotEmpty) 'data_sem_animais': dataHora,
+          },
+          where: 'bd = ? AND id = ?',
+          whereArgs: [bd, pasto],
+        );
+      }
+    }
+  }
+
+  /// Animais com morte ainda na fila (não enviada ou recusada) — a busca
+  /// do Nº Animal não pode oferecer de novo.
+  Future<Set<int>> animaisComMortePendente(String bd) async {
+    final db = await LocalDatabase.instance.database;
+    final linhas = await db.query(
+      'mapa_outbox',
+      columns: ['payload_json'],
+      where: 'bd = ? AND tipo = ?',
+      whereArgs: [bd, AcaoMapa.morte],
+    );
+    final ids = <int>{};
+    for (final l in linhas) {
+      try {
+        final p = json.decode(l['payload_json'] as String) as Map;
+        ids.add(_int(p['animal']));
+      } catch (_) {}
+    }
+    return ids;
+  }
+
   Future<void> removerAcao(int id) async {
     final db = await LocalDatabase.instance.database;
     await db.delete('mapa_outbox', where: 'id = ?', whereArgs: [id]);
@@ -597,7 +896,9 @@ class MapaGadoDao {
     String tipo,
     Map<String, dynamic> payload,
   ) async {
-    if (tipo == AcaoMapa.transferirTudo) {
+    if (tipo == AcaoMapa.morte) {
+      await _aplicarMorte(txn, bd, payload);
+    } else if (tipo == AcaoMapa.transferirTudo) {
       await _aplicarTransferencia(
         txn,
         bd,

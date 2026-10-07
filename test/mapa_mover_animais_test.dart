@@ -318,6 +318,156 @@ void main() {
     });
   });
 
+  group('morte de um animal (botão Morte, controle por animal)', () {
+    // Pasto 1 (VACAS, L-23/26): fêmeas nascidas em 2020-01-01 (item 1) e
+    // 2020-02-01 (item 2). Pasto 4 (TOUROS): fêmea de 2019-05-05 (item 9).
+    Map<String, dynamic> an(int item, int pasto, String nasc) => {
+      'local': fazenda,
+      'item': item,
+      'pasto': pasto,
+      'sexo': 'F',
+      'nascimento': nasc,
+    };
+
+    Future<void> preparar() => MapaGadoDao.instance.salvarDoServidor(
+      bd: bd,
+      fazendasConsultadas: [fazenda],
+      categorias: const [
+        {'id': 3, 'de': 13, 'ate': 24},
+        {'id': 5, 'de': 37, 'ate': 999999999},
+      ],
+      descricoesLote: const [],
+      pastos: [
+        {...pasto(1, 1, 'VACAS '), 'id_lote': 23, 'ano_lote': 2026},
+        pasto(4, 4, 'TOUROS '),
+      ],
+      animais: [
+        an(1, 1, '2020-01-01'),
+        an(2, 1, '2020-02-01'),
+        an(9, 4, '2019-05-05'),
+      ],
+    );
+
+    Future<void> morte(int animal, String nascimento, {int pastoId = 1}) =>
+        MapaGadoSyncService.instance.registrarMorte(
+          bd: bd,
+          fazenda: fazenda,
+          pasto: pastoId,
+          animal: animal,
+          codigo: 'B-00000$animal',
+          sexo: 'F',
+          nascimento: nascimento,
+          motivo: 4,
+          dataMorte: '2026-10-07',
+          observacao: 'TESTE',
+          usuario: 'Teste',
+        );
+
+    Future<List<String?>> nascimentos(int pastoId) async =>
+        (await MapaGadoDao.instance.animais(bd, fazenda))
+            .where((a) => a.pastoId == pastoId)
+            .map((a) => a.nascimento)
+            .toList()
+          ..sort();
+
+    test('nascimento igual ao de um registro do pasto: sai esse registro',
+        () async {
+      await preparar();
+      await morte(500, '2020-02-01');
+      expect(await nascimentos(1), ['2020-01-01']);
+      expect(await nascimentos(4), ['2019-05-05']);
+      expect(await MapaGadoDao.instance.contar(bd, 'pendente'), 1);
+      expect(await MapaGadoDao.instance.animaisComMortePendente(bd), {500});
+    });
+
+    test('nascimento só existe em outro pasto: troca as datas e baixa do '
+        'pasto da tela', () async {
+      await preparar();
+      // animal de 2019-05-05 (categoria > 36 meses) morrendo no pasto 1
+      await morte(501, '2019-05-05');
+      // saiu o registro mais recente da categoria no pasto 1 (item 2)...
+      expect(await nascimentos(1), ['2020-01-01']);
+      // ...e o registro do pasto 4 ficou com a data que era dele
+      expect(await nascimentos(4), ['2020-02-01']);
+    });
+
+    test('pasto sem animal desse sexo/categoria: mesma mensagem do web',
+        () async {
+      await preparar();
+      expect(
+        await MapaGadoDao.instance.validarMorte(
+          bd: bd,
+          fazenda: fazenda,
+          pasto: 1,
+          sexo: 'M',
+          nascimento: '2020-01-01',
+          hoje: DateTime(2026, 10, 7),
+        ),
+        'Não existe animais com o sexo M, categoria > 36 meses no pasto.',
+      );
+      expect(
+        await MapaGadoDao.instance.validarMorte(
+          bd: bd,
+          fazenda: fazenda,
+          pasto: 1,
+          sexo: 'F',
+          nascimento: '2018-03-03',
+          hoje: DateTime(2026, 10, 7),
+        ),
+        'Não existe animais com o sexo F, categoria > 36 meses, '
+        'nascimento 2018-03-03 em outros pastos.',
+      );
+      expect(
+        await MapaGadoDao.instance.validarMorte(
+          bd: bd,
+          fazenda: fazenda,
+          pasto: 1,
+          sexo: 'F',
+          nascimento: '2020-01-01',
+          hoje: DateTime(2026, 10, 7),
+        ),
+        isNull,
+      );
+    });
+
+    test('pasto fica vazio: limpa a Descrição do Lote; download não desfaz',
+        () async {
+      await preparar();
+      await morte(502, '2019-05-05', pastoId: 4);
+      var p = {
+        for (final x in await MapaGadoDao.instance.pastos(bd, fazenda)) x.id: x,
+      };
+      expect(await nascimentos(4), isEmpty);
+      expect(p[4]!.descricaoLote, '');
+      expect(p[1]!.descricaoLote, 'VACAS ');
+
+      await preparar(); // servidor ainda com o estado antigo
+      expect(await nascimentos(4), isEmpty);
+    });
+
+    test('extras do tabuleiro: motivos, estação de monta e controle', () async {
+      await MapaGadoDao.instance.salvarExtras(
+        bd: bd,
+        controleEstoque: 'I',
+        motivosMorte: const [
+          {'id': 1, 'descricao': 'Acidente'},
+          {'id': 4, 'descricao': 'Desconhecida'},
+        ],
+        animaisEstacaoMonta: const [618, 908],
+      );
+      expect(await MapaGadoDao.instance.controleEstoque(bd), 'I');
+      expect(
+        (await MapaGadoDao.instance.motivosMorte(bd)).map((m) => m.value),
+        ['Acidente', 'Desconhecida'],
+      );
+      expect(await MapaGadoDao.instance.animalEmEstacaoMonta(bd, 618), isTrue);
+      expect(await MapaGadoDao.instance.animalEmEstacaoMonta(bd, 7), isFalse);
+      // servidor antigo (sem os campos) não apaga o que já estava
+      await MapaGadoDao.instance.salvarExtras(bd: bd);
+      expect(await MapaGadoDao.instance.controleEstoque(bd), 'I');
+    });
+  });
+
   group('montagem da Descrição do Lote (igual ao web)', () {
     test('linhas e descrição completa', () {
       expect(

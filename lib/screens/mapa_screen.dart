@@ -480,6 +480,7 @@ class _MapaScreenState extends State<MapaScreen> {
                 key: ValueKey('pasto-${pastoAberto.pasto.id}'),
                 bd: _bd!,
                 fazendaId: pastoAberto.pasto.fazendaId,
+                fazendaCodigo: fazendaSelecionada ?? '',
                 nomeFazenda: _nomeFazendaSelecionada,
                 pastoId: pastoAberto.pasto.id,
                 usuario: _usuario,

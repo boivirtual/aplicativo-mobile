@@ -239,7 +239,10 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
       return;
     }
     if (_dataMorte.isAfter(_hoje())) {
-      await AppAlert.erro(context, 'A Data não pode ser maior que a data atual!');
+      await AppAlert.erro(
+        context,
+        'A Data não pode ser maior que a data atual!',
+      );
       return;
     }
     final nascimentoIso = (animal['nascimento'] ?? '').toString();
@@ -440,17 +443,20 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
     contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
   );
 
-  Widget _caixa({required Widget child, double? altura = 56, bool erro = false}) =>
-      Container(
-        height: altura,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: erro ? Border.all(color: Colors.red) : null,
-        ),
-        child: child,
-      );
+  Widget _caixa({
+    required Widget child,
+    double? altura = 56,
+    bool erro = false,
+  }) => Container(
+    height: altura,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      border: erro ? Border.all(color: Colors.red) : null,
+    ),
+    child: child,
+  );
 
   Widget _campoAnimal() => _caixa(
     erro: _animalInvalido,

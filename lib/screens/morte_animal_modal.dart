@@ -70,7 +70,7 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
   bool _gravando = false;
   int _buscaAtual = 0;
 
-  // "Cód X não encontrado!" — mesmo aviso vermelho da Pesagem, depois de
+  // "Cód X não encontrado ou está inativo!" — mesmo aviso vermelho da Pesagem, depois de
   // 800 ms sem digitar (para não avisar com o número pela metade).
   Timer? _esperaNaoEncontrado;
   OverlayEntry? _avisoNaoEncontrado;
@@ -158,7 +158,9 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
       _esperaNaoEncontrado = Timer(const Duration(milliseconds: 800), () {
         if (!mounted || busca != _buscaAtual) return;
         _animalController.clear();
-        _mostrarNaoEncontrado('Cód ${termo.trim()} não encontrado!');
+        _mostrarNaoEncontrado(
+          'Cód ${termo.trim()} não encontrado ou está inativo!',
+        );
       });
     }
   }

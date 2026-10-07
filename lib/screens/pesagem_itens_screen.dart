@@ -1373,7 +1373,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
         // Animal sozinho — pedido do George, antes precisava tocar no
         // campo de novo pra reabrir o teclado e tentar outro número.
         _exibirMensagemErro(
-          "Cód $termo não encontrado!",
+          "Cód $termo não encontrado ou está inativo!",
           onClose: _focarNoAnimalComDelay,
         );
         _noAnimalController.clear();

@@ -11,7 +11,7 @@ class LocalDatabase {
   LocalDatabase._();
   static final LocalDatabase instance = LocalDatabase._();
 
-  static const int _versaoSchema = 11;
+  static const int _versaoSchema = 12;
 
   /// Nome do arquivo do banco — não é `const` de propósito: os testes
   /// automatizados rodam vários arquivos em paralelo (isolates diferentes),
@@ -147,6 +147,34 @@ class LocalDatabase {
     await _criarTabelasMapaSatelite(db);
     await _criarTabelaPesosMedios(db);
     await _criarTabelaExtrasMapa(db);
+    await _criarTabelaNutricaoMapa(db);
+  }
+
+  /// Nutrições lançadas nos pastos (botão Nutrição da tela do pasto): as
+  /// recentes vêm com o tabuleiro e as lançadas no aparelho entram na hora.
+  /// "chave" = 's' + id do servidor, ou o uuid da inclusão ainda não
+  /// confirmada (id 0).
+  Future<void> _criarTabelaNutricaoMapa(Database db) async {
+    await db.execute('''
+      CREATE TABLE mapa_nutricao_cache (
+        bd TEXT NOT NULL,
+        chave TEXT NOT NULL,
+        id INTEGER NOT NULL,
+        fazenda_id INTEGER NOT NULL,
+        pasto_id INTEGER NOT NULL,
+        data TEXT NOT NULL,
+        produto_id INTEGER NOT NULL,
+        produto TEXT,
+        unidade TEXT,
+        quantidade REAL,
+        qtd_animais INTEGER,
+        media_cabeca REAL,
+        PRIMARY KEY (bd, chave)
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX idx_mapa_nutricao_pasto ON mapa_nutricao_cache (bd, pasto_id, data)',
+    );
   }
 
   /// Dados avulsos do Mapa de Gado baixados junto com o tabuleiro, um JSON
@@ -441,6 +469,9 @@ class LocalDatabase {
     if (versaoAntiga < 11) {
       await _criarTabelaExtrasMapa(db);
     }
+    if (versaoAntiga < 12) {
+      await _criarTabelaNutricaoMapa(db);
+    }
   }
 
   /// Só para os testes/roteiro de verificação manual — apaga todos os dados
@@ -462,5 +493,6 @@ class LocalDatabase {
     await db.delete('mapa_modulos_cache');
     await db.delete('mapa_pesos_medios_cache');
     await db.delete('mapa_extras_cache');
+    await db.delete('mapa_nutricao_cache');
   }
 }

@@ -259,7 +259,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
                   Expanded(
                     flex: 5,
                     child: SeletorCampoWidget<int>(
-                      rotulo: '* Situação do Cocho',
+                      rotulo: '* Situação Cocho',
                       corRotulo: _corRotulo,
                       valor: _cocho,
                       opcoes: _cochos,
@@ -395,7 +395,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
 
   /// Rótulo pequeno em cima e o valor embaixo (mesmo desenho do select).
   Widget _rotuloValor(String rotulo, String valor, {Widget? icone}) => Padding(
-    padding: const EdgeInsets.only(left: 12, right: 8),
+    padding: const EdgeInsets.only(left: 12, right: 6),
     child: Row(
       children: [
         Expanded(
@@ -405,11 +405,16 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
             children: [
               Text(rotulo, style: TextStyle(fontSize: 11, color: _corRotulo)),
               const SizedBox(height: 2),
-              Text(
-                valor,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 15),
+              // Encolhe um pouco se não couber (ex: a data), em vez de
+              // cortar com "...".
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  valor,
+                  maxLines: 1,
+                  style: const TextStyle(fontSize: 15),
+                ),
               ),
             ],
           ),
@@ -456,25 +461,36 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
 
   // Tabela: Data | Produto | Quantidade | Und | Qtd Animais | Média/Cabeças
   static const _larguras = <int, TableColumnWidth>{
-    0: FixedColumnWidth(54),
+    0: FixedColumnWidth(60),
     1: FlexColumnWidth(),
     2: FixedColumnWidth(44),
-    3: FixedColumnWidth(22),
-    4: FixedColumnWidth(38),
-    5: FixedColumnWidth(42),
+    3: FixedColumnWidth(24),
+    4: FixedColumnWidth(40),
+    5: FixedColumnWidth(44),
     6: FixedColumnWidth(26),
   };
 
   Widget _tabela() {
+    // Cada texto encolhe para caber na própria coluna (FittedBox) — a
+    // fonte do aplicativo é larga e, sem isso, um texto invadia a coluna
+    // do lado.
+    Alignment lado(TextAlign a) => a == TextAlign.right
+        ? Alignment.centerRight
+        : (a == TextAlign.center ? Alignment.center : Alignment.centerLeft);
+
     Widget cab(String t, {TextAlign alinhamento = TextAlign.left}) => Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
-      child: Text(
-        t,
-        textAlign: alinhamento,
-        style: const TextStyle(
-          fontSize: 9,
-          color: Color(0xFF5B8A72),
-          fontWeight: FontWeight.bold,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: lado(alinhamento),
+        child: Text(
+          t,
+          textAlign: alinhamento,
+          style: const TextStyle(
+            fontSize: 9,
+            color: Color(0xFF5B8A72),
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
@@ -486,14 +502,23 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
       bool quebra = false,
     }) => Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
-      child: Text(
-        t,
-        textAlign: alinhamento,
-        softWrap: quebra,
-        maxLines: quebra ? 2 : 1,
-        overflow: quebra ? TextOverflow.ellipsis : TextOverflow.visible,
-        style: const TextStyle(fontSize: 9.5, color: Color(0xFF444444)),
-      ),
+      child: quebra
+          ? Text(
+              t,
+              textAlign: alinhamento,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 9.5, color: Color(0xFF444444)),
+            )
+          : FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: lado(alinhamento),
+              child: Text(
+                t,
+                maxLines: 1,
+                style: const TextStyle(fontSize: 9.5, color: Color(0xFF444444)),
+              ),
+            ),
     );
 
     return Container(

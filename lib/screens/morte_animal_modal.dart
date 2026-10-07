@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 
 import '../data/daos/animal_cache_dao.dart';
 import '../data/daos/mapa_gado_dao.dart';
+import '../services/animal_cache_service.dart';
+import '../services/connectivity_service.dart';
 import '../services/mapa_gado_sync_service.dart';
 import '../utils/app_alert.dart';
 import '../widgets/seletor_campo_widget.dart';
@@ -60,6 +62,9 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
   List<MapEntry<int, String>> _motivos = [];
   bool _temCadastro = true;
 
+  /// Baixando o cadastro de animais do servidor (ao abrir, com internet).
+  bool _atualizandoCadastro = false;
+
   List<Map<String, dynamic>> _sugestoes = [];
   Map<String, dynamic>? _animal; // linha de animais_cache já validada
   bool _emEstacaoMonta = false;
@@ -106,6 +111,34 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
       _motivos = motivos;
       _temCadastro = temCadastro;
     });
+    await _atualizarCadastro();
+  }
+
+  /// Com internet, busca o cadastro de animais do servidor toda vez que o
+  /// modal abre — o cadastro do aparelho só era baixado uma vez por sessão,
+  /// então um animal reativado (ou baixado) pela web com o aplicativo já
+  /// aberto não aparecia (ou continuava aparecendo) aqui. A busca funciona
+  /// com o que já está no aparelho enquanto o download roda.
+  Future<void> _atualizarCadastro() async {
+    if (!ConnectivityService.instance.temInternetReal) return;
+    setState(() => _atualizandoCadastro = true);
+    await AnimalCacheService.instance.garantirCacheCompleto(
+      widget.bd,
+      forcar: true,
+    );
+    if (!mounted) return;
+    final temCadastro = await AnimalCacheDao.instance.temCacheParaFazenda(
+      widget.fazendaCodigo,
+    );
+    if (!mounted) return;
+    setState(() {
+      _atualizandoCadastro = false;
+      _temCadastro = temCadastro;
+    });
+    // Refaz a busca em andamento com o cadastro novo.
+    if (_animal == null && _animalController.text.trim().isNotEmpty) {
+      _aoDigitarAnimal(_animalController.text);
+    }
   }
 
   // ---------------------------------------------------------------------
@@ -157,6 +190,9 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
     if (_sugestoes.isEmpty) {
       _esperaNaoEncontrado = Timer(const Duration(milliseconds: 800), () {
         if (!mounted || busca != _buscaAtual) return;
+        // Cadastro ainda baixando: a busca é refeita quando terminar (o
+        // animal pode estar justamente no que está chegando).
+        if (_atualizandoCadastro) return;
         _animalController.clear();
         _mostrarNaoEncontrado(
           'Cód ${termo.trim()} não encontrado ou está inativo!',
@@ -441,7 +477,25 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
               const SizedBox(height: 10),
               _tarja(),
               const SizedBox(height: 10),
-              if (!_temCadastro) ...[
+              if (_atualizandoCadastro) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Atualizando o cadastro de animais...',
+                      style: TextStyle(fontSize: 12, color: _corRotulo),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+              if (!_temCadastro && !_atualizandoCadastro) ...[
                 _aviso(
                   'O cadastro de animais desta fazenda ainda não foi baixado '
                   'neste aparelho. Atualize os dados com internet.',

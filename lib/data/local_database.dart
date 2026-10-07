@@ -11,7 +11,7 @@ class LocalDatabase {
   LocalDatabase._();
   static final LocalDatabase instance = LocalDatabase._();
 
-  static const int _versaoSchema = 10;
+  static const int _versaoSchema = 11;
 
   /// Nome do arquivo do banco — não é `const` de propósito: os testes
   /// automatizados rodam vários arquivos em paralelo (isolates diferentes),
@@ -146,6 +146,21 @@ class LocalDatabase {
     await _criarTabelasMovimentacaoMapa(db);
     await _criarTabelasMapaSatelite(db);
     await _criarTabelaPesosMedios(db);
+    await _criarTabelaExtrasMapa(db);
+  }
+
+  /// Dados avulsos do Mapa de Gado baixados junto com o tabuleiro, um JSON
+  /// por chave: motivos de morte, animais em estação de monta e o tipo de
+  /// controle de estoque da empresa (botão Morte da tela do pasto).
+  Future<void> _criarTabelaExtrasMapa(Database db) async {
+    await db.execute('''
+      CREATE TABLE mapa_extras_cache (
+        bd TEXT NOT NULL,
+        chave TEXT NOT NULL,
+        valor TEXT,
+        PRIMARY KEY (bd, chave)
+      )
+    ''');
   }
 
   Future<void> _criarTabelaPesosMedios(Database db) async {
@@ -423,6 +438,9 @@ class LocalDatabase {
       }
       await _criarTabelaPesosMedios(db);
     }
+    if (versaoAntiga < 11) {
+      await _criarTabelaExtrasMapa(db);
+    }
   }
 
   /// Só para os testes/roteiro de verificação manual — apaga todos os dados
@@ -443,5 +461,6 @@ class LocalDatabase {
     await db.delete('mapa_satelite_cache');
     await db.delete('mapa_modulos_cache');
     await db.delete('mapa_pesos_medios_cache');
+    await db.delete('mapa_extras_cache');
   }
 }

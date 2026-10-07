@@ -100,4 +100,72 @@ void main() {
     },
     skip: api == null ? 'defina MAPA_API_LOCAL (ver topo do arquivo)' : false,
   );
+
+  // Morte de um animal, do app até o servidor:
+  //   MAPA_MORTE_ANIMAL=<tbl_animal_codigo_id>  MAPA_MORTE_PASTO=<pasto>
+  //   MAPA_MORTE_SEXO=F  MAPA_MORTE_NASC=2019-12-01
+  final morteAnimal = env['MAPA_MORTE_ANIMAL'];
+  test(
+    'morte: baixa os extras, grava na fila e o servidor aceita',
+    () async {
+      ApiConfig.baseUrl = api!;
+      final bd = env['MAPA_BD_TESTE']!;
+      final fazenda = int.parse(env['MAPA_FAZENDA']!);
+      final pasto = int.parse(env['MAPA_MORTE_PASTO']!);
+
+      await LocalDatabase.instance.resetarParaTeste();
+      ConnectivityService.instance.forcarNivelParaTeste(NivelConexao.internetOk);
+      expect(await MapaGadoSyncService.instance.baixar(bd, [fazenda]), isTrue);
+
+      final dao = MapaGadoDao.instance;
+      expect(await dao.controleEstoque(bd), 'I');
+      expect(await dao.motivosMorte(bd), isNotEmpty);
+
+      Future<int> qtd() async => (await dao.animais(
+        bd,
+        fazenda,
+      )).where((a) => a.pastoId == pasto).length;
+      final antes = await qtd();
+
+      expect(
+        await dao.validarMorte(
+          bd: bd,
+          fazenda: fazenda,
+          pasto: pasto,
+          sexo: env['MAPA_MORTE_SEXO']!,
+          nascimento: env['MAPA_MORTE_NASC']!,
+        ),
+        isNull,
+      );
+      await MapaGadoSyncService.instance.registrarMorte(
+        bd: bd,
+        fazenda: fazenda,
+        pasto: pasto,
+        animal: int.parse(morteAnimal!),
+        codigo: '',
+        sexo: env['MAPA_MORTE_SEXO']!,
+        nascimento: env['MAPA_MORTE_NASC']!,
+        motivo: (await dao.motivosMorte(bd)).first.key,
+        dataMorte: DateTime.now().toIso8601String().substring(0, 10),
+        observacao: 'TESTE APP',
+        usuario: 'Teste App',
+      );
+      expect(await qtd(), antes - 1);
+
+      for (var i = 0; i < 80; i++) {
+        if (await dao.contar(bd, 'pendente') == 0) break;
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+      expect(await dao.contar(bd, 'pendente'), 0);
+      expect(await dao.contar(bd, 'erro'), 0);
+
+      // o download depois do envio confirma o estado do servidor
+      await Future.delayed(const Duration(seconds: 2));
+      expect(await MapaGadoSyncService.instance.baixar(bd, [fazenda]), isTrue);
+      expect(await qtd(), antes - 1);
+    },
+    skip: api == null || morteAnimal == null
+        ? 'defina MAPA_API_LOCAL e MAPA_MORTE_ANIMAL (ver comentário)'
+        : false,
+  );
 }

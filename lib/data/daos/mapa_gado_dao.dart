@@ -30,6 +30,16 @@ class AcaoMapa {
   /// payload: {fazenda, pasto, animal (id), codigo, sexo, nascimento
   /// (Y-m-d), motivo, data_morte (Y-m-d), observacao, usuario, data_hora}
   static const morte = 'morte';
+
+  /// Nutrição — Confirmar Inclusão.
+  /// payload: {chave (uuid da linha local), fazenda, pasto, data (Y-m-d),
+  /// produto, produto_descricao, unidade, quantidade, qtd_animais, cocho,
+  /// usuario, data_hora}
+  static const nutricaoIncluir = 'nutricao_incluir';
+
+  /// Nutrição — excluir (lixeira da tabela).
+  /// payload: {id (do servidor), chave, usuario, data_hora}
+  static const nutricaoExcluir = 'nutricao_excluir';
 }
 
 /// Qual registro do pasto sai com a morte de um animal (ou o erro).
@@ -588,6 +598,8 @@ class MapaGadoDao {
     String? controleEstoque,
     List<dynamic>? motivosMorte,
     List<dynamic>? animaisEstacaoMonta,
+    List<dynamic>? scoresCocho,
+    List<dynamic>? produtosNutricao,
   }) async {
     final db = await LocalDatabase.instance.database;
     Future<void> gravar(String chave, Object? valor) async {
@@ -602,6 +614,8 @@ class MapaGadoDao {
     await gravar('controle_estoque', controleEstoque);
     await gravar('motivos_morte', motivosMorte);
     await gravar('animais_estacao_monta', animaisEstacaoMonta);
+    await gravar('scores_cocho', scoresCocho);
+    await gravar('produtos_nutricao', produtosNutricao);
   }
 
   Future<dynamic> _extra(String bd, String chave) async {
@@ -856,6 +870,214 @@ class MapaGadoDao {
     return ids;
   }
 
+  // ---------------------------------------------------------------------
+  // Nutrição (botão Nutrição da tela do pasto)
+  // ---------------------------------------------------------------------
+
+  /// Opções de "Situação do Cocho" (código, descrição).
+  Future<List<MapEntry<int, String>>> scoresCocho(String bd) async {
+    final lista = await _extra(bd, 'scores_cocho');
+    if (lista is! List) return const [];
+    return [
+      for (final m in lista)
+        if (m is Map)
+          MapEntry(_int(m['id']), (m['descricao'] ?? '').toString()),
+    ];
+  }
+
+  /// Produtos da nutrição: {id, descricao, unidade}.
+  Future<List<Map<String, dynamic>>> produtosNutricao(String bd) async {
+    final lista = await _extra(bd, 'produtos_nutricao');
+    if (lista is! List) return const [];
+    return [
+      for (final m in lista)
+        if (m is Map)
+          {
+            'id': _int(m['id']),
+            'descricao': (m['descricao'] ?? '').toString(),
+            'unidade': (m['unidade'] ?? '').toString(),
+          },
+    ];
+  }
+
+  Map<String, Object?> _linhaNutricao(String bd, Map<String, dynamic> n) => {
+    'bd': bd,
+    'chave': 's${_int(n['id'])}',
+    'id': _int(n['id']),
+    'fazenda_id': _int(n['local']),
+    'pasto_id': _int(n['pasto']),
+    'data': (n['data'] ?? '').toString(),
+    'produto_id': _int(n['produto']),
+    'produto': (n['produto_descricao'] ?? '').toString(),
+    'unidade': (n['unidade'] ?? '').toString(),
+    'quantidade': double.tryParse('${n['quantidade']}') ?? 0,
+    'qtd_animais': _int(n['qtd_animais']),
+    'media_cabeca': double.tryParse('${n['media_cabeca']}') ?? 0,
+  };
+
+  /// Nutrições recentes (a partir de [desde], Y-m-d) das fazendas, como
+  /// vieram do servidor junto com o tabuleiro. As inclusões/exclusões ainda
+  /// pendentes voltam a valer por cima.
+  Future<void> salvarNutricoes({
+    required String bd,
+    required List<int> fazendas,
+    required String desde,
+    required List<Map<String, dynamic>> nutricoes,
+  }) async {
+    if (fazendas.isEmpty) return;
+    final db = await LocalDatabase.instance.database;
+    await db.transaction((txn) async {
+      await txn.delete(
+        'mapa_nutricao_cache',
+        where: 'bd = ? AND data >= ? AND fazenda_id IN (${fazendas.join(',')})',
+        whereArgs: [bd, desde],
+      );
+      for (final n in nutricoes) {
+        await txn.insert(
+          'mapa_nutricao_cache',
+          _linhaNutricao(bd, n),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+      await _reaplicarNutricao(txn, bd);
+    });
+  }
+
+  /// Nutrições de UM pasto numa data, buscadas na hora no servidor (data
+  /// fora do período que vem com o tabuleiro).
+  Future<void> salvarNutricoesDoDia({
+    required String bd,
+    required int pasto,
+    required String data,
+    required List<Map<String, dynamic>> nutricoes,
+  }) async {
+    final db = await LocalDatabase.instance.database;
+    await db.transaction((txn) async {
+      await txn.delete(
+        'mapa_nutricao_cache',
+        where: 'bd = ? AND pasto_id = ? AND data = ?',
+        whereArgs: [bd, pasto, data],
+      );
+      for (final n in nutricoes) {
+        await txn.insert(
+          'mapa_nutricao_cache',
+          _linhaNutricao(bd, n),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+      await _reaplicarNutricao(txn, bd);
+    });
+  }
+
+  Future<void> _reaplicarNutricao(DatabaseExecutor txn, String bd) async {
+    final pendentes = await txn.query(
+      'mapa_outbox',
+      where: "bd = ? AND status = 'pendente' AND tipo IN (?, ?)",
+      whereArgs: [bd, AcaoMapa.nutricaoIncluir, AcaoMapa.nutricaoExcluir],
+      orderBy: 'id',
+    );
+    for (final p in pendentes) {
+      await _aplicarNoCache(
+        txn,
+        bd,
+        p['tipo'] as String,
+        json.decode(p['payload_json'] as String) as Map<String, dynamic>,
+      );
+    }
+  }
+
+  /// Linhas da tabela do modal: nutrições do pasto na data (Y-m-d).
+  Future<List<Map<String, Object?>>> nutricoesDoPasto(
+    String bd,
+    int pasto,
+    String data,
+  ) async {
+    final db = await LocalDatabase.instance.database;
+    return db.query(
+      'mapa_nutricao_cache',
+      where: 'bd = ? AND pasto_id = ? AND data = ?',
+      whereArgs: [bd, pasto, data],
+      orderBy: 'id = 0, id, rowid',
+    );
+  }
+
+  /// O servidor confirmou a inclusão: a linha local passa a ter o id dele
+  /// (para poder ser excluída depois).
+  Future<void> definirIdNutricao(String bd, String chave, int id) async {
+    final db = await LocalDatabase.instance.database;
+    await db.update(
+      'mapa_nutricao_cache',
+      {'id': id},
+      where: 'bd = ? AND chave = ?',
+      whereArgs: [bd, chave],
+    );
+  }
+
+  /// Excluir uma nutrição que ainda nem foi enviada: tira a inclusão da
+  /// fila e a linha do cache (o servidor nunca fica sabendo). Devolve
+  /// false se não havia inclusão pendente com essa chave.
+  Future<bool> cancelarInclusaoNutricao(String bd, String chave) async {
+    final db = await LocalDatabase.instance.database;
+    return db.transaction((txn) async {
+      final acoes = await txn.query(
+        'mapa_outbox',
+        columns: ['id', 'payload_json'],
+        where: 'bd = ? AND tipo = ?',
+        whereArgs: [bd, AcaoMapa.nutricaoIncluir],
+      );
+      for (final a in acoes) {
+        final p = json.decode(a['payload_json'] as String) as Map;
+        if (p['chave'] == chave) {
+          await txn.delete(
+            'mapa_outbox',
+            where: 'id = ?',
+            whereArgs: [a['id']],
+          );
+          await txn.delete(
+            'mapa_nutricao_cache',
+            where: 'bd = ? AND chave = ?',
+            whereArgs: [bd, chave],
+          );
+          return true;
+        }
+      }
+      return false;
+    });
+  }
+
+  Future<void> _aplicarNutricaoIncluir(
+    DatabaseExecutor txn,
+    String bd,
+    Map<String, dynamic> p,
+  ) async {
+    await txn.insert('mapa_nutricao_cache', {
+      'bd': bd,
+      'chave': (p['chave'] ?? '').toString(),
+      'id': 0,
+      'fazenda_id': _int(p['fazenda']),
+      'pasto_id': _int(p['pasto']),
+      'data': (p['data'] ?? '').toString(),
+      'produto_id': _int(p['produto']),
+      'produto': (p['produto_descricao'] ?? '').toString(),
+      'unidade': (p['unidade'] ?? '').toString(),
+      'quantidade': double.tryParse('${p['quantidade']}') ?? 0,
+      'qtd_animais': _int(p['qtd_animais']),
+      'media_cabeca': 0,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<void> _aplicarNutricaoExcluir(
+    DatabaseExecutor txn,
+    String bd,
+    Map<String, dynamic> p,
+  ) async {
+    await txn.delete(
+      'mapa_nutricao_cache',
+      where: 'bd = ? AND (chave = ? OR (id > 0 AND id = ?))',
+      whereArgs: [bd, (p['chave'] ?? '').toString(), _int(p['id'])],
+    );
+  }
+
   Future<void> removerAcao(int id) async {
     final db = await LocalDatabase.instance.database;
     await db.delete('mapa_outbox', where: 'id = ?', whereArgs: [id]);
@@ -896,7 +1118,11 @@ class MapaGadoDao {
     String tipo,
     Map<String, dynamic> payload,
   ) async {
-    if (tipo == AcaoMapa.morte) {
+    if (tipo == AcaoMapa.nutricaoIncluir) {
+      await _aplicarNutricaoIncluir(txn, bd, payload);
+    } else if (tipo == AcaoMapa.nutricaoExcluir) {
+      await _aplicarNutricaoExcluir(txn, bd, payload);
+    } else if (tipo == AcaoMapa.morte) {
       await _aplicarMorte(txn, bd, payload);
     } else if (tipo == AcaoMapa.transferirTudo) {
       await _aplicarTransferencia(

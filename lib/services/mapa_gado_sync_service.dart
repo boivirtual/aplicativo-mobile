@@ -192,6 +192,111 @@ class MapaGadoSyncService {
     _depoisDeRegistrar(bd);
   }
 
+  /// Nutrição — Confirmar Inclusão no [pasto]. [data] em Y-m-d.
+  Future<void> incluirNutricao({
+    required String bd,
+    required int fazenda,
+    required int pasto,
+    required String data,
+    required int produto,
+    required String produtoDescricao,
+    required String unidade,
+    required double quantidade,
+    required int qtdAnimais,
+    required int cocho,
+    required String? usuario,
+  }) async {
+    await MapaGadoDao.instance.registrarAcao(
+      bd: bd,
+      uuid: _uuid.v4(),
+      tipo: AcaoMapa.nutricaoIncluir,
+      payload: {
+        'chave': _uuid.v4(),
+        'fazenda': fazenda,
+        'pasto': pasto,
+        'data': data,
+        'produto': produto,
+        'produto_descricao': produtoDescricao,
+        'unidade': unidade,
+        'quantidade': quantidade,
+        'qtd_animais': qtdAnimais,
+        'cocho': cocho,
+        'usuario': usuario ?? '',
+        'data_hora': _agora(),
+      },
+    );
+    _depoisDeRegistrar(bd);
+  }
+
+  /// Nutrição — excluir uma linha da tabela. Linha que ainda nem foi
+  /// enviada ([id] 0) só sai da fila; as do servidor entram na fila.
+  Future<void> excluirNutricao({
+    required String bd,
+    required String chave,
+    required int id,
+    required String? usuario,
+  }) async {
+    if (id <= 0 &&
+        await MapaGadoDao.instance.cancelarInclusaoNutricao(bd, chave)) {
+      versaoFila.value++;
+      return;
+    }
+    await MapaGadoDao.instance.registrarAcao(
+      bd: bd,
+      uuid: _uuid.v4(),
+      tipo: AcaoMapa.nutricaoExcluir,
+      payload: {
+        'id': id,
+        'chave': chave,
+        'usuario': usuario ?? '',
+        'data_hora': _agora(),
+      },
+    );
+    _depoisDeRegistrar(bd);
+  }
+
+  /// Com internet, busca no servidor as nutrições do [pasto] na [data]
+  /// (Y-m-d) e guarda no cache — para datas fora do período que vem com o
+  /// tabuleiro. Melhor esforço: devolve false e mantém o cache se falhar.
+  Future<bool> buscarNutricoesDoDia({
+    required String bd,
+    required int fazenda,
+    required int pasto,
+    required String data,
+  }) async {
+    if (!ConnectivityService.instance.temInternetReal) return false;
+    try {
+      final response = await http
+          .post(
+            Uri.parse("${ApiConfig.baseUrl}/rest/mapa-gado/nutricao.php"),
+            headers: {"Content-Type": "application/json"},
+            body: json.encode({
+              'acao': 'itens',
+              'bd': bd,
+              'fazenda': fazenda,
+              'pasto': pasto,
+              'data': data,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode != 200) return false;
+      final dados = json.decode(response.body);
+      if (dados is! Map || dados['success'] != true) return false;
+      await MapaGadoDao.instance.salvarNutricoesDoDia(
+        bd: bd,
+        pasto: pasto,
+        data: data,
+        nutricoes: ((dados['nutricoes'] as List?) ?? const [])
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList(),
+      );
+      return true;
+    } catch (e) {
+      debugPrint('[MapaGadoSync] nutrições do dia: falhou -> $e');
+      return false;
+    }
+  }
+
   void _depoisDeRegistrar(String bd) {
     versaoFila.value++;
     if (ConnectivityService.instance.temInternetReal) {
@@ -229,6 +334,8 @@ class MapaGadoSyncService {
           AcaoMapa.transferirCategoria: 'transferir_categoria.php',
           AcaoMapa.levarDescricaoLote: 'levar_descricao_lote.php',
           AcaoMapa.morte: 'morte.php',
+          AcaoMapa.nutricaoIncluir: 'nutricao.php',
+          AcaoMapa.nutricaoExcluir: 'nutricao.php',
         };
         final endpoint = endpoints[tipo];
         if (endpoint == null) {
@@ -236,7 +343,13 @@ class MapaGadoSyncService {
           continue;
         }
 
-        final _Resposta r = await _post(endpoint, {'bd': bd, ...payload});
+        final _Resposta r = await _post(endpoint, {
+          'bd': bd,
+          // nutricao.php atende incluir e excluir pelo campo "acao"
+          if (tipo == AcaoMapa.nutricaoIncluir) 'acao': 'incluir',
+          if (tipo == AcaoMapa.nutricaoExcluir) 'acao': 'excluir',
+          ...payload,
+        });
         // Rastro no log do aparelho (adb logcat) de cada envio da fila.
         debugPrint(
           '[MapaGadoSync] $tipo #$id -> '
@@ -263,6 +376,17 @@ class MapaGadoSyncService {
                 descricaoLote: '${payload['descricao_lote'] ?? ''}',
                 idLote: idLote,
                 anoLote: anoLote,
+              );
+            }
+          }
+          // Nutrição incluída: a linha local passa a ter o id do servidor.
+          if (tipo == AcaoMapa.nutricaoIncluir) {
+            final idNutricao = int.tryParse('${r.dados['id'] ?? ''}') ?? 0;
+            if (idNutricao > 0) {
+              await MapaGadoDao.instance.definirIdNutricao(
+                bd,
+                '${payload['chave'] ?? ''}',
+                idNutricao,
               );
             }
           }
@@ -394,7 +518,18 @@ class MapaGadoSyncService {
         controleEstoque: data['controle_estoque']?.toString(),
         motivosMorte: data['motivos_morte'] as List?,
         animaisEstacaoMonta: data['animais_estacao_monta'] as List?,
+        scoresCocho: data['scores_cocho'] as List?,
+        produtosNutricao: data['produtos_nutricao'] as List?,
       );
+      // Nutrições recentes (servidor antigo não manda: fica o que já tinha).
+      if (data['nutricoes'] is List && data['nutricoes_desde'] != null) {
+        await MapaGadoDao.instance.salvarNutricoes(
+          bd: bd,
+          fazendas: ids,
+          desde: data['nutricoes_desde'].toString(),
+          nutricoes: lista('nutricoes'),
+        );
+      }
       await _baixarSatelite(bd, ids);
       return true;
     } catch (e) {

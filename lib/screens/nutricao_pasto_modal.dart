@@ -516,8 +516,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
               cab('Quant.', alinhamento: TextAlign.right),
               cab('Und', alinhamento: TextAlign.center),
               cab('Qtd\nAnimais', alinhamento: TextAlign.center),
-              cab('Média/
-Cabeças', alinhamento: TextAlign.right),
+              cab('Média/\nCabeças', alinhamento: TextAlign.right),
               const SizedBox.shrink(),
             ],
           ),

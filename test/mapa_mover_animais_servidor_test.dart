@@ -101,6 +101,89 @@ void main() {
     skip: api == null ? 'defina MAPA_API_LOCAL (ver topo do arquivo)' : false,
   );
 
+  // Nutrição, do app até o servidor: MAPA_NUTRI_PASTO=<pasto>
+  final nutriPasto = env['MAPA_NUTRI_PASTO'];
+  test(
+    'nutrição: inclui, o servidor devolve o id, exclui e some',
+    () async {
+      ApiConfig.baseUrl = api!;
+      final bd = env['MAPA_BD_TESTE']!;
+      final fazenda = int.parse(env['MAPA_FAZENDA']!);
+      final pasto = int.parse(nutriPasto!);
+      final hoje = DateTime.now().toIso8601String().substring(0, 10);
+
+      await LocalDatabase.instance.resetarParaTeste();
+      ConnectivityService.instance.forcarNivelParaTeste(NivelConexao.internetOk);
+      expect(await MapaGadoSyncService.instance.baixar(bd, [fazenda]), isTrue);
+
+      final dao = MapaGadoDao.instance;
+      final cochos = await dao.scoresCocho(bd);
+      final produtos = await dao.produtosNutricao(bd);
+      expect(cochos, isNotEmpty);
+      expect(produtos, isNotEmpty);
+
+      Future<void> esperarFila() async {
+        for (var i = 0; i < 80; i++) {
+          if (await dao.contar(bd, 'pendente') == 0) break;
+          await Future.delayed(const Duration(milliseconds: 100));
+        }
+        await Future.delayed(const Duration(milliseconds: 300));
+      }
+
+      final antes = (await dao.nutricoesDoPasto(bd, pasto, hoje)).length;
+      await MapaGadoSyncService.instance.incluirNutricao(
+        bd: bd,
+        fazenda: fazenda,
+        pasto: pasto,
+        data: hoje,
+        produto: produtos.first['id'] as int,
+        produtoDescricao: produtos.first['descricao'].toString(),
+        unidade: produtos.first['unidade'].toString(),
+        quantidade: 12.5,
+        qtdAnimais: 5,
+        cocho: cochos.last.key,
+        usuario: 'Teste App',
+      );
+      await esperarFila();
+      expect(await dao.contar(bd, 'erro'), 0);
+      var linhas = await dao.nutricoesDoPasto(bd, pasto, hoje);
+      expect(linhas.length, antes + 1);
+      expect(linhas.last['id'], greaterThan(0));
+
+      // a busca do dia no servidor traz a mesma linha (sem duplicar)
+      expect(
+        await MapaGadoSyncService.instance.buscarNutricoesDoDia(
+          bd: bd,
+          fazenda: fazenda,
+          pasto: pasto,
+          data: hoje,
+        ),
+        isTrue,
+      );
+      linhas = await dao.nutricoesDoPasto(bd, pasto, hoje);
+      expect(linhas.length, antes + 1);
+
+      await MapaGadoSyncService.instance.excluirNutricao(
+        bd: bd,
+        chave: linhas.last['chave'] as String,
+        id: linhas.last['id'] as int,
+        usuario: 'Teste App',
+      );
+      await esperarFila();
+      expect(await dao.contar(bd, 'erro'), 0);
+      await MapaGadoSyncService.instance.buscarNutricoesDoDia(
+        bd: bd,
+        fazenda: fazenda,
+        pasto: pasto,
+        data: hoje,
+      );
+      expect((await dao.nutricoesDoPasto(bd, pasto, hoje)).length, antes);
+    },
+    skip: api == null || nutriPasto == null
+        ? 'defina MAPA_API_LOCAL e MAPA_NUTRI_PASTO (ver comentário)'
+        : false,
+  );
+
   // Morte de um animal, do app até o servidor:
   //   MAPA_MORTE_ANIMAL=<tbl_animal_codigo_id>  MAPA_MORTE_PASTO=<pasto>
   //   MAPA_MORTE_SEXO=F  MAPA_MORTE_NASC=2019-12-01

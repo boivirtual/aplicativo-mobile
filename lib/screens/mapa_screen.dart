@@ -81,6 +81,11 @@ class _MapaScreenState extends State<MapaScreen> {
   bool _modoToque = false;
   int? _origemToque;
 
+  // Mover por toque: toque simples abre o pasto, toque DUPLO escolhe
+  // origem/destino (igual ao web — clique_ou_duplo_clique, janela de 300 ms).
+  Timer? _timerToque;
+  int? _pastoDoToque;
+
   // Arrastar.
   int? _pastoSobArraste;
   final _scrollController = ScrollController();
@@ -103,6 +108,7 @@ class _MapaScreenState extends State<MapaScreen> {
     _scrollController.dispose();
     _autoScroll?.cancel();
     _timerEnviado?.cancel();
+    _timerToque?.cancel();
     super.dispose();
   }
 
@@ -269,19 +275,41 @@ class _MapaScreenState extends State<MapaScreen> {
   }
 
   void _alternarModoToque() {
+    _timerToque?.cancel();
+    _timerToque = null;
     setState(() {
       _modoToque = !_modoToque;
       _origemToque = null;
     });
   }
 
-  /// Toque no card: no modo toque escolhe origem/destino; fora dele, abre a
-  /// tela do pasto ("Mapa de Gado - Movimentações").
+  /// Toque no pasto (Tabuleiro e Satélite). Fora do modo toque abre a tela
+  /// do pasto. No "Mover por toque", igual ao web: o toque simples continua
+  /// abrindo o pasto e o toque DUPLO escolhe origem/destino — o simples só
+  /// vale depois de 300 ms sem um segundo toque no mesmo pasto.
   void _tocarCard(PastoTabuleiro card) {
     if (!_modoToque) {
       _abrirPasto(card);
       return;
     }
+
+    if (_timerToque != null && _pastoDoToque == card.pasto.id) {
+      _timerToque!.cancel();
+      _timerToque = null;
+      _selecionarPorToque(card);
+      return;
+    }
+    _timerToque?.cancel();
+    _pastoDoToque = card.pasto.id;
+    _timerToque = Timer(const Duration(milliseconds: 300), () {
+      _timerToque = null;
+      if (mounted) _abrirPasto(card);
+    });
+  }
+
+  /// Toque duplo no modo toque: escolhe a origem (borda laranja tracejada)
+  /// e depois o destino.
+  void _selecionarPorToque(PastoTabuleiro card) {
 
     if (_origemToque == null) {
       // Pasto vazio não pode ser origem, igual ao arrastar.
@@ -958,19 +986,27 @@ class _MapaScreenState extends State<MapaScreen> {
         TextSpan(
           style: TextStyle(fontSize: 13, color: Color(0xFF31708F)),
           children: [
-            TextSpan(text: 'Modo toque ativado: toque no pasto de '),
+            TextSpan(text: 'Modo toque ativado: dê '),
+            TextSpan(
+              text: 'dois toques',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            TextSpan(text: ' no pasto de '),
             TextSpan(
               text: 'origem',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
+            TextSpan(text: ' (fica com borda laranja), depois '),
             TextSpan(
-              text: ' (fica com borda laranja), depois toque no pasto de ',
+              text: 'dois toques',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
+            TextSpan(text: ' no pasto de '),
             TextSpan(
               text: 'destino',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            TextSpan(text: '.'),
+            TextSpan(text: '. O toque simples continua abrindo o pasto.'),
           ],
         ),
       ),

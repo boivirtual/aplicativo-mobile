@@ -124,20 +124,26 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
     if (pontos.isNotEmpty) {
       final alvo = CameraFit.bounds(
         bounds: LatLngBounds.fromPoints(pontos),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(20),
         maxZoom: 17,
       ).fit(_mapController.camera);
+      // Zoom 14 é o menor aceito (igual ao web): fazenda com pasto isolado
+      // longe do resto não abre afastada demais.
+      final zoom = math.max(alvo.zoom, 14.0);
+      // Zoom de entrada = "visão geral" da fazenda (ver _visaoGeral).
+      _zoomInicial = (zoom * 10).roundToDouble() / 10;
       // Aplicado no quadro seguinte: enquadrando direto no onMapReady o
       // TileLayer não pedia as imagens (fundo ficava preto até mexer).
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        _mapController.move(alvo.center, alvo.zoom);
-        _aoMudarZoom(alvo.zoom);
+        _mapController.move(alvo.center, zoom);
+        _aoMudarZoom(zoom);
         _zoomNaBusca();
       });
       return;
     } else if (widget.centroFazenda != null) {
       _mapController.move(widget.centroFazenda!, 13);
+      _zoomInicial = 13;
     }
     _aoMudarZoom(_mapController.camera.zoom);
     _zoomNaBusca();
@@ -152,8 +158,14 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
   /// nível de zoom varia 25%, limitado entre 0.45 e 1.6.
   double get _escala => (1 + (_zoom - 16) * 0.25).clamp(0.45, 1.6);
 
-  /// Visão geral (zoom afastado): o selo mostra só o total.
-  bool get _zoomBaixo => _zoom < 16;
+  /// Visão geral, igual ao web (modo_visao_geral): zoom afastado (abaixo de
+  /// 16) ou o mesmo zoom em que o mapa abriu (fazenda pequena, que já abre
+  /// aproximada). Nela não aparecem os nomes dos pastos e o selo mostra só
+  /// as bolinhas das categorias, sem os números.
+  bool get _visaoGeral =>
+      _zoom < 16 || (_zoomInicial != null && _zoom <= _zoomInicial!);
+
+  double? _zoomInicial;
 
   /// Igual ao web (atualizar_rotulos_zoom): o nome só aparece se couber em
   /// 80% da largura do pasto na tela, senão vira uma pilha de textos.
@@ -370,7 +382,7 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          if (_nomeCabe(p, estilo))
+          if (!_visaoGeral && _nomeCabe(p, estilo))
             Positioned(
               left: 0,
               right: 0,
@@ -406,7 +418,7 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
   /// O selo não tem gesto próprio: o arraste começa segurando o dedo em
   /// qualquer ponto do pasto (ver _aoSegurar).
   Widget _seloArrastavel(PastoTabuleiro pasto) {
-    final selo = _Selo(pasto: pasto, apenasTotal: _zoomBaixo);
+    final selo = _Selo(pasto: pasto, visaoGeral: _visaoGeral);
     final arrastando = _origemArraste?.pasto.id == pasto.pasto.id;
     return IgnorePointer(
       child: Opacity(opacity: arrastando ? 0.35 : 1, child: selo),
@@ -512,8 +524,15 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
               initialZoom: 13,
               maxZoom: 20,
               backgroundColor: const Color(0xFF263238),
-              interactionOptions: const InteractionOptions(
-                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+              // No "Mover por toque" o toque duplo escolhe o pasto: o zoom
+              // por toque duplo do mapa atrapalharia (igual ao web).
+              interactionOptions: InteractionOptions(
+                flags:
+                    InteractiveFlag.all &
+                    ~InteractiveFlag.rotate &
+                    (widget.modoToque
+                        ? ~InteractiveFlag.doubleTapZoom
+                        : InteractiveFlag.all),
               ),
               onMapReady: _enquadrarFazenda,
               onPositionChanged: (camera, _) => _aoMudarZoom(camera.zoom),
@@ -589,84 +608,124 @@ TextStyle _textoBranco(double tamanho) => TextStyle(
   ],
 );
 
-/// Selo do pasto no satélite — igual ao web (.satelite-pasto-badge): uma
-/// linha por categoria com animal (ícone num círculo colorido + qtde),
-/// divisor e o total.
+/// Selo do pasto no satélite — igual ao web (.satelite-pasto-badge).
+///
+/// Zoom aproximado: uma bolinha colorida por categoria com animal (ícone e
+/// o total da categoria DENTRO da bolinha), o divisor e o total do pasto.
+///
+/// Visão geral ([visaoGeral], web: .satelite-zoom-baixo): só as bolinhas,
+/// pequenas e lado a lado, sem os números nem o total.
 class _Selo extends StatelessWidget {
   final PastoTabuleiro pasto;
+  final bool visaoGeral;
+  const _Selo({required this.pasto, this.visaoGeral = false});
 
-  /// Zoom afastado: só o total (web: .satelite-zoom-baixo).
-  final bool apenasTotal;
-  const _Selo({required this.pasto, this.apenasTotal = false});
+  static const _corBezerro = Color(0xFF9C7239);
+  static const _corFemea = Color(0xFFB71C1C);
+  static const _corMacho = Color(0xFF212121);
 
   @override
   Widget build(BuildContext context) {
-    if (apenasTotal) return Text('${pasto.total}', style: _textoBranco(22));
+    final bolinhas = [
+      if (pasto.bezerros > 0)
+        _bolinha('mapa_bezerro.png', _corBezerro, pasto.bezerros),
+      if (pasto.femeas > 0) _bolinha('mapa_vaca.png', _corFemea, pasto.femeas),
+      if (pasto.machos > 0) _bolinha('mapa_gado.png', _corMacho, pasto.machos),
+    ];
+
+    if (visaoGeral) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < bolinhas.length; i++) ...[
+            if (i > 0) const SizedBox(width: 3),
+            bolinhas[i],
+          ],
+        ],
+      );
+    }
+
     return IntrinsicHeight(
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (pasto.bezerros > 0)
-                _linha(
-                  'mapa_bezerro.png',
-                  const Color(0xFF9C7239),
-                  pasto.bezerros,
-                ),
-              if (pasto.femeas > 0)
-                _linha('mapa_vaca.png', const Color(0xFFB71C1C), pasto.femeas),
-              if (pasto.machos > 0)
-                _linha('mapa_gado.png', const Color(0xFF212121), pasto.machos),
+              for (var i = 0; i < bolinhas.length; i++) ...[
+                if (i > 0) const SizedBox(height: 2),
+                bolinhas[i],
+              ],
             ],
           ),
           const SizedBox(width: 6),
           Container(
-            width: 2,
+            width: 1,
             decoration: const BoxDecoration(
               color: Color(0xBFFFFFFF),
               boxShadow: [BoxShadow(color: Colors.black, blurRadius: 1.5)],
             ),
           ),
           const SizedBox(width: 6),
-          Center(child: Text('${pasto.total}', style: _textoBranco(22))),
+          // Total do pasto: menor e sem negrito (web: 16px, peso 300).
+          Center(
+            child: Text(
+              '${pasto.total}',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.normal,
+                color: Colors.white,
+                shadows: [
+                  Shadow(color: Colors.black, blurRadius: 1.5),
+                  Shadow(color: Colors.black, blurRadius: 1.5),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _linha(String imagem, Color cor, int qtd) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 20,
-            height: 20,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: cor,
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xE6FFFFFF), width: 1.5),
-              boxShadow: const [
-                BoxShadow(color: Color(0xD9000000), blurRadius: 2),
+  /// Bolinha da categoria: 28 com o ícone e o total dentro; na visão geral
+  /// 20, só com o ícone.
+  Widget _bolinha(String imagem, Color cor, int qtd) {
+    final tamanho = visaoGeral ? 20.0 : 28.0;
+    final icone = ColorFiltered(
+      colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+      child: Image.asset('assets/images/$imagem', width: visaoGeral ? 12 : 10),
+    );
+    return Container(
+      width: tamanho,
+      height: tamanho,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: cor,
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0xE6FFFFFF), width: 1.5),
+        boxShadow: const [BoxShadow(color: Color(0xD9000000), blurRadius: 2)],
+      ),
+      child: visaoGeral
+          ? icone
+          : Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                icone,
+                // total da categoria dentro da bolinha: menor e sem negrito
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '$qtd',
+                    style: const TextStyle(
+                      fontSize: 9,
+                      height: 1,
+                      fontWeight: FontWeight.normal,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
               ],
             ),
-            child: ColorFiltered(
-              colorFilter: const ColorFilter.mode(
-                Colors.white,
-                BlendMode.srcIn,
-              ),
-              child: Image.asset('assets/images/$imagem', width: 12),
-            ),
-          ),
-          const SizedBox(width: 4),
-          Text('$qtd', style: _textoBranco(13)),
-        ],
-      ),
     );
   }
 }

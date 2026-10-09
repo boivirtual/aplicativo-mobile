@@ -43,19 +43,29 @@ class TarjaFazendaWidget extends StatelessWidget {
         ),
         child: Row(
           children: [
-            if (prefixo != null) ...[prefixo!, const SizedBox(width: 2)],
+            if (prefixo != null) prefixo!,
             Expanded(
-              child: Text.rich(
-                TextSpan(
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.blue,
-                    fontWeight: FontWeight.bold,
+              // Sempre em UMA linha: se o texto não couber (nome comprido,
+              // total de animais com 4 ou 5 dígitos), a fonte encolhe um
+              // pouco em vez de quebrar a linha ou encostar no ícone de
+              // trocar de fazenda.
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text.rich(
+                  TextSpan(
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    children: [
+                      TextSpan(text: nomeFazenda),
+                      ...complemento,
+                    ],
                   ),
-                  children: [
-                    TextSpan(text: nomeFazenda),
-                    ...complemento,
-                  ],
+                  maxLines: 1,
+                  softWrap: false,
                 ),
               ),
             ),

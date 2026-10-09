@@ -791,17 +791,22 @@ class _MapaScreenState extends State<MapaScreen> {
       onTrocar: _escolherOutraFazenda,
       // Troca Tabuleiro <-> Mapa Satélite, dentro da tarja e antes do nome
       // da fazenda (mostra o ícone do OUTRO modo, igual ao web).
-      prefixo: IconButton(
-        tooltip: _satelite ? 'Mapa Tabuleiro' : 'Mapa Satélite',
-        visualDensity: VisualDensity.compact,
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-        icon: Icon(
-          _satelite ? Icons.grid_view : Icons.map_outlined,
-          color: Colors.blue,
-          size: 22,
+      // InkWell (e não IconButton, que reserva 40+ de largura): o ícone
+      // fica perto do nome da fazenda.
+      prefixo: Tooltip(
+        message: _satelite ? 'Mapa Tabuleiro' : 'Mapa Satélite',
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: _alternarTipoMapa,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 7, 6, 7),
+            child: Icon(
+              _satelite ? Icons.grid_view : Icons.map_outlined,
+              color: Colors.blue,
+              size: 22,
+            ),
+          ),
         ),
-        onPressed: _alternarTipoMapa,
       ),
       complemento: [
         if (_cards.isNotEmpty) ...[

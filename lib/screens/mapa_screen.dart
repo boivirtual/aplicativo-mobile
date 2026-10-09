@@ -14,6 +14,7 @@ import '../widgets/cabecalho_fazenda_widget.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 import '../widgets/mapa_satelite_widget.dart';
 import '../widgets/pasto_movimentacao_widget.dart';
+import '../widgets/seletor_campo_widget.dart';
 import '../widgets/tarja_fazenda_widget.dart';
 import 'composicao_descricao_lote_screen.dart';
 
@@ -307,7 +308,6 @@ class _MapaScreenState extends State<MapaScreen> {
   /// Toque duplo no modo toque: escolhe a origem (borda laranja tracejada)
   /// e depois o destino.
   void _selecionarPorToque(PastoTabuleiro card) {
-
     if (_origemToque == null) {
       // Pasto vazio não pode ser origem, igual ao arrastar.
       if (card.total == 0) return;
@@ -787,8 +787,11 @@ class _MapaScreenState extends State<MapaScreen> {
   Widget _buildTarjaFazenda() {
     return TarjaFazendaWidget(
       nomeFazenda: _nomeFazendaSelecionada,
-      temOutras: fazendasCarregadas.length > 1,
-      onTrocar: _escolherOutraFazenda,
+      // O ícone de editar abre as opções do mapa (fazenda, busca e Mover
+      // por toque), então aparece mesmo com uma fazenda só.
+      temOutras: true,
+      dicaTrocar: 'Opções do mapa',
+      onTrocar: _abrirOpcoes,
       // Troca Tabuleiro <-> Mapa Satélite, dentro da tarja e antes do nome
       // da fazenda (mostra o ícone do OUTRO modo, igual ao web).
       // InkWell (e não IconButton, que reserva 40+ de largura): o ícone
@@ -832,18 +835,161 @@ class _MapaScreenState extends State<MapaScreen> {
     );
   }
 
-  /// Modal para escolher outra fazenda; ao escolher, recarrega o tabuleiro.
-  Future<void> _escolherOutraFazenda() async {
-    final escolhida = await escolherFazendaModal(
-      context,
-      fazendas: fazendasCarregadas,
-      fazendaSelecionada: fazendaSelecionada,
+  /// Modal de opções do mapa (ícone de editar da tarja): Fazenda, Buscar
+  /// pasto e Mover por toque.
+  ///   - escolher a fazenda ou tocar em "Mover por toque" fecha o modal e
+  ///     executa na hora;
+  ///   - a busca funciona como antes (filtra/destaca enquanto digita, com o
+  ///     mapa visível atrás) e o usuário fecha pelo botão Fechar.
+  Future<void> _abrirOpcoes() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    const azulTitulo = Color(0xFF18385F);
+    const azulVoltar = Color(0xFF4BBAEB);
+    final corRotulo = Colors.blueGrey[800]!;
+
+    await showDialog<void>(
+      context: context,
+      // escurece pouco: dá para ver o resultado da busca no mapa atrás
+      barrierColor: Colors.black26,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModal) => Dialog(
+          backgroundColor: Colors.transparent,
+          alignment: Alignment.topCenter,
+          insetPadding: const EdgeInsets.fromLTRB(12, 70, 12, 24),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: const [
+                BoxShadow(color: Colors.black26, blurRadius: 8),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Mapa de Gado',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18, color: azulTitulo),
+                ),
+                const SizedBox(height: 10),
+                SeletorCampoWidget<String>(
+                  rotulo: 'Fazenda',
+                  corRotulo: corRotulo,
+                  valor: fazendaSelecionada,
+                  opcoes: [
+                    for (final f in fazendasCarregadas)
+                      MapEntry(
+                        (f as Map)['id'].toString(),
+                        f['nome'].toString().toUpperCase(),
+                      ),
+                  ],
+                  onChanged: (id) {
+                    Navigator.pop(ctx);
+                    if (id != fazendaSelecionada) {
+                      _buscaController.clear();
+                      _termoBusca = '';
+                      _selecionarFazenda(id);
+                    }
+                  },
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 56,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: TextField(
+                    controller: _buscaController,
+                    onChanged: (v) {
+                      setState(() => _termoBusca = v.trim());
+                      setModal(() {});
+                    },
+                    textCapitalization: TextCapitalization.characters,
+                    style: const TextStyle(fontSize: 15),
+                    decoration: InputDecoration(
+                      hintText: 'Buscar pasto...',
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      prefixIconConstraints: const BoxConstraints(minWidth: 40),
+                      suffixIcon: _termoBusca.isEmpty
+                          ? null
+                          : IconButton(
+                              icon: const Icon(Icons.cancel, size: 18),
+                              onPressed: () {
+                                _buscaController.clear();
+                                setState(() => _termoBusca = '');
+                                setModal(() {});
+                              },
+                            ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 45,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: _modoToque
+                          ? const Color(0xFF2E7D32)
+                          : Colors.white,
+                      foregroundColor: _modoToque
+                          ? Colors.white
+                          : const Color(0xFF455A64),
+                      side: BorderSide(
+                        color: _modoToque
+                            ? const Color(0xFF2E7D32)
+                            : const Color(0xFFCFD8DC),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _alternarModoToque();
+                    },
+                    icon: Icon(
+                      _modoToque ? Icons.open_with : Icons.touch_app,
+                      size: 18,
+                    ),
+                    label: Text(
+                      _modoToque ? 'Voltar para arrastar' : 'Mover por toque',
+                      style: const TextStyle(fontSize: 15),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 45,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: azulVoltar,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text(
+                      'Fechar',
+                      style: TextStyle(fontSize: 15, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
-    if (escolhida != null && escolhida != fazendaSelecionada) {
-      _buscaController.clear();
-      _termoBusca = '';
-      _selecionarFazenda(escolhida);
-    }
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   Widget _buildBarraTotalEBusca() {

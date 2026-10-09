@@ -15,6 +15,9 @@ class TarjaFazendaWidget extends StatelessWidget {
   /// Gado, o ícone que troca Tabuleiro <-> Satélite).
   final Widget? prefixo;
 
+  /// Dica do ícone de edição.
+  final String dicaTrocar;
+
   const TarjaFazendaWidget({
     super.key,
     required this.nomeFazenda,
@@ -22,6 +25,7 @@ class TarjaFazendaWidget extends StatelessWidget {
     required this.onTrocar,
     this.complemento = const [],
     this.prefixo,
+    this.dicaTrocar = 'Trocar de fazenda',
   });
 
   @override
@@ -74,7 +78,7 @@ class TarjaFazendaWidget extends StatelessWidget {
                 onPressed: onTrocar,
                 visualDensity: VisualDensity.compact,
                 icon: const Icon(Icons.edit_note, color: Colors.blue, size: 22),
-                tooltip: 'Trocar de fazenda',
+                tooltip: dicaTrocar,
               ),
           ],
         ),

@@ -402,7 +402,8 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
             Positioned(
               left: 0,
               right: 0,
-              top: meio + alturaNome / 2,
+              // um respiro entre o nome do pasto e o selo (acompanha o zoom)
+              top: meio + alturaNome / 2 + 5 * _escala,
               // Igual ao web: scale(--sat-escala) a partir do topo/centro.
               child: Transform.scale(
                 scale: _escala,
@@ -649,14 +650,24 @@ class _Selo extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (var i = 0; i < bolinhas.length; i++) ...[
-                if (i > 0) const SizedBox(height: 2),
-                bolinhas[i],
-              ],
-            ],
+          // As duas metades têm a MESMA largura, para a barra ficar sempre
+          // no centro do selo — e o selo é centralizado no nome do pasto,
+          // então bolinhas | barra | total ficam alinhados ao centro do
+          // nome, com total de 1 ou de 4 dígitos.
+          SizedBox(
+            width: _metade,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var i = 0; i < bolinhas.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 2),
+                    bolinhas[i],
+                  ],
+                ],
+              ),
+            ),
           ),
           const SizedBox(width: 6),
           Container(
@@ -668,17 +679,21 @@ class _Selo extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           // Total do pasto: menor e sem negrito (web: 16px, peso 300).
-          Center(
-            child: Text(
-              '${pasto.total}',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.normal,
-                color: Colors.white,
-                shadows: [
-                  Shadow(color: Colors.black, blurRadius: 1.5),
-                  Shadow(color: Colors.black, blurRadius: 1.5),
-                ],
+          SizedBox(
+            width: _metade,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '${pasto.total}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.normal,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(color: Colors.black, blurRadius: 1.5),
+                    Shadow(color: Colors.black, blurRadius: 1.5),
+                  ],
+                ),
               ),
             ),
           ),
@@ -687,10 +702,15 @@ class _Selo extends StatelessWidget {
     );
   }
 
+  /// Largura de cada lado da barra (cabe um total de 4 dígitos).
+  static const _metade = 44.0;
+
   /// Bolinha da categoria: 28 com o ícone e o total dentro; na visão geral
   /// 20, só com o ícone.
   Widget _bolinha(String imagem, Color cor, int qtd) {
-    final tamanho = visaoGeral ? 20.0 : 28.0;
+    // 30 (web: 28): dois pontos a mais para o número não encostar na borda
+    // com o espaço maior entre o ícone e o total.
+    final tamanho = visaoGeral ? 20.0 : 30.0;
     final icone = ColorFiltered(
       colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
       child: Image.asset('assets/images/$imagem', width: visaoGeral ? 12 : 10),
@@ -711,6 +731,7 @@ class _Selo extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 icone,
+                const SizedBox(height: 2.5),
                 // total da categoria dentro da bolinha: menor e sem negrito
                 FittedBox(
                   fit: BoxFit.scaleDown,

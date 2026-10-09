@@ -708,9 +708,7 @@ class _Selo extends StatelessWidget {
   /// Bolinha da categoria: 28 com o ícone e o total dentro; na visão geral
   /// 20, só com o ícone.
   Widget _bolinha(String imagem, Color cor, int qtd) {
-    // 30 (web: 28): dois pontos a mais para o número não encostar na borda
-    // com o espaço maior entre o ícone e o total.
-    final tamanho = visaoGeral ? 20.0 : 30.0;
+    final tamanho = visaoGeral ? 20.0 : 28.0;
     final icone = ColorFiltered(
       colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
       child: Image.asset('assets/images/$imagem', width: visaoGeral ? 12 : 10),
@@ -738,7 +736,9 @@ class _Selo extends StatelessWidget {
                   child: Text(
                     '$qtd',
                     style: const TextStyle(
-                      fontSize: 9,
+                      // 8 (web: 9): com o espaço maior entre o ícone e o
+                      // total, o número não encosta na borda da bolinha.
+                      fontSize: 8,
                       height: 1,
                       fontWeight: FontWeight.normal,
                       color: Colors.white,

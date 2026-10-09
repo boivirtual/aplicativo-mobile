@@ -54,7 +54,8 @@ class _MapaScreenState extends State<MapaScreen> {
   List<PastoTabuleiro> _cards = [];
 
   // Mapa Satélite
-  static const _chaveTipoMapa = 'mapaGadoTipo';
+  // Regra do George: o Mapa de Gado SEMPRE abre no Tabuleiro — a escolha
+  // do Satélite vale só enquanto a tela está aberta, não é lembrada.
   bool _satelite = false;
   bool _sateliteBaixado = false;
   List<PastoTabuleiro> _cardsTodos = [];
@@ -129,7 +130,6 @@ class _MapaScreenState extends State<MapaScreen> {
     setState(() {
       _bd = prefs.getString('userCNPJ');
       _usuario = prefs.getString('userName');
-      _satelite = prefs.getString(_chaveTipoMapa) == 'M';
       _pastaCacheImagens = pastaCache;
       if (fazendasJson != null) {
         fazendasCarregadas = json.decode(fazendasJson);
@@ -255,14 +255,11 @@ class _MapaScreenState extends State<MapaScreen> {
     for (final c in _cardsTodos) c.pasto.descricao.toUpperCase(): c,
   };
 
-  Future<void> _alternarTipoMapa() async {
+  void _alternarTipoMapa() {
     setState(() {
       _satelite = !_satelite;
       _origemToque = null;
     });
-    // Lembra a última escolha, como o web (marcar_tipo_mapa_sessao.php).
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_chaveTipoMapa, _satelite ? 'M' : 'T');
   }
 
   // ---------------------------------------------------------------------

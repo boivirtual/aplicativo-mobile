@@ -853,78 +853,43 @@ class _MapaScreenState extends State<MapaScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 38,
-                  child: TextField(
-                    controller: _buscaController,
-                    onChanged: (v) => setState(() => _termoBusca = v.trim()),
-                    textCapitalization: TextCapitalization.characters,
-                    style: const TextStyle(fontSize: 14),
-                    decoration: InputDecoration(
-                      hintText: 'Buscar pasto...',
-                      isDense: true,
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 10,
-                      ),
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                      prefixIconConstraints: const BoxConstraints(minWidth: 36),
-                      suffixIcon: _termoBusca.isEmpty
-                          ? null
-                          : IconButton(
-                              icon: const Icon(Icons.cancel, size: 18),
-                              onPressed: () {
-                                _buscaController.clear();
-                                setState(() => _termoBusca = '');
-                              },
-                            ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
+          // A busca e o "Mover por toque" ficam no modal de opções (ícone
+          // de editar da tarja). Com uma busca ativa, esta faixa lembra o
+          // que está filtrado e deixa limpar sem abrir o modal.
+          if (_termoBusca.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.only(left: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.search, size: 18, color: Color(0xFF455A64)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Busca: $_termoBusca',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF455A64),
                       ),
                     ),
                   ),
-                ),
+                  IconButton(
+                    tooltip: 'Limpar a busca',
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.cancel, size: 18),
+                    onPressed: () {
+                      _buscaController.clear();
+                      setState(() => _termoBusca = '');
+                    },
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              SizedBox(
-                height: 38,
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: _modoToque
-                        ? const Color(0xFF2E7D32)
-                        : Colors.white,
-                    foregroundColor: _modoToque
-                        ? Colors.white
-                        : const Color(0xFF455A64),
-                    side: BorderSide(
-                      color: _modoToque
-                          ? const Color(0xFF2E7D32)
-                          : const Color(0xFFCFD8DC),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                  ),
-                  onPressed: _alternarModoToque,
-                  icon: Icon(
-                    _modoToque ? Icons.open_with : Icons.touch_app,
-                    size: 16,
-                  ),
-                  label: Text(
-                    _modoToque ? 'Voltar para arrastar' : 'Mover por toque',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
           // Situação da fila do mapa: enviando (com internet), aguardando
           // internet (sem) e, depois de gravado, a confirmação por 4s.
           if (_pendentes > 0)

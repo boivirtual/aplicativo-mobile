@@ -789,6 +789,20 @@ class _MapaScreenState extends State<MapaScreen> {
       nomeFazenda: _nomeFazendaSelecionada,
       temOutras: fazendasCarregadas.length > 1,
       onTrocar: _escolherOutraFazenda,
+      // Troca Tabuleiro <-> Mapa Satélite, dentro da tarja e antes do nome
+      // da fazenda (mostra o ícone do OUTRO modo, igual ao web).
+      prefixo: IconButton(
+        tooltip: _satelite ? 'Mapa Tabuleiro' : 'Mapa Satélite',
+        visualDensity: VisualDensity.compact,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+        icon: Icon(
+          _satelite ? Icons.grid_view : Icons.map_outlined,
+          color: Colors.blue,
+          size: 22,
+        ),
+        onPressed: _alternarTipoMapa,
+      ),
       complemento: [
         if (_cards.isNotEmpty) ...[
           const TextSpan(text: '  ➔  '),
@@ -836,21 +850,6 @@ class _MapaScreenState extends State<MapaScreen> {
         children: [
           Row(
             children: [
-              // Troca Tabuleiro <-> Mapa Satélite (igual ao web: mostra o
-              // ícone do OUTRO modo).
-              IconButton(
-                tooltip: _satelite ? 'Mapa Tabuleiro' : 'Mapa Satélite',
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                icon: Icon(
-                  _satelite ? Icons.grid_view : Icons.map_outlined,
-                  color: Colors.grey,
-                  size: 24,
-                ),
-                onPressed: _alternarTipoMapa,
-              ),
-              const SizedBox(width: 6),
               Expanded(
                 child: SizedBox(
                   height: 38,

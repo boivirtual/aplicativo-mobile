@@ -11,12 +11,17 @@ class TarjaFazendaWidget extends StatelessWidget {
   final VoidCallback onTrocar;
   final List<InlineSpan> complemento;
 
+  /// Opcional: fica dentro da tarja, antes do nome da fazenda (no Mapa de
+  /// Gado, o ícone que troca Tabuleiro <-> Satélite).
+  final Widget? prefixo;
+
   const TarjaFazendaWidget({
     super.key,
     required this.nomeFazenda,
     required this.temOutras,
     required this.onTrocar,
     this.complemento = const [],
+    this.prefixo,
   });
 
   @override
@@ -26,13 +31,19 @@ class TarjaFazendaWidget extends StatelessWidget {
       color: const Color(0xFFF1F3F6),
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
       child: Container(
-        padding: EdgeInsets.fromLTRB(10, 8, temOutras ? 0 : 10, 8),
+        padding: EdgeInsets.fromLTRB(
+          prefixo == null ? 10 : 2,
+          prefixo == null ? 8 : 2,
+          temOutras ? 0 : 10,
+          prefixo == null ? 8 : 2,
+        ),
         decoration: BoxDecoration(
           color: Colors.blue.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           children: [
+            if (prefixo != null) ...[prefixo!, const SizedBox(width: 2)],
             Expanded(
               child: Text.rich(
                 TextSpan(
@@ -41,7 +52,10 @@ class TarjaFazendaWidget extends StatelessWidget {
                     color: Colors.blue,
                     fontWeight: FontWeight.bold,
                   ),
-                  children: [TextSpan(text: nomeFazenda), ...complemento],
+                  children: [
+                    TextSpan(text: nomeFazenda),
+                    ...complemento,
+                  ],
                 ),
               ),
             ),

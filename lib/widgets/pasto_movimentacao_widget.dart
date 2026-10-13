@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/daos/mapa_gado_dao.dart';
 import '../screens/composicao_descricao_lote_screen.dart';
 import '../screens/morte_animal_modal.dart';
+import '../screens/nascimento_pasto_screen.dart';
 import '../screens/nutricao_pasto_modal.dart';
 import '../services/connectivity_service.dart';
 import '../services/mapa_gado_sync_service.dart';
@@ -25,8 +26,8 @@ import 'seletor_campo_widget.dart';
 /// botão Morte abre o modal "Mapa de Gado - Morte" ([MorteAnimalModal]).
 /// O botão Nutrição abre "Mapa de Gado - Nutrição" ([NutricaoPastoModal]).
 /// O botão Nascimento só funciona online: sem internet (ou com ela ruim)
-/// avisa e não continua ([_abrirNascimento]); o lançamento em si é a
-/// próxima etapa.
+/// avisa e não continua ([_abrirNascimento]); online, abre a tela
+/// "Mapa de Gado - Nascimento" ([NascimentoPastoScreen]).
 ///
 /// Lê tudo do cache local (funciona offline).
 class PastoMovimentacaoWidget extends StatefulWidget {
@@ -206,9 +207,10 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
   /// Botão Nascimento. O nascimento só pode ser lançado com o aplicativo
   /// online: confere a internet na hora do toque (e não o último estado
   /// medido) e, sem internet ou com ela ruim/intermitente, avisa e para.
-  /// Devolve true quando pode continuar.
+  /// Online, abre a tela do Nascimento. Devolve true quando abriu.
   Future<bool> _abrirNascimento() async {
-    if (_conferindoInternet) return false;
+    final pasto = _pasto;
+    if (pasto == null || _conferindoInternet) return false;
     _conferindoInternet = true;
     final nivel = await ConnectivityService.instance.verificarAgora();
     _conferindoInternet = false;
@@ -230,7 +232,22 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
       );
       return false;
     }
-    // Online: o lançamento do nascimento é a próxima etapa.
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => NascimentoPastoScreen(
+          bd: widget.bd,
+          fazendaId: widget.fazendaId,
+          fazendaCodigo: widget.fazendaCodigo,
+          nomeFazenda: widget.nomeFazenda,
+          pastoId: pasto.id,
+          nomePasto: pasto.descricao,
+          usuario: widget.usuario,
+        ),
+      ),
+    );
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (mounted) await _carregar();
     return true;
   }
 

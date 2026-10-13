@@ -19,7 +19,7 @@ class NascimentoPastoScreen extends StatefulWidget {
   final String nomeFazenda;
   final int pastoId;
   final String nomePasto;
-  final String usuario;
+  final String? usuario;
 
   const NascimentoPastoScreen({
     super.key,
@@ -102,7 +102,10 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
               TextSpan(
                 style: TextStyle(fontSize: 14, color: _corRotulo),
                 children: const [
-                  TextSpan(text: '* ', style: TextStyle(color: Colors.red)),
+                  TextSpan(
+                    text: '* ',
+                    style: TextStyle(color: Colors.red),
+                  ),
                   TextSpan(text: 'Selecione uma opção'),
                 ],
               ),

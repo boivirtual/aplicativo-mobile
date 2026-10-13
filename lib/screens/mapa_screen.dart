@@ -516,89 +516,65 @@ class _MapaScreenState extends State<MapaScreen> {
     );
   }
 
-  /// Espaço que a tarja azul ocupa no topo (ela flutua sobre o mapa).
-  static const double _alturaTarja = 44;
-
-  /// Atualizando por baixo de um mapa que já está na tela.
-  bool get _mostraAguardeNoTopo =>
-      _baixando && fazendaSelecionada != null && _cards.isNotEmpty;
-
-  /// Tem faixa de busca ou aviso da fila para mostrar.
-  bool get _temFaixa =>
-      _termoBusca.isNotEmpty || _pendentes > 0 || _mostrarEnviado;
-
-  /// Tem algum aviso entre a tarja e os pastos (aí os pastos começam
-  /// depois do aviso, e não atrás da tarja).
-  bool get _temAvisoNoTopo =>
-      _mostraAguardeNoTopo || _temFaixa || _modoToque || _erros.isNotEmpty;
-
   Widget _buildMapa() {
-    if (carregando) return const Center(child: CircularProgressIndicator());
-    final corpo = _buildCorpoMapa();
-    if (fazendaSelecionada == null) return corpo;
-    // Sem fundo cinza: só a tarja azul, flutuando no topo, com os pastos
-    // (ou o mapa satélite) rolando atrás dela.
-    return Stack(
-      children: [
-        Positioned.fill(child: corpo),
-        Positioned(top: 0, left: 0, right: 0, child: _buildTarjaFazenda()),
-      ],
-    );
-  }
-
-  Widget _buildCorpoMapa() {
-    return Column(
-      children: [
-        // Antes de escolher: o select. Depois: a tarja azul (ver
-        // _buildMapa) com a fazenda, o total e as opções do mapa.
-        if (fazendaSelecionada == null)
-          CabecalhoFazendaWidget(
-            fazendaSelecionada: fazendaSelecionada,
-            fazendasCarregadas: fazendasCarregadas,
-            onChanged: _selecionarFazenda,
-            mostrarIcone: false,
-            textoVazio: 'Selecione uma Fazenda',
-          )
-        else if (_temAvisoNoTopo)
-          const SizedBox(height: _alturaTarja),
-        // Atualizando por baixo de um mapa que já está na tela (cache):
-        // aviso discreto, sem cobrir o mapa. Sem nada na tela, o
-        // "Aguarde" grande aparece no centro (ver _buildConteudo).
-        if (_mostraAguardeNoTopo)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 6),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: _azul,
+    return carregando
+        ? const Center(child: CircularProgressIndicator())
+        : Column(
+            children: [
+              // Antes de escolher: o select. Depois: tarja azul com a
+              // fazenda e o total (mesmo visual da tarja da Pesagem) e o
+              // ícone de edição para trocar de fazenda.
+              if (fazendaSelecionada == null)
+                CabecalhoFazendaWidget(
+                  fazendaSelecionada: fazendaSelecionada,
+                  fazendasCarregadas: fazendasCarregadas,
+                  onChanged: _selecionarFazenda,
+                  mostrarIcone: false,
+                  textoVazio: 'Selecione uma Fazenda',
+                )
+              else
+                _buildTarjaFazenda(),
+              // Atualizando por baixo de um mapa que já está na tela (cache):
+              // aviso discreto, sem cobrir o mapa. Sem nada na tela, o
+              // "Aguarde" grande aparece no centro (ver _buildConteudo).
+              if (_baixando && fazendaSelecionada != null && _cards.isNotEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: _azul,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Aguarde',
+                        style: TextStyle(fontSize: 13, color: _azul),
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(width: 8),
-                Text('Aguarde', style: TextStyle(fontSize: 13, color: _azul)),
-              ],
-            ),
-          ),
-        // Acompanha o dedo durante o arraste (ver _aoMoverDedo) e
-        // dedo saiu da tela = arraste terminou (ver _fimArraste).
-        Expanded(
-          child: Listener(
-            onPointerMove: (e) => _aoMoverDedo(e.position),
-            onPointerUp: (_) {
-              if (_arrastando) _fimArraste();
-            },
-            onPointerCancel: (_) {
-              if (_arrastando) _fimArraste();
-            },
-            child: _buildConteudo(),
-          ),
-        ),
-      ],
-    );
+              // Acompanha o dedo durante o arraste (ver _aoMoverDedo) e
+              // dedo saiu da tela = arraste terminou (ver _fimArraste).
+              Expanded(
+                child: Listener(
+                  onPointerMove: (e) => _aoMoverDedo(e.position),
+                  onPointerUp: (_) {
+                    if (_arrastando) _fimArraste();
+                  },
+                  onPointerCancel: (_) {
+                    if (_arrastando) _fimArraste();
+                  },
+                  child: _buildConteudo(),
+                ),
+              ),
+            ],
+          );
   }
 
   /// Ícone girando + "Aguarde" (mesmo visual da tela "Atualizando os dados").
@@ -665,7 +641,7 @@ class _MapaScreenState extends State<MapaScreen> {
 
     return Column(
       children: [
-        if (_temFaixa) _buildBarraTotalEBusca(),
+        _buildBarraTotalEBusca(),
         if (_modoToque) _buildAvisoModoToque(),
         if (_erros.isNotEmpty) _buildAvisoErros(),
         if (_satelite)
@@ -683,14 +659,7 @@ class _MapaScreenState extends State<MapaScreen> {
                     key: _gridKey,
                     controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
-                    // sem aviso no topo, a primeira linha começa logo
-                    // abaixo da tarja e rola por trás dela
-                    padding: EdgeInsets.fromLTRB(
-                      8,
-                      _temAvisoNoTopo ? 6 : _alturaTarja,
-                      8,
-                      16,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: colunas,
                       mainAxisExtent: 120,
@@ -1026,8 +995,12 @@ class _MapaScreenState extends State<MapaScreen> {
 
   Widget _buildBarraTotalEBusca() {
     return Container(
+      // Largura cheia: sem a busca e o botão (foram para o modal), a
+      // coluna pode ficar vazia e a faixa encolhia para um quadradinho
+      // cinza no meio da tela.
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+      color: const Color(0xFFF1F3F6),
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1038,7 +1011,7 @@ class _MapaScreenState extends State<MapaScreen> {
             Container(
               padding: const EdgeInsets.only(left: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F3F6),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(

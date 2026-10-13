@@ -994,6 +994,10 @@ class _MapaScreenState extends State<MapaScreen> {
 
   Widget _buildBarraTotalEBusca() {
     return Container(
+      // Largura cheia: sem a busca e o botão (foram para o modal), a
+      // coluna pode ficar vazia e a faixa encolhia para um quadradinho
+      // cinza no meio da tela.
+      width: double.infinity,
       color: const Color(0xFFF1F3F6),
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
       child: Column(

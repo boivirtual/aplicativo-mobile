@@ -120,5 +120,56 @@ void main() {
     await AnimalCacheDao.instance.salvarLote([], removerAusentes: true);
     expect(await AnimalCacheDao.instance.contarTotal(), 1);
   });
-}
 
+  test('Nascimento: lista do Nº Mãe segue os critérios do web (fêmea ativa '
+      'da fazenda, com mais de 7 meses, em ordem de número)', () async {
+    final hoje = DateTime.now();
+    // nascida há exatamente [meses] meses e [dias] dias a menos
+    String nasc(int meses, {int diasAMenos = 0}) {
+      final d = DateTime(
+        hoje.year,
+        hoje.month - meses,
+        hoje.day,
+      ).add(Duration(days: diasAMenos));
+      return '${d.year}-${d.month.toString().padLeft(2, '0')}-'
+          '${d.day.toString().padLeft(2, '0')}';
+    }
+
+    Map<String, dynamic> animal(
+      String id,
+      String codigo, {
+      String sexo = 'F',
+      String fazenda = '57',
+      String ativo = 'S',
+      String? nascimento,
+    }) => {
+      'id': id,
+      'fazendaId': fazenda,
+      'codigo': codigo,
+      'sexo': sexo,
+      'nascimento': nascimento ?? '2020-01-15',
+      'ativo': ativo,
+    };
+
+    await AnimalCacheDao.instance.salvarLote([
+      animal('1', 'B-000000210'),
+      animal('2', '000000021'),
+      animal('3', 'C-000000021', sexo: 'M'), // macho
+      animal('4', 'D-000000021', fazenda: '58'), // outra fazenda
+      animal('5', 'E-000000021', ativo: 'N'), // inativa
+      animal('6', 'F-000000021', nascimento: nasc(7)), // 7 meses: não
+      animal('7', 'G-000000021', nascimento: nasc(8)), // 8 meses: sim
+      // falta 1 dia para completar 8 meses: ainda 7 completos
+      animal('8', 'H-000000021', nascimento: nasc(8, diasAMenos: 1)),
+    ]);
+
+    final lista = await AnimalCacheDao.instance.buscarFemeasParaNascimento(
+      '57',
+      '21',
+    );
+    expect(
+      [for (final a in lista) a['codigo']],
+      ['000000021', 'G-000000021', 'B-000000210'],
+    );
+  });
+}

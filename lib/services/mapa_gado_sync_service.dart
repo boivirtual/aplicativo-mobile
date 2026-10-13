@@ -297,6 +297,27 @@ class MapaGadoSyncService {
     }
   }
 
+  /// Opções dos selects da tela do Nascimento (Pai Nº, Raça e Pelagem),
+  /// direto do servidor — o Nascimento só funciona online. null se falhar.
+  Future<Map<String, dynamic>?> buscarListasNascimento(String bd) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse("${ApiConfig.baseUrl}/rest/mapa-gado/nascimento.php"),
+            headers: {"Content-Type": "application/json"},
+            body: json.encode({'acao': 'listas', 'bd': bd}),
+          )
+          .timeout(const Duration(seconds: 20));
+      if (response.statusCode != 200) return null;
+      final dados = json.decode(response.body);
+      if (dados is! Map || dados['success'] != true) return null;
+      return Map<String, dynamic>.from(dados);
+    } catch (e) {
+      debugPrint('[MapaGadoSync] listas do nascimento: falhou -> $e');
+      return null;
+    }
+  }
+
   void _depoisDeRegistrar(String bd) {
     versaoFila.value++;
     if (ConnectivityService.instance.temInternetReal) {

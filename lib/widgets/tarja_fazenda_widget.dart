@@ -18,6 +18,10 @@ class TarjaFazendaWidget extends StatelessWidget {
   /// Dica do ícone de edição.
   final String dicaTrocar;
 
+  /// Tarja mais baixa e com menos espaço cinza em volta (Mapa de Gado,
+  /// para sobrar mais tela para os pastos).
+  final bool compacta;
+
   const TarjaFazendaWidget({
     super.key,
     required this.nomeFazenda,
@@ -26,6 +30,7 @@ class TarjaFazendaWidget extends StatelessWidget {
     this.complemento = const [],
     this.prefixo,
     this.dicaTrocar = 'Trocar de fazenda',
+    this.compacta = false,
   });
 
   @override
@@ -33,13 +38,15 @@ class TarjaFazendaWidget extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: const Color(0xFFF1F3F6),
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      padding: compacta
+          ? const EdgeInsets.fromLTRB(12, 6, 12, 0)
+          : const EdgeInsets.fromLTRB(12, 10, 12, 8),
       child: Container(
         padding: EdgeInsets.fromLTRB(
           prefixo == null ? 10 : 2,
-          prefixo == null ? 8 : 2,
-          temOutras ? 0 : 10,
-          prefixo == null ? 8 : 2,
+          compacta ? 1 : (prefixo == null ? 8 : 2),
+          temOutras ? (compacta ? 2 : 0) : 10,
+          compacta ? 1 : (prefixo == null ? 8 : 2),
         ),
         decoration: BoxDecoration(
           color: Colors.blue.withValues(alpha: 0.1),
@@ -73,7 +80,21 @@ class TarjaFazendaWidget extends StatelessWidget {
                 ),
               ),
             ),
-            if (temOutras)
+            if (temOutras && compacta)
+              // InkWell (e não IconButton, que reserva 40 de altura): é ele
+              // que deixa a tarja mais baixa.
+              Tooltip(
+                message: dicaTrocar,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: onTrocar,
+                  child: const Padding(
+                    padding: EdgeInsets.fromLTRB(8, 5, 8, 5),
+                    child: Icon(Icons.edit_note, color: Colors.blue, size: 22),
+                  ),
+                ),
+              )
+            else if (temOutras)
               IconButton(
                 onPressed: onTrocar,
                 visualDensity: VisualDensity.compact,

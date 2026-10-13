@@ -791,6 +791,7 @@ class _MapaScreenState extends State<MapaScreen> {
       // por toque), então aparece mesmo com uma fazenda só.
       temOutras: true,
       dicaTrocar: 'Opções do mapa',
+      compacta: true,
       onTrocar: _abrirOpcoes,
       // Troca Tabuleiro <-> Mapa Satélite, dentro da tarja e antes do nome
       // da fazenda (mostra o ícone do OUTRO modo, igual ao web).
@@ -802,7 +803,7 @@ class _MapaScreenState extends State<MapaScreen> {
           borderRadius: BorderRadius.circular(8),
           onTap: _alternarTipoMapa,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 7, 6, 7),
+            padding: const EdgeInsets.fromLTRB(8, 5, 6, 5),
             child: Icon(
               _satelite ? Icons.grid_view : Icons.map_outlined,
               color: Colors.blue,
@@ -999,7 +1000,7 @@ class _MapaScreenState extends State<MapaScreen> {
       // cinza no meio da tela.
       width: double.infinity,
       color: const Color(0xFFF1F3F6),
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

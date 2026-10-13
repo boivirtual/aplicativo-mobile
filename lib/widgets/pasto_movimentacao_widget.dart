@@ -4,6 +4,7 @@ import '../data/daos/mapa_gado_dao.dart';
 import '../screens/composicao_descricao_lote_screen.dart';
 import '../screens/morte_animal_modal.dart';
 import '../screens/nutricao_pasto_modal.dart';
+import '../services/connectivity_service.dart';
 import '../services/mapa_gado_sync_service.dart';
 import '../utils/app_alert.dart';
 import '../utils/mapa_tabuleiro_calculo.dart';
@@ -23,7 +24,9 @@ import 'seletor_campo_widget.dart';
 /// do pasto destino quando o web abre (ver [_confirmarTransferencia]). O
 /// botão Morte abre o modal "Mapa de Gado - Morte" ([MorteAnimalModal]).
 /// O botão Nutrição abre "Mapa de Gado - Nutrição" ([NutricaoPastoModal]).
-/// Nascimento ainda não faz nada (próxima etapa).
+/// O botão Nascimento só funciona online: sem internet (ou com ela ruim)
+/// avisa e não continua ([_abrirNascimento]); o lançamento em si é a
+/// próxima etapa.
 ///
 /// Lê tudo do cache local (funciona offline).
 class PastoMovimentacaoWidget extends StatefulWidget {
@@ -199,6 +202,39 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
     );
     FocusManager.instance.primaryFocus?.unfocus();
   }
+
+  /// Botão Nascimento. O nascimento só pode ser lançado com o aplicativo
+  /// online: confere a internet na hora do toque (e não o último estado
+  /// medido) e, sem internet ou com ela ruim/intermitente, avisa e para.
+  /// Devolve true quando pode continuar.
+  Future<bool> _abrirNascimento() async {
+    if (_conferindoInternet) return false;
+    _conferindoInternet = true;
+    final nivel = await ConnectivityService.instance.verificarAgora();
+    _conferindoInternet = false;
+    if (!mounted) return false;
+    if (nivel == NivelConexao.semInternet) {
+      await AppAlert.erro(
+        context,
+        'Sem internet!\n\nO Nascimento só pode ser lançado com o aplicativo '
+        'online. Conecte-se à internet e tente novamente.',
+      );
+      return false;
+    }
+    if (nivel == NivelConexao.internetRuim) {
+      await AppAlert.erro(
+        context,
+        'Internet ruim ou intermitente!\n\nO Nascimento só pode ser lançado '
+        'com o aplicativo online. Tente novamente quando a internet estiver '
+        'estável.',
+      );
+      return false;
+    }
+    // Online: o lançamento do nascimento é a próxima etapa.
+    return true;
+  }
+
+  bool _conferindoInternet = false;
 
   /// Botão Morte — modal "Mapa de Gado - Morte" do web. Por enquanto só o
   /// controle de estoque por animal ('I').
@@ -667,7 +703,14 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
               ),
             ),
             const SizedBox(width: 8),
-            Expanded(child: _botao('Nascimento', _azulBotao, fonte: 16)),
+            Expanded(
+              child: _botao(
+                'Nascimento',
+                _azulBotao,
+                fonte: 16,
+                aoTocar: _abrirNascimento,
+              ),
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: _botao(

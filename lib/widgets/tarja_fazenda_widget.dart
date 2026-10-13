@@ -89,7 +89,7 @@ class TarjaFazendaWidget extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   onTap: onTrocar,
                   child: const Padding(
-                    padding: EdgeInsets.fromLTRB(8, 5, 8, 5),
+                    padding: EdgeInsets.fromLTRB(8, 7, 8, 7),
                     child: Icon(Icons.edit_note, color: Colors.blue, size: 22),
                   ),
                 ),

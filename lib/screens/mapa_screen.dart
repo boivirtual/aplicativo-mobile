@@ -803,7 +803,7 @@ class _MapaScreenState extends State<MapaScreen> {
           borderRadius: BorderRadius.circular(8),
           onTap: _alternarTipoMapa,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 5, 6, 5),
+            padding: const EdgeInsets.fromLTRB(8, 7, 6, 7),
             child: Icon(
               _satelite ? Icons.grid_view : Icons.map_outlined,
               color: Colors.blue,

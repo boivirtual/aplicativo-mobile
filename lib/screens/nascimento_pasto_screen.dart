@@ -245,9 +245,7 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     const SizedBox(height: 8),
     Row(
       children: [
-        Expanded(
-          child: _campoTexto('* Peso', _pesoController, numerico: true),
-        ),
+        Expanded(child: _campoTexto('* Peso', _pesoController, numerico: true)),
         const SizedBox(width: 8),
         const Expanded(child: SizedBox()),
       ],
@@ -297,7 +295,10 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     TextSpan(
       style: TextStyle(fontSize: fonte, color: _corRotulo),
       children: [
-        const TextSpan(text: '* ', style: TextStyle(color: Colors.red)),
+        const TextSpan(
+          text: '* ',
+          style: TextStyle(color: Colors.red),
+        ),
         TextSpan(text: texto),
       ],
     ),

@@ -501,8 +501,11 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
                     ..._camposNascimento()
                   else
                     ..._camposOcorrencia(),
-                  const SizedBox(height: 10),
-                  _botao('Confirmar', _verde, _confirmar),
+                  // no Nascimento o Confirmar fica na linha do Peso
+                  if (_opcao != 'N') ...[
+                    const SizedBox(height: 10),
+                    _botao('Confirmar', _verde, _confirmar),
+                  ],
                 ],
               ),
             ),
@@ -568,15 +571,19 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     ],
   ];
 
-  /// Opção Nascimento.
+  /// Opção Nascimento:
+  ///   1. Data Nascimento
+  ///   2. Nº Mãe e Pai Nº
+  ///   3. Nº Animal e Monta
+  ///   (Sexo)
+  ///   4. Raça e Pelagem
+  ///   5. Peso e Confirmar
   List<Widget> _camposNascimento() => [
     Row(
       children: [
         Expanded(child: _campoData('* Data Nascimento')),
         const SizedBox(width: 8),
-        Expanded(
-          child: _campoTexto('Nº Animal', _animalController, numerico: true),
-        ),
+        const Expanded(child: SizedBox()),
       ],
     ),
     const SizedBox(height: 8),
@@ -589,9 +596,22 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     ),
     ..._abaixoDaMae(),
     const SizedBox(height: 8),
-    Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: Text('Monta:', style: TextStyle(fontSize: 14, color: _corRotulo)),
+    Row(
+      children: [
+        Expanded(
+          child: _campoTexto('Nº Animal', _animalController, numerico: true),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Text(
+              'Monta:',
+              style: TextStyle(fontSize: 14, color: _corRotulo),
+            ),
+          ),
+        ),
+      ],
     ),
     const SizedBox(height: 8),
     _campoSexo(),
@@ -622,7 +642,7 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
       children: [
         Expanded(child: _campoTexto('* Peso', _pesoController, numerico: true)),
         const SizedBox(width: 8),
-        const Expanded(child: SizedBox()),
+        Expanded(child: _botao('Confirmar', _verde, _confirmar, altura: 56)),
       ],
     ),
   ];
@@ -937,8 +957,13 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     ),
   );
 
-  Widget _botao(String texto, Color cor, VoidCallback aoTocar) => SizedBox(
-    height: 45,
+  Widget _botao(
+    String texto,
+    Color cor,
+    VoidCallback aoTocar, {
+    double altura = 45,
+  }) => SizedBox(
+    height: altura,
     child: ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: cor,

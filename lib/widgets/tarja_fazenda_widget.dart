@@ -18,8 +18,8 @@ class TarjaFazendaWidget extends StatelessWidget {
   /// Dica do ícone de edição.
   final String dicaTrocar;
 
-  /// Tarja mais baixa e com menos espaço cinza em volta (Mapa de Gado,
-  /// para sobrar mais tela para os pastos).
+  /// Tarja mais baixa, sem o fundo cinza em volta e com cor sólida: no
+  /// Mapa de Gado ela flutua no topo e os pastos rolam atrás dela.
   final bool compacta;
 
   const TarjaFazendaWidget({
@@ -37,7 +37,7 @@ class TarjaFazendaWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: const Color(0xFFF1F3F6),
+      color: compacta ? null : const Color(0xFFF1F3F6),
       padding: compacta
           ? const EdgeInsets.fromLTRB(12, 6, 12, 0)
           : const EdgeInsets.fromLTRB(12, 10, 12, 8),
@@ -49,8 +49,23 @@ class TarjaFazendaWidget extends StatelessWidget {
           compacta ? 1 : (prefixo == null ? 8 : 2),
         ),
         decoration: BoxDecoration(
-          color: Colors.blue.withValues(alpha: 0.1),
+          // compacta: mesma cor, mas sólida (o que passa atrás não aparece)
+          color: compacta
+              ? Color.alphaBlend(
+                  Colors.blue.withValues(alpha: 0.1),
+                  const Color(0xFFF1F3F6),
+                )
+              : Colors.blue.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
+          boxShadow: compacta
+              ? const [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 4,
+                    offset: Offset(0, 1),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           children: [

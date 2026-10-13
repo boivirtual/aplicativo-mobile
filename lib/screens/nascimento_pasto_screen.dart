@@ -1,3 +1,8 @@
+// Os campos escondidos do web (cobertura, estação, tipo de gravação...) já
+// são preenchidos ao escolher a fêmea e serão lidos na gravação (próxima
+// etapa).
+// ignore_for_file: unused_field
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -6,7 +11,10 @@ import 'package:flutter/services.dart';
 import '../data/daos/animal_cache_dao.dart';
 import '../services/animal_cache_service.dart';
 import '../services/connectivity_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../services/mapa_gado_sync_service.dart';
+import '../utils/app_alert.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 import '../widgets/seletor_campo_widget.dart';
 
@@ -27,8 +35,11 @@ import '../widgets/seletor_campo_widget.dart';
 /// a digitação do Nº Mãe / Nº Fêmea, com a lista de aproximação (mesmos
 /// critérios do web, ver AnimalCacheDao.buscarFemeasParaNascimento) — a
 /// fêmea só vale depois de escolhida na lista, como o Nº Animal da Morte.
-/// As regras da estação de monta, as validações e a gravação são a próxima
-/// etapa.
+/// Ao escolher a fêmea a tela consulta o servidor e aplica as mesmas
+/// regras de ler_animal_mae() do web (estação de monta, pai, raça e os
+/// avisos de diagnóstico, aborto/natimorto, gemelar e 9 meses) — ver
+/// [_NascimentoPastoScreenState._aplicarMae]. O Confirmar ainda não valida
+/// nem grava (próxima etapa).
 class NascimentoPastoScreen extends StatefulWidget {
   final String bd;
   final int fazendaId;
@@ -104,6 +115,34 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
   int _buscaAtual = 0;
   Timer? _esperaNaoEncontrado;
   OverlayEntry? _avisoNaoEncontrado;
+  bool _consultandoMae = false;
+
+  // Parâmetros de nascimento da fazenda (ler_parametro_nascimento.php).
+  final _alfaController = TextEditingController();
+  bool _mostraAlfa = false;
+  String _grupoUsuario = '';
+
+  // Linha "Estação de Monta: 25/2026" / "Monta:" / "Monta Natural" e o
+  // aviso vermelho ao lado (.desc_novo_nascimento).
+  String _rotuloMonta = 'Estação de Monta:';
+  String _estacao = '';
+  String _descNovoNascimento = '';
+
+  // Campos escondidos do web, preenchidos ao escolher a fêmea (usados na
+  // gravação — próxima etapa).
+  String _maeId = '';
+  String _coberturaId = '';
+  String _itemCobertura = '';
+  String _dataInseminacao = '';
+  String _diasNascimento = '';
+  String _estacaoId = '';
+  int _tipoGravacao = 0;
+  String _tipoCobertura = '';
+  String _dataPrenhes = '';
+
+  static String _iso(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
 
   static DateTime _hoje() {
     final a = DateTime.now();
@@ -130,6 +169,7 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     super.initState();
     _carregarListas();
     _carregarCadastro();
+    _carregarParametros();
   }
 
   @override
@@ -137,6 +177,7 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     _esperaNaoEncontrado?.cancel();
     _avisoNaoEncontrado?.remove();
     _maeController.dispose();
+    _alfaController.dispose();
     _maeFoco.dispose();
     _animalController.dispose();
     _pesoController.dispose();
@@ -194,6 +235,31 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
           MapEntry(txt(p, 'id'), txt(p, 'descricao')),
       ];
       _carregandoListas = false;
+    });
+  }
+
+  /// Código alfa e próximo número do animal, a estação de monta da
+  /// fazenda e o grupo do usuário — como o web faz ao abrir a tela.
+  Future<void> _carregarParametros() async {
+    final prefs = await SharedPreferences.getInstance();
+    final dados = await MapaGadoSyncService.instance.consultarNascimento({
+      'acao': 'parametros',
+      'bd': widget.bd,
+      'fazenda': widget.fazendaId,
+      'usuario_id': int.tryParse(prefs.getString('userId') ?? '') ?? 0,
+    });
+    if (!mounted || dados == null) return;
+    final alfa = (dados['codigo_alfa'] ?? '').toString();
+    final numero = (dados['codigo_numerico'] ?? '').toString();
+    setState(() {
+      _grupoUsuario = (dados['grupo_usuario'] ?? '').toString();
+      _mostraAlfa = alfa.isNotEmpty;
+      _alfaController.text = alfa;
+      _animalController.text = numero;
+      if (numero.isNotEmpty) {
+        _estacao = (dados['estacao'] ?? '').toString();
+        _estacaoId = (dados['estacao_id'] ?? '').toString();
+      }
     });
   }
 
@@ -263,21 +329,73 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     }
   }
 
-  void _escolherMae(Map<String, dynamic> animal) {
-    _buscaAtual++;
+  // ---------------------------------------------------------------------
+  // Fêmea escolhida — ler_animal_mae() do web (js/mapa_gados.js)
+  // ---------------------------------------------------------------------
+
+  /// Toque na lista de aproximação: consulta a fêmea no servidor
+  /// (ler_animal_femea_nascimento.php) e aplica as mesmas regras do web.
+  Future<void> _escolherMae(Map<String, dynamic> animal) async {
+    final busca = ++_buscaAtual;
     _esperaNaoEncontrado?.cancel();
+    final codigo = animal['codigo']?.toString() ?? '';
     setState(() {
-      _mae = animal;
+      _mae = null;
       _maeInvalida = false;
       _sugestoes = [];
-      _maeController.text = _exibicao(animal['codigo']?.toString() ?? '');
+      _maeController.text = _exibicao(codigo);
+      _consultandoMae = true;
     });
     _maeFoco.unfocus();
+
+    final dados = await MapaGadoSyncService.instance.consultarNascimento({
+      'acao': 'mae',
+      'bd': widget.bd,
+      'fazenda': widget.fazendaId,
+      'codigo': codigo,
+      'data': _iso(_data),
+    });
+    if (!mounted || busca != _buscaAtual) return;
+    setState(() => _consultandoMae = false);
+
+    if (dados == null) {
+      _limparMae();
+      await AppAlert.erro(
+        context,
+        'Não foi possível consultar a fêmea no servidor. Verifique a '
+        'internet e tente novamente.',
+      );
+      return;
+    }
+    if (dados['encontrado'] != true) {
+      // web: o campo fica com "Não encontrado"
+      _limparMae();
+      _mostrarNaoEncontrado(
+        'Cód ${_exibicao(codigo)} não encontrado ou está inativo!',
+      );
+      return;
+    }
+    final php = [
+      for (final v in (dados['php'] as List? ?? const [])) v?.toString() ?? '',
+    ];
+    while (php.length < 24) {
+      php.add('');
+    }
+    await _aplicarMae(animal, php);
   }
 
-  /// No web, tocar no campo já preenchido limpa a fêmea para digitar outra.
-  void _aoTocarMae() {
-    if (_mae == null) return;
+  /// Número como o JavaScript do web compara ('' vale 0).
+  static double _num(String v) =>
+      v.trim().isEmpty ? 0 : (double.tryParse(v.trim()) ?? double.nan);
+
+  /// Grupos 01 e 03 (administradores) decidem nos avisos; os outros só
+  /// recebem "Entre em contato com o Administrador do Sistema".
+  bool get _administrador {
+    final g = _num(_grupoUsuario);
+    return g == 1 || g == 3;
+  }
+
+  void _limparMae() {
     setState(() {
       _mae = null;
       _maeController.clear();
@@ -285,15 +403,538 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     });
   }
 
-  /// "Nasc: 01/12/2019 - Nelore Branca"
-  String get _descricaoMae {
-    final a = _mae;
-    if (a == null) return '';
-    final nasc = DateTime.tryParse(a['nascimento']?.toString() ?? '');
-    final raca = (a['raca'] ?? '').toString();
-    final pelagem = (a['pelagem'] ?? '').toString();
-    return 'Nasc: ${nasc == null ? '' : _formatar(nasc)} - $raca $pelagem'
-        .trim();
+  Future<void> _aplicarMae(
+    Map<String, dynamic> animal,
+    List<String> php,
+  ) async {
+    final exib = _exibicao(animal['codigo']?.toString() ?? '');
+    final estacao = php[12];
+
+    // $("#codigo_mae_consulta").val(id + ' - ' + raça) e o id da fêmea
+    void marcarMae() {
+      _mae = animal;
+      _maeId = php[0];
+      _maeController.text = '$exib - ${php[2]}';
+    }
+
+    // campos que o web preenche com o que veio da cobertura
+    void dadosDaCobertura() {
+      _definirPai(php[3]);
+      _definirRaca(php[11]);
+      _coberturaId = php[4];
+      _itemCobertura = php[5];
+      _dataInseminacao = php[6];
+      _diasNascimento = php[7];
+      _estacaoId = php[8];
+      _estacao = estacao;
+      _tipoGravacao = 0;
+      _tipoCobertura = php[15];
+      _dataPrenhes = php[16];
+    }
+
+    // "Limpa dados da estação para Monta"
+    void limparParaMonta() {
+      _pai = null;
+      _raca = null;
+      _coberturaId = '0';
+      _itemCobertura = '';
+      _estacaoId = '';
+      _estacao = '';
+      _tipoGravacao = 0;
+      _tipoCobertura = 'M';
+      _rotuloMonta = 'Monta:';
+      _dataPrenhes = '';
+    }
+
+    final diag = php[1];
+    final controle = php[15];
+
+    if (diag == 'N') {
+      setState(() {
+        marcarMae();
+        _estacaoId = php[8];
+        _estacao = estacao;
+        _rotuloMonta = 'Estação de Monta:';
+      });
+      if (php[8] == php[14] && controle == 'C') {
+        // negativo na estação atual
+        await _modalEstacao(
+          'Diagnóstico negativo estação $estacao',
+          linhas: const [
+            '-Clique em Substituir por Monta Natural OU;',
+            '-Clique em ALTERAR DIAGNÓSTICO OU;',
+            '-Selecione outra fêmea.',
+          ],
+          botoes: const ['substituir', 'alterar', 'outra'],
+        );
+        return;
+      } else if (controle == 'C') {
+        // negativo na estação anterior e não entrou na estação atual
+        if (_num(php[22]) < 9) {
+          await _modalEstacao(
+            'Esta Fêmea não está em estação de monta. Diagnóstico negativo '
+            'estação $estacao',
+            linhas: const [
+              '-Clique em Substituir por Monta Natural OU;',
+              '-Clique em ALTERAR DIAGNÓSTICO OU;',
+              '-Selecione outra fêmea.',
+            ],
+            botoes: const ['alterar', 'substituir', 'outra'],
+          );
+          return;
+        }
+        // diagnóstico negativo há 9 meses ou mais: Monta Natural
+        setState(limparParaMonta);
+        return;
+      }
+    } else if (diag == 'D' && controle == 'C') {
+      _limparMae();
+      await AppAlert.erro(context, 'Estação: $estacao Aguardando Diagnóstico.');
+      return;
+    } else if (diag == 'I' && controle == 'C') {
+      _limparMae();
+      await AppAlert.erro(context, 'Estação: $estacao Aguardando Inseminação.');
+      return;
+    } else if (diag == 'P') {
+      setState(() {
+        marcarMae();
+        dadosDaCobertura();
+        _rotuloMonta = 'Estação de Monta:';
+        if (_num(php[4]) != 0 && php[20] == 'A') {
+          _coberturaId = '0';
+          _itemCobertura = '';
+        }
+      });
+    }
+
+    if (_opcao == 'N') {
+      if (_num(php[4]) == 0 || controle == 'M') {
+        setState(() {
+          marcarMae();
+          dadosDaCobertura();
+          _rotuloMonta = 'Monta:';
+          _estacao = '';
+          if (php[20] == 'A') {
+            _coberturaId = '0';
+            _itemCobertura = '';
+          }
+        });
+      }
+      if (_num(php[10]) == 1 && _num(php[18]) <= 90) {
+        await _avisoAbortoNatimorto(
+          'Essa fêmea teve aborto ou natimorto nos últimos 90 dias',
+        );
+        return;
+      }
+      if (_num(php[10]) == 1 && _num(php[21]) < 9) {
+        await _avisoAbortoNatimorto(
+          'Essa fêmea teve aborto ou natimorto nos últimos 9 meses',
+        );
+        return;
+      }
+      if (_num(php[9]) != 0) {
+        final mesmaData = _iso(_data) == php[13];
+        if (controle == 'C') {
+          if (mesmaData) {
+            await _avisoGemelar(
+              'Fêmea já possui nascimento na estação $estacao',
+            );
+            return;
+          }
+          if (_num(php[17]) < 9) {
+            await _modalEstacao(
+              'Esta fêmea teve nascimento na estação  $estacao',
+              linhas: const [
+                '-Para GEMELAR, VOLTAR e informar a mesma data de nascimento OU;',
+                '-Clique em Substituir por Monta Natural OU;',
+                '-Selecione outra fêmea.',
+              ],
+              botoes: const ['substituir', 'outra'],
+            );
+            return;
+          }
+          setState(limparParaMonta);
+          return;
+        } else if (controle == 'M') {
+          if (mesmaData) {
+            await _avisoGemelar('Fêmea já possui nascimento nessa data.');
+            return;
+          }
+          if (_num(php[10]) == 1 && _num(php[18]) <= 90) {
+            await _avisoAbortoNatimorto(
+              'Essa fêmea teve aborto ou natimorto nos últimos 90 dias',
+            );
+            return;
+          }
+          if (_num(php[17]) < 9) {
+            await _modalEstacao(
+              'Essa fêmea possui bezerro nascido há menos de 9 meses.',
+              linhas: const [
+                '-Para GEMELAR, VOLTAR e informar a mesma data de nascimento OU;',
+                '-Selecione outra fêmea.;',
+              ],
+              botoes: const ['outra', 'voltar'],
+            );
+            return;
+          }
+        }
+      }
+    } else {
+      // Aborto, Absorção e Natimorto
+      if (_num(php[10]) == 1) {
+        if (controle == 'C' && _num(php[18]) <= 90) {
+          await _avisoAbortoNatimorto(
+            'Essa fêmea teve aborto ou natimorto na estação $estacao nos '
+            'últimos 90 dias',
+          );
+          return;
+        } else if (controle == 'M' && _num(php[18]) <= 90) {
+          await _avisoAbortoNatimorto(
+            'Essa fêmea teve aborto ou natimorto nos últimos 90 dias',
+          );
+          return;
+        }
+      }
+      if (_num(php[9]) != 0 && php[19] != '') {
+        if (controle == 'C' && _num(php[19]) <= 90) {
+          await _avisoAbortoNatimorto(
+            'Essa fêmea teve nascimento na estação $estacao nos últimos 90 '
+            'dias',
+          );
+          return;
+        } else if (controle == 'M' && _num(php[19]) <= 90) {
+          await _avisoAbortoNatimorto(
+            'Essa fêmea teve nascimento nos últimos 90 dias',
+          );
+          return;
+        }
+      }
+      setState(() {
+        marcarMae();
+        _tipoGravacao = 0;
+        _tipoCobertura = 'M';
+        if (_num(php[10]) == 1 && _num(php[18]) > 90) {
+          // último aborto/natimorto há mais de 90 dias: outro por MONTA
+          _coberturaId = '0';
+          _itemCobertura = '';
+          _estacaoId = '';
+          _dataPrenhes = '';
+        } else {
+          _coberturaId = php[4];
+          _itemCobertura = php[5];
+          _estacaoId = php[8];
+          _dataPrenhes = php[16];
+        }
+        if (_num(php[4]) != 0 && php[20] == 'N') {
+          _coberturaId = '0';
+          _itemCobertura = '';
+        }
+      });
+    }
+  }
+
+  /// $("#codigo_pai_animal").val(id): '000000000' (ou um id que não está
+  /// na lista) deixa o select em "...".
+  void _definirPai(String id) {
+    _pai = null;
+    for (final o in _pais) {
+      if (o.id == id) {
+        _pai = o;
+        break;
+      }
+    }
+  }
+
+  void _definirRaca(String id) {
+    _raca = _racas.any((r) => r.key == id) ? id : null;
+  }
+
+  /// volta_nascimento_mensagem() do web.
+  void _voltaNascimentoMensagem() {
+    setState(() {
+      _mae = null;
+      _maeId = '';
+      _maeController.clear();
+      _pai = null;
+      _coberturaId = '';
+      _itemCobertura = '';
+      _tipoGravacao = 0;
+    });
+  }
+
+  /// selecinarOutraFemea() / fecharModalEstacao() / voltarModalEstacao().
+  void _outraFemea({bool marcarCampo = true}) {
+    setState(() {
+      _mae = null;
+      _maeId = '';
+      _maeController.clear();
+      _pai = null;
+      _maeInvalida = marcarCampo;
+      _descNovoNascimento = '';
+    });
+  }
+
+  /// #nascimento_aborto_natimorto: "ATENÇÃO!" + mensagem, botão Fechar.
+  Future<void> _avisoAbortoNatimorto(String mensagem) async {
+    await _mensagem(
+      linhas: [mensagem],
+      atencao: true,
+      botoes: [_BotaoAviso('Fechar', Colors.grey.shade600, 'fechar')],
+    );
+    if (mounted) _voltaNascimentoMensagem();
+  }
+
+  /// #nascimento_gemelar.
+  Future<void> _avisoGemelar(String mensagem) async {
+    final r = await _mensagem(
+      linhas: [mensagem],
+      botoes: const [
+        _BotaoAviso('Voltar e conferir a Fêmea', _verde, 'voltar'),
+        _BotaoAviso('Nascimento Gemelar', Color(0xFFD9534F), 'gemelar'),
+      ],
+    );
+    if (!mounted) return;
+    if (r == 'gemelar') {
+      setState(() => _descNovoNascimento = 'Nascimento Gemelar.');
+    } else {
+      _voltaNascimentoMensagem();
+    }
+  }
+
+  /// #modal_estacao. Para quem não é administrador (grupos 01 e 03) o web
+  /// troca as instruções por "Entre em contato com o Administrador do
+  /// Sistema" e deixa só o Fechar.
+  Future<void> _modalEstacao(
+    String descricao, {
+    required List<String> linhas,
+    required List<String> botoes,
+  }) async {
+    const rotulos = {
+      'substituir': _BotaoAviso(
+        'Substituir por Monta Natural',
+        Color(0xFF007AFF),
+        'substituir',
+      ),
+      'alterar': _BotaoAviso(
+        'Alterar Diagnóstico',
+        Color(0xFF78909C),
+        'alterar',
+      ),
+      'outra': _BotaoAviso('Selecione Outra Fêmea', Color(0xFFD9534F), 'outra'),
+      'voltar': _BotaoAviso('Voltar', Color(0xFF78909C), 'voltar'),
+    };
+    final adm = _administrador;
+    final r = await _mensagem(
+      atencao: true,
+      destaque: descricao,
+      administrador: !adm,
+      linhas: adm ? linhas : const [],
+      botoes: adm
+          ? [for (final b in botoes) rotulos[b]!]
+          : const [_BotaoAviso('Fechar', Color(0xFF78909C), 'fechar')],
+    );
+    if (!mounted) return;
+    switch (r) {
+      case 'substituir':
+        await _substituirPorMontaNatural();
+      case 'alterar':
+        // No web este botão abre a tela de diagnóstico da cobertura, que o
+        // aplicativo não tem.
+        _outraFemea();
+        await AppAlert.erro(
+          context,
+          'A alteração do diagnóstico é feita no sistema web (Reprodução > '
+          'Cobertura > Diagnóstico). Depois de alterar, informe a fêmea '
+          'novamente.',
+        );
+      case 'voltar':
+        _outraFemea(marcarCampo: false);
+      default:
+        _outraFemea();
+    }
+  }
+
+  /// substituir_por_monta_natural() do web.
+  Future<void> _substituirPorMontaNatural() async {
+    void aplicar(int tipoGravacao) {
+      setState(() {
+        _tipoGravacao = tipoGravacao;
+        _rotuloMonta = 'Monta Natural';
+        _estacao = '';
+        _coberturaId = '0';
+        _tipoCobertura = 'M';
+        _dataPrenhes = '';
+        _pai = null;
+      });
+    }
+
+    if (_opcao != 'N') {
+      aplicar(0);
+      return;
+    }
+    final dados = await MapaGadoSyncService.instance.consultarNascimento({
+      'acao': 'ultimo_nascimento',
+      'bd': widget.bd,
+      'mae': _maeId,
+      'data': _iso(_data),
+    });
+    if (!mounted) return;
+    if (dados == null) {
+      await _mensagem(
+        atencao: true,
+        linhas: const ['Erro não previsto: sem resposta do servidor'],
+        botoes: const [_BotaoAviso('Fechar', Color(0xFF78909C), 'fechar')],
+      );
+      return;
+    }
+    final meses = double.tryParse(dados['meses']?.toString() ?? '') ?? 999;
+    if (meses < 9) {
+      await _mensagem(
+        atencao: true,
+        linhas: const [
+          'Essa fêmea possui bezerro nascido há menos de 9 meses.',
+        ],
+        botoes: const [_BotaoAviso('Fechar', Color(0xFF78909C), 'fechar')],
+      );
+      if (!mounted) return;
+      // fechar_nascimento_nove_meses()
+      setState(() {
+        _sexo = null;
+        _mae = null;
+        _maeId = '';
+        _maeController.clear();
+        _pai = null;
+        _raca = null;
+        _pelagem = null;
+        _pesoController.clear();
+        _tipoGravacao = 0;
+        _maeInvalida = true;
+      });
+      return;
+    }
+    aplicar(3);
+  }
+
+  /// Modal "Nascimento - Mensagem" (padrão dos modais do aplicativo).
+  /// Devolve a ação do botão tocado.
+  Future<String?> _mensagem({
+    required List<String> linhas,
+    required List<_BotaoAviso> botoes,
+    bool atencao = false,
+    String? destaque,
+    bool administrador = false,
+  }) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 24,
+          ),
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Nascimento - Mensagem',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 18, color: _azul),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (atencao) ...[
+                          const Row(
+                            children: [
+                              Icon(
+                                Icons.warning_amber_rounded,
+                                color: Color(0xFFF0AD4E),
+                                size: 22,
+                              ),
+                              SizedBox(width: 6),
+                              Text('ATENÇÃO!', style: TextStyle(fontSize: 14)),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                        if (destaque != null) ...[
+                          Text(
+                            destaque,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              shadows: [
+                                Shadow(offset: Offset(0.4, 0)),
+                                Shadow(offset: Offset(-0.4, 0)),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                        if (administrador)
+                          const Text(
+                            'Entre em contato com o Administrador do Sistema',
+                            style: TextStyle(fontSize: 14, color: Colors.red),
+                          ),
+                        for (final l in linhas)
+                          Padding(
+                            padding: EdgeInsets.only(
+                              left: destaque == null ? 0 : 12,
+                              bottom: 4,
+                            ),
+                            child: Text(
+                              l,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  for (final b in botoes) ...[
+                    const SizedBox(height: 8),
+                    _botao(b.texto, b.cor, () => Navigator.pop(ctx, b.acao)),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// No web, tocar no campo já preenchido limpa a fêmea para digitar outra
+  /// (e some o aviso vermelho ao lado da estação).
+  void _aoTocarMae() {
+    if (_maeInvalida) setState(() => _maeInvalida = false);
+    if (_mae == null && _maeController.text.isEmpty) return;
+    if (_mae == null) return;
+    setState(() {
+      _mae = null;
+      _maeId = '';
+      _maeController.clear();
+      _sugestoes = [];
+      _descNovoNascimento = '';
+    });
   }
 
   /// Aviso vermelho no padrão da Pesagem/Morte: fica na tela até tocar em
@@ -399,8 +1040,17 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
       _maeInvalida = false;
       _sugestoes = [];
       _maeController.clear();
-      _animalController.clear();
       _pesoController.clear();
+      // como no web: zera o que veio da fêmea anterior; o código alfa, o
+      // número do animal e a estação continuam como estavam
+      _maeId = '';
+      _consultandoMae = false;
+      _descNovoNascimento = '';
+      _coberturaId = '';
+      _itemCobertura = '';
+      _dataInseminacao = '';
+      _diasNascimento = '';
+      _tipoGravacao = 0;
     });
   }
 
@@ -413,7 +1063,18 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
       lastDate: _hoje(),
       helpText: _opcao == 'N' ? 'Data do nascimento' : 'Data da ocorrência',
     );
-    if (d != null) setState(() => _data = d);
+    if (d == null) return;
+    // como no web: trocar a data limpa a fêmea e o pai
+    _buscaAtual++;
+    setState(() {
+      _data = d;
+      _mae = null;
+      _maeId = '';
+      _maeController.clear();
+      _sugestoes = [];
+      _pai = null;
+      _consultandoMae = false;
+    });
   }
 
   /// "Pai Nº": são milhares de opções (todo sêmen e todo macho), então em
@@ -558,15 +1219,21 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
   /// campo.
   List<Widget> _abaixoDaMae() => [
     if (_sugestoes.isNotEmpty) _listaSugestoes(),
-    if (_mae != null) ...[
+    if (_consultandoMae) ...[
       const SizedBox(height: 6),
-      Text(
-        _descricaoMae,
-        style: const TextStyle(
-          fontSize: 13,
-          color: Colors.blue,
-          fontWeight: FontWeight.w600,
-        ),
+      Row(
+        children: [
+          const SizedBox(
+            width: 12,
+            height: 12,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Consultando a fêmea...',
+            style: TextStyle(fontSize: 12, color: _corRotulo),
+          ),
+        ],
       ),
     ],
   ];
@@ -598,16 +1265,42 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     const SizedBox(height: 8),
     Row(
       children: [
+        // Código Alfa só aparece quando a fazenda tem um nos Parâmetros
+        // de Nascimento (igual ao web).
+        if (_mostraAlfa) ...[
+          Expanded(
+            flex: 5,
+            child: _campoTexto('Cód. Alfa', _alfaController, maximo: 4),
+          ),
+          const SizedBox(width: 6),
+        ],
         Expanded(
+          flex: _mostraAlfa ? 7 : 12,
           child: _campoTexto('Nº Animal', _animalController, numerico: true),
         ),
         const SizedBox(width: 8),
         Expanded(
+          flex: 12,
           child: Padding(
             padding: const EdgeInsets.only(left: 4),
-            child: Text(
-              'Monta:',
-              style: TextStyle(fontSize: 14, color: _corRotulo),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$_rotuloMonta $_estacao'.trim(),
+                  style: TextStyle(fontSize: 13, color: _corRotulo),
+                ),
+                if (_descNovoNascimento.isNotEmpty)
+                  Text(
+                    _descNovoNascimento,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
@@ -771,13 +1464,15 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     String rotulo,
     TextEditingController controller, {
     bool numerico = false,
+    int? maximo,
   }) => _caixa(
     child: TextField(
       controller: controller,
       keyboardType: numerico ? TextInputType.number : TextInputType.text,
-      inputFormatters: numerico
-          ? [FilteringTextInputFormatter.digitsOnly]
-          : null,
+      inputFormatters: [
+        if (numerico) FilteringTextInputFormatter.digitsOnly,
+        if (maximo != null) LengthLimitingTextInputFormatter(maximo),
+      ],
       textCapitalization: TextCapitalization.characters,
       autocorrect: false,
       enableSuggestions: false,
@@ -977,6 +1672,14 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
       ),
     ),
   );
+}
+
+/// Botão de um modal "Nascimento - Mensagem".
+class _BotaoAviso {
+  final String texto;
+  final Color cor;
+  final String acao;
+  const _BotaoAviso(this.texto, this.cor, this.acao);
 }
 
 /// Lista do "Pai Nº" com busca, nos grupos SEMEM e ANIMAIS do web. A

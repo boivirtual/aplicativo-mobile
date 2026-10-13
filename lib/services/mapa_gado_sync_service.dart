@@ -297,6 +297,30 @@ class MapaGadoSyncService {
     }
   }
 
+  /// Consulta do Nascimento no servidor (rest/mapa-gado/nascimento.php):
+  /// 'parametros', 'mae' ou 'ultimo_nascimento' em [corpo]['acao']. null
+  /// se falhar — o Nascimento só funciona online.
+  Future<Map<String, dynamic>?> consultarNascimento(
+    Map<String, dynamic> corpo,
+  ) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse("${ApiConfig.baseUrl}/rest/mapa-gado/nascimento.php"),
+            headers: {"Content-Type": "application/json"},
+            body: json.encode(corpo),
+          )
+          .timeout(const Duration(seconds: 20));
+      if (response.statusCode != 200) return null;
+      final dados = json.decode(response.body);
+      if (dados is! Map || dados['success'] != true) return null;
+      return Map<String, dynamic>.from(dados);
+    } catch (e) {
+      debugPrint('[MapaGadoSync] nascimento (${corpo['acao']}): falhou -> $e');
+      return null;
+    }
+  }
+
   /// Opções dos selects da tela do Nascimento (Pai Nº, Raça e Pelagem),
   /// direto do servidor — o Nascimento só funciona online. null se falhar.
   Future<Map<String, dynamic>?> buscarListasNascimento(String bd) async {

@@ -9,8 +9,8 @@ import '../widgets/indicador_conectividade_widget.dart';
 /// Só abre com o aplicativo online (ver _abrirNascimento em
 /// PastoMovimentacaoWidget).
 ///
-/// Por enquanto tem só o começo: tarja com a fazenda e o pasto, o botão
-/// Voltar e as opções (Nascimento, Aborto, Absorção e Natimorto). Os
+/// Por enquanto tem só o começo: tarja com a fazenda e o pasto e as
+/// opções (Nascimento, Aborto, Absorção e Natimorto). Os
 /// campos de cada opção são a próxima etapa.
 class NascimentoPastoScreen extends StatefulWidget {
   final String bd;
@@ -38,7 +38,6 @@ class NascimentoPastoScreen extends StatefulWidget {
 
 class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
   static const _azul = Color(0xFF18385F);
-  static const _azulVoltar = Color(0xFF4BBAEB);
   static final _corRotulo = Colors.blueGrey[800]!;
 
   /// Mesmos valores do web (radio opcao_nascimento): N = Nascimento,
@@ -72,30 +71,7 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
         padding: const EdgeInsets.fromLTRB(6, 6, 6, 16),
         children: [
           _cabecalho(),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: SizedBox(
-              height: 40,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _azulVoltar,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 22),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'Voltar',
-                  style: TextStyle(fontSize: 15, color: Colors.white),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Divider(color: Colors.grey[200], height: 16),
+          const SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.fromLTRB(6, 6, 6, 2),
             child: Text.rich(
@@ -127,13 +103,9 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     );
   }
 
-  /// Tarja azul no mesmo padrão da tela do pasto: fazenda e pasto.
+  /// Tarja azul no mesmo padrão da tela do pasto, com a fazenda e o pasto
+  /// na mesma linha (a fonte encolhe um pouco se o nome for comprido).
   Widget _cabecalho() {
-    TextStyle estilo(double tamanho) => TextStyle(
-      fontSize: tamanho,
-      color: Colors.blue,
-      fontWeight: FontWeight.bold,
-    );
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -141,20 +113,18 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
         color: Colors.blue.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Column(
-        children: [
-          Text(
-            widget.nomeFazenda,
-            textAlign: TextAlign.center,
-            style: estilo(11),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          '${widget.nomeFazenda}  -  Pasto: ${widget.nomePasto}',
+          maxLines: 1,
+          softWrap: false,
+          style: const TextStyle(
+            fontSize: 13,
+            color: Colors.blue,
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: 2),
-          Text(
-            'Pasto: ${widget.nomePasto}',
-            textAlign: TextAlign.center,
-            style: estilo(14),
-          ),
-        ],
+        ),
       ),
     );
   }

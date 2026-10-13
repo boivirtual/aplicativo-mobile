@@ -500,7 +500,10 @@ class _PesagemScreenState extends State<PesagemScreen> {
                   const SizedBox(height: 2),
                   if (!_mostrarFormulario) ...[
                     _buildTituloDinamico(),
-                    const SizedBox(height: 5),
+                    if (_mostraLinkConsultar)
+                      _buildConsultarAnimaisPesadosLink()
+                    else
+                      const SizedBox(height: 5),
                     exibirFinalizadas
                         ? _buildListaFinalizadas()
                         : _buildListaPendentes(),
@@ -509,8 +512,6 @@ class _PesagemScreenState extends State<PesagemScreen> {
               ),
             ),
           ),
-          if (!exibirFinalizadas && !_mostrarFormulario)
-            _buildConsultarAnimaisPesadosLink(),
         ],
       ),
           if (carregandoPendentes || _baixandoAnimais || _baixandoItensPendentes)
@@ -844,9 +845,15 @@ class _PesagemScreenState extends State<PesagemScreen> {
     );
   }
 
+  /// O link "Consultar" (animais pesados) só existe quando há pesagem
+  /// sem finalizar na lista.
+  bool get _mostraLinkConsultar =>
+      !exibirFinalizadas && !_mostrarFormulario && pesagensPendentes.isNotEmpty;
+
   Widget _buildTituloDinamico() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      // com o link "Consultar" logo abaixo, o título fica colado nele
+      padding: EdgeInsets.only(top: 10, bottom: _mostraLinkConsultar ? 0 : 10),
       child: Center(
         child: Text(
           exibirFinalizadas ? "Pesagens Finalizadas" : "Pesagens sem finalizar",
@@ -889,46 +896,24 @@ class _PesagemScreenState extends State<PesagemScreen> {
     );
   }
 
+  /// Link "Consultar" (lupa + texto), à direita, logo abaixo do título
+  /// "Pesagens sem finalizar": abre a consulta de animais pesados.
   Widget _buildConsultarAnimaisPesadosLink() {
-    const Color corDestaque = Color(0xFF18385F);
-    // Mesmo padrão visual do RodapeApartacaoWidget (traço no topo separando
-    // da lista + texto azul escuro em negrito), só que alinhado à esquerda
-    // e dentro do conteúdo rolável — não é um rodapé fixo como o da tela de
-    // itens, é a última linha da lista de "Pesagens sem Finalizar".
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey[200]!)),
-      ),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: InkWell(
-          onTap: _abrirConsultaAnimaisPesados,
-          borderRadius: BorderRadius.circular(8),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.search_outlined,
-                  color: corDestaque,
-                  size: 18,
-                ),
-                SizedBox(width: 4),
-                Text(
-                  "Consultar Animais Pesados",
-                  style: TextStyle(
-                    color: corDestaque,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
+    final cor = Colors.grey[500];
+    return Align(
+      alignment: Alignment.centerRight,
+      child: InkWell(
+        onTap: _abrirConsultaAnimaisPesados,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 2, 10, 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.search_outlined, color: cor, size: 16),
+              const SizedBox(width: 3),
+              Text('Consultar', style: TextStyle(color: cor, fontSize: 13)),
+            ],
           ),
         ),
       ),

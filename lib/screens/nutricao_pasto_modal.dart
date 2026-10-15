@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../data/daos/mapa_gado_dao.dart';
 import '../services/mapa_gado_sync_service.dart';
 import '../utils/app_alert.dart';
+import '../widgets/campo_topo_widget.dart';
 import '../widgets/seletor_campo_widget.dart';
 import 'composicao_descricao_lote_screen.dart' show perguntarSimNao;
 
@@ -50,7 +51,6 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
   static final Color _corRotulo = Colors.blueGrey.shade800;
 
   final _qtdController = TextEditingController();
-  final _qtdFoco = FocusNode();
 
   List<MapEntry<int, String>> _cochos = [];
   List<Map<String, dynamic>> _produtos = [];
@@ -101,7 +101,6 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
   void dispose() {
     MapaGadoSyncService.instance.versaoFila.removeListener(_lerItens);
     _qtdController.dispose();
-    _qtdFoco.dispose();
     super.dispose();
   }
 
@@ -359,135 +358,34 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
   /// Mesma altura do campo "Nº do Animal" da tela de itens da Pesagem.
   static const _alturaCampo = 80.0;
 
-  Widget _caixa({required Widget child}) => Container(
-    height: _alturaCampo,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: child,
+  // Mesmo componente dos campos da Morte, Nascimento e Mudar Animais de
+  // Pasto (rótulo no topo e valor em negrito), na altura da Pesagem.
+
+  Widget _campoQtde() => CampoTextoTopo(
+    rotulo: '* Qtde',
+    corRotulo: _corRotulo,
+    controller: _qtdController,
+    altura: _alturaCampo,
+    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
   );
 
-  /// Rótulo pequeno em cima e o valor embaixo (mesmo desenho do select).
-  Widget _rotuloValor(String rotulo, String valor, {Widget? icone}) => Padding(
-    // rótulo colado no topo da caixa e o valor em negrito, como os campos
-    // da Pesagem
-    padding: const EdgeInsets.only(left: 12, right: 6, top: 10),
-    child: Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(rotulo, style: TextStyle(fontSize: 11, color: _corRotulo)),
-              Expanded(
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  // Encolhe um pouco se não couber (ex: a data), em vez de
-                  // cortar com "...".
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      valor,
-                      maxLines: 1,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (icone != null) icone,
-      ],
-    ),
-  );
-
-  /// Qtde no mesmo desenho dos outros campos: vazio mostra o rótulo no
-  /// meio da caixa; preenchido (ou digitando), rótulo no topo e o número em
-  /// negrito.
-  Widget _campoQtde() => GestureDetector(
-    onTap: () => _qtdFoco.requestFocus(),
-    child: _caixa(
-      child: ListenableBuilder(
-        listenable: Listenable.merge([_qtdController, _qtdFoco]),
-        builder: (context, _) {
-          final aberto = _qtdController.text.isNotEmpty || _qtdFoco.hasFocus;
-          // O campo fica sempre montado (o foco não se perde); só o rótulo
-          // muda de lugar.
-          return Stack(
-            children: [
-              Positioned(
-                left: 12,
-                right: 6,
-                top: 24,
-                bottom: 0,
-                child: _textoQtde(),
-              ),
-              if (aberto)
-                Positioned(
-                  left: 12,
-                  top: 10,
-                  child: Text(
-                    '* Qtde',
-                    style: TextStyle(fontSize: 11, color: _corRotulo),
-                  ),
-                )
-              else
-                Positioned.fill(
-                  left: 12,
-                  child: IgnorePointer(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        '* Qtde',
-                        style: TextStyle(fontSize: 14, color: _corRotulo),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          );
-        },
-      ),
-    ),
-  );
-
-  Widget _textoQtde() => Align(
-    alignment: Alignment.centerLeft,
-    child: TextField(
-      controller: _qtdController,
-      focusNode: _qtdFoco,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: Colors.black87,
-      ),
-      decoration: const InputDecoration.collapsed(hintText: ''),
-    ),
-  );
-
-  Widget _campoData() => GestureDetector(
+  Widget _campoData() => CampoValorTopo(
+    rotulo: '* Data',
+    corRotulo: _corRotulo,
+    valor: _br(_data),
+    altura: _alturaCampo,
+    icone: Icon(Icons.calendar_month, color: _corRotulo, size: 18),
     onTap: _escolherData,
-    child: _caixa(
-      child: _rotuloValor(
-        '* Data',
-        _br(_data),
-        icone: Icon(Icons.calendar_month, color: _corRotulo, size: 18),
-      ),
-    ),
   );
 
   /// Campo só de leitura (Und vem do produto, como no web).
-  Widget _campoFixo(String rotulo, String valor) =>
-      _caixa(child: _rotuloValor(rotulo, valor));
+  Widget _campoFixo(String rotulo, String valor) => CampoValorTopo(
+    rotulo: rotulo,
+    corRotulo: _corRotulo,
+    valor: valor,
+    altura: _alturaCampo,
+  );
 
   Widget _botao(String texto, Color cor, VoidCallback aoTocar) => SizedBox(
     height: 45,

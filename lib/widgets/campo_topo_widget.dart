@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 /// Nascimento e Mudar Animais de Pasto).
 
 const _estiloValor = TextStyle(
-  fontSize: 16,
+  fontSize: 14,
   fontWeight: FontWeight.bold,
   color: Colors.black87,
 );

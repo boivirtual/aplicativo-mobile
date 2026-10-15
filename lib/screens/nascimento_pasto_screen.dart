@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../data/daos/animal_cache_dao.dart';
+import '../data/daos/mapa_gado_dao.dart';
 import '../services/animal_cache_service.dart';
 import '../services/connectivity_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -39,8 +40,8 @@ import '../widgets/seletor_campo_widget.dart';
 /// Ao escolher a fêmea a tela consulta o servidor e aplica as mesmas
 /// regras de ler_animal_mae() do web (estação de monta, pai, raça e os
 /// avisos de diagnóstico, aborto/natimorto, gemelar e 9 meses) — ver
-/// [_NascimentoPastoScreenState._aplicarMae]. O Confirmar ainda não valida
-/// nem grava (próxima etapa).
+/// [_NascimentoPastoScreenState._aplicarMae]. O Confirmar grava pelos próprios
+/// scripts do web no servidor (ver [_NascimentoPastoScreenState._confirmar]).
 class NascimentoPastoScreen extends StatefulWidget {
   final String bd;
   final int fazendaId;
@@ -824,6 +825,7 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     bool atencao = false,
     String? destaque,
     bool administrador = false,
+    bool linhasVermelhas = false,
   }) {
     FocusManager.instance.primaryFocus?.unfocus();
     return showDialog<String>(
@@ -899,12 +901,17 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
                         for (final l in linhas)
                           Padding(
                             padding: EdgeInsets.only(
-                              left: destaque == null ? 0 : 12,
+                              left: destaque == null || linhasVermelhas
+                                  ? 0
+                                  : 12,
                               bottom: 4,
                             ),
                             child: Text(
                               l,
-                              style: const TextStyle(fontSize: 14),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: linhasVermelhas ? Colors.red : null,
+                              ),
                             ),
                           ),
                       ],
@@ -1099,8 +1106,250 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     setState(() => _pai = escolhido.id.isEmpty ? null : escolhido);
   }
 
-  /// A gravação é a próxima etapa.
-  void _confirmar() => FocusManager.instance.primaryFocus?.unfocus();
+  // ---------------------------------------------------------------------
+  // Confirmar — confirmar_nascimento() do web (js/mapa_gados.js). A
+  // gravação é feita pelos próprios scripts do web no servidor
+  // (gravar_nascimento.php / gravar_nascimento_aborto_natimorto.php).
+  // ---------------------------------------------------------------------
+
+  bool _gravando = false;
+
+  Future<void> _confirmar() async {
+    if (_gravando) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    // O Nascimento só funciona online (a internet pode ter caído com a
+    // tela aberta).
+    final nivel = await ConnectivityService.instance.verificarAgora();
+    if (!mounted) return;
+    if (nivel != NivelConexao.internetOk) {
+      await AppAlert.erro(
+        context,
+        'Sem internet ou internet ruim!\n\nO Nascimento só pode ser '
+        'confirmado com o aplicativo online. Tente novamente quando a '
+        'internet estiver estável.',
+      );
+      return;
+    }
+
+    if (_opcao != 'N') {
+      await _gravar('gravar_aborto_natimorto');
+      return;
+    }
+    // sem cobertura (ou monta natural sem data da prenhes): monta natural
+    if ((_tipoCobertura == 'M' && _dataPrenhes == '') ||
+        _num(_coberturaId) == 0) {
+      await _gravarMontaNatural();
+      return;
+    }
+    final dias = _num(_diasNascimento);
+    if (dias >= 252 && dias <= 303) {
+      await _gravarNascimento();
+    } else {
+      await _avisoDiasGestacao();
+    }
+  }
+
+  /// gravar_nascimento() do web (tipo_gravacao 0).
+  Future<void> _gravarNascimento() async {
+    if (_tipoCobertura == 'M') {
+      await _gravarMontaNatural();
+      return;
+    }
+    await _gravar('gravar_nascimento');
+  }
+
+  /// gravar_nascimento_monta_natural() do web (tipo_gravacao 3).
+  Future<void> _gravarMontaNatural() async {
+    setState(() => _tipoGravacao = 3);
+    await _gravar('gravar_nascimento');
+  }
+
+  /// #nascimento_erro do web: gestação fora de 252 a 303 dias.
+  Future<void> _avisoDiasGestacao() async {
+    final estacao = _tipoCobertura == 'C' ? 'Estação $_estacao: ' : '';
+    final controleI = await MapaGadoDao.instance.controleEstoque(widget.bd);
+    if (!mounted) return;
+    final porAnimal = controleI == 'I';
+    final adm = _administrador;
+
+    final linhas = <String>[];
+    final botoes = <_BotaoAviso>[];
+    if (adm && porAnimal) {
+      botoes.add(const _BotaoAviso('Confirmar Nascimento', _verde, 'gravar'));
+      if (_tipoCobertura == 'C') {
+        botoes.add(
+          const _BotaoAviso(
+            'Substituir por Monta Natural',
+            Color(0xFF007AFF),
+            'substituir',
+          ),
+        );
+      } else {
+        linhas.add(
+          'Atenção! Ao confirmar o nascimento você estará alterando a data '
+          'da prenhes.',
+        );
+      }
+    } else if (porAnimal) {
+      linhas.add('Entre em contato com o Administrador do Sistema');
+    } else {
+      botoes.add(const _BotaoAviso('Confirmar Nascimento', _verde, 'gravar'));
+      botoes.add(
+        const _BotaoAviso(
+          'Substituir por Monta Natural',
+          Color(0xFF007AFF),
+          'substituir',
+        ),
+      );
+    }
+    botoes.add(const _BotaoAviso('Não Confirmar', Color(0xFFD9534F), 'nao'));
+
+    final r = await _mensagem(
+      destaque:
+          '${estacao}Animal com ( ${_diasNascimento.trim()} dias ) de '
+          'gestação. Previsão (~ 282 dias)',
+      linhasVermelhas: true,
+      linhas: linhas,
+      botoes: botoes,
+    );
+    if (!mounted) return;
+    switch (r) {
+      case 'gravar':
+        await _gravarNascimento();
+      case 'substituir':
+        setState(() => _pai = null);
+        await _gravarMontaNatural();
+      default:
+        // fechar_nascimento_erro()
+        setState(() {
+          _sexo = null;
+          _mae = null;
+          _maeId = '';
+          _maeController.clear();
+          _pai = null;
+          _raca = null;
+          _pelagem = null;
+          _pesoController.clear();
+          _tipoGravacao = 0;
+        });
+    }
+  }
+
+  /// Os campos do formulário #form_gravar_animal do web, com os mesmos
+  /// nomes e valores ($('#form_gravar_animal').serialize()).
+  Map<String, String?> get _camposFormulario => {
+    'grupo_usuario': _grupoUsuario,
+    'tipo_gravacao': '$_tipoGravacao',
+    'num_mov_nascimento': '0',
+    'codigo_mae_animal': _maeId,
+    'dias_nascimento': _diasNascimento,
+    'cobertura_id': _coberturaId,
+    'item_cobertura': _itemCobertura,
+    'tipo_cobertura': _tipoCobertura,
+    'data_prenhes': _dataPrenhes,
+    'estacao_monta_id': _estacaoId,
+    'data_inseminacao': _dataInseminacao,
+    'local_id': '${widget.fazendaId}',
+    'pasto_id': '${widget.pastoId}',
+    'opcao_nascimento': _opcao,
+    'nascimento_animal': _iso(_data),
+    'codigo_mae_consulta': _maeController.text,
+    'codigo_pai_animal': _pai?.id ?? '000000000',
+    'alfa_animal': _mostraAlfa ? _alfaController.text : '',
+    'codigo_animal_id': '',
+    'codigo_numerico_animal': _animalController.text,
+    'qtd_animal': '',
+    // sem escolher, o web não envia o sexo
+    'sexo_animal': _sexo,
+    'raca_id': _raca ?? '',
+    'pelagem_id': _pelagem ?? '',
+    'peso_animal': _pesoController.text.replaceAll(',', '.'),
+  };
+
+  /// Envia ao servidor e trata a resposta como o web.
+  Future<void> _gravar(String acao) async {
+    final nascimento = acao == 'gravar_nascimento';
+    setState(() => _gravando = true);
+    final resposta = await MapaGadoSyncService.instance.gravarNascimento(
+      acao: acao,
+      bd: widget.bd,
+      usuario: widget.usuario ?? '',
+      campos: _camposFormulario,
+    );
+    if (!mounted) return;
+    setState(() => _gravando = false);
+
+    if (resposta == null) {
+      if (nascimento) setState(() => _tipoGravacao = 0);
+      await AppAlert.erro(
+        context,
+        'Não foi possível confirmar: sem resposta do servidor. Verifique a '
+        'internet e tente novamente.',
+      );
+      return;
+    }
+    final mensagem = (resposta['message'] ?? '').toString();
+    if (resposta['success'] != true) {
+      if (nascimento) setState(() => _tipoGravacao = 0);
+      await AppAlert.erro(context, mensagem);
+      if (!mounted) return;
+      // fechar_erro_gravar(): sem a fêmea validada, limpa o campo e o pai
+      if (_maeId.isEmpty || _num(_maeId) == 0) {
+        setState(() {
+          _mae = null;
+          _maeController.clear();
+          _pai = null;
+          _maeInvalida = true;
+        });
+      }
+      return;
+    }
+
+    // Gravou: o mapa e o cadastro de animais mudaram no servidor.
+    MapaGadoSyncService.instance.atualizarDepoisDoNascimento(
+      widget.bd,
+      widget.fazendaId,
+    );
+
+    final descricaoLote = (resposta['descricao_lote'] ?? '').toString();
+    if (nascimento && descricaoLote.isEmpty) {
+      // Pasto sem Descrição do Lote: o web abre a Composição da Descrição
+      // do Lote — aqui volta para o pasto e ela abre lá.
+      await AppAlert.sucesso(
+        context,
+        '$mensagem\nNecessário incluir a Descrição do Lote para o Pasto: '
+        '${resposta['descricao_pasto'] ?? widget.nomePasto}',
+      );
+      if (mounted) Navigator.pop(context, 'descricao_lote');
+      return;
+    }
+    await AppAlert.sucesso(context, mensagem);
+    if (!mounted) return;
+    // ler_animal_nascimento(): tela limpa para o próximo, com o próximo
+    // número do animal.
+    setState(() {
+      _opcao = null;
+      _sexo = null;
+      _mae = null;
+      _maeId = '';
+      _maeController.clear();
+      _sugestoes = [];
+      _pai = null;
+      _raca = null;
+      _pelagem = null;
+      _pesoController.clear();
+      _maeInvalida = false;
+      _descNovoNascimento = '';
+      _coberturaId = '';
+      _itemCobertura = '';
+      _dataInseminacao = '';
+      _diasNascimento = '';
+      _tipoGravacao = 0;
+      _rotuloMonta = 'Estação de Monta:';
+    });
+    await _carregarParametros();
+  }
 
   // ---------------------------------------------------------------------
   // Layout
@@ -1166,7 +1415,11 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
                   // no Nascimento o Confirmar fica na linha do Peso
                   if (_opcao != 'N') ...[
                     const SizedBox(height: 10),
-                    _botao('Confirmar', _verde, _confirmar),
+                    _botao(
+                      _gravando ? 'Aguarde...' : 'Confirmar',
+                      _verde,
+                      _confirmar,
+                    ),
                   ],
                 ],
               ),
@@ -1334,9 +1587,16 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     const SizedBox(height: 8),
     Row(
       children: [
-        Expanded(child: _campoTexto('* Peso', _pesoController, numerico: true)),
+        Expanded(child: _campoTexto('* Peso', _pesoController, decimal: true)),
         const SizedBox(width: 8),
-        Expanded(child: _botao('Confirmar', _verde, _confirmar, altura: 56)),
+        Expanded(
+          child: _botao(
+            _gravando ? 'Aguarde...' : 'Confirmar',
+            _verde,
+            _confirmar,
+            altura: 56,
+          ),
+        ),
       ],
     ),
   ];
@@ -1457,14 +1717,20 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     String rotulo,
     TextEditingController controller, {
     bool numerico = false,
+    bool decimal = false,
     int? maximo,
   }) => CampoTextoTopo(
     rotulo: rotulo,
     corRotulo: _corRotulo,
     controller: controller,
-    keyboardType: numerico ? TextInputType.number : TextInputType.text,
+    keyboardType: decimal
+        ? const TextInputType.numberWithOptions(decimal: true)
+        : numerico
+        ? TextInputType.number
+        : TextInputType.text,
     inputFormatters: [
       if (numerico) FilteringTextInputFormatter.digitsOnly,
+      if (decimal) FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
       if (maximo != null) LengthLimitingTextInputFormatter(maximo),
     ],
     textCapitalization: TextCapitalization.characters,

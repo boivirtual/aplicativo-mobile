@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../config/api_config.dart';
 import '../data/daos/animal_cache_dao.dart';
 import '../data/daos/mapa_gado_dao.dart';
+import 'animal_cache_service.dart';
 import 'connectivity_service.dart';
 
 /// Sincronização do Mapa de Gado — download do tabuleiro (cache local) e
@@ -473,6 +474,50 @@ class MapaGadoSyncService {
     // "há X dia(s)" pela regra das 24h, números de lote etc.) — o cache
     // local só tinha uma aproximação. Sem await: a tela não espera.
     if (enviou) _atualizarDepoisDoEnvio(bd);
+  }
+
+  /// Confirmar do Nascimento: o servidor roda o script de gravação do web
+  /// (acao 'gravar_nascimento' ou 'gravar_aborto_natimorto') e devolve a
+  /// resposta dele ({error, message} ou {success, message, id_pasto,
+  /// descricao_pasto, descricao_lote}). null = sem resposta (rede).
+  Future<Map<String, dynamic>?> gravarNascimento({
+    required String acao,
+    required String bd,
+    required String usuario,
+    required Map<String, String?> campos,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse("${ApiConfig.baseUrl}/rest/mapa-gado/nascimento.php"),
+            headers: {"Content-Type": "application/json"},
+            body: json.encode({
+              'acao': acao,
+              'bd': bd,
+              'usuario': usuario,
+              'campos': {
+                for (final c in campos.entries)
+                  if (c.value != null) c.key: c.value,
+              },
+            }),
+          )
+          .timeout(const Duration(seconds: 60));
+      if (response.statusCode != 200) return null;
+      final dados = json.decode(response.body);
+      if (dados is! Map) return null;
+      return Map<String, dynamic>.from(dados);
+    } catch (e) {
+      debugPrint('[MapaGadoSync] gravar nascimento ($acao): falhou -> $e');
+      return null;
+    }
+  }
+
+  /// Depois de um nascimento/aborto/natimorto gravado: baixa de novo o mapa
+  /// (totais e categorias do pasto) e o cadastro de animais (o bezerro
+  /// novo). Sem await: a tela não espera.
+  void atualizarDepoisDoNascimento(String bd, int fazenda) {
+    _atualizarDepoisDoEnvio(bd);
+    AnimalCacheService.instance.garantirCacheCompleto(bd, forcar: true);
   }
 
   Future<void> _atualizarDepoisDoEnvio(String bd) async {

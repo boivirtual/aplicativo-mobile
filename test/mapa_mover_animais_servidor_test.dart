@@ -251,4 +251,74 @@ void main() {
         ? 'defina MAPA_API_LOCAL e MAPA_MORTE_ANIMAL (ver comentário)'
         : false,
   );
+
+  // Confirmar do Nascimento, do app até o servidor (roda o script do web):
+  //   MAPA_NASC=1 (usa a mãe B-986 da Pedra Bonita, pasto FUNDAÇA 01)
+  final nasc = env['MAPA_NASC'];
+  test(
+    'nascimento: grava pelo script do web e valida como o web',
+    () async {
+      ApiConfig.baseUrl = api!;
+      final bd = env['MAPA_BD_TESTE']!;
+      final s = MapaGadoSyncService.instance;
+      Map<String, String?> campos({String? sexo, String mae = '000006408'}) => {
+        'grupo_usuario': '01',
+        'tipo_gravacao': '0',
+        'num_mov_nascimento': '0',
+        'codigo_mae_animal': mae,
+        'dias_nascimento': '269',
+        'cobertura_id': '000000430',
+        'item_cobertura': '0023',
+        'tipo_cobertura': 'C',
+        'data_prenhes': '2026-01-17',
+        'estacao_monta_id': '000000017',
+        'data_inseminacao': '2026-01-17',
+        'local_id': '57',
+        'pasto_id': '52',
+        'opcao_nascimento': 'N',
+        'nascimento_animal': DateTime.now().toIso8601String().substring(0, 10),
+        'codigo_mae_consulta': 'B-986 - Mestiça',
+        'codigo_pai_animal': '900000068',
+        'alfa_animal': 'B',
+        'codigo_animal_id': '',
+        'codigo_numerico_animal': '1738',
+        'qtd_animal': '',
+        'sexo_animal': sexo,
+        'raca_id': '001',
+        'pelagem_id': '',
+        'peso_animal': '30.5',
+      };
+
+      // sem sexo: a mesma mensagem do web
+      var r = await s.gravarNascimento(
+        acao: 'gravar_nascimento',
+        bd: bd,
+        usuario: 'Teste App',
+        campos: campos(),
+      );
+      expect(r?['message'], 'Informe o Sexo.');
+
+      // sem a mãe validada
+      r = await s.gravarNascimento(
+        acao: 'gravar_nascimento',
+        bd: bd,
+        usuario: 'Teste App',
+        campos: campos(sexo: 'M', mae: ''),
+      );
+      expect(r?['message'], startsWith('FALTA VALIDAR O Nº DA MÃE'));
+
+      r = await s.gravarNascimento(
+        acao: 'gravar_nascimento',
+        bd: bd,
+        usuario: 'Teste App',
+        campos: campos(sexo: 'M'),
+      );
+      expect(r?['success'], isTrue);
+      expect(r?['message'], 'Registro incluído com sucesso.');
+      expect(r?['descricao_pasto'], 'FUNDAÇA 01');
+    },
+    skip: api == null || nasc == null
+        ? 'defina MAPA_API_LOCAL e MAPA_NASC (ver comentário)'
+        : false,
+  );
 }

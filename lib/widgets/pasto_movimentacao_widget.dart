@@ -233,7 +233,7 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
       );
       return false;
     }
-    await Navigator.push<void>(
+    final resultado = await Navigator.push<String>(
       context,
       MaterialPageRoute(
         builder: (_) => NascimentoPastoScreen(
@@ -249,6 +249,9 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
     );
     FocusManager.instance.primaryFocus?.unfocus();
     if (mounted) await _carregar();
+    // Nascimento gravado num pasto sem Descrição do Lote: o web abre a
+    // Composição da Descrição do Lote em seguida.
+    if (mounted && resultado == 'descricao_lote') await _editarDescricaoLote();
     return true;
   }
 

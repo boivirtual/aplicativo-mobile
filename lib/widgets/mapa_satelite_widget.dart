@@ -169,6 +169,41 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
 
   /// Igual ao web (atualizar_rotulos_zoom): o nome só aparece se couber em
   /// 80% da largura do pasto na tela, senão vira uma pilha de textos.
+  /// Pixels na tela por grau de latitude (Web Mercator) no zoom atual.
+  double _pxPorGrauLat(double latitude) =>
+      256 * math.pow(2, _zoom) / 360 / math.cos(latitude * math.pi / 180);
+
+  /// Raio do maior círculo que cabe no pasto, em pixels da tela.
+  double _raioPx(PoligonoPasto p) =>
+      p.raio <= 0 ? double.infinity : p.raio * _pxPorGrauLat(p.ponto.latitude);
+
+  /// Selo de animais pelo espaço do pasto (atualizar_selos_zoom do web):
+  /// o maior nível que CABE no pasto — "cheio" (bolinhas + barra + total),
+  /// "medio" (só as bolinhas com os totais) ou "vaca" (só o boi azul,
+  /// sempre aceito). Cabe = o canto do selo mais distante do ponto do pasto
+  /// fica dentro de 1,4 vez o raio do círculo inscrito. Na visão geral é
+  /// sempre o boi.
+  String _nivelSelo(PoligonoPasto p, PastoTabuleiro pasto, double alturaNome) {
+    if (_visaoGeral) return 'vaca';
+    if (p.raio <= 0) return 'cheio'; // polígono degenerado: selo cheio
+    final raio = _raioPx(p) * 1.4;
+    final bolinhas =
+        (pasto.bezerros > 0 ? 1 : 0) +
+        (pasto.femeas > 0 ? 1 : 0) +
+        (pasto.machos > 0 ? 1 : 0);
+    final altura = (bolinhas * 28 + math.max(0, bolinhas - 1) * 2) * _escala;
+    // topo do selo em relação ao ponto do pasto (ver _rotulo)
+    final topo = alturaNome / 2 + 5 * _escala;
+    for (final nivel in const ['cheio', 'medio']) {
+      final largura =
+          (nivel == 'cheio' ? _Selo._metade * 2 + 13 : 28.0) * _escala;
+      final dx = largura / 2;
+      final dy = math.max(topo.abs(), (topo + altura).abs());
+      if (math.sqrt(dx * dx + dy * dy) <= raio) return nivel;
+    }
+    return 'vaca';
+  }
+
   bool _nomeCabe(PoligonoPasto p, TextStyle estilo) {
     final graus = _larguraGraus[p] ??= () {
       final lons = p.pontos.map((e) => e.longitude);
@@ -181,7 +216,11 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
       textDirection: TextDirection.ltr,
       maxLines: 1,
     )..layout();
-    return texto.width <= larguraTela * 0.8;
+    // Também precisa caber no maior círculo inscrito no pasto (não só na
+    // caixa que o envolve): pastos finos ou em "L" têm caixa grande mas
+    // pouco espaço de verdade.
+    return texto.width <= larguraTela * 0.8 &&
+        texto.width <= _raioPx(p) * 2 * 1.2;
   }
 
   void _zoomNaBusca() {
@@ -374,9 +413,12 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
     // Mesma regra do CSS do web: max(7px, 10px * escala).
     final estilo = _textoBranco(math.max(7, 10 * _escala));
     final alturaNome = estilo.fontSize! * 1.3;
-    const meio = 130.0; // centro do Marker = centro do pasto
+    const meio = 130.0; // centro do Marker = ponto do pasto
+    final nivel = temAnimais ? _nivelSelo(p, pasto, alturaNome) : null;
+    final arrastando = temAnimais && _origemArraste?.pasto.id == pasto.pasto.id;
     return Marker(
-      point: p.centro,
+      // nome e selo no ponto mais interno do pasto (igual ao web)
+      point: p.ponto,
       width: 260,
       height: meio * 2,
       child: Stack(
@@ -386,7 +428,8 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
             Positioned(
               left: 0,
               right: 0,
-              top: meio - alturaNome / 2,
+              // com animais o nome sobe 8 (web: offset do tooltip -8)
+              top: meio - alturaNome / 2 - (temAnimais ? 8 : 0),
               child: IgnorePointer(
                 child: Text(
                   p.nome,
@@ -398,7 +441,21 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
                 ),
               ),
             ),
-          if (temAnimais)
+          // Só o boi azul (visão geral ou pasto pequeno): centralizado no
+          // ponto do pasto e sem escala.
+          if (nivel == 'vaca')
+            Positioned(
+              left: 0,
+              right: 0,
+              top: meio - _BoiAzul.altura / 2,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: arrastando ? 0.35 : 1,
+                  child: const Center(child: _BoiAzul()),
+                ),
+              ),
+            )
+          else if (nivel != null)
             Positioned(
               left: 0,
               right: 0,
@@ -408,21 +465,18 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
               child: Transform.scale(
                 scale: _escala,
                 alignment: Alignment.topCenter,
-                child: Center(child: _seloArrastavel(pasto)),
+                child: Center(
+                  child: IgnorePointer(
+                    child: Opacity(
+                      opacity: arrastando ? 0.35 : 1,
+                      child: _Selo(pasto: pasto, medio: nivel == 'medio'),
+                    ),
+                  ),
+                ),
               ),
             ),
         ],
       ),
-    );
-  }
-
-  /// O selo não tem gesto próprio: o arraste começa segurando o dedo em
-  /// qualquer ponto do pasto (ver _aoSegurar).
-  Widget _seloArrastavel(PastoTabuleiro pasto) {
-    final selo = _Selo(pasto: pasto, visaoGeral: _visaoGeral);
-    final arrastando = _origemArraste?.pasto.id == pasto.pasto.id;
-    return IgnorePointer(
-      child: Opacity(opacity: arrastando ? 0.35 : 1, child: selo),
     );
   }
 
@@ -593,6 +647,47 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Boi azul (web: .satelite-boi-azul): só indica que o pasto tem animais,
+/// na visão geral e nos pastos pequenos demais para o selo. Mesma imagem
+/// do web (img/vaca.png) pintada de azul, com contorno branco.
+class _BoiAzul extends StatelessWidget {
+  const _BoiAzul();
+
+  static const largura = 26.0;
+  static const altura = 18.0;
+
+  Widget _imagem(Color cor) => Image.asset(
+    'assets/images/mapa_vaca.png',
+    width: largura,
+    height: altura,
+    fit: BoxFit.contain,
+    color: cor,
+    colorBlendMode: BlendMode.srcIn,
+  );
+
+  
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: largura + 2,
+      height: altura + 2,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // contorno branco (web: drop-shadow 1px branco)
+          for (final o in const [
+            Offset(1, 0),
+            Offset(-1, 0),
+            Offset(0, 1),
+            Offset(0, -1),
+          ])
+            Transform.translate(offset: o, child: _imagem(Colors.white)),
+          _imagem(const Color(0xFF1A237E)),
         ],
       ),
     );

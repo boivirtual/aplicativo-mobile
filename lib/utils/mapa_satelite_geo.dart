@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:latlong2/latlong.dart';
 
@@ -10,11 +11,21 @@ class PoligonoPasto {
   final List<LatLng> pontos;
   final LatLng centro;
 
-  const PoligonoPasto({
+  /// Ponto DENTRO do pasto mais afastado das bordas (o "centro visual",
+  /// ver [MapaSateliteGeo.pontoInterno]): é onde ficam o nome e o selo.
+  final LatLng ponto;
+
+  /// Raio do maior círculo que cabe no pasto em volta de [ponto], em graus
+  /// de latitude (0 = polígono degenerado).
+  final double raio;
+
+  PoligonoPasto({
     required this.nome,
     required this.pontos,
     required this.centro,
-  });
+    LatLng? ponto,
+    this.raio = 0,
+  }) : ponto = ponto ?? centro;
 }
 
 /// Geometria do Mapa Satélite, replicada de js/mapa_gados_satelite.js
@@ -52,6 +63,7 @@ class MapaSateliteGeo {
       final nome = (((f['properties'] as Map?)?['name']) ?? '')
           .toString()
           .toUpperCase();
+      final interno = pontoInterno(anel);
       poligonos.add(
         PoligonoPasto(
           nome: nome,
@@ -60,10 +72,95 @@ class MapaSateliteGeo {
               .map((p) => LatLng(p[1], p[0]))
               .toList(),
           centro: centroide(anel),
+          ponto: interno.$1,
+          raio: interno.$2,
         ),
       );
     }
     return poligonos;
+  }
+
+  /// Ponto DENTRO do pasto o mais afastado possível das bordas (o "centro
+  /// visual") e a distância dele até a borda mais próxima (raio do maior
+  /// círculo inscrito, em graus de latitude) — mesma conta de
+  /// mapa_gado_satelite_ponto_interno() do web (busca em grade com
+  /// refinamento, ideia do polylabel). O centroide comum cai fora de pastos
+  /// em "L" ou "U". anel: [lng, lat] com o último ponto repetindo o
+  /// primeiro.
+  static (LatLng, double) pontoInterno(List<List<double>> anel) {
+    final qtd = anel.length - 1;
+    double lat0 = 0;
+    for (var i = 0; i < qtd; i++) {
+      lat0 += anel[i][1];
+    }
+    lat0 = lat0 / qtd;
+
+    // plano local: x em "graus de longitude" corrigidos pela latitude
+    final k = math.cos(lat0 * math.pi / 180);
+    final pts = <List<double>>[];
+    var minX = double.infinity, maxX = -double.infinity;
+    var minY = double.infinity, maxY = -double.infinity;
+    for (var j = 0; j < qtd; j++) {
+      final x = anel[j][0] * k, y = anel[j][1];
+      pts.add([x, y]);
+      minX = math.min(minX, x);
+      maxX = math.max(maxX, x);
+      minY = math.min(minY, y);
+      maxY = math.max(maxY, y);
+    }
+
+    bool dentro(double px, double py) {
+      var d = false;
+      for (var a = 0, b = qtd - 1; a < qtd; b = a++) {
+        if (((pts[a][1] > py) != (pts[b][1] > py)) &&
+            (px <
+                (pts[b][0] - pts[a][0]) * (py - pts[a][1]) /
+                        (pts[b][1] - pts[a][1]) +
+                    pts[a][0])) {
+          d = !d;
+        }
+      }
+      return d;
+    }
+
+    double distanciaBorda(double px, double py) {
+      var menor = double.infinity;
+      for (var a = 0, b = qtd - 1; a < qtd; b = a++) {
+        final ax = pts[a][0], ay = pts[a][1], bx = pts[b][0], by = pts[b][1];
+        final dx = bx - ax, dy = by - ay;
+        final t = (dx == 0 && dy == 0)
+            ? 0.0
+            : (((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy))
+                  .clamp(0.0, 1.0);
+        final ex = px - (ax + t * dx), ey = py - (ay + t * dy);
+        menor = math.min(menor, math.sqrt(ex * ex + ey * ey));
+      }
+      return menor;
+    }
+
+    List<double>? melhor; // [x, y, dist]
+    var passo = math.max(maxX - minX, maxY - minY) / 12;
+    var x0 = minX, x1 = maxX, y0 = minY, y1 = maxY;
+    for (var volta = 0; volta < 4 && passo > 0; volta++) {
+      for (var gx = x0; gx <= x1; gx += passo) {
+        for (var gy = y0; gy <= y1; gy += passo) {
+          if (dentro(gx, gy)) {
+            final dist = distanciaBorda(gx, gy);
+            if (melhor == null || dist > melhor[2]) melhor = [gx, gy, dist];
+          }
+        }
+      }
+      if (melhor == null) break;
+      // refina em volta do melhor ponto encontrado
+      x0 = melhor[0] - passo;
+      x1 = melhor[0] + passo;
+      y0 = melhor[1] - passo;
+      y1 = melhor[1] + passo;
+      passo = passo / 4;
+    }
+
+    if (melhor == null) return (centroide(anel), 0);
+    return (LatLng(melhor[1], melhor[0] / k), melhor[2]);
   }
 
   /// Centro geométrico (fórmula do "shoelace") — mesma conta do web.

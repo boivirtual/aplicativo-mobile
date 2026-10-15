@@ -50,6 +50,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
   static final Color _corRotulo = Colors.blueGrey.shade800;
 
   final _qtdController = TextEditingController();
+  final _qtdFoco = FocusNode();
 
   List<MapEntry<int, String>> _cochos = [];
   List<Map<String, dynamic>> _produtos = [];
@@ -100,6 +101,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
   void dispose() {
     MapaGadoSyncService.instance.versaoFila.removeListener(_lerItens);
     _qtdController.dispose();
+    _qtdFoco.dispose();
     super.dispose();
   }
 
@@ -261,6 +263,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
                     child: SeletorCampoWidget<int>(
                       rotulo: '* Situação Cocho',
                       altura: _alturaCampo,
+                      destaque: true,
                       corRotulo: _corRotulo,
                       valor: _cocho,
                       opcoes: _cochos,
@@ -280,6 +283,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
                     child: SeletorCampoWidget<int>(
                       rotulo: '* Produto',
                       altura: _alturaCampo,
+                      destaque: true,
                       corRotulo: _corRotulo,
                       valor: _produto,
                       opcoes: [
@@ -294,25 +298,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
                     flex: 4,
                     child: Row(
                       children: [
-                        Expanded(
-                          flex: 11,
-                          child: _caixa(
-                            child: TextField(
-                              controller: _qtdController,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                  RegExp(r'[0-9.,]'),
-                                ),
-                              ],
-                              style: const TextStyle(fontSize: 15),
-                              decoration: _decoracao('* Qtde'),
-                            ),
-                          ),
-                        ),
+                        Expanded(flex: 11, child: _campoQtde()),
                         const SizedBox(width: 6),
                         // Und vem do produto — não é digitável.
                         Expanded(flex: 8, child: _campoFixo('Und', _unidade)),
@@ -370,14 +356,6 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
     ),
   );
 
-  InputDecoration _decoracao(String rotulo) => InputDecoration(
-    labelText: rotulo,
-    labelStyle: TextStyle(fontSize: 14, color: _corRotulo),
-    border: InputBorder.none,
-    isDense: true,
-    contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-  );
-
   /// Mesma altura do campo "Nº do Animal" da tela de itens da Pesagem.
   static const _alturaCampo = 80.0;
 
@@ -393,25 +371,33 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
 
   /// Rótulo pequeno em cima e o valor embaixo (mesmo desenho do select).
   Widget _rotuloValor(String rotulo, String valor, {Widget? icone}) => Padding(
-    padding: const EdgeInsets.only(left: 12, right: 6),
+    // rótulo colado no topo da caixa e o valor em negrito, como os campos
+    // da Pesagem
+    padding: const EdgeInsets.only(left: 12, right: 6, top: 10),
     child: Row(
       children: [
         Expanded(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(rotulo, style: TextStyle(fontSize: 11, color: _corRotulo)),
-              const SizedBox(height: 2),
-              // Encolhe um pouco se não couber (ex: a data), em vez de
-              // cortar com "...".
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  valor,
-                  maxLines: 1,
-                  style: const TextStyle(fontSize: 15),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  // Encolhe um pouco se não couber (ex: a data), em vez de
+                  // cortar com "...".
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      valor,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -419,6 +405,72 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
         ),
         if (icone != null) icone,
       ],
+    ),
+  );
+
+  /// Qtde no mesmo desenho dos outros campos: vazio mostra o rótulo no
+  /// meio da caixa; preenchido (ou digitando), rótulo no topo e o número em
+  /// negrito.
+  Widget _campoQtde() => GestureDetector(
+    onTap: () => _qtdFoco.requestFocus(),
+    child: _caixa(
+      child: ListenableBuilder(
+        listenable: Listenable.merge([_qtdController, _qtdFoco]),
+        builder: (context, _) {
+          final aberto = _qtdController.text.isNotEmpty || _qtdFoco.hasFocus;
+          // O campo fica sempre montado (o foco não se perde); só o rótulo
+          // muda de lugar.
+          return Stack(
+            children: [
+              Positioned(
+                left: 12,
+                right: 6,
+                top: 24,
+                bottom: 0,
+                child: _textoQtde(),
+              ),
+              if (aberto)
+                Positioned(
+                  left: 12,
+                  top: 10,
+                  child: Text(
+                    '* Qtde',
+                    style: TextStyle(fontSize: 11, color: _corRotulo),
+                  ),
+                )
+              else
+                Positioned.fill(
+                  left: 12,
+                  child: IgnorePointer(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '* Qtde',
+                        style: TextStyle(fontSize: 14, color: _corRotulo),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    ),
+  );
+
+  Widget _textoQtde() => Align(
+    alignment: Alignment.centerLeft,
+    child: TextField(
+      controller: _qtdController,
+      focusNode: _qtdFoco,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Colors.black87,
+      ),
+      decoration: const InputDecoration.collapsed(hintText: ''),
     ),
   );
 

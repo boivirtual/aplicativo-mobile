@@ -16,6 +16,10 @@ class SeletorCampoWidget<T> extends StatelessWidget {
   /// Altura da caixa (56 por padrão).
   final double altura;
 
+  /// Preenchido no padrão dos campos da Pesagem: rótulo colado no topo da
+  /// caixa e o valor em negrito.
+  final bool destaque;
+
   const SeletorCampoWidget({
     super.key,
     required this.rotulo,
@@ -24,6 +28,7 @@ class SeletorCampoWidget<T> extends StatelessWidget {
     required this.opcoes,
     required this.onChanged,
     this.altura = 56,
+    this.destaque = false,
   });
 
   Future<void> _abrir(BuildContext context) async {
@@ -93,6 +98,34 @@ class SeletorCampoWidget<T> extends StatelessWidget {
                   ? Text(
                       rotulo,
                       style: TextStyle(fontSize: 14, color: corRotulo),
+                    )
+                  : destaque
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            rotulo,
+                            style: TextStyle(fontSize: 11, color: corRotulo),
+                          ),
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                texto,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     )
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,

@@ -13,6 +13,9 @@ class SeletorCampoWidget<T> extends StatelessWidget {
   final List<MapEntry<T, String>> opcoes;
   final ValueChanged<T> onChanged;
 
+  /// Altura da caixa (56 por padrão).
+  final double altura;
+
   const SeletorCampoWidget({
     super.key,
     required this.rotulo,
@@ -20,6 +23,7 @@ class SeletorCampoWidget<T> extends StatelessWidget {
     required this.valor,
     required this.opcoes,
     required this.onChanged,
+    this.altura = 56,
   });
 
   Future<void> _abrir(BuildContext context) async {
@@ -76,7 +80,7 @@ class SeletorCampoWidget<T> extends StatelessWidget {
     return GestureDetector(
       onTap: () => _abrir(context),
       child: Container(
-        height: 56,
+        height: altura,
         padding: const EdgeInsets.only(left: 12, right: 6),
         decoration: BoxDecoration(
           color: Colors.white,

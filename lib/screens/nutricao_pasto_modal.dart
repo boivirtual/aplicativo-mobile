@@ -7,9 +7,9 @@ import '../utils/app_alert.dart';
 import '../widgets/seletor_campo_widget.dart';
 import 'composicao_descricao_lote_screen.dart' show perguntarSimNao;
 
-/// "Mapa de Gado - Nutrição" — botão Nutrição da tela do pasto, igual ao
+/// "Nutrição" — botão Nutrição da tela do pasto, igual ao
 /// modal do web (form_mapa_gados_movimentacao.php): Situação do Cocho,
-/// Data, Produto, Quantidade, Und, "Confirmar Inclusão" e a tabela das
+/// Data, Produto, Quantidade, Und, "Confirmar" e a tabela das
 /// nutrições do pasto na data, com a lixeira.
 ///
 /// Funciona offline: as listas e as nutrições recentes vêm do cache local;
@@ -246,7 +246,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Mapa de Gado - Nutrição',
+                'Nutrição',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 18, color: _azulTitulo),
               ),
@@ -260,6 +260,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
                     flex: 5,
                     child: SeletorCampoWidget<int>(
                       rotulo: '* Situação Cocho',
+                      altura: _alturaCampo,
                       corRotulo: _corRotulo,
                       valor: _cocho,
                       opcoes: _cochos,
@@ -278,6 +279,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
                     flex: 5,
                     child: SeletorCampoWidget<int>(
                       rotulo: '* Produto',
+                      altura: _alturaCampo,
                       corRotulo: _corRotulo,
                       valor: _produto,
                       opcoes: [
@@ -324,11 +326,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
                 children: [
                   Expanded(
                     flex: 5,
-                    child: _botao(
-                      'Confirmar Inclusão',
-                      _verde,
-                      _confirmarInclusao,
-                    ),
+                    child: _botao('Confirmar', _verde, _confirmarInclusao),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -349,29 +347,26 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
     );
   }
 
+  /// Fazenda e pasto na mesma linha (a fonte encolhe um pouco se o nome for
+  /// comprido).
   Widget _tarja() => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
     decoration: BoxDecoration(
       color: Colors.blue.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(8),
     ),
-    child: Column(
-      children: [
-        Text(
-          widget.nomeFazenda,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 12, color: Colors.blue),
+    child: FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        '${widget.nomeFazenda}  -  Pasto: ${widget.nomePasto}',
+        maxLines: 1,
+        softWrap: false,
+        style: const TextStyle(
+          fontSize: 13,
+          color: Colors.blue,
+          fontWeight: FontWeight.bold,
         ),
-        Text(
-          'Pasto: ${widget.nomePasto}',
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.blue,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
+      ),
     ),
   );
 
@@ -383,8 +378,11 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
     contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
   );
 
+  /// Mesma altura do campo "Nº do Animal" da tela de itens da Pesagem.
+  static const _alturaCampo = 80.0;
+
   Widget _caixa({required Widget child}) => Container(
-    height: 56,
+    height: _alturaCampo,
     alignment: Alignment.center,
     decoration: BoxDecoration(
       color: Colors.white,

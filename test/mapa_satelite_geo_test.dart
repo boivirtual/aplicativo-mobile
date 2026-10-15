@@ -74,4 +74,35 @@ void main() {
     },
     skip: arquivo == null ? 'defina MAPA_GEOJSON' : false,
   );
+
+  test('ponto interno: fica DENTRO de pasto em "L" (o centroide cai fora)', () {
+    // "L": quadrado 0..10 sem o canto 4..10 x 4..10 ([lng, lat])
+    final anel = [
+      [0.0, 0.0],
+      [10.0, 0.0],
+      [10.0, 4.0],
+      [4.0, 4.0],
+      [4.0, 10.0],
+      [0.0, 10.0],
+      [0.0, 0.0],
+    ];
+    final pontos = [for (final p in anel.take(6)) LatLng(p[1], p[0])];
+    final centroide = MapaSateliteGeo.centroide(anel);
+    final (ponto, raio) = MapaSateliteGeo.pontoInterno(anel);
+    expect(MapaSateliteGeo.contem(pontos, ponto), isTrue);
+    expect(raio, greaterThan(1.5));
+    // no quadrado do exemplo o ponto interno é o centro
+    final quadrado = [
+      [10.0, 20.0],
+      [11.0, 20.0],
+      [11.0, 21.0],
+      [10.0, 21.0],
+      [10.0, 20.0],
+    ];
+    final (centroQ, raioQ) = MapaSateliteGeo.pontoInterno(quadrado);
+    expect(centroQ.latitude, closeTo(20.5, 0.05));
+    expect(centroQ.longitude, closeTo(10.5, 0.05));
+    expect(raioQ, closeTo(0.5, 0.05));
+    expect(centroide, isNotNull);
+  });
 }

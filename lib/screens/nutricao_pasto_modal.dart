@@ -344,7 +344,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
     child: FittedBox(
       fit: BoxFit.scaleDown,
       child: Text(
-        '${widget.nomeFazenda}  -  Pasto: ${widget.nomePasto}',
+        '${widget.nomeFazenda}  -  ${widget.nomePasto}',
         maxLines: 1,
         softWrap: false,
         style: const TextStyle(

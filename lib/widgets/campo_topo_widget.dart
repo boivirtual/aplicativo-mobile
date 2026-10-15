@@ -101,8 +101,7 @@ class _CampoTextoTopoState extends State<CampoTextoTopo> {
         child: ListenableBuilder(
           listenable: Listenable.merge([widget.controller, _foco]),
           builder: (context, _) {
-            final aberto =
-                widget.controller.text.isNotEmpty || _foco.hasFocus;
+            final aberto = widget.controller.text.isNotEmpty || _foco.hasFocus;
             final rotuloTopo = Text(
               widget.rotulo,
               style: TextStyle(fontSize: 11, color: widget.corRotulo),
@@ -136,7 +135,10 @@ class _CampoTextoTopoState extends State<CampoTextoTopo> {
                   right: 8,
                   top: _topoValor,
                   bottom: 0,
-                  child: Align(alignment: Alignment.centerLeft, child: _texto()),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: _texto(),
+                  ),
                 ),
                 if (aberto)
                   Positioned(left: 12, top: _topoRotulo, child: rotuloTopo)
@@ -227,7 +229,7 @@ class CampoValorTopo extends StatelessWidget {
                       ],
                     ),
             ),
-            ?icone,
+            if (icone != null) icone!,
           ],
         ),
       ),

@@ -9,6 +9,7 @@ import '../services/animal_cache_service.dart';
 import '../services/connectivity_service.dart';
 import '../services/mapa_gado_sync_service.dart';
 import '../utils/app_alert.dart';
+import '../widgets/campo_topo_widget.dart';
 import '../widgets/seletor_campo_widget.dart';
 
 /// "Mapa de Gado - Morte" — botão Morte da tela do pasto, igual ao modal do
@@ -470,7 +471,7 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Mapa de Gado - Morte',
+                'Morte',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 18, color: _azulTitulo),
               ),
@@ -523,6 +524,7 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
               SeletorCampoWidget<int>(
                 rotulo: '* Motivo da Morte',
                 corRotulo: _corRotulo,
+                destaque: true,
                 valor: _motivo,
                 opcoes: _motivos,
                 onChanged: (v) => setState(() => _motivo = v),
@@ -552,29 +554,26 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
     );
   }
 
+  /// Fazenda e pasto na mesma linha (a fonte encolhe um pouco se o nome for
+  /// comprido).
   Widget _tarja() => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
     decoration: BoxDecoration(
       color: Colors.blue.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(8),
     ),
-    child: Column(
-      children: [
-        Text(
-          widget.nomeFazenda,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 12, color: Colors.blue),
+    child: FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        '${widget.nomeFazenda}  -  ${widget.nomePasto}',
+        maxLines: 1,
+        softWrap: false,
+        style: const TextStyle(
+          fontSize: 13,
+          color: Colors.blue,
+          fontWeight: FontWeight.bold,
         ),
-        Text(
-          'Pasto: ${widget.nomePasto}',
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.blue,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
+      ),
     ),
   );
 
@@ -590,43 +589,16 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
     ),
   );
 
-  InputDecoration _decoracao(String rotulo) => InputDecoration(
-    labelText: rotulo,
-    labelStyle: TextStyle(fontSize: 14, color: _corRotulo),
-    border: InputBorder.none,
-    isDense: true,
-    contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-  );
-
-  Widget _caixa({
-    required Widget child,
-    double? altura = 56,
-    bool erro = false,
-  }) => Container(
-    height: altura,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(8),
-      border: erro ? Border.all(color: Colors.red) : null,
-    ),
-    child: child,
-  );
-
-  Widget _campoAnimal() => _caixa(
+  Widget _campoAnimal() => CampoTextoTopo(
+    rotulo: '* Nº Animal',
+    corRotulo: _corRotulo,
+    controller: _animalController,
+    focusNode: _animalFoco,
+    enabled: _temCadastro,
     erro: _animalInvalido,
-    child: TextField(
-      controller: _animalController,
-      focusNode: _animalFoco,
-      enabled: _temCadastro,
-      textCapitalization: TextCapitalization.characters,
-      autocorrect: false,
-      enableSuggestions: false,
-      style: const TextStyle(fontSize: 15),
-      decoration: _decoracao('* Nº Animal'),
-      onTap: _aoTocarAnimal,
-      onChanged: _aoDigitarAnimal,
-    ),
+    textCapitalization: TextCapitalization.characters,
+    onTap: _aoTocarAnimal,
+    onChanged: _aoDigitarAnimal,
   );
 
   /// Lista de aproximação logo abaixo do Nº Animal (como na Pesagem).
@@ -656,48 +628,22 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
     ),
   );
 
-  Widget _campoData() => GestureDetector(
+  Widget _campoData() => CampoValorTopo(
+    rotulo: '* Data da morte',
+    corRotulo: _corRotulo,
+    valor: _formatar(_dataMorte),
+    icone: Icon(Icons.calendar_month, color: _corRotulo, size: 20),
     onTap: _escolherData,
-    child: _caixa(
-      child: Padding(
-        padding: const EdgeInsets.only(left: 12, right: 10),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '* Data da morte',
-                    style: TextStyle(fontSize: 11, color: _corRotulo),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _formatar(_dataMorte),
-                    style: const TextStyle(fontSize: 15),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.calendar_month, color: _corRotulo, size: 20),
-          ],
-        ),
-      ),
-    ),
   );
 
-  Widget _campoObservacao() => _caixa(
+  Widget _campoObservacao() => CampoTextoTopo(
+    rotulo: 'Observação',
+    corRotulo: _corRotulo,
+    controller: _obsController,
     altura: null,
-    child: TextField(
-      controller: _obsController,
-      minLines: 3,
-      maxLines: 3,
-      textCapitalization: TextCapitalization.characters,
-      inputFormatters: [_Maiusculas()],
-      style: const TextStyle(fontSize: 15),
-      decoration: _decoracao('Observação'),
-    ),
+    linhas: 3,
+    textCapitalization: TextCapitalization.characters,
+    inputFormatters: [_Maiusculas()],
   );
 
   Widget _botao(String texto, Color cor, VoidCallback aoTocar) => SizedBox(

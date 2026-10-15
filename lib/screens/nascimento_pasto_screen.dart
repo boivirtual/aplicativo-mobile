@@ -15,6 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/mapa_gado_sync_service.dart';
 import '../utils/app_alert.dart';
+import '../widgets/campo_topo_widget.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 import '../widgets/seletor_campo_widget.dart';
 
@@ -1367,7 +1368,7 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
       child: FittedBox(
         fit: BoxFit.scaleDown,
         child: Text(
-          '${widget.nomeFazenda}  -  Pasto: ${widget.nomePasto}',
+          '${widget.nomeFazenda}  -  ${widget.nomePasto}',
           maxLines: 1,
           softWrap: false,
           style: const TextStyle(
@@ -1441,14 +1442,6 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
   // Campos — mesmo padrão dos modais de Morte e Nutrição
   // -----------------------------------------------------------------------
 
-  InputDecoration _decoracao(String rotulo) => InputDecoration(
-    labelText: rotulo,
-    labelStyle: TextStyle(fontSize: 14, color: _corRotulo),
-    border: InputBorder.none,
-    isDense: true,
-    contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-  );
-
   Widget _caixa({required Widget child, bool erro = false}) => Container(
     height: 56,
     alignment: Alignment.center,
@@ -1465,36 +1458,28 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     TextEditingController controller, {
     bool numerico = false,
     int? maximo,
-  }) => _caixa(
-    child: TextField(
-      controller: controller,
-      keyboardType: numerico ? TextInputType.number : TextInputType.text,
-      inputFormatters: [
-        if (numerico) FilteringTextInputFormatter.digitsOnly,
-        if (maximo != null) LengthLimitingTextInputFormatter(maximo),
-      ],
-      textCapitalization: TextCapitalization.characters,
-      autocorrect: false,
-      enableSuggestions: false,
-      style: const TextStyle(fontSize: 15),
-      decoration: _decoracao(rotulo),
-    ),
+  }) => CampoTextoTopo(
+    rotulo: rotulo,
+    corRotulo: _corRotulo,
+    controller: controller,
+    keyboardType: numerico ? TextInputType.number : TextInputType.text,
+    inputFormatters: [
+      if (numerico) FilteringTextInputFormatter.digitsOnly,
+      if (maximo != null) LengthLimitingTextInputFormatter(maximo),
+    ],
+    textCapitalization: TextCapitalization.characters,
   );
 
-  Widget _campoMae(String rotulo) => _caixa(
+  Widget _campoMae(String rotulo) => CampoTextoTopo(
+    rotulo: rotulo,
+    corRotulo: _corRotulo,
+    controller: _maeController,
+    focusNode: _maeFoco,
+    enabled: _temCadastro,
     erro: _maeInvalida,
-    child: TextField(
-      controller: _maeController,
-      focusNode: _maeFoco,
-      enabled: _temCadastro,
-      textCapitalization: TextCapitalization.characters,
-      autocorrect: false,
-      enableSuggestions: false,
-      style: const TextStyle(fontSize: 15),
-      decoration: _decoracao(rotulo),
-      onTap: _aoTocarMae,
-      onChanged: _aoDigitarMae,
-    ),
+    textCapitalization: TextCapitalization.characters,
+    onTap: _aoTocarMae,
+    onChanged: _aoDigitarMae,
   );
 
   /// Lista de aproximação logo abaixo do campo (como na Morte e na
@@ -1525,32 +1510,12 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     ),
   );
 
-  Widget _campoData(String rotulo) => GestureDetector(
+  Widget _campoData(String rotulo) => CampoValorTopo(
+    rotulo: rotulo,
+    corRotulo: _corRotulo,
+    valor: _formatar(_data),
+    icone: Icon(Icons.calendar_month, color: _corRotulo, size: 20),
     onTap: _escolherData,
-    child: _caixa(
-      child: Padding(
-        padding: const EdgeInsets.only(left: 12, right: 10),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    rotulo,
-                    style: TextStyle(fontSize: 11, color: _corRotulo),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(_formatar(_data), style: const TextStyle(fontSize: 15)),
-                ],
-              ),
-            ),
-            Icon(Icons.calendar_month, color: _corRotulo, size: 20),
-          ],
-        ),
-      ),
-    ),
   );
 
   /// "* Sexo" com Macho e Fêmea, dentro de uma caixa como os outros campos.
@@ -1580,59 +1545,23 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     ),
   );
 
-  /// "Pai Nº" com a mesma cara do SeletorCampoWidget.
-  Widget _campoPai() => GestureDetector(
+  /// "Pai Nº": mesmo desenho dos outros selects (rótulo no topo e o valor
+  /// em negrito quando escolhido).
+  Widget _campoPai() => CampoValorTopo(
+    rotulo: 'Pai Nº',
+    corRotulo: _corRotulo,
+    valor: _pai?.texto ?? '',
     onTap: _escolherPai,
-    child: Container(
-      height: 56,
-      padding: const EdgeInsets.only(left: 12, right: 6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _pai == null
-                ? Text(
-                    'Pai Nº',
-                    style: TextStyle(fontSize: 14, color: _corRotulo),
-                  )
-                : Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Pai Nº',
-                        style: TextStyle(fontSize: 11, color: _corRotulo),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _pai!.texto,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-          ),
-          if (_carregandoListas)
-            const Padding(
-              padding: EdgeInsets.only(right: 6),
-              child: SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            )
-          else
-            Icon(Icons.arrow_drop_down, color: _corRotulo),
-        ],
-      ),
-    ),
+    icone: _carregandoListas
+        ? const Padding(
+            padding: EdgeInsets.only(right: 6),
+            child: SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          )
+        : Icon(Icons.arrow_drop_down, color: _corRotulo),
   );
 
   Widget _seletor(
@@ -1646,6 +1575,7 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     child: SeletorCampoWidget<String>(
       rotulo: rotulo,
       corRotulo: _corRotulo,
+      destaque: true,
       valor: valor,
       opcoes: opcoes,
       onChanged: aoMudar,

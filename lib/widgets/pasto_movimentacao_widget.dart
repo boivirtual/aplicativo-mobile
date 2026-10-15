@@ -10,6 +10,7 @@ import '../services/mapa_gado_sync_service.dart';
 import '../utils/app_alert.dart';
 import '../utils/mapa_tabuleiro_calculo.dart';
 import '../utils/pasto_movimentacao_calculo.dart';
+import 'campo_topo_widget.dart';
 import 'seletor_campo_widget.dart';
 
 /// "Mapa de Gado - Movimentações" — tela do pasto aberta pelo toque no
@@ -564,25 +565,6 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
   // com cantos 10 e texto branco.
   // ---------------------------------------------------------------------
 
-  InputDecoration _decoracao(String rotulo) => InputDecoration(
-    labelText: rotulo,
-    labelStyle: TextStyle(fontSize: 14, color: _corRotulo),
-    border: InputBorder.none,
-    // compacto para o rótulo flutuante + o valor caberem nos 56 de altura
-    isDense: true,
-    contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-  );
-
-  Widget _campo(Widget child) => Container(
-    height: 56,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: child,
-  );
-
   Widget _botao(
     String texto,
     Color cor, {
@@ -634,6 +616,7 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
                 child: SeletorCampoWidget<String>(
                   rotulo: 'Qual Categoria',
                   corRotulo: _corRotulo,
+                  destaque: true,
                   valor: _categoria,
                   opcoes: [
                     for (final c in _opcoesCategoria)
@@ -645,13 +628,11 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
               const SizedBox(width: 8),
               Expanded(
                 flex: 3,
-                child: _campo(
-                  TextFormField(
-                    controller: _qtdController,
-                    keyboardType: TextInputType.number,
-                    style: const TextStyle(fontSize: 16),
-                    decoration: _decoracao('Quantidade'),
-                  ),
+                child: CampoTextoTopo(
+                  rotulo: 'Quantidade',
+                  corRotulo: _corRotulo,
+                  controller: _qtdController,
+                  keyboardType: TextInputType.number,
                 ),
               ),
             ],
@@ -666,6 +647,7 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
                 child: SeletorCampoWidget<int>(
                   rotulo: 'Novo Pasto',
                   corRotulo: _corRotulo,
+                  destaque: true,
                   valor: _novoPasto,
                   opcoes: [
                     for (final p in _pastosDestino) MapEntry(p.id, p.descricao),
@@ -687,13 +669,13 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
           ),
           const SizedBox(height: 10),
           // Lote: o toque abre a Composição da Descrição do Lote.
-          _campo(
-            TextFormField(
-              controller: _loteController,
-              readOnly: true,
+          ListenableBuilder(
+            listenable: _loteController,
+            builder: (context, _) => CampoValorTopo(
+              rotulo: 'Descrição do Lote',
+              corRotulo: _corRotulo,
+              valor: _loteController.text,
               onTap: _editarDescricaoLote,
-              style: const TextStyle(fontSize: 15),
-              decoration: _decoracao('Descrição do Lote'),
             ),
           ),
         ],

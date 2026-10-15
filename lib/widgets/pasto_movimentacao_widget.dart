@@ -623,7 +623,7 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
           Padding(
             padding: const EdgeInsets.only(left: 2, bottom: 8),
             child: Text(
-              'Transferir animais de pasto?',
+              'Mudar Animais de Pasto',
               style: TextStyle(fontSize: 15, color: _corRotulo),
             ),
           ),

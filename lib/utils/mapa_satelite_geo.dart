@@ -114,7 +114,8 @@ class MapaSateliteGeo {
       for (var a = 0, b = qtd - 1; a < qtd; b = a++) {
         if (((pts[a][1] > py) != (pts[b][1] > py)) &&
             (px <
-                (pts[b][0] - pts[a][0]) * (py - pts[a][1]) /
+                (pts[b][0] - pts[a][0]) *
+                        (py - pts[a][1]) /
                         (pts[b][1] - pts[a][1]) +
                     pts[a][0])) {
           d = !d;
@@ -130,8 +131,10 @@ class MapaSateliteGeo {
         final dx = bx - ax, dy = by - ay;
         final t = (dx == 0 && dy == 0)
             ? 0.0
-            : (((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy))
-                  .clamp(0.0, 1.0);
+            : (((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)).clamp(
+                0.0,
+                1.0,
+              );
         final ex = px - (ax + t * dx), ey = py - (ay + t * dy);
         menor = math.min(menor, math.sqrt(ex * ex + ey * ey));
       }
@@ -193,7 +196,8 @@ class MapaSateliteGeo {
     var dentro = false;
     for (var i = 0, j = pontos.length - 1; i < pontos.length; j = i++) {
       final a = pontos[i], b = pontos[j];
-      final cruza = (a.latitude > p.latitude) != (b.latitude > p.latitude) &&
+      final cruza =
+          (a.latitude > p.latitude) != (b.latitude > p.latitude) &&
           p.longitude <
               (b.longitude - a.longitude) *
                       (p.latitude - a.latitude) /

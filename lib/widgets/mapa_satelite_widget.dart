@@ -469,7 +469,7 @@ class _MapaSateliteWidgetState extends State<MapaSateliteWidget> {
                   child: IgnorePointer(
                     child: Opacity(
                       opacity: arrastando ? 0.35 : 1,
-                      child: _Selo(pasto: pasto, medio: nivel == 'medio'),
+                      child: _Selo(pasto: pasto!, medio: nivel == 'medio'),
                     ),
                   ),
                 ),
@@ -671,7 +671,7 @@ class _BoiAzul extends StatelessWidget {
     colorBlendMode: BlendMode.srcIn,
   );
 
-  
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: largura + 2,
@@ -709,12 +709,13 @@ TextStyle _textoBranco(double tamanho) => TextStyle(
 /// Zoom aproximado: uma bolinha colorida por categoria com animal (ícone e
 /// o total da categoria DENTRO da bolinha), o divisor e o total do pasto.
 ///
-/// Visão geral ([visaoGeral], web: .satelite-zoom-baixo): só as bolinhas,
-/// pequenas e lado a lado, sem os números nem o total.
+/// Nível "medio" ([medio], web: data-nivel="medio"): só as bolinhas com os
+/// totais por categoria, sem a barra e o total do pasto. Na visão geral e
+/// nos pastos pequenos o selo dá lugar ao boi azul ([_BoiAzul]).
 class _Selo extends StatelessWidget {
   final PastoTabuleiro pasto;
-  final bool visaoGeral;
-  const _Selo({required this.pasto, this.visaoGeral = false});
+  final bool medio;
+  const _Selo({required this.pasto, this.medio = false});
 
   static const _corBezerro = Color(0xFF9C7239);
   static const _corFemea = Color(0xFFB71C1C);
@@ -729,12 +730,12 @@ class _Selo extends StatelessWidget {
       if (pasto.machos > 0) _bolinha('mapa_gado.png', _corMacho, pasto.machos),
     ];
 
-    if (visaoGeral) {
-      return Row(
+    if (medio) {
+      return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           for (var i = 0; i < bolinhas.length; i++) ...[
-            if (i > 0) const SizedBox(width: 3),
+            if (i > 0) const SizedBox(height: 2),
             bolinhas[i],
           ],
         ],
@@ -800,13 +801,12 @@ class _Selo extends StatelessWidget {
   /// Largura de cada lado da barra (cabe um total de 4 dígitos).
   static const _metade = 44.0;
 
-  /// Bolinha da categoria: 28 com o ícone e o total dentro; na visão geral
-  /// 20, só com o ícone.
+  /// Bolinha da categoria: 28, com o ícone e o total dentro.
   Widget _bolinha(String imagem, Color cor, int qtd) {
-    final tamanho = visaoGeral ? 20.0 : 28.0;
+    const tamanho = 28.0;
     final icone = ColorFiltered(
       colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-      child: Image.asset('assets/images/$imagem', width: visaoGeral ? 12 : 10),
+      child: Image.asset('assets/images/$imagem', width: 10),
     );
     return Container(
       width: tamanho,
@@ -818,30 +818,28 @@ class _Selo extends StatelessWidget {
         border: Border.all(color: const Color(0xE6FFFFFF), width: 1.5),
         boxShadow: const [BoxShadow(color: Color(0xD9000000), blurRadius: 2)],
       ),
-      child: visaoGeral
-          ? icone
-          : Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                icone,
-                const SizedBox(height: 2.5),
-                // total da categoria dentro da bolinha: menor e sem negrito
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    '$qtd',
-                    style: const TextStyle(
-                      // 8 (web: 9): com o espaço maior entre o ícone e o
-                      // total, o número não encosta na borda da bolinha.
-                      fontSize: 8,
-                      height: 1,
-                      fontWeight: FontWeight.normal,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          icone,
+          const SizedBox(height: 2.5),
+          // total da categoria dentro da bolinha: menor e sem negrito
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              '$qtd',
+              style: const TextStyle(
+                // 8 (web: 9): com o espaço maior entre o ícone e o
+                // total, o número não encosta na borda da bolinha.
+                fontSize: 8,
+                height: 1,
+                fontWeight: FontWeight.normal,
+                color: Colors.white,
+              ),
             ),
+          ),
+        ],
+      ),
     );
   }
 }

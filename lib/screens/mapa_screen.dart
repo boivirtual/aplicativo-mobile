@@ -130,8 +130,7 @@ class _MapaScreenState extends State<MapaScreen> with WidgetsBindingObserver {
   //   - ao voltar para o aplicativo — didChangeAppLifecycleState;
   //   - ao voltar da tela do pasto para o mapa — _fecharPasto;
   //   - puxar para atualizar (nos pastos do Tabuleiro, a partir da tarja
-  //     azul no Tabuleiro e no Satélite, e na tela do pasto) e o botão de
-  //     atualizar do Satélite.
+  //     azul no Tabuleiro e no Satélite, e na tela do pasto).
   // Nunca durante um arraste. A tela do pasto só relê os dados: o que já
   // foi escolhido/digitado nos campos continua lá.
   // ---------------------------------------------------------------------
@@ -603,27 +602,7 @@ class _MapaScreenState extends State<MapaScreen> with WidgetsBindingObserver {
             // Na tela do pasto volta para o mapa; no mapa, para a Home.
             onPressed: pastoAberto == null ? widget.onBack : _fecharPasto,
           ),
-          actions: [
-            const IndicadorConectividadeWidget(),
-            // Satélite: botão de atualizar no canto direito do título (o
-            // Satélite não tem o "puxar para atualizar" do Tabuleiro).
-            if (pastoAberto == null && _satelite && fazendaSelecionada != null)
-              IconButton(
-                tooltip: 'Atualizar o mapa',
-                onPressed: _baixando ? null : _baixarEAtualizar,
-                icon: _baixando
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.refresh, color: Colors.white),
-              ),
-            const SizedBox(width: 8),
-          ],
+          actions: const [IndicadorConectividadeWidget(), SizedBox(width: 8)],
         ),
         // O mapa continua montado por baixo (Offstage) enquanto a tela do
         // pasto está aberta, para voltar exatamente onde estava (rolagem do

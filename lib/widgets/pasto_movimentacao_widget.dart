@@ -42,6 +42,10 @@ class PastoMovimentacaoWidget extends StatefulWidget {
   final int pastoId;
   final String? usuario;
 
+  /// "Puxar para atualizar": baixa o mapa do servidor (a tela relê sozinha
+  /// quando os dados chegam).
+  final Future<void> Function()? onAtualizar;
+
   const PastoMovimentacaoWidget({
     super.key,
     required this.bd,
@@ -50,6 +54,7 @@ class PastoMovimentacaoWidget extends StatefulWidget {
     required this.nomeFazenda,
     required this.pastoId,
     required this.usuario,
+    this.onAtualizar,
   });
 
   @override
@@ -144,6 +149,16 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
         animaisDoPasto: doPasto,
         categorias: categorias,
       );
+      // Dados novos do servidor: a escolha feita continua, a não ser que
+      // não exista mais (ex.: a categoria saiu do pasto pela web).
+      if (_categoria != null &&
+          !_opcoesCategoria.any((c) => c.rotulo == _categoria)) {
+        _categoria = null;
+      }
+      if (_novoPasto != null &&
+          !_pastosDestino.any((p) => p.id == _novoPasto)) {
+        _novoPasto = null;
+      }
       _carregando = false;
     });
   }
@@ -426,17 +441,21 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
 
     return Container(
       color: Colors.white,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(6, 6, 6, 16),
-        children: [
-          _cabecalho(pasto),
-          const SizedBox(height: 22),
-          _tabela(),
-          const SizedBox(height: 12),
-          _formulario(),
-          const SizedBox(height: 22),
-          _outrasAtividades(),
-        ],
+      child: RefreshIndicator(
+        onRefresh: widget.onAtualizar ?? () async {},
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(6, 6, 6, 16),
+          children: [
+            _cabecalho(pasto),
+            const SizedBox(height: 22),
+            _tabela(),
+            const SizedBox(height: 12),
+            _formulario(),
+            const SizedBox(height: 22),
+            _outrasAtividades(),
+          ],
+        ),
       ),
     );
   }

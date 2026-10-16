@@ -43,7 +43,7 @@ class MapaScreen extends StatefulWidget {
   State<MapaScreen> createState() => _MapaScreenState();
 }
 
-class _MapaScreenState extends State<MapaScreen> {
+class _MapaScreenState extends State<MapaScreen> with WidgetsBindingObserver {
   static const _azul = Color(0xFF18385F);
 
   String? fazendaSelecionada;
@@ -100,18 +100,59 @@ class _MapaScreenState extends State<MapaScreen> {
   void initState() {
     super.initState();
     MapaGadoSyncService.instance.versaoFila.addListener(_aoMudarFila);
+    WidgetsBinding.instance.addObserver(this);
     _carregarContexto();
   }
 
   @override
   void dispose() {
     MapaGadoSyncService.instance.versaoFila.removeListener(_aoMudarFila);
+    WidgetsBinding.instance.removeObserver(this);
     _buscaController.dispose();
     _scrollController.dispose();
     _autoScroll?.cancel();
     _timerEnviado?.cancel();
     _timerToque?.cancel();
     super.dispose();
+  }
+
+  // ---------------------------------------------------------------------
+  // Quando buscar os dados da web (online):
+  //   - ao entrar no Mapa de Gado (a aba monta a tela de novo) e ao trocar
+  //     de fazenda — _carregarContexto;
+  //   - ao tocar em um pasto: abre na hora com o que está no aparelho e
+  //     atualiza em segundo plano — _abrirPasto;
+  //   - ao voltar para o aplicativo — didChangeAppLifecycleState;
+  //   - ao voltar da tela do pasto para o mapa — _fecharPasto;
+  //   - puxar para atualizar (Tabuleiro e tela do pasto) e o botão de
+  //     atualizar do Satélite.
+  // Nunca durante um arraste. A tela do pasto só relê os dados: o que já
+  // foi escolhido/digitado nos campos continua lá.
+  // ---------------------------------------------------------------------
+
+  DateTime? _ultimaAtualizacao;
+
+  /// Atualização automática (tocar no pasto, voltar ao app, voltar ao
+  /// mapa): só online, fora de arraste, e no máximo uma a cada 10 s (tocar
+  /// em vários pastos seguidos não baixa o mapa várias vezes).
+  Future<void> _atualizarEmSegundoPlano() async {
+    if (_arrastando || _baixando) return;
+    if (!ConnectivityService.instance.temInternetReal) return;
+    final ultima = _ultimaAtualizacao;
+    if (ultima != null &&
+        DateTime.now().difference(ultima) < const Duration(seconds: 10)) {
+      return;
+    }
+    await _baixarEAtualizar();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    // a internet pode ter mudado com o app em segundo plano
+    ConnectivityService.instance.verificarAgora().then((_) {
+      if (mounted) _atualizarEmSegundoPlano();
+    });
   }
 
   /// A fila mudou (enviou, falhou, nova ação): atualiza os avisos e relê o
@@ -170,12 +211,17 @@ class _MapaScreenState extends State<MapaScreen> {
   /// offline ou erro mantém o cache) e relê. Ao abrir a tela e no "puxar
   /// pra atualizar".
   Future<void> _baixarEAtualizar() async {
-    if (_bd == null || _idsFazendas.isEmpty) return;
+    if (_bd == null || _idsFazendas.isEmpty || _baixando) return;
     setState(() => _baixando = true);
     final ok = await MapaGadoSyncService.instance.baixar(_bd, _idsFazendas);
     if (!mounted) return;
     setState(() => _baixando = false);
-    if (ok) await _lerDoCache();
+    if (ok) {
+      _ultimaAtualizacao = DateTime.now();
+      // a tela do pasto aberta relê os dados novos (ela escuta a fila)
+      MapaGadoSyncService.instance.versaoFila.value++;
+      await _lerDoCache();
+    }
     await _atualizarFila();
   }
 
@@ -270,6 +316,7 @@ class _MapaScreenState extends State<MapaScreen> {
   void _abrirPasto(PastoTabuleiro card) {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _pastoAberto = card);
+    _atualizarEmSegundoPlano();
   }
 
   void _alternarModoToque() {
@@ -466,6 +513,7 @@ class _MapaScreenState extends State<MapaScreen> {
   void _fecharPasto() {
     setState(() => _pastoAberto = null);
     _lerDoCache();
+    _atualizarEmSegundoPlano();
   }
 
   @override
@@ -492,7 +540,27 @@ class _MapaScreenState extends State<MapaScreen> {
             // Na tela do pasto volta para o mapa; no mapa, para a Home.
             onPressed: pastoAberto == null ? widget.onBack : _fecharPasto,
           ),
-          actions: const [IndicadorConectividadeWidget(), SizedBox(width: 8)],
+          actions: [
+            const IndicadorConectividadeWidget(),
+            // Satélite: botão de atualizar no canto direito do título (o
+            // Satélite não tem o "puxar para atualizar" do Tabuleiro).
+            if (pastoAberto == null && _satelite && fazendaSelecionada != null)
+              IconButton(
+                tooltip: 'Atualizar o mapa',
+                onPressed: _baixando ? null : _baixarEAtualizar,
+                icon: _baixando
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.refresh, color: Colors.white),
+              ),
+            const SizedBox(width: 8),
+          ],
         ),
         // O mapa continua montado por baixo (Offstage) enquanto a tela do
         // pasto está aberta, para voltar exatamente onde estava (rolagem do
@@ -509,6 +577,7 @@ class _MapaScreenState extends State<MapaScreen> {
                 nomeFazenda: _nomeFazendaSelecionada,
                 pastoId: pastoAberto.pasto.id,
                 usuario: _usuario,
+                onAtualizar: _baixarEAtualizar,
               ),
           ],
         ),

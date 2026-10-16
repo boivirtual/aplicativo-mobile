@@ -71,6 +71,11 @@ class _MapaScreenState extends State<MapaScreen> with WidgetsBindingObserver {
   bool _lendoCache = false;
   bool _baixando = false;
 
+  /// "Puxar para atualizar" a partir da tarja azul (Tabuleiro e Satélite):
+  /// quanto o dedo já desceu.
+  double _puxao = 0;
+  static const _puxaoParaAtualizar = 80.0;
+
   int _pendentes = 0;
   bool _mostrarEnviado = false;
   Timer? _timerEnviado;
@@ -124,7 +129,8 @@ class _MapaScreenState extends State<MapaScreen> with WidgetsBindingObserver {
   //     atualiza em segundo plano — _abrirPasto;
   //   - ao voltar para o aplicativo — didChangeAppLifecycleState;
   //   - ao voltar da tela do pasto para o mapa — _fecharPasto;
-  //   - puxar para atualizar (Tabuleiro e tela do pasto) e o botão de
+  //   - puxar para atualizar (nos pastos do Tabuleiro, a partir da tarja
+  //     azul no Tabuleiro e no Satélite, e na tela do pasto) e o botão de
   //     atualizar do Satélite.
   // Nunca durante um arraste. A tela do pasto só relê os dados: o que já
   // foi escolhido/digitado nos campos continua lá.
@@ -144,6 +150,63 @@ class _MapaScreenState extends State<MapaScreen> with WidgetsBindingObserver {
       return;
     }
     await _baixarEAtualizar();
+  }
+
+  /// Tarja azul que também aceita o "puxar para atualizar": arrastar o dedo
+  /// para baixo a partir dela (no Tabuleiro e no Satélite) e soltar depois
+  /// de [_puxaoParaAtualizar] baixa o mapa de novo. Enquanto puxa, aparece
+  /// logo abaixo o ícone girando com "Puxe/Solte para atualizar".
+  Widget _tarjaPuxavel() {
+    final pronto = _puxao >= _puxaoParaAtualizar;
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onVerticalDragUpdate: (d) {
+        if (_baixando) return;
+        setState(() => _puxao = (_puxao + d.delta.dy).clamp(0, 140));
+      },
+      onVerticalDragEnd: (_) {
+        final atualizar = _puxao >= _puxaoParaAtualizar;
+        setState(() => _puxao = 0);
+        if (atualizar) _baixarEAtualizar();
+      },
+      onVerticalDragCancel: () => setState(() => _puxao = 0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildTarjaFazenda(),
+          if (_puxao > 0)
+            Container(
+              width: double.infinity,
+              height: (_puxao * 0.6).clamp(0, 48),
+              color: const Color(0xFFF1F3F6),
+              alignment: Alignment.center,
+              child: FittedBox(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Transform.rotate(
+                      angle: _puxao / _puxaoParaAtualizar * 3.1416,
+                      child: Icon(
+                        Icons.refresh,
+                        size: 20,
+                        color: pronto ? _azul : Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      pronto ? 'Solte para atualizar' : 'Puxe para atualizar',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: pronto ? _azul : Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -602,7 +665,7 @@ class _MapaScreenState extends State<MapaScreen> with WidgetsBindingObserver {
                   textoVazio: 'Selecione uma Fazenda',
                 )
               else
-                _buildTarjaFazenda(),
+                _tarjaPuxavel(),
               // Atualizando por baixo de um mapa que já está na tela (cache):
               // aviso discreto, sem cobrir o mapa. Sem nada na tela, o
               // "Aguarde" grande aparece no centro (ver _buildConteudo).

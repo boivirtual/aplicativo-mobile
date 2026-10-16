@@ -1264,7 +1264,7 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     'sexo_animal': _sexo,
     'raca_id': _raca ?? '',
     'pelagem_id': _pelagem ?? '',
-    'peso_animal': _pesoController.text.replaceAll(',', '.'),
+    'peso_animal': _pesoController.text,
   };
 
   /// Envia ao servidor e trata a resposta como o web.
@@ -1587,7 +1587,7 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     const SizedBox(height: 8),
     Row(
       children: [
-        Expanded(child: _campoTexto('* Peso', _pesoController, decimal: true)),
+        Expanded(child: _campoTexto('* Peso', _pesoController, numerico: true)),
         const SizedBox(width: 8),
         Expanded(
           child: _botao(

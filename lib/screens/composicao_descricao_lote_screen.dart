@@ -77,6 +77,12 @@ class ComposicaoDescricaoLoteScreen extends StatefulWidget {
   final String descricaoAtual;
   final List<MapEntry<int, String>> descricoes;
   final bool edicao;
+
+  /// Descrição obrigatória (pasto que recebeu o nascimento sem Descrição do
+  /// Lote): sem o botão Voltar e sem voltar pelo celular — o usuário tem
+  /// que criar a descrição (no web, abrir_modal_descricao_lote(1) esconde o
+  /// Voltar).
+  final bool semVoltar;
   final List<String> lotesAtuais;
 
   const ComposicaoDescricaoLoteScreen({
@@ -85,6 +91,7 @@ class ComposicaoDescricaoLoteScreen extends StatefulWidget {
     required this.descricaoAtual,
     required this.descricoes,
     this.edicao = false,
+    this.semVoltar = false,
     this.lotesAtuais = const [],
     this.mostrarManter = true,
     this.mostrarLevar = false,
@@ -275,7 +282,7 @@ class _ComposicaoDescricaoLoteScreenState
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: widget.edicao,
+      canPop: widget.edicao && !widget.semVoltar,
       child: Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -459,7 +466,7 @@ class _ComposicaoDescricaoLoteScreenState
               Expanded(child: _botao('Confirmar', _verde, _confirmar)),
               // Voltar só na edição (toque no campo Descrição do Lote),
               // com o azul do "Voltar" da Pesagem.
-              if (widget.edicao) ...[
+              if (widget.edicao && !widget.semVoltar) ...[
                 const SizedBox(width: 8),
                 Expanded(
                   child: _botao(

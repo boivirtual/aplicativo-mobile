@@ -152,7 +152,9 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
   /// (abrir_modal_descricao_lote(0) + gravar_alterar_descricao_lote.php
   /// com novo_id = 'N'): edita os lotes do pasto e mantém o número do
   /// lote. Grava no cache na hora e entra na fila (funciona offline).
-  Future<void> _editarDescricaoLote() async {
+  /// [obrigatoria]: depois de um nascimento num pasto sem Descrição do Lote
+  /// — a Composição abre sem o Voltar.
+  Future<void> _editarDescricaoLote({bool obrigatoria = false}) async {
     final pasto = _pasto;
     if (pasto == null) return;
     final dao = MapaGadoDao.instance;
@@ -168,6 +170,7 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
         descricaoAtual: pasto.descricaoLote,
         descricoes: descricoes,
         edicao: true,
+        semVoltar: obrigatoria,
         lotesAtuais: lotes,
       ),
     );
@@ -251,7 +254,9 @@ class _PastoMovimentacaoWidgetState extends State<PastoMovimentacaoWidget> {
     if (mounted) await _carregar();
     // Nascimento gravado num pasto sem Descrição do Lote: o web abre a
     // Composição da Descrição do Lote em seguida.
-    if (mounted && resultado == 'descricao_lote') await _editarDescricaoLote();
+    if (mounted && resultado == 'descricao_lote') {
+      await _editarDescricaoLote(obrigatoria: true);
+    }
     return true;
   }
 

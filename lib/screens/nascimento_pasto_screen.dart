@@ -1462,11 +1462,11 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
   }
 
   static const _colunasRegistros = [
-    ('Nº do Animal', 6),
-    ('Data', 5),
-    ('Sexo', 3),
-    ('Mãe', 4),
-    ('Pasto', 6),
+    ('Nº Animal', 10),
+    ('Data', 12),
+    ('Sexo', 5),
+    ('Mãe', 8),
+    ('Pasto', 12),
   ];
 
   Widget _linhaRegistro(List<String> valores, {bool cabecalho = false}) {
@@ -1500,50 +1500,49 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
       return d == null ? iso : _formatar(d);
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 8, bottom: 4),
-            child: Text(
-              'Registros de Hoje',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: _azul),
+    // Sem moldura, no mesmo visual da lista de pesagens da tela de Pesagem.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // mesmo título de "Pesagens sem finalizar"
+        Padding(
+          padding: const EdgeInsets.only(top: 4, bottom: 6),
+          child: Text(
+            'Registros de Hoje',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue[300],
             ),
           ),
-          _linhaRegistro([
-            for (final c in _colunasRegistros) c.$1,
-          ], cabecalho: true),
-          Divider(height: 1, color: Colors.grey.shade300),
-          // Rola sozinha quando não cabe (a tela também rola).
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 280),
-            child: ListView.separated(
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              itemCount: _registrosHoje.length,
-              separatorBuilder: (_, _) =>
-                  Divider(height: 1, color: Colors.grey.shade200),
-              itemBuilder: (context, i) {
-                final r = _registrosHoje[i];
-                return _linhaRegistro([
-                  (r['animal'] ?? '').toString(),
-                  dataBr((r['data'] ?? '').toString()),
-                  (r['sexo'] ?? '').toString(),
-                  (r['mae'] ?? '').toString(),
-                  (r['pasto'] ?? '').toString(),
-                ]);
-              },
-            ),
+        ),
+        _linhaRegistro([
+          for (final c in _colunasRegistros) c.$1,
+        ], cabecalho: true),
+        Divider(height: 1, color: Colors.grey.shade300),
+        // Rola sozinha quando não cabe (a tela também rola).
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 280),
+          child: ListView.separated(
+            shrinkWrap: true,
+            padding: EdgeInsets.zero,
+            itemCount: _registrosHoje.length,
+            separatorBuilder: (_, _) =>
+                Divider(height: 1, color: Colors.grey.shade200),
+            itemBuilder: (context, i) {
+              final r = _registrosHoje[i];
+              return _linhaRegistro([
+                (r['animal'] ?? '').toString(),
+                dataBr((r['data'] ?? '').toString()),
+                (r['sexo'] ?? '').toString(),
+                (r['mae'] ?? '').toString(),
+                (r['pasto'] ?? '').toString(),
+              ]);
+            },
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

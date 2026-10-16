@@ -14,6 +14,7 @@ import '../widgets/cabecalho_fazenda_widget.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 import '../widgets/mapa_satelite_widget.dart';
 import '../widgets/pasto_movimentacao_widget.dart';
+import '../widgets/puxar_para_atualizar_widget.dart';
 import '../widgets/seletor_campo_widget.dart';
 import '../widgets/tarja_fazenda_widget.dart';
 import 'composicao_descricao_lote_screen.dart';
@@ -70,11 +71,6 @@ class _MapaScreenState extends State<MapaScreen> with WidgetsBindingObserver {
   DateTime? _atualizadoEm;
   bool _lendoCache = false;
   bool _baixando = false;
-
-  /// "Puxar para atualizar" a partir da tarja azul (Tabuleiro e Satélite):
-  /// quanto o dedo já desceu.
-  double _puxao = 0;
-  static const _puxaoParaAtualizar = 80.0;
 
   int _pendentes = 0;
   bool _mostrarEnviado = false;
@@ -155,58 +151,14 @@ class _MapaScreenState extends State<MapaScreen> with WidgetsBindingObserver {
   /// para baixo a partir dela (no Tabuleiro e no Satélite) e soltar depois
   /// de [_puxaoParaAtualizar] baixa o mapa de novo. Enquanto puxa, aparece
   /// logo abaixo o ícone girando com "Puxe/Solte para atualizar".
-  Widget _tarjaPuxavel() {
-    final pronto = _puxao >= _puxaoParaAtualizar;
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onVerticalDragUpdate: (d) {
-        if (_baixando) return;
-        setState(() => _puxao = (_puxao + d.delta.dy).clamp(0, 140));
-      },
-      onVerticalDragEnd: (_) {
-        final atualizar = _puxao >= _puxaoParaAtualizar;
-        setState(() => _puxao = 0);
-        if (atualizar) _baixarEAtualizar();
-      },
-      onVerticalDragCancel: () => setState(() => _puxao = 0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildTarjaFazenda(),
-          if (_puxao > 0)
-            Container(
-              width: double.infinity,
-              height: (_puxao * 0.6).clamp(0, 48),
-              color: const Color(0xFFF1F3F6),
-              alignment: Alignment.center,
-              child: FittedBox(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Transform.rotate(
-                      angle: _puxao / _puxaoParaAtualizar * 3.1416,
-                      child: Icon(
-                        Icons.refresh,
-                        size: 20,
-                        color: pronto ? _azul : Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      pronto ? 'Solte para atualizar' : 'Puxe para atualizar',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: pronto ? _azul : Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
+  Widget _tarjaPuxavel() => PuxarParaAtualizarWidget(
+    onAtualizar: _baixarEAtualizar,
+    habilitado: !_baixando,
+    // o mapa já mostra o próprio "Aguarde"
+    mostrarAtualizando: false,
+    corFundo: const Color(0xFFF1F3F6),
+    child: _buildTarjaFazenda(),
+  );
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {

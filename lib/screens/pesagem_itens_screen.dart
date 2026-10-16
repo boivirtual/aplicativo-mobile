@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/animal_cache_service.dart';
 import '../services/sync_service.dart';
 import '../widgets/indicador_conectividade_widget.dart';
+import '../widgets/puxar_para_atualizar_widget.dart';
 import '../repositories/pesagem_repository.dart';
 import '../repositories/animal_repository.dart';
 import 'pesagem_consulta_mae_modal.dart';
@@ -1273,6 +1274,22 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     });
   }
 
+  /// "Puxar para atualizar" (a partir da tarja azul, com internet): envia
+  /// os itens que estão na fila, relê os itens desta pesagem no servidor
+  /// (inclusive excluídos pelo web ou por outro aparelho) e baixa de novo o
+  /// cadastro de animais. Os campos Nº do Animal e Peso não são mexidos.
+  Future<void> _atualizarItens() async {
+    await SyncService.instance.sincronizarAgora(ignorarRecuo: true);
+    if (!mounted) return;
+    AnimalCacheService.instance.garantirCacheCompleto(
+      cnpjParaBanco,
+      forcar: true,
+    );
+    if (_idPesagemServer != 0 && _indexSendoEditado == null) {
+      await _carregarItensDoServidor(reconciliar: true);
+    }
+  }
+
   Future<void> _carregarDadosBase() async {
     final prefs = await SharedPreferences.getInstance();
     cnpjParaBanco = prefs.getString('userCNPJ');
@@ -2199,13 +2216,20 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
           child: Column(
             children: [
               FormularioPesagemTopoWidget(
-                filtroAtivoWidget: FiltroAtivoPesagemWidget(
+                // Puxar para baixo a partir da tarja azul atualiza os itens
+                // (só com internet; desligado no meio de uma edição) — ver
+                // _atualizarItens.
+                filtroAtivoWidget: PuxarParaAtualizarWidget(
+                  onAtualizar: _atualizarItens,
+                  habilitado: _indexSendoEditado == null,
+                  child: FiltroAtivoPesagemWidget(
                   nomeFazenda: _getNomeFazenda(_fazendaSelecionadaAtual),
                   nomeMotivo: motivos[_motivoSelecionadoAtual] ?? '',
                   descricaoLote: _descricaoLoteAtual,
                   qtdAPesar: _qtdAPesarAtual,
                   itensPesadosVazio: _itensPesados.isEmpty,
                   onEditarTap: _abrirModalEdicaoPesagem,
+                ),
                 ),
                 indexSendoEditado: _indexSendoEditado,
                 noAnimalController: _noAnimalController,

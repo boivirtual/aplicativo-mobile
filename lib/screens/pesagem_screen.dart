@@ -6,6 +6,7 @@ import '../services/sync_service.dart';
 import '../services/animal_cache_service.dart';
 import '../repositories/pesagem_repository.dart';
 import '../widgets/indicador_conectividade_widget.dart';
+import '../widgets/puxar_para_atualizar_widget.dart';
 import 'pesagem_itens_screen.dart';
 import 'pesagem_consulta_screen.dart';
 import 'pesagem_pendencias_revisao_screen.dart';
@@ -296,6 +297,19 @@ class _PesagemScreenState extends State<PesagemScreen> {
     return fazenda['nome'].toString().toUpperCase();
   }
 
+  /// "Puxar para atualizar" (a partir do botão Nova Pesagem, com internet):
+  /// envia o que está na fila, relê as pesagens em aberto e finalizadas do
+  /// servidor e baixa de novo o cadastro de animais.
+  Future<void> _atualizarPesagens() async {
+    await SyncService.instance.sincronizarAgora(ignorarRecuo: true);
+    if (!mounted) return;
+    await _carregarDadosIniciais();
+    AnimalCacheService.instance.garantirCacheCompleto(
+      _cnpjCarregado,
+      forcar: true,
+    );
+  }
+
   Future<void> _carregarDadosIniciais() async {
     await _carregarFazendasEPendencias();
     await _carregarFinalizadas();
@@ -459,7 +473,11 @@ class _PesagemScreenState extends State<PesagemScreen> {
                       ],
                     )
                   else
-                    SizedBox(
+                    // Puxar para baixo a partir do "Nova Pesagem" atualiza
+                    // a tela (só com internet) — ver _atualizarPesagens.
+                    PuxarParaAtualizarWidget(
+                      onAtualizar: _atualizarPesagens,
+                      child: SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton.icon(
@@ -488,6 +506,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
                           elevation: 2,
                         ),
                       ),
+                    ),
                     ),
 
                   if (_mostrarFormulario) ...[

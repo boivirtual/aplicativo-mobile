@@ -172,6 +172,7 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     _carregarListas();
     _carregarCadastro();
     _carregarParametros();
+    _carregarRegistrosHoje();
   }
 
   @override
@@ -1349,6 +1350,7 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
       _rotuloMonta = 'Estação de Monta:';
     });
     await _carregarParametros();
+    await _carregarRegistrosHoje();
   }
 
   // ---------------------------------------------------------------------
@@ -1426,6 +1428,120 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
             ),
           ] else
             Divider(color: Colors.grey[200], height: 16),
+          // Fora do card cinza: logo abaixo das opções e, com uma opção
+          // escolhida, depois dos campos.
+          if (_registrosHoje.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _listaRegistrosHoje(),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------
+  // Registros de Hoje: nascimentos, abortos, absorções e natimortos da
+  // fazenda com a data de hoje (servidor — o Nascimento só funciona online)
+  // ---------------------------------------------------------------------
+
+  List<Map<String, dynamic>> _registrosHoje = [];
+
+  Future<void> _carregarRegistrosHoje() async {
+    final dados = await MapaGadoSyncService.instance.consultarNascimento({
+      'acao': 'registros_hoje',
+      'bd': widget.bd,
+      'fazenda': widget.fazendaId,
+    });
+    if (!mounted || dados == null) return;
+    setState(() {
+      _registrosHoje = [
+        for (final r in (dados['registros'] as List? ?? const []))
+          Map<String, dynamic>.from(r as Map),
+      ];
+    });
+  }
+
+  static const _colunasRegistros = [
+    ('Nº do Animal', 6),
+    ('Data', 5),
+    ('Sexo', 3),
+    ('Mãe', 4),
+    ('Pasto', 6),
+  ];
+
+  Widget _linhaRegistro(List<String> valores, {bool cabecalho = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+      child: Row(
+        children: [
+          for (var i = 0; i < valores.length; i++)
+            Expanded(
+              flex: _colunasRegistros[i].$2,
+              child: Text(
+                valores[i],
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: i == 2 ? TextAlign.center : TextAlign.left,
+                style: TextStyle(
+                  fontSize: cabecalho ? 11 : 12,
+                  color: cabecalho ? _corRotulo : Colors.black87,
+                  fontWeight: cabecalho ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _listaRegistrosHoje() {
+    String dataBr(String iso) {
+      final d = DateTime.tryParse(iso);
+      return d == null ? iso : _formatar(d);
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 8, bottom: 4),
+            child: Text(
+              'Registros de Hoje',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: _azul),
+            ),
+          ),
+          _linhaRegistro([
+            for (final c in _colunasRegistros) c.$1,
+          ], cabecalho: true),
+          Divider(height: 1, color: Colors.grey.shade300),
+          // Rola sozinha quando não cabe (a tela também rola).
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 280),
+            child: ListView.separated(
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              itemCount: _registrosHoje.length,
+              separatorBuilder: (_, _) =>
+                  Divider(height: 1, color: Colors.grey.shade200),
+              itemBuilder: (context, i) {
+                final r = _registrosHoje[i];
+                return _linhaRegistro([
+                  (r['animal'] ?? '').toString(),
+                  dataBr((r['data'] ?? '').toString()),
+                  (r['sexo'] ?? '').toString(),
+                  (r['mae'] ?? '').toString(),
+                  (r['pasto'] ?? '').toString(),
+                ]);
+              },
+            ),
+          ),
         ],
       ),
     );

@@ -1162,33 +1162,10 @@ class _MapaScreenState extends State<MapaScreen> with WidgetsBindingObserver {
         color: const Color(0xFFD9EDF7),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: const Text.rich(
-        TextSpan(
-          style: TextStyle(fontSize: 13, color: Color(0xFF31708F)),
-          children: [
-            TextSpan(text: 'Modo toque ativado: dê '),
-            TextSpan(
-              text: 'dois toques',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            TextSpan(text: ' no pasto de '),
-            TextSpan(
-              text: 'origem',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            TextSpan(text: ' (fica com borda laranja), depois '),
-            TextSpan(
-              text: 'dois toques',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            TextSpan(text: ' no pasto de '),
-            TextSpan(
-              text: 'destino',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            TextSpan(text: '. O toque simples continua abrindo o pasto.'),
-          ],
-        ),
+      child: const Text(
+        'Mover animais por toque: Tocar 2x no pasto Origem e 2x no pasto '
+        'Destino.',
+        style: TextStyle(fontSize: 13, color: Color(0xFF31708F)),
       ),
     );
   }

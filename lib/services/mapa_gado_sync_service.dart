@@ -322,6 +322,38 @@ class MapaGadoSyncService {
     }
   }
 
+  /// "Registros de Hoje" do modal da Morte: as mortes lançadas hoje na
+  /// fazenda, no servidor. null se falhar (sem internet etc.).
+  Future<List<Map<String, dynamic>>?> buscarMortesDeHoje({
+    required String bd,
+    required int fazenda,
+  }) async {
+    if (!ConnectivityService.instance.temInternetReal) return null;
+    try {
+      final response = await http
+          .post(
+            Uri.parse("${ApiConfig.baseUrl}/rest/mapa-gado/morte.php"),
+            headers: {"Content-Type": "application/json"},
+            body: json.encode({
+              'acao': 'registros_hoje',
+              'bd': bd,
+              'fazenda': fazenda,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode != 200) return null;
+      final dados = json.decode(response.body);
+      if (dados is! Map || dados['success'] != true) return null;
+      return [
+        for (final r in (dados['registros'] as List? ?? const []))
+          Map<String, dynamic>.from(r as Map),
+      ];
+    } catch (e) {
+      debugPrint('[MapaGadoSync] mortes de hoje: falhou -> $e');
+      return null;
+    }
+  }
+
   /// Opções dos selects da tela do Nascimento (Pai Nº, Raça e Pelagem),
   /// direto do servidor — o Nascimento só funciona online. null se falhar.
   Future<Map<String, dynamic>?> buscarListasNascimento(String bd) async {

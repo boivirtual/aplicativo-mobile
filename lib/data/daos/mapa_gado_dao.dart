@@ -852,6 +852,30 @@ class MapaGadoDao {
 
   /// Animais com morte ainda na fila (não enviada ou recusada) — a busca
   /// do Nº Animal não pode oferecer de novo.
+  /// Mortes registradas no aparelho que ainda estão na fila (sem resposta
+  /// do servidor): o payload de cada uma ("Registros de Hoje" da Morte).
+  Future<List<Map<String, dynamic>>> mortesNaFila(String bd) async {
+    final db = await LocalDatabase.instance.database;
+    final linhas = await db.query(
+      'mapa_outbox',
+      columns: ['payload_json'],
+      where: 'bd = ? AND tipo = ?',
+      whereArgs: [bd, AcaoMapa.morte],
+      orderBy: 'id',
+    );
+    final mortes = <Map<String, dynamic>>[];
+    for (final l in linhas) {
+      try {
+        mortes.add(
+          Map<String, dynamic>.from(
+            json.decode(l['payload_json'] as String) as Map,
+          ),
+        );
+      } catch (_) {}
+    }
+    return mortes;
+  }
+
   Future<Set<int>> animaisComMortePendente(String bd) async {
     final db = await LocalDatabase.instance.database;
     final linhas = await db.query(

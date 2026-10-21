@@ -90,10 +90,15 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
   void initState() {
     super.initState();
     _carregar();
+    // morte enviada ao servidor (ou que falhou): relê a lista do dia
+    MapaGadoSyncService.instance.versaoFila.addListener(_carregarRegistrosHoje);
   }
 
   @override
   void dispose() {
+    MapaGadoSyncService.instance.versaoFila.removeListener(
+      _carregarRegistrosHoje,
+    );
     _esperaNaoEncontrado?.cancel();
     _avisoNaoEncontrado?.remove();
     _animalController.dispose();
@@ -112,7 +117,151 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
       _motivos = motivos;
       _temCadastro = temCadastro;
     });
+    _carregarRegistrosHoje();
     await _atualizarCadastro();
+  }
+
+  // ---------------------------------------------------------------------
+  // Registros de Hoje: mortes lançadas hoje na fazenda (pela data de
+  // inclusão no sistema; a data mostrada é a da morte). Vêm do servidor
+  // (com internet) mais as que ainda estão na fila do aparelho (em
+  // laranja, aguardando envio) — a Morte funciona offline.
+  // ---------------------------------------------------------------------
+
+  List<Map<String, dynamic>> _registrosServidor = [];
+  List<Map<String, dynamic>> _registrosFila = [];
+
+  Future<void> _carregarRegistrosHoje() async {
+    final hoje = _iso(_hoje());
+    final dao = MapaGadoDao.instance;
+    final fila = await dao.mortesNaFila(widget.bd);
+    final pastos = await dao.pastos(
+      widget.bd,
+      widget.fazendaId,
+      incluirForaTabuleiro: true,
+    );
+    final nomePasto = {for (final p in pastos) p.id: p.descricao};
+    final motivos = await dao.motivosMorte(widget.bd);
+    final nomeMotivo = {for (final m in motivos) m.key: m.value};
+    int numero(Object? v) => int.tryParse(v?.toString() ?? '') ?? 0;
+    final daFila = [
+      for (final p in fila)
+        if (numero(p['fazenda']) == widget.fazendaId &&
+            (p['data_hora'] ?? '').toString().startsWith(hoje))
+          {
+            'animal': _exibicao((p['codigo'] ?? '').toString()),
+            'data': (p['data_morte'] ?? '').toString(),
+            'sexo': (p['sexo'] ?? '').toString(),
+            'motivo': nomeMotivo[numero(p['motivo'])] ?? '',
+            'pasto': nomePasto[numero(p['pasto'])] ?? '',
+            'pendente': true,
+          },
+    ];
+    if (!mounted) return;
+    setState(() => _registrosFila = daFila);
+
+    final servidor = await MapaGadoSyncService.instance.buscarMortesDeHoje(
+      bd: widget.bd,
+      fazenda: widget.fazendaId,
+    );
+    if (!mounted || servidor == null) return;
+    setState(() => _registrosServidor = servidor);
+  }
+
+  static const _colunasRegistros = [
+    ('Nº Animal', 10),
+    ('Data', 12),
+    ('Sexo', 5),
+    ('Motivo', 10),
+    ('Pasto', 12),
+  ];
+
+  Widget _linhaRegistro(
+    List<String> valores, {
+    bool cabecalho = false,
+    bool pendente = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
+      child: Row(
+        children: [
+          for (var i = 0; i < valores.length; i++)
+            Expanded(
+              flex: _colunasRegistros[i].$2,
+              child: Text(
+                valores[i],
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: i == 2 ? TextAlign.center : TextAlign.left,
+                style: TextStyle(
+                  fontSize: cabecalho ? 11 : 12,
+                  color: cabecalho
+                      ? _corRotulo
+                      : pendente
+                      ? const Color(0xFFE65100)
+                      : Colors.black87,
+                  fontWeight: cabecalho ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Mesmo visual da lista "Registros de Hoje" do Nascimento.
+  Widget _listaRegistrosHoje() {
+    final registros = [..._registrosServidor, ..._registrosFila];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 4, bottom: 6),
+          child: Text(
+            'Registros de Hoje',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue[300],
+            ),
+          ),
+        ),
+        _linhaRegistro([
+          for (final c in _colunasRegistros) c.$1,
+        ], cabecalho: true),
+        Divider(height: 1, color: Colors.grey.shade400),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 200),
+          child: ListView.separated(
+            shrinkWrap: true,
+            padding: EdgeInsets.zero,
+            itemCount: registros.length,
+            separatorBuilder: (_, _) =>
+                Divider(height: 1, color: Colors.grey.shade300),
+            itemBuilder: (context, i) {
+              final r = registros[i];
+              final data = DateTime.tryParse((r['data'] ?? '').toString());
+              return _linhaRegistro([
+                (r['animal'] ?? '').toString(),
+                data == null ? '' : _formatar(data),
+                (r['sexo'] ?? '').toString(),
+                (r['motivo'] ?? '').toString(),
+                (r['pasto'] ?? '').toString(),
+              ], pendente: r['pendente'] == true);
+            },
+          ),
+        ),
+        if (_registrosFila.isNotEmpty)
+          const Padding(
+            padding: EdgeInsets.only(top: 4),
+            child: Text(
+              'Em laranja: aguardando envio ao servidor.',
+              style: TextStyle(fontSize: 11, color: Color(0xFFE65100)),
+            ),
+          ),
+      ],
+    );
   }
 
   /// Com internet, busca o cadastro de animais do servidor toda vez que o
@@ -445,6 +594,7 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
         _motivo = null;
         _dataMorte = _hoje();
       });
+      _carregarRegistrosHoje();
     } finally {
       if (mounted) setState(() => _gravando = false);
     }
@@ -547,6 +697,11 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
                   ),
                 ],
               ),
+              if (_registrosServidor.isNotEmpty ||
+                  _registrosFila.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                _listaRegistrosHoje(),
+              ],
             ],
           ),
         ),

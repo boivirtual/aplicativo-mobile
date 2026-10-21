@@ -18,6 +18,7 @@ import '../services/mapa_gado_sync_service.dart';
 import '../utils/app_alert.dart';
 import '../widgets/campo_topo_widget.dart';
 import '../widgets/indicador_conectividade_widget.dart';
+import '../widgets/puxar_para_atualizar_widget.dart';
 import '../widgets/seletor_campo_widget.dart';
 
 /// Tela "Mapa de Gado - Nascimento" (modal #modal_nascimento do web, em
@@ -1376,7 +1377,13 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(6, 6, 6, 16),
         children: [
-          _cabecalho(),
+          // Puxar para baixo a partir da tarja azul atualiza a tela (com
+          // internet) — ver _atualizarTela.
+          PuxarParaAtualizarWidget(
+            onAtualizar: _atualizarTela,
+            habilitado: !_gravando,
+            child: _cabecalho(),
+          ),
           const SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.fromLTRB(6, 6, 6, 2),
@@ -1447,6 +1454,20 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
   // ---------------------------------------------------------------------
 
   List<Map<String, dynamic>> _registrosHoje = [];
+
+  /// "Puxar para atualizar" pela tarja azul: busca de novo a lista do dia,
+  /// os selects (Pai, Raça e Pelagem) e o cadastro de animais. O próximo Nº
+  /// do Animal e a estação só são relidos sem opção escolhida, para não
+  /// trocar o que já está na tela; o que foi escolhido/digitado continua.
+  Future<void> _atualizarTela() async {
+    final tarefas = <Future<void>>[
+      _carregarRegistrosHoje(),
+      _carregarListas(),
+      _carregarCadastro(),
+      if (_opcao == null) _carregarParametros(),
+    ];
+    await Future.wait(tarefas);
+  }
 
   Future<void> _carregarRegistrosHoje() async {
     final dados = await MapaGadoSyncService.instance.consultarNascimento({

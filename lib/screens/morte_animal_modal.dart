@@ -794,7 +794,7 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
     corRotulo: _corRotulo,
     controller: _obsController,
     altura: null,
-    linhas: 3,
+    linhas: 2,
     textCapitalization: TextCapitalization.characters,
     inputFormatters: [_Maiusculas()],
   );

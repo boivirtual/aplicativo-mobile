@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/login_screen.dart';
 import 'screens/atualizando_dados_screen.dart';
@@ -9,6 +10,9 @@ import 'services/mapa_gado_sync_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  // Só em pé (retrato), como a maioria dos aplicativos: virar o celular
+  // não gira as telas.
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   // Liga o motor de sincronização offline assim que o app abre — ele fica
   // ouvindo conectividade e reprocessando a fila local durante toda a vida
   // do app, independente de qual tela está em primeiro plano.

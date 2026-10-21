@@ -1441,7 +1441,9 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
 
   // ---------------------------------------------------------------------
   // Registros de Hoje: nascimentos, abortos, absorções e natimortos da
-  // fazenda com a data de hoje (servidor — o Nascimento só funciona online)
+  // fazenda INCLUÍDOS hoje no sistema, mesmo com nascimento em data
+  // anterior (servidor — o Nascimento só funciona online). Animal que já
+  // morreu ou foi vendido aparece em vermelho.
   // ---------------------------------------------------------------------
 
   List<Map<String, dynamic>> _registrosHoje = [];
@@ -1469,7 +1471,13 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     ('Pasto', 12),
   ];
 
-  Widget _linhaRegistro(List<String> valores, {bool cabecalho = false}) {
+  /// [vermelho]: o animal já morreu ou foi vendido (como a lista de
+  /// nascimentos do web, em vermelho).
+  Widget _linhaRegistro(
+    List<String> valores, {
+    bool cabecalho = false,
+    bool vermelho = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
       child: Row(
@@ -1484,7 +1492,11 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
                 textAlign: i == 2 ? TextAlign.center : TextAlign.left,
                 style: TextStyle(
                   fontSize: cabecalho ? 11 : 12,
-                  color: cabecalho ? _corRotulo : Colors.black87,
+                  color: cabecalho
+                      ? _corRotulo
+                      : vermelho
+                      ? Colors.red
+                      : Colors.black87,
                   fontWeight: cabecalho ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
@@ -1538,7 +1550,7 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
                 (r['sexo'] ?? '').toString(),
                 (r['mae'] ?? '').toString(),
                 (r['pasto'] ?? '').toString(),
-              ]);
+              ], vermelho: r['baixado'] == true);
             },
           ),
         ),

@@ -172,8 +172,7 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
     ('Nº Animal', 10),
     ('Data', 12),
     ('Sexo', 5),
-    ('Motivo', 10),
-    ('Pasto', 12),
+    ('Motivo', 13),
   ];
 
   Widget _linhaRegistro(
@@ -247,7 +246,6 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
                 data == null ? '' : _formatar(data),
                 (r['sexo'] ?? '').toString(),
                 (r['motivo'] ?? '').toString(),
-                (r['pasto'] ?? '').toString(),
               ], pendente: r['pendente'] == true);
             },
           ),

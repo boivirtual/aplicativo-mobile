@@ -842,7 +842,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
             Expanded(
               child: Text(
                 texto,
-                style: TextStyle(fontSize: 15, color: _corRotulo),
+                // mesmo peso das opções da Seção 2
+                style: _textoGrosso(_corRotulo).copyWith(fontSize: 15),
               ),
             ),
           ],

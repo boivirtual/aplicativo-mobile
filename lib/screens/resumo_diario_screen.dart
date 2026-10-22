@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../utils/app_alert.dart';
 import '../widgets/campo_topo_widget.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 import '../widgets/seletor_campo_widget.dart';
@@ -35,6 +36,26 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   List<MapEntry<String, String>> _fazendas = [];
   String? _fazenda;
   String _responsavel = '';
+
+  /// "Atividades do Dia" (Seção 1): o que o usuário fez hoje na fazenda.
+  /// Muitas estão ligadas aos programas do app (Chuva, Mapa de Gado,
+  /// Nascimento, Morte...). "Nenhuma das atividades" exclui as outras.
+  static const _nenhuma = 'nenhuma';
+  static const _atividades = <(String, String, IconData?, String?)>[
+    ('choveu', 'Choveu', null, 'chuva.png'),
+    ('mudei_pasto', 'Mudei o gado de pasto', Icons.swap_horiz, null),
+    ('nutricao', 'Distribuí nutrição', Icons.grass, null),
+    ('nascimento', 'Nascimento', Icons.child_care, null),
+    (
+      'aborto_natimorto',
+      'Aborto / Natimorto',
+      Icons.warning_amber_rounded,
+      null,
+    ),
+    ('morte', 'Morreu animal', Icons.heart_broken_outlined, null),
+    (_nenhuma, 'Nenhuma das atividades', Icons.block, null),
+  ];
+  final Set<String> _atividadesMarcadas = {};
 
   static DateTime _hoje() {
     final a = DateTime.now();
@@ -84,8 +105,41 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
     if (d != null) setState(() => _data = d);
   }
 
-  /// A navegação entre as seções vem nas próximas etapas.
-  void _proximo() {}
+  /// Só avança com a seção atual preenchida. A ida para a Seção 2 vem nas
+  /// próximas etapas.
+  Future<void> _proximo() async {
+    if (_secao == 1) {
+      if (_fazenda == null) {
+        await AppAlert.erro(context, 'Selecione a Fazenda.');
+        return;
+      }
+      if (_atividadesMarcadas.isEmpty) {
+        await AppAlert.erro(
+          context,
+          'Marque pelo menos uma das Atividades do Dia (ou "Nenhuma das '
+          'atividades").',
+        );
+        return;
+      }
+    }
+  }
+
+  void _marcarAtividade(String chave, bool marcada) {
+    setState(() {
+      if (!marcada) {
+        _atividadesMarcadas.remove(chave);
+      } else if (chave == _nenhuma) {
+        // "Nenhuma" desmarca as outras
+        _atividadesMarcadas
+          ..clear()
+          ..add(_nenhuma);
+      } else {
+        _atividadesMarcadas
+          ..remove(_nenhuma)
+          ..add(chave);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,67 +161,81 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
         children: [
           _progresso(),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+            child: Stack(
               children: [
-                // painel cinza com as caixas brancas, como nas outras telas
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: _camposDaSecao(),
+                ListView(
+                  // espaço no fim para o último item passar do botão Próximo
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
+                  children: [
+                    // painel cinza com as caixas brancas, como nas outras telas
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: _camposDaSecao(),
+                      ),
+                    ),
+                    ..._foraDoCard(),
+                  ],
+                ),
+                // Próximo sempre visível; a tela rola por trás dele
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: SafeArea(
+                    top: false,
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 6,
+                            offset: const Offset(0, -2),
+                          ),
+                        ],
+                      ),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: SizedBox(
+                          width: 170,
+                          height: 48,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _azulBotao,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: _proximo,
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Próximo',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Icon(Icons.arrow_forward, size: 20),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ],
-            ),
-          ),
-          // Próximo fixo embaixo, como no modelo
-          SafeArea(
-            top: false,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 6,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: SizedBox(
-                  width: 170,
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _azulBotao,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    onPressed: _proximo,
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Próximo',
-                          style: TextStyle(fontSize: 16, color: Colors.white),
-                        ),
-                        SizedBox(width: 8),
-                        Icon(Icons.arrow_forward, size: 20),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
             ),
           ),
         ],
@@ -210,6 +278,81 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   List<Widget> _camposDaSecao() => switch (_secao) {
     _ => _secaoIdentificacao(),
   };
+
+  /// O que fica fora do painel cinza (abaixo dele) em cada seção.
+  List<Widget> _foraDoCard() => switch (_secao) {
+    1 => _atividadesDoDia(),
+    _ => const [],
+  };
+
+  /// Seção 1 — "Atividades do Dia": caixas de marcar, uma por atividade.
+  List<Widget> _atividadesDoDia() => [
+    Padding(
+      padding: const EdgeInsets.fromLTRB(2, 18, 2, 8),
+      child: Text(
+        'Atividades do Dia',
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.bold,
+          color: Colors.blue[300],
+        ),
+      ),
+    ),
+    for (final a in _atividades) ...[
+      _atividade(a.$1, a.$2, a.$3, a.$4),
+      const SizedBox(height: 8),
+    ],
+  ];
+
+  Widget _atividade(
+    String chave,
+    String texto,
+    IconData? icone,
+    String? imagem,
+  ) {
+    const azulIcone = Color(0xFF228cb9);
+    final marcada = _atividadesMarcadas.contains(chave);
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () => _marcarAtividade(chave, !marcada),
+      child: Container(
+        height: 54,
+        padding: const EdgeInsets.only(left: 4, right: 12),
+        decoration: BoxDecoration(
+          color: marcada ? const Color(0xFFE3F2FD) : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: marcada ? _azulBotao : const Color(0xFFCFD8DC),
+          ),
+        ),
+        child: Row(
+          children: [
+            Checkbox(
+              value: marcada,
+              activeColor: _azulBotao,
+              onChanged: (v) => _marcarAtividade(chave, v ?? false),
+            ),
+            if (imagem != null)
+              Image.asset(
+                'assets/images/$imagem',
+                width: 24,
+                height: 24,
+                color: azulIcone,
+              )
+            else
+              Icon(icone, size: 24, color: azulIcone),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                texto,
+                style: TextStyle(fontSize: 15, color: _corRotulo),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   /// Seção 1 — Identificação.
   List<Widget> _secaoIdentificacao() => [

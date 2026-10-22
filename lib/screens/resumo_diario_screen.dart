@@ -624,7 +624,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   );
 
   static TextStyle _textoGrosso(Color cor) => TextStyle(
-    fontSize: 14,
+    fontSize: 13,
+    height: 1.15,
     fontWeight: FontWeight.w900,
     color: cor,
     shadows: [
@@ -634,49 +635,58 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
     ],
   );
 
-  /// Opções lado a lado: a escolhida fica azul cheia, as outras com borda.
+  /// Opções lado a lado, no mesmo visual das Atividades do Dia: fundo
+  /// branco e borda cinza; a escolhida fica com fundo azul claro e borda
+  /// azul. Ícone azul no centro e o texto embaixo.
   Widget _opcoes(
-    List<(String, String)> opcoes,
+    List<(String, String, IconData)> opcoes,
     String? escolhida,
     ValueChanged<String> aoEscolher,
   ) {
+    const azulIcone = Color(0xFF228cb9);
     return Row(
       children: [
         for (var i = 0; i < opcoes.length; i++) ...[
           if (i > 0) const SizedBox(width: 8),
           Expanded(
-            child: SizedBox(
-              // mais quadradas, como no modelo
-              height: 84,
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  backgroundColor: escolhida == opcoes[i].$1
-                      ? _azulBotao
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () {
+                FocusManager.instance.primaryFocus?.unfocus();
+                aoEscolher(opcoes[i].$1);
+              },
+              child: Container(
+                // mais quadradas, como no modelo
+                height: 96,
+                padding: const EdgeInsets.fromLTRB(4, 12, 4, 6),
+                decoration: BoxDecoration(
+                  color: escolhida == opcoes[i].$1
+                      ? const Color(0xFFE3F2FD)
                       : Colors.white,
-                  foregroundColor: escolhida == opcoes[i].$1
-                      ? Colors.white
-                      : _azulBotao,
-                  side: const BorderSide(color: _azulBotao),
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: escolhida == opcoes[i].$1
+                        ? _azulBotao
+                        : const Color(0xFFCFD8DC),
                   ),
                 ),
-                onPressed: () {
-                  FocusManager.instance.primaryFocus?.unfocus();
-                  aoEscolher(opcoes[i].$1);
-                },
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    opcoes[i].$2,
-                    textAlign: TextAlign.center,
-                    // a fonte do app só tem a versão fina: o traço é
-                    // engrossado com "sombras" da mesma cor
-                    style: _textoGrosso(
-                      escolhida == opcoes[i].$1 ? Colors.white : _azulBotao,
+                child: Column(
+                  children: [
+                    Icon(opcoes[i].$3, size: 28, color: azulIcone),
+                    const SizedBox(height: 6),
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          opcoes[i].$2,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          // a fonte do app só tem a versão fina: o traço é
+                          // engrossado com "sombras" da mesma cor
+                          style: _textoGrosso(_corRotulo),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
@@ -690,9 +700,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
     _pergunta('Conferiu o Gado?'),
     _opcoes(
       const [
-        ('todo', 'Gado Todo'),
-        ('parte', 'Parte do Gado'),
-        ('nao', 'Não Conferi'),
+        ('todo', 'Gado Todo', Icons.done_all),
+        ('parte', 'Parte do Gado', Icons.rule),
+        ('nao', 'Não Conferi', Icons.block),
       ],
       _conferiuGado,
       (v) => setState(() => _conferiuGado = v),
@@ -758,7 +768,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
     ],
     _pergunta('Conferiu as Vacas Prenhas?'),
     _opcoes(
-      const [('sim', 'SIM'), ('nao', 'NÃO'), ('sem', 'Sem Vacas Prenhas')],
+      const [
+        ('sim', 'Sim', Icons.check_circle_outline),
+        ('nao', 'Não', Icons.highlight_off),
+        ('sem', 'Sem\nVacas Prenhas', Icons.do_not_disturb_on_outlined),
+      ],
       _conferiuPrenhas,
       (v) => setState(() => _conferiuPrenhas = v),
     ),

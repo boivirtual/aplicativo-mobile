@@ -623,6 +623,17 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
     ),
   );
 
+  static TextStyle _textoGrosso(Color cor) => TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w900,
+    color: cor,
+    shadows: [
+      Shadow(color: cor, offset: const Offset(0.4, 0)),
+      Shadow(color: cor, offset: const Offset(-0.4, 0)),
+      Shadow(color: cor, offset: const Offset(0, 0.4)),
+    ],
+  );
+
   /// Opções lado a lado: a escolhida fica azul cheia, as outras com borda.
   Widget _opcoes(
     List<(String, String)> opcoes,
@@ -660,7 +671,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
                   child: Text(
                     opcoes[i].$2,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 14),
+                    // a fonte do app só tem a versão fina: o traço é
+                    // engrossado com "sombras" da mesma cor
+                    style: _textoGrosso(
+                      escolhida == opcoes[i].$1 ? Colors.white : _azulBotao,
+                    ),
                   ),
                 ),
               ),

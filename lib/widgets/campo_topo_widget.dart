@@ -35,6 +35,12 @@ class CampoTextoTopo extends StatefulWidget {
   final VoidCallback? onTap;
   final ValueChanged<String>? onChanged;
 
+  /// Parte do rótulo em negrito (ex.: "Esperados").
+  final String? rotuloNegrito;
+
+  /// Texto de exemplo dentro do campo vazio (campo de várias linhas).
+  final String? dica;
+
   const CampoTextoTopo({
     super.key,
     required this.rotulo,
@@ -50,6 +56,8 @@ class CampoTextoTopo extends StatefulWidget {
     this.erro = false,
     this.onTap,
     this.onChanged,
+    this.rotuloNegrito,
+    this.dica,
   });
 
   @override
@@ -78,10 +86,38 @@ class _CampoTextoTopoState extends State<CampoTextoTopo> {
     minLines: widget.altura == null ? widget.linhas : 1,
     maxLines: widget.altura == null ? widget.linhas : 1,
     style: _estiloValor,
-    decoration: const InputDecoration.collapsed(hintText: ''),
+    decoration: InputDecoration.collapsed(
+      hintText: widget.dica ?? '',
+      hintStyle: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.normal,
+        color: Colors.grey[500],
+      ),
+    ),
     onTap: widget.onTap,
     onChanged: widget.onChanged,
   );
+
+  /// O rótulo, com [CampoTextoTopo.rotuloNegrito] em negrito.
+  Widget _rotulo(double tamanho) {
+    final estilo = TextStyle(fontSize: tamanho, color: widget.corRotulo);
+    final negrito = widget.rotuloNegrito;
+    final i = negrito == null ? -1 : widget.rotulo.indexOf(negrito);
+    if (i < 0) return Text(widget.rotulo, style: estilo);
+    return Text.rich(
+      TextSpan(
+        style: estilo,
+        children: [
+          TextSpan(text: widget.rotulo.substring(0, i)),
+          TextSpan(
+            text: negrito,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          TextSpan(text: widget.rotulo.substring(i + negrito!.length)),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,14 +138,8 @@ class _CampoTextoTopoState extends State<CampoTextoTopo> {
           listenable: Listenable.merge([widget.controller, _foco]),
           builder: (context, _) {
             final aberto = widget.controller.text.isNotEmpty || _foco.hasFocus;
-            final rotuloTopo = Text(
-              widget.rotulo,
-              style: TextStyle(fontSize: 11, color: widget.corRotulo),
-            );
-            final rotuloMeio = Text(
-              widget.rotulo,
-              style: TextStyle(fontSize: 14, color: widget.corRotulo),
-            );
+            final rotuloTopo = _rotulo(11);
+            final rotuloMeio = _rotulo(14);
 
             if (widget.altura == null) {
               // várias linhas: rótulo em cima e o texto embaixo

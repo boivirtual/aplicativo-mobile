@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../utils/app_alert.dart';
@@ -28,9 +29,22 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   static final _corRotulo = Colors.blueGrey[800]!;
 
   static const _totalSecoes = 10;
-  // muda quando o Próximo passar a avançar entre as seções
-  // ignore: prefer_final_fields
   int _secao = 1;
+
+  // Seção 2 — Conferência de Rebanho
+  String? _conferiuGado; // 'todo', 'parte', 'nao'
+  final _esperadosController = TextEditingController();
+  final _encontradosController = TextEditingController();
+  String? _conferiuPrenhas; // 'sim', 'nao', 'sem'
+  final _obsRebanhoController = TextEditingController();
+
+  @override
+  void dispose() {
+    _esperadosController.dispose();
+    _encontradosController.dispose();
+    _obsRebanhoController.dispose();
+    super.dispose();
+  }
 
   DateTime _data = _hoje();
   List<MapEntry<String, String>> _fazendas = [];
@@ -105,9 +119,32 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
     if (d != null) setState(() => _data = d);
   }
 
-  /// Só avança com a seção atual preenchida. A ida para a Seção 2 vem nas
-  /// próximas etapas.
+  /// Só avança com a seção atual preenchida. Os dados de cada seção ficam
+  /// guardados ao ir e voltar.
   Future<void> _proximo() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (_secao == 2) {
+      if (_conferiuGado == null) {
+        await AppAlert.erro(context, 'Informe se conferiu o gado.');
+        return;
+      }
+      if (_conferiuGado != 'nao') {
+        if (_esperadosController.text.trim().isEmpty ||
+            _encontradosController.text.trim().isEmpty) {
+          await AppAlert.erro(
+            context,
+            'Informe o Total de Animais Esperados e o de Encontrados.',
+          );
+          return;
+        }
+      }
+      if (_conferiuPrenhas == null) {
+        await AppAlert.erro(context, 'Informe se conferiu as vacas prenhas.');
+        return;
+      }
+      // A Seção 3 vem nas próximas etapas.
+      return;
+    }
     if (_secao == 1) {
       if (_fazenda == null) {
         await AppAlert.erro(context, 'Selecione a Fazenda.');
@@ -121,7 +158,13 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
         );
         return;
       }
+      setState(() => _secao = 2);
     }
+  }
+
+  void _anterior() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (_secao > 1) setState(() => _secao--);
   }
 
   void _marcarAtividade(String chave, bool marcada) {
@@ -211,36 +254,70 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
                           ),
                         ],
                       ),
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: SizedBox(
-                          width: 170,
-                          height: 48,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _azulBotao,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            onPressed: _proximo,
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'Próximo',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white,
+                      child: Row(
+                        children: [
+                          // Anterior (btn-default) a partir da Seção 2
+                          if (_secao > 1) ...[
+                            Expanded(
+                              child: SizedBox(
+                                height: 48,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFE9ECEF),
+                                    foregroundColor: const Color(0xFF333333),
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  onPressed: _anterior,
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.arrow_back, size: 20),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'Anterior',
+                                        style: TextStyle(fontSize: 16),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                SizedBox(width: 8),
-                                Icon(Icons.arrow_forward, size: 20),
-                              ],
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                          ] else
+                            const Spacer(),
+                          Expanded(
+                            child: SizedBox(
+                              height: 48,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _azulBotao,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                onPressed: _proximo,
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Próximo',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Icon(Icons.arrow_forward, size: 20),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ),
@@ -282,6 +359,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
 
   String _tituloDaSecao(int secao) => switch (secao) {
     1 => 'Identificação/Atividades',
+    2 => 'Conferência de Rebanho',
     _ => '',
   };
 
@@ -303,30 +381,153 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   );
 
   /// Parte fixa de cada seção (não rola).
-  List<Widget> _fixoDaSecao() => [
-    if (_secao == 1) _tituloAzul('Identificação'),
-    // painel cinza com as caixas brancas, como nas outras telas
-    Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: _camposDaSecao(),
-      ),
+  List<Widget> _fixoDaSecao() => switch (_secao) {
+    2 => [_tituloAzul('Contagem de Animais Hoje')],
+    _ => [
+      _tituloAzul('Identificação'),
+      // painel cinza com as caixas brancas, como nas outras telas
+      _painelCinza(_camposDaSecao()),
+      _tituloAzul('Atividades do Dia'),
+    ],
+  };
+
+  Widget _painelCinza(List<Widget> filhos) => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.grey[200],
+      borderRadius: BorderRadius.circular(12),
     ),
-    if (_secao == 1) _tituloAzul('Atividades do Dia'),
-  ];
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: filhos,
+    ),
+  );
 
   /// Parte que rola em cada seção (por trás do botão Próximo).
   List<Widget> _rolavelDaSecao() => switch (_secao) {
     1 => _atividadesDoDia(),
+    2 => _conferenciaRebanho(),
     _ => const [],
   };
 
-  /// Seção 1 — "Atividades do Dia": caixas de marcar, uma por atividade.
+  // ---------------------------------------------------------------------
+  // Seção 2 — Conferência de Rebanho
+  // ---------------------------------------------------------------------
+
+  Widget _pergunta(String texto) => Padding(
+    padding: const EdgeInsets.fromLTRB(2, 14, 2, 8),
+    child: Text(
+      texto,
+      style: const TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF455A64),
+      ),
+    ),
+  );
+
+  /// Opções lado a lado: a escolhida fica azul cheia, as outras com borda.
+  Widget _opcoes(
+    List<(String, String)> opcoes,
+    String? escolhida,
+    ValueChanged<String> aoEscolher,
+  ) {
+    return Row(
+      children: [
+        for (var i = 0; i < opcoes.length; i++) ...[
+          if (i > 0) const SizedBox(width: 8),
+          Expanded(
+            child: SizedBox(
+              height: 52,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: escolhida == opcoes[i].$1
+                      ? _azulBotao
+                      : Colors.white,
+                  foregroundColor: escolhida == opcoes[i].$1
+                      ? Colors.white
+                      : _azulBotao,
+                  side: const BorderSide(color: _azulBotao),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: () {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                  aoEscolher(opcoes[i].$1);
+                },
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    opcoes[i].$2,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  List<Widget> _conferenciaRebanho() => [
+    _pergunta('Conferiu o Gado?'),
+    _opcoes(
+      const [
+        ('todo', 'Gado Todo'),
+        ('parte', 'Parte do Gado'),
+        ('nao', 'Não Conferi'),
+      ],
+      _conferiuGado,
+      (v) => setState(() => _conferiuGado = v),
+    ),
+    // os totais só com "Gado Todo" ou "Parte do Gado"
+    if (_conferiuGado == 'todo' || _conferiuGado == 'parte') ...[
+      const SizedBox(height: 10),
+      _painelCinza([
+        CampoTextoTopo(
+          rotulo: '* Totais de Animais Esperados',
+          rotuloNegrito: 'Esperados',
+          corRotulo: _corRotulo,
+          controller: _esperadosController,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        ),
+        const SizedBox(height: 8),
+        CampoTextoTopo(
+          rotulo: '* Totais de Animais Encontrados',
+          rotuloNegrito: 'Encontrados',
+          corRotulo: _corRotulo,
+          controller: _encontradosController,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        ),
+      ]),
+    ],
+    _pergunta('Conferiu as Vacas Prenhas?'),
+    _opcoes(
+      const [('sim', 'SIM'), ('nao', 'NÃO'), ('sem', 'Sem Vacas Prenhas')],
+      _conferiuPrenhas,
+      (v) => setState(() => _conferiuPrenhas = v),
+    ),
+    const SizedBox(height: 14),
+    _painelCinza([
+      CampoTextoTopo(
+        rotulo: 'Observação Sobre o Rebanho',
+        corRotulo: _corRotulo,
+        controller: _obsRebanhoController,
+        altura: null,
+        linhas: 3,
+        dica: 'Comentar problemas do rebanho',
+        textCapitalization: TextCapitalization.sentences,
+      ),
+    ]),
+  ];
+
+  /// Seção 1 — "Atividades do Dia"  /// Seção 1 — "Atividades do Dia": caixas de marcar, uma por atividade.
   List<Widget> _atividadesDoDia() => [
     for (final a in _atividades) ...[
       _atividade(a.$1, a.$2, a.$3, a.$4),

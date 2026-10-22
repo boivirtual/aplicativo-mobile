@@ -109,7 +109,20 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
-              children: _camposDaSecao(),
+              children: [
+                // painel cinza com as caixas brancas, como nas outras telas
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: _camposDaSecao(),
+                  ),
+                ),
+              ],
             ),
           ),
           // Próximo fixo embaixo, como no modelo

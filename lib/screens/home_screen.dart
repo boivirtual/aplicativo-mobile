@@ -32,12 +32,22 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              // Quadro 1: Mapa Gado - Largura total
-              _buildWideCard("Mapa Gado", 'home.png', 0, onNavigate),
+              // Linha 1: Resumo Diário da Fazenda — largura total, fundo
+              // azul bem claro para destacar dos outros.
+              _buildWideCard(
+                "Resumo Diário da Fazenda",
+                'farmer.png',
+                () => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Resumo Diário da Fazenda: em breve.'),
+                  ),
+                ),
+                fundo: const Color(0xFFE3F2FD),
+              ),
 
               const SizedBox(height: 15),
 
-              // Grade com os outros 4 quadros menores
+              // Linha 2: Mapa Gado e Pesagem
               GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -46,10 +56,25 @@ class HomeScreen extends StatelessWidget {
                 crossAxisSpacing: 15,
                 childAspectRatio: 1.1,
                 children: [
-                  _buildMenuCard("Dashboard", 'dashboard.png', 1, onNavigate),
+                  _buildMenuCard("Mapa Gado", 'home.png', 0, onNavigate),
                   _buildMenuCard("Pesagem", 'pesagem.png', 2, onNavigate),
+                ],
+              ),
+
+              const SizedBox(height: 15),
+
+              // Linha 3: Chuva, Agenda e Dashboard
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 3,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1,
+                children: [
                   _buildMenuCard("Chuva", 'chuva.png', 3, onNavigate),
                   _buildMenuCard("Agenda", 'agenda.png', 4, onNavigate),
+                  _buildMenuCard("Dashboard", 'dashboard.png', 1, onNavigate),
                 ],
               ),
             ],
@@ -59,17 +84,17 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Quadro LARGO (Mapa Gado) - AJUSTADO PARA PADRONIZAR
+  // Quadro LARGO (Resumo Diário da Fazenda) - mesmo padrão dos outros
   Widget _buildWideCard(
     String title,
     String img,
-    int index,
-    Function(int)? tap,
-  ) {
+    VoidCallback onTap, {
+    Color fundo = Colors.white,
+  }) {
     const Color azulIcone = Color(0xFF228cb9);
 
     return GestureDetector(
-      onTap: () => tap?.call(index),
+      onTap: onTap,
       child: LayoutBuilder(
         builder: (context, constraints) {
           double alturaCalculada = (constraints.maxWidth / 2) / 1.1;
@@ -79,7 +104,7 @@ class HomeScreen extends StatelessWidget {
             height: alturaCalculada,
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: fundo,
               borderRadius: BorderRadius.circular(15),
               boxShadow: [
                 BoxShadow(
@@ -155,12 +180,19 @@ class HomeScreen extends StatelessWidget {
               height: 32,
               color: azulIcone,
             ),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFF18385F),
+            // sempre em uma linha: nos cards menores (3 por linha) a fonte
+            // encolhe um pouco em vez de quebrar o nome
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                title,
+                maxLines: 1,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF18385F),
+                ),
               ),
             ),
           ],

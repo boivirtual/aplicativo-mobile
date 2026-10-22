@@ -236,7 +236,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   /// Nascimento, Morte...). "Nenhuma das atividades" exclui as outras.
   static const _nenhuma = 'nenhuma';
   static const _atividades = <(String, String, IconData?, String?)>[
-    ('choveu', 'Choveu', null, 'chuva.png'),
+    ('choveu', 'Choveu', Icons.water_drop_outlined, null),
     ('mudei_pasto', 'Mudei o gado de pasto', Icons.swap_horiz, null),
     ('nutricao', 'Distribuí nutrição', Icons.grass, null),
     ('nascimento', 'Nascimento', Icons.child_care, null),

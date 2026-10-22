@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/daos/mapa_gado_dao.dart';
 import '../utils/app_alert.dart';
 import '../widgets/campo_topo_widget.dart';
 import '../widgets/indicador_conectividade_widget.dart';
@@ -37,6 +38,113 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   final _encontradosController = TextEditingController();
   String? _conferiuPrenhas; // 'sim', 'nao', 'sem'
   final _obsRebanhoController = TextEditingController();
+  // pastos onde está a diferença (quando Esperados ≠ Encontrados)
+  final Set<int> _pastosDiferenca = {};
+  List<MapEntry<int, String>> _pastosFazenda = [];
+  String? _pastosDaFazenda; // fazenda dos pastos carregados
+
+  int? get _esperados => int.tryParse(_esperadosController.text.trim());
+  int? get _encontrados => int.tryParse(_encontradosController.text.trim());
+
+  /// Encontrados − Esperados (null enquanto falta um dos dois).
+  int? get _diferenca {
+    final e = _esperados, n = _encontrados;
+    return e == null || n == null ? null : n - e;
+  }
+
+  /// Pastos da fazenda escolhida (do mapa guardado no aparelho).
+  Future<void> _carregarPastos() async {
+    final fazenda = _fazenda;
+    final bd = _bd;
+    if (fazenda == null || bd == null || _pastosDaFazenda == fazenda) return;
+    final pastos = await MapaGadoDao.instance.pastos(
+      bd,
+      int.tryParse(fazenda) ?? 0,
+      incluirForaTabuleiro: true,
+    );
+    if (!mounted) return;
+    setState(() {
+      _pastosDaFazenda = fazenda;
+      _pastosFazenda = [for (final p in pastos) MapEntry(p.id, p.descricao)];
+      _pastosDiferenca.removeWhere(
+        (id) => !_pastosFazenda.any((p) => p.key == id),
+      );
+    });
+  }
+
+  /// Lista para marcar um ou vários pastos.
+  Future<void> _escolherPastos() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    await _carregarPastos();
+    if (!mounted) return;
+    if (_pastosFazenda.isEmpty) {
+      await AppAlert.erro(
+        context,
+        'Os pastos desta fazenda ainda não foram baixados neste aparelho. '
+        'Abra o Mapa de Gado com internet e tente de novo.',
+      );
+      return;
+    }
+    final marcados = {..._pastosDiferenca};
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModal) => AlertDialog(
+          title: const Text(
+            'Em qual(is) pasto(s) está a diferença?',
+            style: TextStyle(fontSize: 16, color: _azul),
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(0, 12, 0, 0),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                for (final p in _pastosFazenda)
+                  CheckboxListTile(
+                    dense: true,
+                    value: marcados.contains(p.key),
+                    activeColor: _azulBotao,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: Text(p.value, style: const TextStyle(fontSize: 14)),
+                    onChanged: (v) => setModal(() {
+                      if (v == true) {
+                        marcados.add(p.key);
+                      } else {
+                        marcados.remove(p.key);
+                      }
+                    }),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (ok == true && mounted) {
+      setState(
+        () => _pastosDiferenca
+          ..clear()
+          ..addAll(marcados),
+      );
+    }
+  }
+
+  /// Nomes dos pastos marcados, na ordem da lista.
+  String get _nomesPastosDiferenca => [
+    for (final p in _pastosFazenda)
+      if (_pastosDiferenca.contains(p.key)) p.value,
+  ].join(', ');
 
   @override
   void dispose() {
@@ -50,6 +158,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   List<MapEntry<String, String>> _fazendas = [];
   String? _fazenda;
   String _responsavel = '';
+  String? _bd;
 
   /// "Atividades do Dia" (Seção 1): o que o usuário fez hoje na fazenda.
   /// Muitas estão ligadas aos programas do app (Chuva, Mapa de Gado,
@@ -95,6 +204,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
     if (!mounted) return;
     setState(() {
       _responsavel = (prefs.getString('userName') ?? '').toUpperCase();
+      _bd = prefs.getString('userCNPJ');
       _fazendas = [
         for (final f in lista)
           MapEntry(
@@ -137,6 +247,17 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
           );
           return;
         }
+      }
+      final dif = _diferenca;
+      if (_conferiuGado != 'nao' &&
+          dif != null &&
+          dif != 0 &&
+          _pastosDiferenca.isEmpty) {
+        await AppAlert.erro(
+          context,
+          'Informe em qual(is) pasto(s) está a diferença.',
+        );
+        return;
       }
       if (_conferiuPrenhas == null) {
         await AppAlert.erro(context, 'Informe se conferiu as vacas prenhas.');
@@ -438,7 +559,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
           if (i > 0) const SizedBox(width: 8),
           Expanded(
             child: SizedBox(
-              height: 52,
+              // mais quadradas, como no modelo
+              height: 84,
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
                   backgroundColor: escolhida == opcoes[i].$1
@@ -495,6 +617,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
           controller: _esperadosController,
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 8),
         CampoTextoTopo(
@@ -504,7 +627,39 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
           controller: _encontradosController,
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          onChanged: (_) => setState(() {}),
         ),
+        // Totais diferentes: a diferença (só leitura) e os pastos
+        if ((_diferenca ?? 0) != 0) ...[
+          const SizedBox(height: 8),
+          CampoValorTopo(
+            rotulo: _diferenca! < 0 ? 'Quantos Faltaram' : 'Quantos Sobraram',
+            corRotulo: _corRotulo,
+            valor: '${_diferenca!.abs()}',
+          ),
+          const SizedBox(height: 8),
+          CampoValorTopo(
+            rotulo: '* Em qual(is) pasto(s) está a diferença?',
+            corRotulo: _corRotulo,
+            valor: _pastosDiferenca.isEmpty
+                ? ''
+                : '${_pastosDiferenca.length} pasto(s) selecionado(s)',
+            icone: Icon(Icons.arrow_drop_down, color: _corRotulo),
+            onTap: _escolherPastos,
+          ),
+          if (_pastosDiferenca.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
+              child: Text(
+                _nomesPastosDiferenca,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontStyle: FontStyle.italic,
+                  color: _corRotulo,
+                ),
+              ),
+            ),
+        ],
       ]),
     ],
     _pergunta('Conferiu as Vacas Prenhas?'),

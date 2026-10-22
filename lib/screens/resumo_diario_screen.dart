@@ -160,27 +160,29 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
       body: Column(
         children: [
           _progresso(),
+          // Parte fixa da seção (não rola): na Seção 1, a Identificação e o
+          // título das Atividades do Dia.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: _fixoDaSecao(),
+            ),
+          ),
           Expanded(
             child: Stack(
               children: [
+                // Só esta parte rola (na Seção 1, as Atividades do Dia)
                 ListView(
                   // espaço no fim para o último item passar do botão Próximo
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-                  children: [
-                    // painel cinza com as caixas brancas, como nas outras telas
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: _camposDaSecao(),
-                      ),
-                    ),
-                    ..._foraDoCard(),
-                  ],
+                  // (que fica por cima, junto com a barra do celular)
+                  padding: EdgeInsets.fromLTRB(
+                    12,
+                    0,
+                    12,
+                    96 + MediaQuery.of(context).padding.bottom,
+                  ),
+                  children: _rolavelDaSecao(),
                 ),
                 // Próximo sempre visível; a tela rola por trás dele
                 Positioned(
@@ -271,7 +273,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   }
 
   String _tituloDaSecao(int secao) => switch (secao) {
-    1 => 'Identificação',
+    1 => 'Identificação/Atividades do Dia',
     _ => '',
   };
 
@@ -279,25 +281,44 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
     _ => _secaoIdentificacao(),
   };
 
-  /// O que fica fora do painel cinza (abaixo dele) em cada seção.
-  List<Widget> _foraDoCard() => switch (_secao) {
+  Widget _tituloAzul(String texto) => Padding(
+    padding: const EdgeInsets.fromLTRB(2, 10, 2, 8),
+    child: Text(
+      texto,
+      style: TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.bold,
+        color: Colors.blue[300],
+      ),
+    ),
+  );
+
+  /// Parte fixa de cada seção (não rola).
+  List<Widget> _fixoDaSecao() => [
+    if (_secao == 1) _tituloAzul('Identificação'),
+    // painel cinza com as caixas brancas, como nas outras telas
+    Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: _camposDaSecao(),
+      ),
+    ),
+    if (_secao == 1) _tituloAzul('Atividades do Dia'),
+  ];
+
+  /// Parte que rola em cada seção (por trás do botão Próximo).
+  List<Widget> _rolavelDaSecao() => switch (_secao) {
     1 => _atividadesDoDia(),
     _ => const [],
   };
 
   /// Seção 1 — "Atividades do Dia": caixas de marcar, uma por atividade.
   List<Widget> _atividadesDoDia() => [
-    Padding(
-      padding: const EdgeInsets.fromLTRB(2, 18, 2, 8),
-      child: Text(
-        'Atividades do Dia',
-        style: TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.bold,
-          color: Colors.blue[300],
-        ),
-      ),
-    ),
     for (final a in _atividades) ...[
       _atividade(a.$1, a.$2, a.$3, a.$4),
       const SizedBox(height: 8),
@@ -330,6 +351,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
             Checkbox(
               value: marcada,
               activeColor: _azulBotao,
+              // quadrado com a borda fina
+              side: const BorderSide(width: 1.2, color: Color(0xFF90A4AE)),
+              visualDensity: VisualDensity.compact,
               onChanged: (v) => _marcarAtividade(chave, v ?? false),
             ),
             if (imagem != null)

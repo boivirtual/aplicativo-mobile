@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'resumo_diario_screen.dart';
+
 class HomeScreen extends StatelessWidget {
   final Function(int)? onNavigate;
 
@@ -37,10 +39,9 @@ class HomeScreen extends StatelessWidget {
               _buildWideCard(
                 "Resumo Diário da Fazenda",
                 'farmer.png',
-                () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Resumo Diário da Fazenda: em breve.'),
-                  ),
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ResumoDiarioScreen()),
                 ),
                 fundo: const Color(0xFFE3F2FD),
               ),

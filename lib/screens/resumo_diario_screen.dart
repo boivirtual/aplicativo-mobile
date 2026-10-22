@@ -27,6 +27,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   static final _corRotulo = Colors.blueGrey[800]!;
 
   static const _totalSecoes = 10;
+  // muda quando o Próximo passar a avançar entre as seções
+  // ignore: prefer_final_fields
   int _secao = 1;
 
   DateTime _data = _hoje();

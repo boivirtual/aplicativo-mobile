@@ -85,50 +85,113 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
       );
       return;
     }
+    // Como o selectpicker do web: busca no topo e um toque marca/desmarca
+    // a linha (fica destacada, com o ✓), sem caixinhas.
     final marcados = {..._pastosDiferenca};
+    var busca = '';
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModal) => AlertDialog(
-          title: const Text(
-            'Em qual(is) pasto(s) está a diferença?',
-            style: TextStyle(fontSize: 16, color: _azul),
-          ),
-          contentPadding: const EdgeInsets.fromLTRB(0, 12, 0, 0),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView(
-              shrinkWrap: true,
-              children: [
-                for (final p in _pastosFazenda)
-                  CheckboxListTile(
-                    dense: true,
-                    value: marcados.contains(p.key),
-                    activeColor: _azulBotao,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    title: Text(p.value, style: const TextStyle(fontSize: 14)),
-                    onChanged: (v) => setModal(() {
-                      if (v == true) {
-                        marcados.add(p.key);
-                      } else {
-                        marcados.remove(p.key);
-                      }
-                    }),
+        builder: (ctx, setModal) {
+          final visiveis = [
+            for (final p in _pastosFazenda)
+              if (p.value.toUpperCase().contains(busca.toUpperCase())) p,
+          ];
+          return AlertDialog(
+            title: const Text(
+              'Em qual(is) pasto(s) está a diferença?',
+              style: TextStyle(fontSize: 16, color: _azul),
+            ),
+            contentPadding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    onChanged: (v) => setModal(() => busca = v.trim()),
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: InputDecoration(
+                      hintText: 'Buscar pasto...',
+                      isDense: true,
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                   ),
-              ],
+                  const SizedBox(height: 8),
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: visiveis.length,
+                      itemBuilder: (context, i) {
+                        final p = visiveis[i];
+                        final marcado = marcados.contains(p.key);
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 3),
+                          child: Material(
+                            color: marcado
+                                ? const Color(0xFFD6E8FA)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(6),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(6),
+                              onTap: () => setModal(() {
+                                if (marcado) {
+                                  marcados.remove(p.key);
+                                } else {
+                                  marcados.add(p.key);
+                                }
+                              }),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 11,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        p.value,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: marcado
+                                              ? _azul
+                                              : Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                    if (marcado)
+                                      const Icon(
+                                        Icons.check,
+                                        size: 18,
+                                        color: _azulBotao,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancelar'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text('OK (${marcados.length})'),
+              ),
+            ],
+          );
+        },
       ),
     );
     if (ok == true && mounted) {
@@ -138,6 +201,14 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
           ..addAll(marcados),
       );
     }
+  }
+
+  /// Ao digitar os totais: se a diferença sumir (iguais ou incompletos), os
+  /// pastos marcados são limpos — numa nova diferença, escolhe-se de novo.
+  void _totaisMudaram() {
+    setState(() {
+      if ((_diferenca ?? 0) == 0) _pastosDiferenca.clear();
+    });
   }
 
   /// Nomes dos pastos marcados, na ordem da lista.
@@ -617,7 +688,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
           controller: _esperadosController,
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          onChanged: (_) => setState(() {}),
+          onChanged: (_) => _totaisMudaram(),
         ),
         const SizedBox(height: 8),
         CampoTextoTopo(
@@ -627,7 +698,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
           controller: _encontradosController,
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          onChanged: (_) => setState(() {}),
+          onChanged: (_) => _totaisMudaram(),
         ),
         // Totais diferentes: a diferença (só leitura) e os pastos
         if ((_diferenca ?? 0) != 0) ...[

@@ -191,8 +191,16 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
                   bottom: 0,
                   child: SafeArea(
                     top: false,
+                    // o fundo branco vai até embaixo (atrás da barra do
+                    // celular), para a lista não aparecer ali
+                    bottom: false,
                     child: Container(
-                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                      padding: EdgeInsets.fromLTRB(
+                        12,
+                        10,
+                        12,
+                        12 + MediaQuery.of(context).padding.bottom,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         boxShadow: [
@@ -273,7 +281,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   }
 
   String _tituloDaSecao(int secao) => switch (secao) {
-    1 => 'Identificação/Atividades do Dia',
+    1 => 'Identificação/Atividades',
     _ => '',
   };
 
@@ -285,6 +293,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
     padding: const EdgeInsets.fromLTRB(2, 10, 2, 8),
     child: Text(
       texto,
+      textAlign: TextAlign.center,
       style: TextStyle(
         fontSize: 15,
         fontWeight: FontWeight.bold,

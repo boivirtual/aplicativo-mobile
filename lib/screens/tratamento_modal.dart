@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import '../services/resumo_diario_service.dart';
 import '../utils/app_alert.dart';
 import '../widgets/campo_topo_widget.dart';
-import '../widgets/seletor_campo_widget.dart';
 
 /// Modal "Tratamento N" do Resumo Diário (Seção 3 — Sanidade Animal).
 /// Fundo cinza no padrão dos outros modais, (x) no canto para fechar sem
@@ -249,32 +248,98 @@ class _TratamentoModalState extends State<TratamentoModal> {
     ),
   ];
 
-  Widget _campoResponsavel() {
+  /// Select Responsável: abre a lista numa janela própria (o menu suspenso
+  /// dentro do modal ficava por cima dele e não rolava).
+  Future<void> _escolherResponsavel() async {
+    FocusManager.instance.primaryFocus?.unfocus();
     if (_responsaveis.isEmpty) {
-      return CampoValorTopo(
-        rotulo: 'Responsável',
-        corRotulo: _corRotulo,
-        valor: '',
-        icone: Icon(Icons.arrow_drop_down, color: _corRotulo),
-        onTap: () => AppAlert.erro(
-          context,
-          'A lista de responsáveis ainda não foi baixada neste aparelho. '
-          'Abra o tratamento com internet e tente de novo.',
-        ),
+      await AppAlert.erro(
+        context,
+        'A lista de responsáveis ainda não foi baixada neste aparelho. '
+        'Abra o tratamento com internet e tente de novo.',
       );
+      return;
     }
-    return SeletorCampoWidget<String>(
-      rotulo: 'Responsável',
-      corRotulo: _corRotulo,
-      valor: _responsavel,
-      opcoes: _responsaveis,
-      destaque: true,
-      onChanged: (v) => setState(() => _responsavel = v),
+    final escolhido = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(
+          'Responsável',
+          style: TextStyle(fontSize: 16, color: _azulTitulo),
+        ),
+        contentPadding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: _responsaveis.length,
+            itemBuilder: (context, i) {
+              final r = _responsaveis[i];
+              final marcado = r.key == _responsavel;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 3),
+                child: Material(
+                  color: marcado ? const Color(0xFFD6E8FA) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(6),
+                    onTap: () => Navigator.pop(ctx, r.key),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 11,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              r.value,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: marcado ? _azulTitulo : Colors.black87,
+                              ),
+                            ),
+                          ),
+                          if (marcado)
+                            const Icon(
+                              Icons.check,
+                              size: 18,
+                              color: _azulBotao,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
     );
+    if (escolhido != null && mounted) {
+      setState(() => _responsavel = escolhido);
+    }
   }
+
+  Widget _campoResponsavel() => CampoValorTopo(
+    rotulo: 'Responsável',
+    corRotulo: _corRotulo,
+    valor:
+        _responsaveis
+            .where((r) => r.key == _responsavel)
+            .map((r) => r.value)
+            .firstOrNull ??
+        '',
+    icone: Icon(Icons.arrow_drop_down, color: _corRotulo),
+    onTap: _escolherResponsavel,
+  );
 
   @override
   Widget build(BuildContext context) {
+    // teclado aberto: o "Confirmar Tratamento" some para o campo em edição
+    // ficar à vista (como a barra Anterior/Próximo da tela do resumo)
+    final tecladoAberto = MediaQuery.viewInsetsOf(context).bottom > 0;
     return Dialog(
       backgroundColor: Colors.transparent,
       // mais para cima, aproveitando melhor a tela
@@ -350,6 +415,9 @@ class _TratamentoModalState extends State<TratamentoModal> {
                           corRotulo: _corRotulo,
                           controller: _tratamentoController,
                           dica: 'Ex: Pomada cicatrizante',
+                          // mais alto: várias linhas
+                          altura: null,
+                          linhas: 3,
                           textCapitalization: TextCapitalization.sentences,
                         ),
                         const SizedBox(height: 8),
@@ -358,26 +426,29 @@ class _TratamentoModalState extends State<TratamentoModal> {
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _verde,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                if (tecladoAberto)
+                  const SizedBox(height: 8)
+                else
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: SizedBox(
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _verde,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
-                      ),
-                      onPressed: _confirmar,
-                      child: const Text(
-                        'Confirmar Tratamento',
-                        style: TextStyle(fontSize: 16, color: Colors.white),
+                        onPressed: _confirmar,
+                        child: const Text(
+                          'Confirmar Tratamento',
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ),

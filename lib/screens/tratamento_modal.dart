@@ -64,6 +64,10 @@ class _TratamentoModalState extends State<TratamentoModal> {
   final _brincoController = TextEditingController();
   final _tratamentoController = TextEditingController();
   String? _responsavel;
+
+  /// Lista do Responsável aberta embaixo do campo.
+  bool _responsavelAberto = false;
+  final _rolagem = ScrollController();
   List<MapEntry<String, String>> _responsaveis = [];
 
   @override
@@ -95,6 +99,7 @@ class _TratamentoModalState extends State<TratamentoModal> {
     _qtdeController.dispose();
     _brincoController.dispose();
     _tratamentoController.dispose();
+    _rolagem.dispose();
     super.dispose();
   }
 
@@ -248,9 +253,9 @@ class _TratamentoModalState extends State<TratamentoModal> {
     ),
   ];
 
-  /// Select Responsável: abre a lista numa janela própria (o menu suspenso
-  /// dentro do modal ficava por cima dele e não rolava).
-  Future<void> _escolherResponsavel() async {
+  /// Select Responsável: abre (ou fecha) a lista embaixo do campo, dentro
+  /// do modal, que rola até ela.
+  Future<void> _abrirResponsavel() async {
     FocusManager.instance.primaryFocus?.unfocus();
     if (_responsaveis.isEmpty) {
       await AppAlert.erro(
@@ -260,67 +265,73 @@ class _TratamentoModalState extends State<TratamentoModal> {
       );
       return;
     }
-    final escolhido = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text(
-          'Responsável',
-          style: TextStyle(fontSize: 16, color: _azulTitulo),
-        ),
-        contentPadding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: _responsaveis.length,
-            itemBuilder: (context, i) {
-              final r = _responsaveis[i];
-              final marcado = r.key == _responsavel;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 3),
-                child: Material(
-                  color: marcado ? const Color(0xFFD6E8FA) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(6),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(6),
-                    onTap: () => Navigator.pop(ctx, r.key),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 11,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              r.value,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: marcado ? _azulTitulo : Colors.black87,
-                              ),
-                            ),
+    setState(() => _responsavelAberto = !_responsavelAberto);
+    if (!_responsavelAberto) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_rolagem.hasClients) return;
+      _rolagem.animateTo(
+        _rolagem.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  /// Lista do Responsável (uma opção só): um toque escolhe e fecha.
+  Widget _listaResponsavel() => Container(
+    margin: const EdgeInsets.only(top: 4),
+    constraints: const BoxConstraints(maxHeight: 4 * 44 + 8),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: const Color(0xFFCFD8DC)),
+    ),
+    child: Scrollbar(
+      thumbVisibility: true,
+      child: ListView.builder(
+        shrinkWrap: true,
+        padding: const EdgeInsets.fromLTRB(4, 4, 10, 4),
+        itemExtent: 44,
+        itemCount: _responsaveis.length,
+        itemBuilder: (context, i) {
+          final r = _responsaveis[i];
+          final marcado = r.key == _responsavel;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 3),
+            child: Material(
+              color: marcado ? const Color(0xFFD6E8FA) : Colors.transparent,
+              borderRadius: BorderRadius.circular(6),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(6),
+                onTap: () => setState(() {
+                  _responsavel = r.key;
+                  _responsavelAberto = false;
+                }),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          r.value,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: marcado ? _azulTitulo : Colors.black87,
                           ),
-                          if (marcado)
-                            const Icon(
-                              Icons.check,
-                              size: 18,
-                              color: _azulBotao,
-                            ),
-                        ],
+                        ),
                       ),
-                    ),
+                      if (marcado)
+                        const Icon(Icons.check, size: 18, color: _azulBotao),
+                    ],
                   ),
                 ),
-              );
-            },
-          ),
-        ),
+              ),
+            ),
+          );
+        },
       ),
-    );
-    if (escolhido != null && mounted) {
-      setState(() => _responsavel = escolhido);
-    }
-  }
+    ),
+  );
 
   Widget _campoResponsavel() => CampoValorTopo(
     rotulo: 'Responsável',
@@ -331,8 +342,11 @@ class _TratamentoModalState extends State<TratamentoModal> {
             .map((r) => r.value)
             .firstOrNull ??
         '',
-    icone: Icon(Icons.arrow_drop_down, color: _corRotulo),
-    onTap: _escolherResponsavel,
+    icone: Icon(
+      _responsavelAberto ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+      color: _corRotulo,
+    ),
+    onTap: _abrirResponsavel,
   );
 
   @override
@@ -367,6 +381,7 @@ class _TratamentoModalState extends State<TratamentoModal> {
                 ),
                 Flexible(
                   child: SingleChildScrollView(
+                    controller: _rolagem,
                     padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -422,6 +437,7 @@ class _TratamentoModalState extends State<TratamentoModal> {
                         ),
                         const SizedBox(height: 8),
                         _campoResponsavel(),
+                        if (_responsavelAberto) _listaResponsavel(),
                       ],
                     ),
                   ),

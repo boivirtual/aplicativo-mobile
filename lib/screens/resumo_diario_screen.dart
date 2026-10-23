@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../data/daos/mapa_gado_dao.dart';
 import '../utils/app_alert.dart';
 import '../widgets/campo_topo_widget.dart';
+import 'tratamento_modal.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 import '../widgets/seletor_campo_widget.dart';
 
@@ -46,13 +47,84 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   /// Tratamentos adicionados (a tela de inclusão vem nas próximas etapas).
   final List<Map<String, dynamic>> _tratamentos = [];
 
-  /// "Adicionar Tratamento": abre a tela para incluir as linhas de
-  /// tratamento — vem nas próximas etapas.
-  void _adicionarTratamento() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Adicionar Tratamento: em breve.')),
+  /// "Adicionar Tratamento": abre o modal "Tratamento N" (N = próximo
+  /// número); ao confirmar, entra na lista abaixo do botão.
+  Future<void> _adicionarTratamento({int? editar}) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final indice = editar ?? _tratamentos.length;
+    final dados = await showDialog<Map<String, dynamic>>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => TratamentoModal(
+        numero: indice + 1,
+        dados: editar == null ? null : _tratamentos[editar],
+      ),
     );
+    if (dados == null || !mounted) return;
+    setState(() {
+      if (editar == null) {
+        _tratamentos.add(dados);
+      } else {
+        _tratamentos[editar] = dados;
+      }
+    });
   }
+
+  Future<void> _excluirTratamento(int indice) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Excluir o Tratamento ${indice + 1}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Não'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sim'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true && mounted) setState(() => _tratamentos.removeAt(indice));
+  }
+
+  /// Lista dos tratamentos confirmados: "Tratamento N", editar e lixeira.
+  List<Widget> _listaTratamentos() => [
+    for (var i = 0; i < _tratamentos.length; i++)
+      Container(
+        margin: const EdgeInsets.only(top: 6),
+        padding: const EdgeInsets.only(left: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFCFD8DC)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Tratamento ${i + 1}',
+                style: _textoGrosso(_corRotulo).copyWith(fontSize: 15),
+              ),
+            ),
+            IconButton(
+              tooltip: 'Editar',
+              icon: const Icon(Icons.edit_outlined, color: Color(0xFF228cb9)),
+              onPressed: _nenhumDoente
+                  ? null
+                  : () => _adicionarTratamento(editar: i),
+            ),
+            IconButton(
+              tooltip: 'Excluir',
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              onPressed: () => _excluirTratamento(i),
+            ),
+          ],
+        ),
+      ),
+  ];
 
   // pastos onde está a diferença (quando Esperados ≠ Encontrados)
   final Set<int> _pastosDiferenca = {};
@@ -669,6 +741,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
         semCaixa: true,
         habilitado: !_nenhumDoente,
       ),
+      ..._listaTratamentos(),
       const SizedBox(height: 8),
       _linhaMarcar(
         'Nenhum animal doente ou medicado hoje',

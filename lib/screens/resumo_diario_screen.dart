@@ -531,7 +531,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   Widget _progresso() {
     return Container(
       width: double.infinity,
-      color: const Color(0xFFF1F3F6),
+      // mesmo azul da tarja dos outros programas (Mapa de Gado, Pesagem)
+      color: Color.alphaBlend(Colors.blue.withValues(alpha: 0.1), Colors.white),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
       child: Column(
         children: [
@@ -545,9 +546,32 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Seção $_secao de $_totalSecoes — ${_tituloDaSecao(_secao)}',
-            style: const TextStyle(fontSize: 15, color: _azul),
+          // "Seção 1 de 10" menor; o nome da seção em negrito
+          Text.rich(
+            TextSpan(
+              style: const TextStyle(color: Colors.blue),
+              children: [
+                TextSpan(
+                  text: 'Seção $_secao de $_totalSecoes — ',
+                  style: const TextStyle(fontSize: 13),
+                ),
+                TextSpan(
+                  text: _tituloDaSecao(_secao),
+                  // a fonte do app só tem a versão fina: o traço é
+                  // engrossado com "sombras" da mesma cor
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                    shadows: [
+                      Shadow(color: Colors.blue, offset: Offset(0.5, 0)),
+                      Shadow(color: Colors.blue, offset: Offset(-0.5, 0)),
+                      Shadow(color: Colors.blue, offset: Offset(0, 0.5)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

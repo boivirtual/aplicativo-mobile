@@ -38,6 +38,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   final _encontradosController = TextEditingController();
   String? _conferiuPrenhas; // 'sim', 'nao', 'sem'
   final _obsRebanhoController = TextEditingController();
+
+  // Seção 3 — Sanidade Animal: "Adicionar Tratamento" ou "Nenhum animal
+  // doente ou medicado hoje" (um exclui o outro).
+  String? _sanidade; // 'tratamento' ou 'nenhum'
   // pastos onde está a diferença (quando Esperados ≠ Encontrados)
   final Set<int> _pastosDiferenca = {};
   List<MapEntry<int, String>> _pastosFazenda = [];
@@ -334,7 +338,19 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
         await AppAlert.erro(context, 'Informe se conferiu as vacas prenhas.');
         return;
       }
-      // A Seção 3 vem nas próximas etapas.
+      setState(() => _secao = 3);
+      return;
+    }
+    if (_secao == 3) {
+      if (_sanidade == null) {
+        await AppAlert.erro(
+          context,
+          'Marque "Adicionar Tratamento" ou "Nenhum animal doente ou '
+          'medicado hoje".',
+        );
+        return;
+      }
+      // A Seção 4 vem nas próximas etapas.
       return;
     }
     if (_secao == 1) {
@@ -581,6 +597,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   String _tituloDaSecao(int secao) => switch (secao) {
     1 => 'Identificação/Atividades',
     2 => 'Conferência de Rebanho',
+    3 => 'Sanidade Animal',
     _ => '',
   };
 
@@ -604,6 +621,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   /// Parte fixa de cada seção (não rola).
   List<Widget> _fixoDaSecao() => switch (_secao) {
     2 => [_tituloAzul('Contagem de Animais Hoje')],
+    3 => [_tituloAzul('Tratamentos Realizados Hoje')],
     _ => [
       _tituloAzul('Identificação'),
       // painel cinza com as caixas brancas, como nas outras telas
@@ -628,6 +646,21 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   List<Widget> _rolavelDaSecao() => switch (_secao) {
     1 => _atividadesDoDia(),
     2 => _conferenciaRebanho(),
+    3 => [
+      _linhaMarcar(
+        '+ Adicionar Tratamento',
+        Icons.medical_services_outlined,
+        _sanidade == 'tratamento',
+        (v) => setState(() => _sanidade = v ? 'tratamento' : null),
+      ),
+      const SizedBox(height: 8),
+      _linhaMarcar(
+        'Nenhum animal doente ou medicado hoje',
+        Icons.verified_outlined,
+        _sanidade == 'nenhum',
+        (v) => setState(() => _sanidade = v ? 'nenhum' : null),
+      ),
+    ],
     _ => const [],
   };
 
@@ -827,12 +860,27 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
     String texto,
     IconData? icone,
     String? imagem,
-  ) {
+  ) => _linhaMarcar(
+    texto,
+    icone,
+    _atividadesMarcadas.contains(chave),
+    (v) => _marcarAtividade(chave, v),
+    imagem: imagem,
+  );
+
+  /// Linha com caixa de marcar, ícone azul e texto (Atividades do Dia,
+  /// Sanidade Animal...): marcada fica com fundo azul claro e borda azul.
+  Widget _linhaMarcar(
+    String texto,
+    IconData? icone,
+    bool marcada,
+    ValueChanged<bool> aoMarcar, {
+    String? imagem,
+  }) {
     const azulIcone = Color(0xFF228cb9);
-    final marcada = _atividadesMarcadas.contains(chave);
     return InkWell(
       borderRadius: BorderRadius.circular(8),
-      onTap: () => _marcarAtividade(chave, !marcada),
+      onTap: () => aoMarcar(!marcada),
       child: Container(
         height: 54,
         padding: const EdgeInsets.only(left: 4, right: 12),
@@ -851,7 +899,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
               // quadrado com a borda fina
               side: const BorderSide(width: 1.2, color: Color(0xFF90A4AE)),
               visualDensity: VisualDensity.compact,
-              onChanged: (v) => _marcarAtividade(chave, v ?? false),
+              onChanged: (v) => aoMarcar(v ?? false),
             ),
             if (imagem != null)
               Image.asset(

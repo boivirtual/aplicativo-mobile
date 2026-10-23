@@ -58,6 +58,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
       builder: (_) => TratamentoModal(
         numero: indice + 1,
         dados: editar == null ? null : _tratamentos[editar],
+        bd: _bd ?? '',
+        fazenda: _fazenda ?? '',
       ),
     );
     if (dados == null || !mounted) return;

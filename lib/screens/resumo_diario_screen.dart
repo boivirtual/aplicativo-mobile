@@ -73,6 +73,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   Future<void> _excluirTratamento(int indice) async {
     final ok = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         // mesmo modelo do "Excluir Item" da Pesagem: o NÃO em evidência
         title: const Text(

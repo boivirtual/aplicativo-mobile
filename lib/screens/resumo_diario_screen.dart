@@ -111,14 +111,13 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
             ),
             IconButton(
               tooltip: 'Editar',
-              icon: const Icon(Icons.edit_outlined, color: Color(0xFF228cb9)),
-              onPressed: _nenhumDoente
-                  ? null
-                  : () => _adicionarTratamento(editar: i),
+              // azul do btn-primary (Bootstrap 3)
+              icon: const Icon(Icons.edit_outlined, color: Color(0xFF337AB7)),
+              onPressed: () => _adicionarTratamento(editar: i),
             ),
             IconButton(
               tooltip: 'Excluir',
-              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              icon: const Icon(Icons.delete_outline, color: Color(0xFF337AB7)),
               onPressed: () => _excluirTratamento(i),
             ),
           ],

@@ -41,6 +41,9 @@ class CampoTextoTopo extends StatefulWidget {
   /// Texto de exemplo dentro do campo vazio (campo de várias linhas).
   final String? dica;
 
+  /// Complemento do rótulo em fonte menor e cinza (ex.: "(opcional)").
+  final String? rotuloComplemento;
+
   const CampoTextoTopo({
     super.key,
     required this.rotulo,
@@ -58,6 +61,7 @@ class CampoTextoTopo extends StatefulWidget {
     this.onChanged,
     this.rotuloNegrito,
     this.dica,
+    this.rotuloComplemento,
   });
 
   @override
@@ -103,6 +107,24 @@ class _CampoTextoTopoState extends State<CampoTextoTopo> {
     final estilo = TextStyle(fontSize: tamanho, color: widget.corRotulo);
     final negrito = widget.rotuloNegrito;
     final i = negrito == null ? -1 : widget.rotulo.indexOf(negrito);
+    final complemento = widget.rotuloComplemento;
+    if (complemento != null) {
+      return Text.rich(
+        TextSpan(
+          style: estilo,
+          children: [
+            TextSpan(text: widget.rotulo),
+            TextSpan(
+              text: ' $complemento',
+              style: TextStyle(
+                fontSize: tamanho - 2,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     if (i < 0) return Text(widget.rotulo, style: estilo);
     return Text.rich(
       TextSpan(

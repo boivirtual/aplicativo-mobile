@@ -616,6 +616,10 @@ class PesagemRepository {
       "bd": bodyMap['bd'],
       "pesagem_id": local['id_servidor'],
       "numero_item": numeroServidor,
+      // o servidor acha o item por estes dois (o número pode ter mudado se
+      // a web regravou a pesagem) e nunca exclui o animal errado
+      "uuid_app": item['uuid'],
+      "id_animal": item['id_animal'],
     };
 
     // Opção 2: nunca espera rede — exclusão local (já feita acima) entra na
@@ -680,6 +684,10 @@ class PesagemRepository {
       "bd": bodyMap['bd'],
       "pesagem_id": local['id_servidor'],
       "numero_item": numeroServidor,
+      // o servidor acha o item por estes dois (o número pode ter mudado se
+      // a web regravou a pesagem) e nunca altera o animal errado
+      "uuid_app": item['uuid'],
+      "id_animal": item['id_animal'],
       "peso": bodyMap['peso'],
       "obs": bodyMap['obs'],
       "criterio_apartacao": bodyMap['criterio_apartacao'],

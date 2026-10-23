@@ -756,13 +756,17 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
         habilitado: !_nenhumDoente,
       ),
       ..._listaTratamentos(),
-      const SizedBox(height: 8),
-      _linhaMarcar(
-        'Nenhum animal doente ou medicado hoje',
-        Icons.verified_outlined,
-        _nenhumDoente,
-        (v) => setState(() => _nenhumDoente = v),
-      ),
+      // com pelo menos 1 tratamento na lista, o "Nenhum animal doente..."
+      // fica escondido; volta quando todos forem excluídos
+      if (_tratamentos.isEmpty) ...[
+        const SizedBox(height: 8),
+        _linhaMarcar(
+          'Nenhum animal doente ou medicado hoje',
+          Icons.verified_outlined,
+          _nenhumDoente,
+          (v) => setState(() => _nenhumDoente = v),
+        ),
+      ],
     ],
     _ => const [],
   };

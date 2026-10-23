@@ -74,15 +74,30 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Excluir o Tratamento ${indice + 1}?'),
+        // mesmo modelo do "Excluir Item" da Pesagem: o NÃO em evidência
+        title: const Text(
+          'Excluir Tratamento',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Text('Confirma a exclusão do Tratamento ${indice + 1}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Não'),
+            child: const Text(
+              'NÃO',
+              style: TextStyle(
+                color: Colors.blue,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sim'),
+            child: const Text(
+              'SIM',
+              style: TextStyle(color: Colors.blue, fontSize: 16),
+            ),
           ),
         ],
       ),

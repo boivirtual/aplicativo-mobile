@@ -41,7 +41,19 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
 
   // Seção 3 — Sanidade Animal: "Adicionar Tratamento" ou "Nenhum animal
   // doente ou medicado hoje" (um exclui o outro).
-  String? _sanidade; // 'tratamento' ou 'nenhum'
+  bool _nenhumDoente = false;
+
+  /// Tratamentos adicionados (a tela de inclusão vem nas próximas etapas).
+  final List<Map<String, dynamic>> _tratamentos = [];
+
+  /// "Adicionar Tratamento": abre a tela para incluir as linhas de
+  /// tratamento — vem nas próximas etapas.
+  void _adicionarTratamento() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Adicionar Tratamento: em breve.')),
+    );
+  }
+
   // pastos onde está a diferença (quando Esperados ≠ Encontrados)
   final Set<int> _pastosDiferenca = {};
   List<MapEntry<int, String>> _pastosFazenda = [];
@@ -342,10 +354,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
       return;
     }
     if (_secao == 3) {
-      if (_sanidade == null) {
+      if (!_nenhumDoente && _tratamentos.isEmpty) {
         await AppAlert.erro(
           context,
-          'Marque "Adicionar Tratamento" ou "Nenhum animal doente ou '
+          'Adicione um tratamento ou marque "Nenhum animal doente ou '
           'medicado hoje".',
         );
         return;
@@ -647,18 +659,22 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
     1 => _atividadesDoDia(),
     2 => _conferenciaRebanho(),
     3 => [
+      // botão (sem caixa de marcar), pode ser tocado várias vezes; travado
+      // com "Nenhum animal doente..." marcado
       _linhaMarcar(
-        '+ Adicionar Tratamento',
+        'Adicionar Tratamento',
         Icons.medical_services_outlined,
-        _sanidade == 'tratamento',
-        (v) => setState(() => _sanidade = v ? 'tratamento' : null),
+        false,
+        (_) => _adicionarTratamento(),
+        semCaixa: true,
+        habilitado: !_nenhumDoente,
       ),
       const SizedBox(height: 8),
       _linhaMarcar(
         'Nenhum animal doente ou medicado hoje',
         Icons.verified_outlined,
-        _sanidade == 'nenhum',
-        (v) => setState(() => _sanidade = v ? 'nenhum' : null),
+        _nenhumDoente,
+        (v) => setState(() => _nenhumDoente = v),
       ),
     ],
     _ => const [],
@@ -876,49 +892,59 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
     bool marcada,
     ValueChanged<bool> aoMarcar, {
     String? imagem,
+    // botão: sem a caixa de marcar
+    bool semCaixa = false,
+    // travado: cinza e sem resposta ao toque
+    bool habilitado = true,
   }) {
     const azulIcone = Color(0xFF228cb9);
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: () => aoMarcar(!marcada),
-      child: Container(
-        height: 54,
-        padding: const EdgeInsets.only(left: 4, right: 12),
-        decoration: BoxDecoration(
-          color: marcada ? const Color(0xFFE3F2FD) : Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: marcada ? _azulBotao : const Color(0xFFCFD8DC),
+    return Opacity(
+      opacity: habilitado ? 1 : 0.4,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: habilitado ? () => aoMarcar(!marcada) : null,
+        child: Container(
+          height: 54,
+          padding: const EdgeInsets.only(left: 4, right: 12),
+          decoration: BoxDecoration(
+            color: marcada ? const Color(0xFFE3F2FD) : Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: marcada ? _azulBotao : const Color(0xFFCFD8DC),
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            Checkbox(
-              value: marcada,
-              activeColor: _azulBotao,
-              // quadrado com a borda fina
-              side: const BorderSide(width: 1.2, color: Color(0xFF90A4AE)),
-              visualDensity: VisualDensity.compact,
-              onChanged: (v) => aoMarcar(v ?? false),
-            ),
-            if (imagem != null)
-              Image.asset(
-                'assets/images/$imagem',
-                width: 24,
-                height: 24,
-                color: azulIcone,
-              )
-            else
-              Icon(icone, size: 24, color: azulIcone),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                texto,
-                // mesmo peso das opções da Seção 2
-                style: _textoGrosso(_corRotulo).copyWith(fontSize: 15),
+          child: Row(
+            children: [
+              if (semCaixa)
+                const SizedBox(width: 14)
+              else
+                Checkbox(
+                  value: marcada,
+                  activeColor: _azulBotao,
+                  // quadrado com a borda fina
+                  side: const BorderSide(width: 1.2, color: Color(0xFF90A4AE)),
+                  visualDensity: VisualDensity.compact,
+                  onChanged: (v) => aoMarcar(v ?? false),
+                ),
+              if (imagem != null)
+                Image.asset(
+                  'assets/images/$imagem',
+                  width: 24,
+                  height: 24,
+                  color: azulIcone,
+                )
+              else
+                Icon(icone, size: 24, color: azulIcone),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  texto,
+                  // mesmo peso das opções da Seção 2
+                  style: _textoGrosso(_corRotulo).copyWith(fontSize: 15),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

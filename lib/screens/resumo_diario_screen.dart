@@ -163,12 +163,27 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   /// Aplicações adicionadas (a tela "Adicionar Aplicação" vem depois).
   final List<Map<String, dynamic>> _aplicacoes = [];
 
-  /// "Adicionar Aplicação": a tela de inclusão vem na próxima etapa.
-  void _adicionarAplicacao({int? editar}) {
+  /// "Adicionar Aplicação": abre o modal "Aplicação N" (N = próximo
+  /// número); ao confirmar, entra na lista abaixo do botão.
+  Future<void> _adicionarAplicacao({int? editar}) async {
     FocusManager.instance.primaryFocus?.unfocus();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Adicionar Aplicação: em breve.')),
+    final indice = editar ?? _aplicacoes.length;
+    final dados = await showDialog<Map<String, dynamic>>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AplicacaoModal(
+        numero: indice + 1,
+        dados: editar == null ? null : _aplicacoes[editar],
+      ),
     );
+    if (dados == null || !mounted) return;
+    setState(() {
+      if (editar == null) {
+        _aplicacoes.add(dados);
+      } else {
+        _aplicacoes[editar] = dados;
+      }
+    });
   }
 
   Future<void> _excluirAplicacao(int indice) async {

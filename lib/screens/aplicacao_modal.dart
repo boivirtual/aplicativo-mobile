@@ -295,14 +295,7 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
                 ),
                 Flexible(
                   child: SingleChildScrollView(
-                    // teclado aberto: folga embaixo para o último campo
-                    // (ex.: Volume) poder subir até o meio da área visível
-                    padding: EdgeInsets.fromLTRB(
-                      12,
-                      4,
-                      12,
-                      tecladoAberto ? 160 : 4,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -391,29 +384,26 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
                     ),
                   ),
                 ),
-                if (tecladoAberto)
-                  const SizedBox(height: 8)
-                else
-                  Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: SizedBox(
-                      height: 48,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _verde,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: SizedBox(
+                    height: 48,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _verde,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        onPressed: _confirmar,
-                        child: const Text(
-                          'Confirmar Aplicação',
-                          style: TextStyle(fontSize: 16, color: Colors.white),
-                        ),
+                      ),
+                      onPressed: _confirmar,
+                      child: const Text(
+                        'Confirmar Aplicação',
+                        style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
                     ),
                   ),
+                ),
               ],
             ),
           ),

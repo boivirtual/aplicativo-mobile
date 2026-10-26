@@ -31,13 +31,14 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
 
   static const _tipos = ['Vacina', 'Vermífugo', 'Carrapaticida'];
 
-  /// Produtos por tipo (os de Vermífugo e Carrapaticida ainda não foram
-  /// definidos).
-  static const _produtosPorTipo = <String, List<String>>{
-    'Vacina': ['Raiva', 'Mal de Ano', 'Brucelose', 'Aftosa', 'Pneumonia'],
-    'Vermífugo': [],
-    'Carrapaticida': [],
-  };
+  /// Produtos do select (só Vacina; os outros tipos são digitados).
+  static const _produtosVacina = [
+    'Raiva',
+    'Mal de Ano',
+    'Brucelose',
+    'Aftosa',
+    'Pneumonia',
+  ];
 
   static const _categorias = [
     'Bezerros 0–7m',
@@ -51,12 +52,27 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
 
   static const _unidades = ['ml', 'ml/kg'];
 
+  /// Vermífugo e Carrapaticida: o produto é digitado (com este exemplo).
+  static const _exemploProduto = {
+    'Vermífugo': 'Ex: Ivermectina',
+    'Carrapaticida': 'Ex: Colosso, Butox',
+  };
+
+  /// Altura dos campos (mais altos para caber rótulo e valor).
+  static const _altura = 64.0;
+
+  /// Primeira opção do select do Nome do Produto: deixa sem nada escolhido.
+  static const _selecione = '— Selecione —';
+
   String _tipo = 'Vacina';
   String? _produto;
   String? _categoria;
   String? _unidade;
   final _qtdeController = TextEditingController();
   final _volumeController = TextEditingController();
+  final _produtoController = TextEditingController();
+
+  bool get _produtoDigitado => _tipo != 'Vacina';
 
   /// Select aberto embaixo do campo (só um por vez): 'tipo', 'produto',
   /// 'categoria' ou 'unidade'.
@@ -70,6 +86,7 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
     if (d != null) {
       _tipo = (d['tipo'] ?? 'Vacina').toString();
       _produto = d['produto']?.toString();
+      if (_produtoDigitado) _produtoController.text = _produto ?? '';
       _categoria = d['categoria']?.toString();
       _unidade = d['unidade']?.toString();
       _qtdeController.text = (d['qtde'] ?? '').toString();
@@ -81,6 +98,7 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
   void dispose() {
     _qtdeController.dispose();
     _volumeController.dispose();
+    _produtoController.dispose();
     super.dispose();
   }
 
@@ -88,8 +106,14 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
     FocusManager.instance.primaryFocus?.unfocus();
     final qtde = int.tryParse(_qtdeController.text.trim()) ?? 0;
     final volume = int.tryParse(_volumeController.text.trim()) ?? 0;
+    if (_produtoDigitado) {
+      final digitado = _produtoController.text.trim();
+      _produto = digitado.isEmpty ? null : digitado;
+    }
     final erro = _produto == null
-        ? 'Selecione o Nome do Produto.'
+        ? (_produtoDigitado
+              ? 'Informe o Nome do Produto.'
+              : 'Selecione o Nome do Produto.')
         : qtde <= 0
         ? 'Informe a Quantidade de Animais por Categoria.'
         : _categoria == null
@@ -114,22 +138,10 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
     });
   }
 
-  /// Rótulo em negrito (a fonte do app só tem a versão fina: o traço é
-  /// engrossado com "sombras" da mesma cor).
+  /// Título de um grupo de campos (ex.: "Dose Aplicada"), sem negrito.
   Widget _rotulo(String texto) => Padding(
     padding: const EdgeInsets.only(left: 2, bottom: 6),
-    child: Text(
-      texto,
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w900,
-        color: _corRotulo,
-        shadows: [
-          Shadow(color: _corRotulo, offset: const Offset(0.4, 0)),
-          Shadow(color: _corRotulo, offset: const Offset(-0.4, 0)),
-        ],
-      ),
-    ),
+    child: Text(texto, style: TextStyle(fontSize: 14, color: _corRotulo)),
   );
 
   /// Abre (ou fecha) a lista do select embaixo do campo e rola o modal até
@@ -165,14 +177,18 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
     String rotulo,
     String? valor,
     List<String> opcoes,
-    ValueChanged<String> aoEscolher,
-  ) {
+    ValueChanged<String?> aoEscolher, {
+    // primeira opção "— Selecione —" (volta a deixar o campo vazio)
+    bool comSelecione = false,
+  }) {
     final aberto = _aberto == chave;
+    final linhas = [if (comSelecione) _selecione, ...opcoes];
     return [
       CampoValorTopo(
         rotulo: rotulo,
         corRotulo: _corRotulo,
         valor: valor ?? '',
+        altura: _altura,
         icone: Icon(
           aberto ? Icons.arrow_drop_up : Icons.arrow_drop_down,
           color: _corRotulo,
@@ -183,24 +199,24 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
         Container(
           key: _listaAberta,
           margin: const EdgeInsets.only(top: 4),
-          constraints: const BoxConstraints(maxHeight: 4 * 44 + 8),
+          // sem limite de altura: todas as opções à vista, sem rolar
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: const Color(0xFFCFD8DC)),
           ),
-          child: Scrollbar(
-            thumbVisibility: true,
-            child: ListView.builder(
-              shrinkWrap: true,
-              padding: const EdgeInsets.fromLTRB(4, 4, 10, 4),
-              itemExtent: 44,
-              itemCount: opcoes.length,
-              itemBuilder: (context, i) {
-                final o = opcoes[i];
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final o in linhas)
+                Builder(
+              builder: (context) {
                 final marcado = o == valor;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 3),
+                final vazio = o == _selecione;
+                return Container(
+                  height: 44,
+                  padding: const EdgeInsets.fromLTRB(4, 0, 4, 3),
                   child: Material(
                     color: marcado
                         ? const Color(0xFFD6E8FA)
@@ -209,7 +225,7 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(6),
                       onTap: () => setState(() {
-                        aoEscolher(o);
+                        aoEscolher(vazio ? null : o);
                         _aberto = null;
                       }),
                       child: Padding(
@@ -221,7 +237,11 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
                                 o,
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: marcado ? _azulTitulo : Colors.black87,
+                                  color: vazio
+                                      ? Colors.grey[600]
+                                      : marcado
+                                      ? _azulTitulo
+                                      : Colors.black87,
                                 ),
                               ),
                             ),
@@ -239,6 +259,7 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
                 );
               },
             ),
+            ],
           ),
         ),
     ];
@@ -281,22 +302,39 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
                       children: [
                         ..._select('tipo', 'Tipo', _tipo, _tipos, (v) {
                           // outro tipo: o produto escolhido deixa de valer
-                          if (v != _tipo) _produto = null;
-                          _tipo = v;
+                          if (v != null && v != _tipo) {
+                            _produto = null;
+                            _produtoController.clear();
+                            _tipo = v;
+                          }
                         }),
                         const SizedBox(height: 8),
-                        ..._select(
-                          'produto',
-                          'Nome do Produto',
-                          _produto,
-                          _produtosPorTipo[_tipo] ?? const [],
-                          (v) => _produto = v,
-                        ),
+                        // Vacina: select; Vermífugo e Carrapaticida: digitado
+                        if (_produtoDigitado)
+                          CampoTextoTopo(
+                            key: ValueKey(_tipo),
+                            rotulo: 'Nome do Produto',
+                            corRotulo: _corRotulo,
+                            controller: _produtoController,
+                            altura: _altura,
+                            dica: _exemploProduto[_tipo],
+                            textCapitalization: TextCapitalization.words,
+                          )
+                        else
+                          ..._select(
+                            'produto',
+                            'Nome do Produto',
+                            _produto,
+                            _produtosVacina,
+                            (v) => _produto = v,
+                            comSelecione: true,
+                          ),
                         const SizedBox(height: 8),
                         CampoTextoTopo(
                           rotulo: 'Quantidade de Animais por Categoria',
                           corRotulo: _corRotulo,
                           controller: _qtdeController,
+                          altura: _altura,
                           keyboardType: TextInputType.number,
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
@@ -320,6 +358,7 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
                                 rotulo: 'Volume',
                                 corRotulo: _corRotulo,
                                 controller: _volumeController,
+                                altura: _altura,
                                 dica: 'Ex: 5',
                                 keyboardType: TextInputType.number,
                                 inputFormatters: [

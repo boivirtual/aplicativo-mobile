@@ -91,7 +91,11 @@ class _CampoTextoTopoState extends State<CampoTextoTopo> {
     maxLines: widget.altura == null ? widget.linhas : 1,
     style: _estiloValor,
     decoration: InputDecoration.collapsed(
-      hintText: widget.dica ?? '',
+      // campo de uma linha: o exemplo só aparece com o rótulo já no topo
+      // (vazio e sem foco, o rótulo fica no meio e os dois se sobrepunham)
+      hintText: widget.altura == null || _foco.hasFocus
+          ? widget.dica ?? ''
+          : '',
       hintStyle: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.normal,

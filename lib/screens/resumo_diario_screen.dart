@@ -1325,7 +1325,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
         borderRadius: BorderRadius.circular(8),
         onTap: habilitado ? () => aoMarcar(!marcada) : null,
         child: Container(
-          height: 54,
+          // 54 no mínimo; cresce quando o texto ocupa mais linhas
+          constraints: const BoxConstraints(minHeight: 54),
           padding: const EdgeInsets.only(left: 4, right: 12),
           decoration: BoxDecoration(
             color: marcada ? const Color(0xFFE3F2FD) : Colors.white,

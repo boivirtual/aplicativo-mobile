@@ -386,7 +386,14 @@ class _TratamentoModalState extends State<TratamentoModal> {
                 Flexible(
                   child: SingleChildScrollView(
                     controller: _rolagem,
-                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+                    // teclado aberto: folga embaixo para o último campo
+                    // (ex.: Volume) subir acima do Confirmar
+                    padding: EdgeInsets.fromLTRB(
+                      12,
+                      4,
+                      12,
+                      tecladoAberto ? 160 : 4,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [

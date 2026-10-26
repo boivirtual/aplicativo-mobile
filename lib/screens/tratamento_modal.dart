@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../services/resumo_diario_service.dart';
 import '../utils/app_alert.dart';
+import '../utils/rolar_ate_foco.dart';
 import '../widgets/campo_topo_widget.dart';
 
 /// Modal "Tratamento N" do Resumo Diário (Seção 3 — Sanidade Animal).
@@ -349,11 +350,16 @@ class _TratamentoModalState extends State<TratamentoModal> {
     onTap: _abrirResponsavel,
   );
 
+  bool _tecladoAntes = false;
+
   @override
   Widget build(BuildContext context) {
     // teclado aberto: o "Confirmar Tratamento" some para o campo em edição
     // ficar à vista (como a barra Anterior/Próximo da tela do resumo)
     final tecladoAberto = MediaQuery.viewInsetsOf(context).bottom > 0;
+    // teclado acabou de abrir: leva o campo em edição para a parte visível
+    if (tecladoAberto && !_tecladoAntes) rolarAteCampoEmFoco();
+    _tecladoAntes = tecladoAberto;
     return Dialog(
       backgroundColor: Colors.transparent,
       // mais para cima, aproveitando melhor a tela

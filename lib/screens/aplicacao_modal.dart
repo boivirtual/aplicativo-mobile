@@ -186,7 +186,7 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
           aberto ? Icons.arrow_drop_up : Icons.arrow_drop_down,
           color: _corRotulo,
         ),
-        onTap: () => _abrir(chave, opcoes),
+        onTap: () => _abrir(chave),
       ),
       if (aberto)
         Container(
@@ -204,54 +204,54 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
             children: [
               for (final o in linhas)
                 Builder(
-              builder: (context) {
-                final marcado = o == valor;
-                final vazio = o == _selecione;
-                return Container(
-                  height: 44,
-                  padding: const EdgeInsets.fromLTRB(4, 0, 4, 3),
-                  child: Material(
-                    color: marcado
-                        ? const Color(0xFFD6E8FA)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(6),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(6),
-                      onTap: () => setState(() {
-                        aoEscolher(vazio ? null : o);
-                        _aberto = null;
-                      }),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                o,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: vazio
-                                      ? Colors.grey[600]
-                                      : marcado
-                                      ? _azulTitulo
-                                      : Colors.black87,
+                  builder: (context) {
+                    final marcado = o == valor;
+                    final vazio = o == _selecione;
+                    return Container(
+                      height: 44,
+                      padding: const EdgeInsets.fromLTRB(4, 0, 4, 3),
+                      child: Material(
+                        color: marcado
+                            ? const Color(0xFFD6E8FA)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(6),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(6),
+                          onTap: () => setState(() {
+                            aoEscolher(vazio ? null : o);
+                            _aberto = null;
+                          }),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    o,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: vazio
+                                          ? Colors.grey[600]
+                                          : marcado
+                                          ? _azulTitulo
+                                          : Colors.black87,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                if (marcado)
+                                  const Icon(
+                                    Icons.check,
+                                    size: 18,
+                                    color: _azulBotao,
+                                  ),
+                              ],
                             ),
-                            if (marcado)
-                              const Icon(
-                                Icons.check,
-                                size: 18,
-                                color: _azulBotao,
-                              ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                );
-              },
-            ),
+                    );
+                  },
+                ),
             ],
           ),
         ),

@@ -90,7 +90,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
           'Excluir $nome',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        content: Text('Confirma a exclusão do $nome ${indice + 1}?'),
+        content: Text(
+          'Confirma a exclusão ${nome == 'Aplicação' ? 'da' : 'do'} '
+          '$nome ${indice + 1}?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),

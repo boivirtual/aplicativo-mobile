@@ -539,8 +539,26 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
     });
   }
 
+  /// Seta do título (e "voltar" do Android): volta para a seção anterior;
+  /// só na Seção 1 sai para a Home.
+  void _voltar() {
+    if (_secao > 1) {
+      _anterior();
+    } else {
+      Navigator.pop(context);
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PopScope(
+    canPop: _secao == 1,
+    onPopInvokedWithResult: (saiu, _) {
+      if (!saiu) _anterior();
+    },
+    child: _tela(context),
+  );
+
+  Widget _tela(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -551,7 +569,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
         backgroundColor: _azul,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+          onPressed: _voltar,
         ),
         actions: const [IndicadorConectividadeWidget(), SizedBox(width: 8)],
       ),

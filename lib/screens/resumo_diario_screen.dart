@@ -160,6 +160,40 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
       ),
   ];
 
+  // Seção 5 — Atividades no Curral: "Teve atividade no curral hoje?"; com
+  // "Sim", as atividades, as categorias trabalhadas, a quantidade e a
+  // observação.
+  String? _teveCurral; // 'sim' ou 'nao'
+  final Set<String> _atividadesCurral = {};
+  final Set<String> _categoriasCurral = {};
+  final _qtdeCurralController = TextEditingController();
+  final _obsCurralController = TextEditingController();
+
+  static const _atividadesDoCurral = <(String, String, IconData)>[
+    ('pesagem', 'Pesagem de animais', Icons.scale_outlined),
+    ('separacao', 'Separação de lotes', Icons.call_split),
+    ('desmama', 'Desmama', Icons.baby_changing_station_outlined),
+    ('tatuagem', 'Tatuagem ou marcação', Icons.sell_outlined),
+    ('descorna', 'Descorna (mochação)', Icons.content_cut),
+    ('protocolo', 'Protocolo de Reprodução', Icons.assignment_outlined),
+    ('diagnostico', 'Diagnóstico', Icons.biotech_outlined),
+    (
+      'medicamentos',
+      'Aplicação de Medicamentos (individual, coletivo, cura de umbigo)',
+      Icons.vaccines_outlined,
+    ),
+  ];
+
+  static const _categoriasAnimal = [
+    'Bezerros 0–7m',
+    'Bezerros 8–12m',
+    'Novilhas 13–24m',
+    'Garrotes 13–24m',
+    'Vacas',
+    'Bois',
+    'CAVALOS',
+  ];
+
   // Seção 4 — Vacinas, Vermífugos e Carrapaticidas: "Adicionar Aplicação"
   // ou "Nenhuma aplicação de vacina ou vermífugo hoje" (como a Seção 3).
   bool _nenhumaAplicacao = false;
@@ -380,6 +414,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
     _esperadosController.dispose();
     _encontradosController.dispose();
     _obsRebanhoController.dispose();
+    _qtdeCurralController.dispose();
+    _obsCurralController.dispose();
     super.dispose();
   }
 
@@ -516,7 +552,28 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
         );
         return;
       }
-      // A Seção 5 vem nas próximas etapas.
+      setState(() => _secao = 5);
+      return;
+    }
+    if (_secao == 5) {
+      String? erro;
+      if (_teveCurral == null) {
+        erro = 'Responda se teve atividade no curral hoje.';
+      } else if (_teveCurral == 'sim') {
+        if (_atividadesCurral.isEmpty) {
+          erro = 'Marque as Atividades Realizadas.';
+        } else if (_categoriasCurral.isEmpty) {
+          erro = 'Selecione a(s) Categoria(s) Trabalhada(s).';
+        } else if ((int.tryParse(_qtdeCurralController.text.trim()) ?? 0) <=
+            0) {
+          erro = 'Informe a Quantidade de Animais.';
+        }
+      }
+      if (erro != null) {
+        await AppAlert.erro(context, erro);
+        return;
+      }
+      // A Seção 6 vem nas próximas etapas.
       return;
     }
     if (_secao == 1) {
@@ -783,6 +840,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
     2 => 'Conferência de Rebanho',
     3 => 'Sanidade Animal',
     4 => 'Vacinas, Vermífugos e Carrapaticidas',
+    5 => 'Atividades no Curral',
     _ => '',
   };
 
@@ -808,6 +866,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
     2 => [_tituloAzul('Contagem de Animais Hoje')],
     3 => [_tituloAzul('Tratamentos Realizados Hoje')],
     4 => [_tituloAzul('Aplicações Realizadas Hoje')],
+    5 => [_tituloAzul('O Que Foi Feito Hoje')],
     _ => [
       _tituloAzul('Identificação'),
       // painel cinza com as caixas brancas, como nas outras telas
@@ -890,8 +949,157 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
         ),
       ],
     ],
+    5 => _atividadesNoCurral(),
     _ => const [],
   };
+
+  // ---------------------------------------------------------------------
+  // Seção 5 — Atividades no Curral
+  // ---------------------------------------------------------------------
+
+  List<Widget> _atividadesNoCurral() => [
+    _pergunta('Teve Atividade no Curral Hoje?'),
+    _opcoes(
+      const [
+        ('sim', 'Sim', Icons.check_circle_outline),
+        ('nao', 'Não', Icons.highlight_off),
+      ],
+      _teveCurral,
+      (v) => setState(() {
+        _teveCurral = v;
+        // "Não": o que tinha sido marcado com "Sim" deixa de valer
+        if (v == 'nao') {
+          _atividadesCurral.clear();
+          _categoriasCurral.clear();
+          _qtdeCurralController.clear();
+          _obsCurralController.clear();
+        }
+      }),
+    ),
+    if (_teveCurral == 'sim') ...[
+      _pergunta('Atividades Realizadas'),
+      for (final a in _atividadesDoCurral) ...[
+        _linhaMarcar(
+          a.$2,
+          a.$3,
+          _atividadesCurral.contains(a.$1),
+          (v) => setState(() {
+            if (v) {
+              _atividadesCurral.add(a.$1);
+            } else {
+              _atividadesCurral.remove(a.$1);
+            }
+          }),
+        ),
+        const SizedBox(height: 8),
+      ],
+      _pergunta('Categorias Trabalhadas'),
+      ..._listaMultipla(_categoriasAnimal, _categoriasCurral),
+      const SizedBox(height: 14),
+      _painelCinza([
+        CampoTextoTopo(
+          rotulo: 'Quantidade de Animais',
+          altura: 80,
+          corRotulo: _corRotulo,
+          controller: _qtdeCurralController,
+          dica: 'Ex: 45',
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        ),
+        const SizedBox(height: 8),
+        CampoTextoTopo(
+          rotulo: 'Observações / Detalhes (descreva "Outras Atividades" aqui)',
+          corRotulo: _corRotulo,
+          controller: _obsCurralController,
+          altura: null,
+          linhas: 3,
+          dica: 'Descreva o que foi realizado, produtos usados, lotes, etc.',
+          textCapitalization: TextCapitalization.sentences,
+        ),
+      ]),
+    ],
+  ];
+
+  /// Lista já aberta, mostrando todas as opções (como a Categoria Animal
+  /// do Tratamento): um toque marca ou desmarca a linha (fica destacada,
+  /// com o ✓); embaixo, os nomes marcados.
+  List<Widget> _listaMultipla(List<String> opcoes, Set<String> marcados) => [
+    Padding(
+      padding: const EdgeInsets.only(left: 2, bottom: 4),
+      child: Text(
+        'Toque para selecionar uma ou mais opções.',
+        style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+      ),
+    ),
+    Container(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFCFD8DC)),
+      ),
+      child: Column(
+        children: [
+          for (final o in opcoes)
+            Container(
+              height: 44,
+              padding: const EdgeInsets.fromLTRB(4, 0, 4, 3),
+              child: Material(
+                color: marcados.contains(o)
+                    ? const Color(0xFFD6E8FA)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(6),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(6),
+                  onTap: () {
+                    FocusManager.instance.primaryFocus?.unfocus();
+                    setState(() {
+                      if (!marcados.remove(o)) marcados.add(o);
+                    });
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            o,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: marcados.contains(o)
+                                  ? _azul
+                                  : Colors.black87,
+                            ),
+                          ),
+                        ),
+                        if (marcados.contains(o))
+                          const Icon(Icons.check, size: 18, color: _azulBotao),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    ),
+    Padding(
+      padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
+      child: Text(
+        marcados.isEmpty
+            ? 'Nenhuma selecionada'
+            : [
+                for (final o in opcoes)
+                  if (marcados.contains(o)) o,
+              ].join(', '),
+        style: TextStyle(
+          fontSize: 13,
+          fontStyle: FontStyle.italic,
+          color: marcados.isEmpty ? Colors.grey[600] : _corRotulo,
+        ),
+      ),
+    ),
+  ];
 
   // ---------------------------------------------------------------------
   // Seção 2 — Conferência de Rebanho

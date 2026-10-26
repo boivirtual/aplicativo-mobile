@@ -146,15 +146,8 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
 
   /// Abre (ou fecha) a lista do select embaixo do campo e rola o modal até
   /// ela ficar à vista.
-  Future<void> _abrir(String chave, List<String> opcoes) async {
+  void _abrir(String chave) {
     FocusManager.instance.primaryFocus?.unfocus();
-    if (opcoes.isEmpty) {
-      await AppAlert.erro(
-        context,
-        'Os produtos de $_tipo ainda não foram cadastrados.',
-      );
-      return;
-    }
     setState(() => _aberto = _aberto == chave ? null : chave);
     if (_aberto == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {

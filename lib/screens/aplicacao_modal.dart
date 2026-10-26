@@ -221,9 +221,7 @@ class _AplicacaoModalState extends State<AplicacaoModal> {
                                 o,
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: marcado
-                                      ? _azulTitulo
-                                      : Colors.black87,
+                                  color: marcado ? _azulTitulo : Colors.black87,
                                 ),
                               ),
                             ),

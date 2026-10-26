@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../data/daos/mapa_gado_dao.dart';
 import '../utils/app_alert.dart';
 import '../widgets/campo_topo_widget.dart';
+import 'aplicacao_modal.dart';
 import 'tratamento_modal.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 import '../widgets/seletor_campo_widget.dart';

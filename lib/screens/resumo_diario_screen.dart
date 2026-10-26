@@ -73,16 +73,23 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   }
 
   Future<void> _excluirTratamento(int indice) async {
+    if (await _confirmarExclusao('Tratamento', indice) && mounted) {
+      setState(() => _tratamentos.removeAt(indice));
+    }
+  }
+
+  /// "Excluir <nome> N?" — mesmo modelo do "Excluir Item" da Pesagem.
+  Future<bool> _confirmarExclusao(String nome, int indice) async {
     final ok = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         // mesmo modelo do "Excluir Item" da Pesagem: o NÃO em evidência
-        title: const Text(
-          'Excluir Tratamento',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          'Excluir $nome',
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        content: Text('Confirma a exclusão do Tratamento ${indice + 1}?'),
+        content: Text('Confirma a exclusão do $nome ${indice + 1}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -105,12 +112,18 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
         ],
       ),
     );
-    if (ok == true && mounted) setState(() => _tratamentos.removeAt(indice));
+    return ok == true;
   }
 
-  /// Lista dos tratamentos confirmados: "Tratamento N", editar e lixeira.
-  List<Widget> _listaTratamentos() => [
-    for (var i = 0; i < _tratamentos.length; i++)
+  /// Lista dos registros confirmados ("Tratamento N", "Aplicação N"...),
+  /// cada um com editar e lixeira.
+  List<Widget> _listaRegistros(
+    String nome,
+    int quantidade,
+    void Function(int) editar,
+    void Function(int) excluir,
+  ) => [
+    for (var i = 0; i < quantidade; i++)
       Container(
         margin: const EdgeInsets.only(top: 6),
         padding: const EdgeInsets.only(left: 14),
@@ -123,7 +136,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
           children: [
             Expanded(
               child: Text(
-                'Tratamento ${i + 1}',
+                '$nome ${i + 1}',
                 style: _textoGrosso(_corRotulo).copyWith(fontSize: 15),
               ),
             ),
@@ -131,17 +144,38 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
               tooltip: 'Editar',
               // azul do btn-primary (Bootstrap 3)
               icon: const Icon(Icons.edit_outlined, color: Color(0xFF337AB7)),
-              onPressed: () => _adicionarTratamento(editar: i),
+              onPressed: () => editar(i),
             ),
             IconButton(
               tooltip: 'Excluir',
               icon: const Icon(Icons.delete_outline, color: Color(0xFF337AB7)),
-              onPressed: () => _excluirTratamento(i),
+              onPressed: () => excluir(i),
             ),
           ],
         ),
       ),
   ];
+
+  // Seção 4 — Vacinas, Vermífugos e Carrapaticidas: "Adicionar Aplicação"
+  // ou "Nenhuma aplicação de vacina ou vermífugo hoje" (como a Seção 3).
+  bool _nenhumaAplicacao = false;
+
+  /// Aplicações adicionadas (a tela "Adicionar Aplicação" vem depois).
+  final List<Map<String, dynamic>> _aplicacoes = [];
+
+  /// "Adicionar Aplicação": a tela de inclusão vem na próxima etapa.
+  void _adicionarAplicacao({int? editar}) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Adicionar Aplicação: em breve.')),
+    );
+  }
+
+  Future<void> _excluirAplicacao(int indice) async {
+    if (await _confirmarExclusao('Aplicação', indice) && mounted) {
+      setState(() => _aplicacoes.removeAt(indice));
+    }
+  }
 
   // pastos onde está a diferença (quando Esperados ≠ Encontrados)
   final Set<int> _pastosDiferenca = {};
@@ -451,7 +485,19 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
         );
         return;
       }
-      // A Seção 4 vem nas próximas etapas.
+      setState(() => _secao = 4);
+      return;
+    }
+    if (_secao == 4) {
+      if (!_nenhumaAplicacao && _aplicacoes.isEmpty) {
+        await AppAlert.erro(
+          context,
+          'Adicione uma aplicação ou marque "Nenhuma aplicação de vacina ou '
+          'vermífugo hoje".',
+        );
+        return;
+      }
+      // A Seção 5 vem nas próximas etapas.
       return;
     }
     if (_secao == 1) {
@@ -699,6 +745,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
     1 => 'Identificação/Atividades',
     2 => 'Conferência de Rebanho',
     3 => 'Sanidade Animal',
+    4 => 'Vacinas, Vermífugos e Carrapaticidas',
     _ => '',
   };
 
@@ -723,6 +770,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   List<Widget> _fixoDaSecao() => switch (_secao) {
     2 => [_tituloAzul('Contagem de Animais Hoje')],
     3 => [_tituloAzul('Tratamentos Realizados Hoje')],
+    4 => [_tituloAzul('Aplicações Realizadas Hoje')],
     _ => [
       _tituloAzul('Identificação'),
       // painel cinza com as caixas brancas, como nas outras telas
@@ -758,7 +806,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
         semCaixa: true,
         habilitado: !_nenhumDoente,
       ),
-      ..._listaTratamentos(),
+      ..._listaRegistros(
+        'Tratamento',
+        _tratamentos.length,
+        (i) => _adicionarTratamento(editar: i),
+        _excluirTratamento,
+      ),
       // com pelo menos 1 tratamento na lista, o "Nenhum animal doente..."
       // fica escondido; volta quando todos forem excluídos
       if (_tratamentos.isEmpty) ...[
@@ -768,6 +821,35 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
           Icons.verified_outlined,
           _nenhumDoente,
           (v) => setState(() => _nenhumDoente = v),
+        ),
+      ],
+    ],
+    4 => [
+      // botão, pode ser tocado várias vezes; travado com "Nenhuma
+      // aplicação..." marcado
+      _linhaMarcar(
+        'Adicionar Aplicação',
+        Icons.vaccines_outlined,
+        false,
+        (_) => _adicionarAplicacao(),
+        semCaixa: true,
+        habilitado: !_nenhumaAplicacao,
+      ),
+      ..._listaRegistros(
+        'Aplicação',
+        _aplicacoes.length,
+        (i) => _adicionarAplicacao(editar: i),
+        _excluirAplicacao,
+      ),
+      // com pelo menos 1 aplicação na lista, o "Nenhuma aplicação..."
+      // fica escondido; volta quando todas forem excluídas
+      if (_aplicacoes.isEmpty) ...[
+        const SizedBox(height: 8),
+        _linhaMarcar(
+          'Nenhuma aplicação de vacina ou vermífugo hoje',
+          Icons.verified_outlined,
+          _nenhumaAplicacao,
+          (v) => setState(() => _nenhumaAplicacao = v),
         ),
       ],
     ],

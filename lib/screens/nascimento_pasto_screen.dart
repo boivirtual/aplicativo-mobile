@@ -1039,6 +1039,7 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     FocusManager.instance.primaryFocus?.unfocus();
     _buscaAtual++;
     _esperaNaoEncontrado?.cancel();
+    _marcarMae();
     setState(() {
       _opcao = valor;
       _data = _hoje();
@@ -1330,8 +1331,9 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     if (!mounted) return;
     // ler_animal_nascimento(): tela limpa para o próximo, com o próximo
     // número do animal.
+    // a opção (Nascimento, Aborto...) continua escolhida, com os campos
+    // limpos, para lançar o próximo
     setState(() {
-      _opcao = null;
       _sexo = null;
       _mae = null;
       _maeId = '';
@@ -1352,6 +1354,20 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     });
     await _carregarParametros();
     await _carregarRegistrosHoje();
+    _marcarMae();
+  }
+
+  /// Deixa o Nº Mãe (Nº Fêmea) marcado para digitação, mas sem abrir o
+  /// teclado: o usuário vê por onde começar; o toque no campo abre o
+  /// teclado.
+  void _marcarMae() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_maeFoco.canRequestFocus) return;
+      _maeFoco.requestFocus();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        SystemChannels.textInput.invokeMethod('TextInput.hide');
+      });
+    });
   }
 
   // ---------------------------------------------------------------------

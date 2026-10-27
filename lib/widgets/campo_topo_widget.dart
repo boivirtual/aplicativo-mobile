@@ -148,6 +148,11 @@ class _CampoTextoTopoState extends State<CampoTextoTopo> {
     return GestureDetector(
       onTap: () {
         if (!widget.enabled) return;
+        // já marcado (foco sem teclado, ex.: Nº Mãe do Nascimento): o toque
+        // abre o teclado
+        if (_foco.hasFocus) {
+          SystemChannels.textInput.invokeMethod('TextInput.show');
+        }
         _foco.requestFocus();
         widget.onTap?.call();
       },

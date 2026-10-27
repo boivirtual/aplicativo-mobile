@@ -1375,7 +1375,15 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
         actions: const [IndicadorConectividadeWidget(), SizedBox(width: 8)],
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(6, 6, 6, 16),
+        // embaixo, também a altura da barra de navegação do celular: a tela
+        // é desenhada por trás dela e a última linha da lista ficava
+        // escondida ali, mesmo rolando até o fim
+        padding: EdgeInsets.fromLTRB(
+          6,
+          6,
+          6,
+          16 + MediaQuery.paddingOf(context).bottom,
+        ),
         children: [
           // Puxar para baixo a partir da tarja azul atualiza a tela (com
           // internet) — ver _atualizarTela.

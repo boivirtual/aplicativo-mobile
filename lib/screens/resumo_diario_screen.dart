@@ -20,7 +20,10 @@ import '../widgets/seletor_campo_widget.dart';
 /// nunca futura), fazenda (as do usuário; uma só já vem escolhida) e o
 /// responsável (o usuário logado, sem digitar). O Próximo ainda não avança.
 class ResumoDiarioScreen extends StatefulWidget {
-  const ResumoDiarioScreen({super.key});
+  /// Seta da Seção 1: volta para a Home do rodapé (null = fecha a tela).
+  final VoidCallback? onBack;
+
+  const ResumoDiarioScreen({super.key, this.onBack});
 
   @override
   State<ResumoDiarioScreen> createState() => _ResumoDiarioScreenState();

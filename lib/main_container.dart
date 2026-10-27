@@ -38,6 +38,12 @@ class _MainContainerState extends State<MainContainer>
 
   bool _verificandoAoVoltar = false;
 
+  /// Resumo Diário: uma instância só, que fica montada enquanto o app está
+  /// aberto (ver o Offstage no build).
+  late final Widget _resumoDiario = ResumoDiarioScreen(
+    onBack: () => setState(() => _currentIndex = 5),
+  );
+
   @override
   void initState() {
     super.initState();

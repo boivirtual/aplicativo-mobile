@@ -1568,27 +1568,18 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
           for (final c in _colunasRegistros) c.$1,
         ], cabecalho: true),
         Divider(height: 1, color: Colors.grey.shade300),
-        // Rola sozinha quando não cabe (a tela também rola).
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 280),
-          child: ListView.separated(
-            shrinkWrap: true,
-            padding: EdgeInsets.zero,
-            itemCount: _registrosHoje.length,
-            separatorBuilder: (_, _) =>
-                Divider(height: 1, color: Colors.grey.shade200),
-            itemBuilder: (context, i) {
-              final r = _registrosHoje[i];
-              return _linhaRegistro([
-                (r['animal'] ?? '').toString(),
-                dataBr((r['data'] ?? '').toString()),
-                (r['sexo'] ?? '').toString(),
-                (r['mae'] ?? '').toString(),
-                (r['pasto'] ?? '').toString(),
-              ], vermelho: r['baixado'] == true);
-            },
-          ),
-        ),
+        // Todas as linhas, sem rolagem própria: quem rola é a tela inteira
+        // (a caixa de altura fixa escondia parte dos animais lá embaixo).
+        for (var i = 0; i < _registrosHoje.length; i++) ...[
+          if (i > 0) Divider(height: 1, color: Colors.grey.shade200),
+          _linhaRegistro([
+            (_registrosHoje[i]['animal'] ?? '').toString(),
+            dataBr((_registrosHoje[i]['data'] ?? '').toString()),
+            (_registrosHoje[i]['sexo'] ?? '').toString(),
+            (_registrosHoje[i]['mae'] ?? '').toString(),
+            (_registrosHoje[i]['pasto'] ?? '').toString(),
+          ], vermelho: _registrosHoje[i]['baixado'] == true),
+        ],
       ],
     );
   }

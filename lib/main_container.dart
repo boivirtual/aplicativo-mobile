@@ -222,8 +222,10 @@ class _MainContainerState extends State<MainContainer>
           : null,
       body: Stack(
         children: [
-          if (_currentIndex != 4)
-            Column(children: [Expanded(child: pages[_currentIndex])]),
+          // Sempre presente (no Resumo Diário é só um espaço vazio): é ela
+          // que dá o tamanho do Stack — sem ela o Resumo ficava com tamanho
+          // zero e não aparecia.
+          Column(children: [Expanded(child: pages[_currentIndex])]),
           // O Resumo Diário continua montado (escondido) ao trocar de
           // programa pelo rodapé: o que já foi preenchido não se perde.
           Positioned.fill(

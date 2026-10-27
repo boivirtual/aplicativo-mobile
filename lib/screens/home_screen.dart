@@ -34,21 +34,17 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              // Linha 1: Resumo Diário da Fazenda — largura total, fundo
-              // azul bem claro para destacar dos outros.
+              // Linha 1: Mapa de Gado — largura total
               _buildWideCard(
-                "Resumo Diário da Fazenda",
-                'farmer.png',
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ResumoDiarioScreen()),
-                ),
-                fundo: const Color(0xFFE3F2FD),
+                "Mapa de Gado",
+                'home.png',
+                () => onNavigate?.call(0),
               ),
 
               const SizedBox(height: 15),
 
-              // Linha 2: Mapa Gado e Pesagem
+              // Linhas 2 e 3: Pesagem e Chuva; Agenda e Resumo Diário
+              // (mesmos índices do rodapé, em main_container.dart)
               GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -57,25 +53,15 @@ class HomeScreen extends StatelessWidget {
                 crossAxisSpacing: 15,
                 childAspectRatio: 1.1,
                 children: [
-                  _buildMenuCard("Mapa Gado", 'home.png', 0, onNavigate),
-                  _buildMenuCard("Pesagem", 'pesagem.png', 2, onNavigate),
-                ],
-              ),
-
-              const SizedBox(height: 15),
-
-              // Linha 3: Chuva, Agenda e Dashboard
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 3,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 1,
-                children: [
-                  _buildMenuCard("Chuva", 'chuva.png', 3, onNavigate),
-                  _buildMenuCard("Agenda", 'agenda.png', 4, onNavigate),
-                  _buildMenuCard("Dashboard", 'dashboard.png', 1, onNavigate),
+                  _buildMenuCard("Pesagem", 'pesagem.png', 1, onNavigate),
+                  _buildMenuCard("Chuva", 'chuva.png', 2, onNavigate),
+                  _buildMenuCard("Agenda", 'agenda.png', 3, onNavigate),
+                  _buildMenuCard(
+                    "Resumo Diário",
+                    'farmer.png',
+                    4,
+                    onNavigate,
+                  ),
                 ],
               ),
             ],

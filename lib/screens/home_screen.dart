@@ -69,7 +69,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Quadro LARGO (Resumo Diário da Fazenda) - mesmo padrão dos outros
+  // Quadro LARGO (Mapa de Gado) - mesmo padrão dos outros
   Widget _buildWideCard(
     String title,
     String img,

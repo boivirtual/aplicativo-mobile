@@ -634,7 +634,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   Widget build(BuildContext context) {
     // Dentro do rodapé o Resumo fica montado mesmo escondido (ver
     // main_container.dart): escondido, não segura o "voltar" do Android.
-    final visivel = TickerMode.valuesOf(context).enabled;
+    final visivel = TickerMode.of(context);
     return PopScope(
       canPop: !visivel || (_secao == 1 && widget.onBack == null),
       onPopInvokedWithResult: (saiu, _) {

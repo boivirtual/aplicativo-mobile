@@ -226,11 +226,13 @@ class _MainContainerState extends State<MainContainer>
             Column(children: [Expanded(child: pages[_currentIndex])]),
           // O Resumo Diário continua montado (escondido) ao trocar de
           // programa pelo rodapé: o que já foi preenchido não se perde.
-          Offstage(
-            offstage: _currentIndex != 4,
-            child: TickerMode(
-              enabled: _currentIndex == 4,
-              child: _resumoDiario,
+          Positioned.fill(
+            child: Offstage(
+              offstage: _currentIndex != 4,
+              child: TickerMode(
+                enabled: _currentIndex == 4,
+                child: _resumoDiario,
+              ),
             ),
           ),
           const IndicadorSincronizandoWidget(),

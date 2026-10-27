@@ -177,7 +177,11 @@ class _CampoTextoTopoState extends State<CampoTextoTopo> {
           border: widget.erro
               ? Border.all(color: Colors.red)
               : _foco.hasFocus
-              ? Border.all(color: const Color(0xFF228cb9), width: 1.5)
+              // mesmo azul claro do campo em foco do web (Bootstrap 3)
+              ? Border.all(color: const Color(0xFF66AFE9), width: 1.5)
+              : null,
+          boxShadow: !widget.erro && _foco.hasFocus
+              ? const [BoxShadow(color: Color(0x5566AFE9), blurRadius: 6)]
               : null,
         ),
         child: ListenableBuilder(

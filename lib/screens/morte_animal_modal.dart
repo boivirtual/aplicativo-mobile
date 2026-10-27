@@ -749,6 +749,8 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
     focusNode: _animalFoco,
     enabled: _temCadastro,
     erro: _animalInvalido,
+    // teclado numérico: o animal é procurado pelo número
+    keyboardType: TextInputType.number,
     textCapitalization: TextCapitalization.characters,
     onTap: _aoTocarAnimal,
     onChanged: _aoDigitarAnimal,

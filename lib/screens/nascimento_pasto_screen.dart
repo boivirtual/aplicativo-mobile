@@ -1476,12 +1476,26 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
       'fazenda': widget.fazendaId,
     });
     if (!mounted || dados == null) return;
-    setState(() {
-      _registrosHoje = [
-        for (final r in (dados['registros'] as List? ?? const []))
-          Map<String, dynamic>.from(r as Map),
-      ];
+    final registros = [
+      for (final r in (dados['registros'] as List? ?? const []))
+        Map<String, dynamic>.from(r as Map),
+    ];
+    // Mesma ordem do form_nascimento_animais.php do web: data da maior para
+    // a menor e, na mesma data, o número do animal do maior para o menor
+    // (Aborto, Absorção e Natimorto, sem número, ficam por último).
+    int numero(Map<String, dynamic> r) =>
+        int.tryParse(
+          RegExp(r'(\d+)$').firstMatch(r['animal']?.toString() ?? '')?[1] ??
+              '',
+        ) ??
+        0;
+    registros.sort((a, b) {
+      final porData = (b['data']?.toString() ?? '').compareTo(
+        a['data']?.toString() ?? '',
+      );
+      return porData != 0 ? porData : numero(b).compareTo(numero(a));
     });
+    setState(() => _registrosHoje = registros);
   }
 
   static const _colunasRegistros = [
@@ -1891,6 +1905,8 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     focusNode: _maeFoco,
     enabled: _temCadastro,
     erro: _maeInvalida,
+    // teclado numérico: a mãe é procurada pelo número
+    keyboardType: TextInputType.number,
     textCapitalization: TextCapitalization.characters,
     onTap: _aoTocarMae,
     onChanged: _aoDigitarMae,

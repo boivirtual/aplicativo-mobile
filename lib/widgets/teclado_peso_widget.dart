@@ -114,7 +114,8 @@ class TecladoPesoWidget extends StatelessWidget {
       const SizedBox(height: _espacoEntreLinhas),
       Row(
         children: [
-          _botaoDigito(','),
+          // sem a vírgula: o peso é sempre inteiro
+          const Expanded(child: SizedBox.shrink()),
           _botaoDigito('0'),
           _botaoApagar(),
           _botaoConfirmar(),

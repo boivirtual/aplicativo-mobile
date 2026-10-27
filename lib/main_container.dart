@@ -145,12 +145,14 @@ class _MainContainerState extends State<MainContainer>
     const Color azulBarra = Color(0xFF18385F);
     const Color cinzaInativo = Colors.grey;
 
+    // Índices: 0 Mapa Gado, 1 Pesagem, 2 Chuva, 3 Agenda, 4 Resumo Diário,
+    // 5 Home (o Resumo Diário fica à parte, em _resumoDiario).
     final List<Widget> pages = [
       MapaScreen(onBack: () => setState(() => _currentIndex = 5)),
-      DashboardScreen(onBack: () => setState(() => _currentIndex = 5)),
       PesagemScreen(onBack: () => setState(() => _currentIndex = 5)),
       ChuvaScreen(onBack: () => setState(() => _currentIndex = 5)),
       AgendaScreen(onBack: () => setState(() => _currentIndex = 5)),
+      const SizedBox.shrink(),
       // AJUSTE: Passando a função onNavigate para a HomeScreen
       HomeScreen(onNavigate: (index) => setState(() => _currentIndex = index)),
     ];

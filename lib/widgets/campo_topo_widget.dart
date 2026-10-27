@@ -73,7 +73,20 @@ class _CampoTextoTopoState extends State<CampoTextoTopo> {
   FocusNode get _foco => widget.focusNode ?? (_focoProprio ??= FocusNode());
 
   @override
+  void initState() {
+    super.initState();
+    // borda azul enquanto o campo está em edição (ou só marcado, sem
+    // teclado — ex.: o Nº Mãe do Nascimento)
+    _foco.addListener(_aoMudarFoco);
+  }
+
+  void _aoMudarFoco() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   void dispose() {
+    _foco.removeListener(_aoMudarFoco);
     _focoProprio?.dispose();
     super.dispose();
   }

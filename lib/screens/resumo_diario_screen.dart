@@ -29,7 +29,8 @@ class ResumoDiarioScreen extends StatefulWidget {
   State<ResumoDiarioScreen> createState() => _ResumoDiarioScreenState();
 }
 
-class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
+class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
+    with WidgetsBindingObserver {
   static const _azul = Color(0xFF18385F);
   static const _azulBotao = Color(0xFF007AFF);
   static final _corRotulo = Colors.blueGrey[800]!;
@@ -414,6 +415,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _esperadosController.dispose();
     _encontradosController.dispose();
     _obsRebanhoController.dispose();
@@ -460,7 +462,20 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _carregar();
+  }
+
+  /// Teclado aberto? Lido direto da tela do aparelho: dentro do rodapé
+  /// (main_container.dart) o Scaffold de fora já desconta o teclado e o
+  /// MediaQuery daqui chega com o valor zerado.
+  bool get _tecladoAberto => View.of(context).viewInsets.bottom > 0;
+
+  /// O teclado abriu ou fechou: redesenha (mostra ou esconde a barra
+  /// Anterior/Próximo).
+  @override
+  void didChangeMetrics() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _carregar() async {
@@ -682,7 +697,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
                     12,
                     0,
                     12,
-                    MediaQuery.of(context).viewInsets.bottom > 0
+                    _tecladoAberto
                         ? 16
                         : 96 + MediaQuery.of(context).padding.bottom,
                   ),
@@ -691,7 +706,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
                 // Próximo sempre visível; a tela rola por trás dele. Com o
                 // teclado aberto ele sai da frente, para não cobrir o campo
                 // que está sendo digitado.
-                if (MediaQuery.of(context).viewInsets.bottom == 0)
+                if (!_tecladoAberto)
                   Positioned(
                     left: 0,
                     right: 0,

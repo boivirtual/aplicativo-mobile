@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'resumo_diario_screen.dart';
-
 class HomeScreen extends StatelessWidget {
   final Function(int)? onNavigate;
 

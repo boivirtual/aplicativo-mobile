@@ -174,7 +174,11 @@ class _CampoTextoTopoState extends State<CampoTextoTopo> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
-          border: widget.erro ? Border.all(color: Colors.red) : null,
+          border: widget.erro
+              ? Border.all(color: Colors.red)
+              : _foco.hasFocus
+              ? Border.all(color: const Color(0xFF228cb9), width: 1.5)
+              : null,
         ),
         child: ListenableBuilder(
           listenable: Listenable.merge([widget.controller, _foco]),

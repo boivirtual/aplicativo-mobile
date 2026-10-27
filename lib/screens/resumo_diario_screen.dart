@@ -620,19 +620,26 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen> {
   void _voltar() {
     if (_secao > 1) {
       _anterior();
+    } else if (widget.onBack != null) {
+      widget.onBack!();
     } else {
       Navigator.pop(context);
     }
   }
 
   @override
-  Widget build(BuildContext context) => PopScope(
-    canPop: _secao == 1,
-    onPopInvokedWithResult: (saiu, _) {
-      if (!saiu) _anterior();
-    },
-    child: _tela(context),
-  );
+  Widget build(BuildContext context) {
+    // Dentro do rodapé o Resumo fica montado mesmo escondido (ver
+    // main_container.dart): escondido, não segura o "voltar" do Android.
+    final visivel = TickerMode.valuesOf(context).enabled;
+    return PopScope(
+      canPop: !visivel || (_secao == 1 && widget.onBack == null),
+      onPopInvokedWithResult: (saiu, _) {
+        if (!saiu && visivel) _voltar();
+      },
+      child: _tela(context),
+    );
+  }
 
   Widget _tela(BuildContext context) {
     return Scaffold(

@@ -37,6 +37,8 @@ class HomeScreen extends StatelessWidget {
                 "Mapa de Gado",
                 'home.png',
                 () => onNavigate?.call(0),
+                // azul bem claro para destacar dos outros
+                fundo: const Color(0xFFE3F2FD),
               ),
 
               const SizedBox(height: 15),

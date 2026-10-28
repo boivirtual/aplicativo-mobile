@@ -174,21 +174,27 @@ class _CampoTextoTopoState extends State<CampoTextoTopo> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
-          border: widget.erro ? Border.all(color: Colors.red) : null,
           boxShadow: !widget.erro && _foco.hasFocus
               ? const [BoxShadow(color: Color(0x5566AFE9), blurRadius: 6)]
               : null,
         ),
-        // A borda do foco vai por cima (foregroundDecoration): como borda
-        // normal ela mudava o recuo interno do campo ao ganhar o foco e o
-        // cursor sumia.
-        foregroundDecoration: !widget.erro && _foco.hasFocus
-            // mesmo azul claro do campo em foco do web (Bootstrap 3)
-            ? BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFF66AFE9), width: 1.5),
-              )
-            : null,
+        // A borda vai SEMPRE por cima (foregroundDecoration), só mudando de
+        // cor. Se ela aparecesse e sumisse (ou entrasse como borda normal),
+        // o Container mudaria a estrutura por dentro e o Flutter recriaria
+        // o campo de texto: ele ficava com o foco mas desligado do teclado
+        // — cursor sumia e o que se digitava não entrava.
+        foregroundDecoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: widget.erro
+                ? Colors.red
+                : _foco.hasFocus
+                // mesmo azul claro do campo em foco do web (Bootstrap 3)
+                ? const Color(0xFF66AFE9)
+                : Colors.transparent,
+            width: widget.erro ? 1 : 1.5,
+          ),
+        ),
         child: ListenableBuilder(
           listenable: Listenable.merge([widget.controller, _foco]),
           builder: (context, _) {

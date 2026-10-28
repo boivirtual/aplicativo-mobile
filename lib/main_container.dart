@@ -240,7 +240,11 @@ class _MainContainerState extends State<MainContainer>
           ? null
           : BottomNavigationBar(
               currentIndex: _currentIndex > 4 ? 0 : _currentIndex,
-              onTap: (index) => setState(() => _currentIndex = index),
+              onTap: (index) {
+                // Resumo Diário fora desta versão (config/recursos.dart)
+                if (index == 4 && !resumoDiarioLiberado) return;
+                setState(() => _currentIndex = index);
+              },
               type: BottomNavigationBarType.fixed,
               backgroundColor: Colors.white,
               selectedItemColor: azulBarra,

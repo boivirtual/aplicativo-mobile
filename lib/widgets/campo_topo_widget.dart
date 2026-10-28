@@ -81,7 +81,18 @@ class _CampoTextoTopoState extends State<CampoTextoTopo> {
   }
 
   void _aoMudarFoco() {
+    if (_foco.hasFocus) _garantirCursor();
     if (mounted) setState(() {});
+  }
+
+  /// Campo limpo pelo programa (controller.clear()) fica sem posição de
+  /// cursor; com o foco dado pelo programa (ex.: Nº Mãe já marcado no
+  /// Nascimento) o cursor não aparecia. Põe o cursor no fim do texto.
+  void _garantirCursor() {
+    final c = widget.controller;
+    if (!c.selection.isValid) {
+      c.selection = TextSelection.collapsed(offset: c.text.length);
+    }
   }
 
   @override

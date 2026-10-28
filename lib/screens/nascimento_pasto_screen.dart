@@ -1363,6 +1363,10 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
   void _marcarMae() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !_maeFoco.canRequestFocus) return;
+      // o campo foi limpo (clear) e ficou sem posição de cursor: põe no fim
+      _maeController.selection = TextSelection.collapsed(
+        offset: _maeController.text.length,
+      );
       _maeFoco.requestFocus();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         SystemChannels.textInput.invokeMethod('TextInput.hide');

@@ -1892,7 +1892,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     }
   }
 
-  void _limparCampos() {
+  void _limparCampos({bool focar = true}) {
     _noAnimalController.clear();
     _pesoController.clear();
     _sizePesoController.clear();
@@ -1914,7 +1914,7 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
     // pra abrir o teclado; pedido do George pra digitar o próximo animal
     // direto após confirmar um peso ou excluir um item, sem esse toque
     // extra.
-    _focarNoAnimalComDelay();
+    if (focar) _focarNoAnimalComDelay();
   }
 
   Future<void> _executarAcaoPrincipal() async {
@@ -2067,12 +2067,16 @@ class _PesagemItensScreenState extends State<PesagemItensScreen> {
       int limite = int.tryParse(_qtdAPesarAtual) ?? 0;
       if (!_mensagemLimiteExibida && limite > 0 && _qtdPesado > limite) {
         _mensagemLimiteExibida = true;
+        // O foco só volta ao Nº do Animal depois do OK: o foco automático
+        // (ver _limparCampos) fechava o aviso sozinho, sem o usuário ler.
+        _limparCampos(focar: false);
         _exibirMensagemOverlay(
           "Qtde de Animais Pesados maior que Qtde de Animais a Pesar",
+          onClose: _focarNoAnimalComDelay,
         );
+      } else {
+        _limparCampos();
       }
-
-      _limparCampos();
     } finally {
       if (mounted) {
         setState(() {

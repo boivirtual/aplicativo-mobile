@@ -112,9 +112,10 @@ reaproveitar os componentes e cores abaixo — nunca criar cor, borda ou campo
   Item" da Pesagem.
 
 ### Textos
-- A fonte do app (FuturaStd) só tem a versão fina: negrito é simulado com
-  `fontWeight: w900` + sombras da mesma cor (ver `_textoGrosso` no Resumo
-  Diário).
+- A fonte do app (FuturaStd) só tem a versão fina: negrito com
+  `EstiloApp.negrito(tamanho, cor)` (w900 + sombras da mesma cor).
+- Títulos de modal em negrito; na tarja azul do topo (fazenda - pasto) o
+  nome do pasto em negrito (`EstiloApp.textoTarjaPasto`).
 - Títulos de seção centralizados em azul claro; subtítulos com maiúsculas
   iniciais ("Aplicações Realizadas Hoje").
 

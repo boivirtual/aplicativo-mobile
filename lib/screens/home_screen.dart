@@ -57,7 +57,17 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   _buildMenuCard("Pesagem", 'pesagem.png', 1, onNavigate),
                   _buildMenuCard("Chuva", 'chuva.png', 2, onNavigate),
-                  _buildMenuCard("Agenda", 'agenda.png', 3, onNavigate),
+                  // fora desta versão (ver config/recursos.dart): clareado
+                  // e sem abrir
+                  Opacity(
+                    opacity: agendaLiberada ? 1 : 0.45,
+                    child: _buildMenuCard(
+                      "Agenda",
+                      'agenda.png',
+                      3,
+                      agendaLiberada ? onNavigate : null,
+                    ),
+                  ),
                   // fora desta versão (ver config/recursos.dart): clareado
                   // e sem abrir
                   Opacity(

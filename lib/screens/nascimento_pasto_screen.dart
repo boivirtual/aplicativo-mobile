@@ -1801,16 +1801,8 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
       ),
       child: FittedBox(
         fit: BoxFit.scaleDown,
-        child: Text(
-          '${widget.nomeFazenda}  -  ${widget.nomePasto}',
-          maxLines: 1,
-          softWrap: false,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Colors.blue,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        // nome do pasto em negrito
+        child: EstiloApp.textoTarjaPasto(widget.nomeFazenda, widget.nomePasto),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../utils/estilo_app.dart';
 import 'package:flutter/services.dart';
 
 import '../data/daos/animal_cache_dao.dart';
@@ -618,10 +619,10 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              Text(
                 'Morte',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, color: _azulTitulo),
+                style: EstiloApp.negrito(18, _azulTitulo),
               ),
               const SizedBox(height: 10),
               _tarja(),
@@ -717,16 +718,8 @@ class _MorteAnimalModalState extends State<MorteAnimalModal> {
     ),
     child: FittedBox(
       fit: BoxFit.scaleDown,
-      child: Text(
-        '${widget.nomeFazenda}  -  ${widget.nomePasto}',
-        maxLines: 1,
-        softWrap: false,
-        style: const TextStyle(
-          fontSize: 13,
-          color: Colors.blue,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+      // nome do pasto em negrito
+      child: EstiloApp.textoTarjaPasto(widget.nomeFazenda, widget.nomePasto),
     ),
   );
 

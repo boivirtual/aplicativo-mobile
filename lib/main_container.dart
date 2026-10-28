@@ -242,7 +242,9 @@ class _MainContainerState extends State<MainContainer>
           : BottomNavigationBar(
               currentIndex: _currentIndex > 4 ? 0 : _currentIndex,
               onTap: (index) {
-                // Resumo Diário fora desta versão (config/recursos.dart)
+                // Agenda e Resumo Diário fora desta versão
+                // (config/recursos.dart)
+                if (index == 3 && !agendaLiberada) return;
                 if (index == 4 && !resumoDiarioLiberado) return;
                 setState(() => _currentIndex = index);
               },
@@ -271,7 +273,8 @@ class _MainContainerState extends State<MainContainer>
                   'Agenda',
                   3,
                   azulBarra,
-                  cinzaInativo,
+                  // fora desta versão: ícone bem clarinho
+                  agendaLiberada ? cinzaInativo : Colors.grey.shade300,
                 ),
                 _buildNavItem(
                   'farmer.png',

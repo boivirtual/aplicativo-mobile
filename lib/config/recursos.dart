@@ -3,3 +3,6 @@
 
 /// Resumo Diário da Fazenda: fora da versão 3.0.0 de testes (2026-10-28).
 const bool resumoDiarioLiberado = false;
+
+/// Agenda: ainda não funciona totalmente, fora da versão 3.0.0 (2026-10-28).
+const bool agendaLiberada = false;

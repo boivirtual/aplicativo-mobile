@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/estilo_app.dart';
 
 class InputMinimalPesagemWidget extends StatelessWidget {
   final String label;
@@ -20,24 +21,26 @@ class InputMinimalPesagemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: containerHeight,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: TextFormField(
-        controller: controller,
-        focusNode: focusNode,
-        maxLines: maxLines,
-        style: const TextStyle(fontSize: 16),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(fontSize: 14, color: corDoRotulo),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 22,
+    return MolduraFoco(
+      child: Container(
+        height: containerHeight,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: TextFormField(
+          controller: controller,
+          focusNode: focusNode,
+          maxLines: maxLines,
+          style: const TextStyle(fontSize: 16),
+          decoration: InputDecoration(
+            labelText: label,
+            labelStyle: TextStyle(fontSize: 14, color: corDoRotulo),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 22,
+            ),
           ),
         ),
       ),

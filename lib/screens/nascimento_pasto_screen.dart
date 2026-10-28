@@ -6,6 +6,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../utils/estilo_app.dart';
 import 'package:flutter/services.dart';
 
 import '../data/daos/animal_cache_dao.dart';
@@ -1506,8 +1507,7 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     // (Aborto, Absorção e Natimorto, sem número, ficam por último).
     int numero(Map<String, dynamic> r) =>
         int.tryParse(
-          RegExp(r'(\d+)$').firstMatch(r['animal']?.toString() ?? '')?[1] ??
-              '',
+          RegExp(r'(\d+)$').firstMatch(r['animal']?.toString() ?? '')?[1] ?? '',
         ) ??
         0;
     registros.sort((a, b) {
@@ -2117,26 +2117,28 @@ class _ListaPaiDialogState extends State<_ListaPaiDialog> {
               style: TextStyle(fontSize: 18, color: widget.corTitulo),
             ),
             const SizedBox(height: 10),
-            Container(
-              height: 48,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: TextField(
-                onChanged: (v) => setState(() => _termo = v),
-                textCapitalization: TextCapitalization.characters,
-                autocorrect: false,
-                enableSuggestions: false,
-                style: const TextStyle(fontSize: 15),
-                decoration: const InputDecoration(
-                  hintText: 'Buscar...',
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.symmetric(vertical: 12),
-                  prefixIcon: Icon(Icons.search, size: 20),
-                  prefixIconConstraints: BoxConstraints(minWidth: 40),
+            MolduraFoco(
+              child: Container(
+                height: 48,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: TextField(
+                  onChanged: (v) => setState(() => _termo = v),
+                  textCapitalization: TextCapitalization.characters,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  style: const TextStyle(fontSize: 15),
+                  decoration: const InputDecoration(
+                    hintText: 'Buscar...',
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(vertical: 12),
+                    prefixIcon: Icon(Icons.search, size: 20),
+                    prefixIconConstraints: BoxConstraints(minWidth: 40),
+                  ),
                 ),
               ),
             ),

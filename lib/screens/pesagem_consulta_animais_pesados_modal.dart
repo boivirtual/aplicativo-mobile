@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../utils/estilo_app.dart';
 import 'package:flutter/services.dart';
 import '../repositories/animal_repository.dart';
 import '../repositories/pesagem_repository.dart';
@@ -188,10 +189,11 @@ class _PesagemConsultaAnimaisPesadosModalState
       _buscaController.text = animal['codigo_limpo'];
     });
     try {
-      final lotes = await PesagemRepository.instance.buscarLotesAbertosPorAnimal(
-        idAnimal: animal['id'].toString(),
-        bd: widget.bd,
-      );
+      final lotes = await PesagemRepository.instance
+          .buscarLotesAbertosPorAnimal(
+            idAnimal: animal['id'].toString(),
+            bd: widget.bd,
+          );
       setState(() => resultadosLotes = lotes);
     } finally {
       setState(() => carregando = false);
@@ -222,50 +224,52 @@ class _PesagemConsultaAnimaisPesadosModalState
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: TextField(
-                            controller: _buscaController,
-                            focusNode: _focoBusca,
-                            // SEMPRE readOnly — mesma razão do Nº da Mãe:
-                            // toda escrita acontece programaticamente via
-                            // TecladoPesoWidget, sem conexão residual com o
-                            // teclado do sistema.
-                            readOnly: true,
-                            keyboardType: TextInputType.none,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            textAlign: TextAlign.left,
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
+                        MolduraFoco(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            decoration: const InputDecoration(
-                              labelText: "Nº do Animal",
-                              labelStyle: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.normal,
+                            child: TextField(
+                              controller: _buscaController,
+                              focusNode: _focoBusca,
+                              // SEMPRE readOnly — mesma razão do Nº da Mãe:
+                              // toda escrita acontece programaticamente via
+                              // TecladoPesoWidget, sem conexão residual com o
+                              // teclado do sistema.
+                              readOnly: true,
+                              keyboardType: TextInputType.none,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              textAlign: TextAlign.left,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
                               ),
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(
-                                vertical: 10,
+                              decoration: const InputDecoration(
+                                labelText: "Nº do Animal",
+                                labelStyle: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
                               ),
+                              onTap: () {
+                                setState(() {
+                                  _buscaController.clear();
+                                  resultadosLotes = null;
+                                  sugestoesAnimais = [];
+                                  mostrandoSugestoes = false;
+                                  _naoEncontrado = false;
+                                });
+                              },
+                              onChanged: _aoAlterarTexto,
                             ),
-                            onTap: () {
-                              setState(() {
-                                _buscaController.clear();
-                                resultadosLotes = null;
-                                sugestoesAnimais = [];
-                                mostrandoSugestoes = false;
-                                _naoEncontrado = false;
-                              });
-                            },
-                            onChanged: _aoAlterarTexto,
                           ),
                         ),
                         if (mostrandoSugestoes)

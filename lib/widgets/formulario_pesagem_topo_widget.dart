@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/estilo_app.dart';
 import 'package:flutter/services.dart';
 
 class FormularioPesagemTopoWidget extends StatelessWidget {
@@ -92,95 +93,96 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
               children: [
                 Expanded(
                   flex: 1,
-                  child: Container(
-                    key: campoNoAnimalKey,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: indexSendoEditado != null
-                          ? Colors.grey[200]
-                          : Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: destacarCampoAnimal
-                          ? Border.all(
-                              color: Colors.lightBlue.shade200,
-                              width: 1,
-                            )
-                          : null,
-                    ),
-                    child: Stack(
+                  child: MolduraFoco(
+                    child: Container(
+                      key: campoNoAnimalKey,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: indexSendoEditado != null
+                            ? Colors.grey[200]
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: destacarCampoAnimal
+                            ? Border.all(
+                                color: Colors.lightBlue.shade200,
+                                width: 1,
+                              )
+                            : null,
+                      ),
+                      child: Stack(
                         children: [
-                            TextField(
-                              controller: noAnimalController,
-                              focusNode: focoNoAnimal,
-                              // SEMPRE readOnly (não só quando editando um
-                              // item existente) — mesmo motivo do campo
-                              // Peso: toda escrita já acontece
-                              // programaticamente via TecladoPesoWidget, e
-                              // deixar o campo "editável" mesmo com
-                              // keyboardType: none podia manter uma conexão
-                              // residual com o teclado do sistema em alguns
-                              // aparelhos, arriscando engolir um dígito
-                              // digitado rápido. O bloqueio de digitação
-                              // durante edição de item já é garantido à
-                              // parte, nos métodos que inserem/apagam
-                              // caractere (_indexSendoEditado != null).
-                              readOnly: !testeTecladoSistemaAnimal,
-                              // Igual ao campo Peso: nunca abre o teclado do
-                              // sistema — a digitação acontece pelo
-                              // TecladoPesoWidget (modo apenas dígitos), que
-                              // fica idêntico no Android e no iOS.
-                              // inputFormatters é trava extra contra colar
-                              // texto por fora. TESTE: com
-                              // testeTecladoSistemaAnimal, volta a abrir o
-                              // teclado numérico do sistema (ver comentário
-                              // no campo da classe).
-                              keyboardType: testeTecladoSistemaAnimal
-                                  ? TextInputType.number
-                                  : TextInputType.none,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                              ],
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              decoration: InputDecoration(
-                                labelText: "Nº do Animal",
-                                labelStyle: TextStyle(
-                                  fontSize: 14,
-                                  color: corDoRotulo,
-                                ),
-                                suffixIcon: carregandoAnimal
-                                    ? const Padding(
-                                        padding: EdgeInsets.all(25),
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : null,
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 15,
-                                  horizontal: 12,
-                                ),
-                              ),
-                              onChanged: onNoAnimalChanged,
-                              onTap: onTapNoAnimal,
-                              showCursor:
-                                  indexSendoEditado == null &&
-                                  !mostrarCursorFake,
+                          TextField(
+                            controller: noAnimalController,
+                            focusNode: focoNoAnimal,
+                            // SEMPRE readOnly (não só quando editando um
+                            // item existente) — mesmo motivo do campo
+                            // Peso: toda escrita já acontece
+                            // programaticamente via TecladoPesoWidget, e
+                            // deixar o campo "editável" mesmo com
+                            // keyboardType: none podia manter uma conexão
+                            // residual com o teclado do sistema em alguns
+                            // aparelhos, arriscando engolir um dígito
+                            // digitado rápido. O bloqueio de digitação
+                            // durante edição de item já é garantido à
+                            // parte, nos métodos que inserem/apagam
+                            // caractere (_indexSendoEditado != null).
+                            readOnly: !testeTecladoSistemaAnimal,
+                            // Igual ao campo Peso: nunca abre o teclado do
+                            // sistema — a digitação acontece pelo
+                            // TecladoPesoWidget (modo apenas dígitos), que
+                            // fica idêntico no Android e no iOS.
+                            // inputFormatters é trava extra contra colar
+                            // texto por fora. TESTE: com
+                            // testeTecladoSistemaAnimal, volta a abrir o
+                            // teclado numérico do sistema (ver comentário
+                            // no campo da classe).
+                            keyboardType: testeTecladoSistemaAnimal
+                                ? TextInputType.number
+                                : TextInputType.none,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
                             ),
-                            if (mostrarCursorFake)
-                              const Positioned.fill(
-                                child: IgnorePointer(
-                                  child: Center(child: _CursorFakePiscando()),
-                                ),
+                            decoration: InputDecoration(
+                              labelText: "Nº do Animal",
+                              labelStyle: TextStyle(
+                                fontSize: 14,
+                                color: corDoRotulo,
                               ),
-                          ],
-                        ),
+                              suffixIcon: carregandoAnimal
+                                  ? const Padding(
+                                      padding: EdgeInsets.all(25),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : null,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 15,
+                                horizontal: 12,
+                              ),
+                            ),
+                            onChanged: onNoAnimalChanged,
+                            onTap: onTapNoAnimal,
+                            showCursor:
+                                indexSendoEditado == null && !mostrarCursorFake,
+                          ),
+                          if (mostrarCursorFake)
+                            const Positioned.fill(
+                              child: IgnorePointer(
+                                child: Center(child: _CursorFakePiscando()),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
+                  ),
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   flex: 1,
@@ -188,65 +190,68 @@ class FormularioPesagemTopoWidget extends StatelessWidget {
                     valueListenable: pesoController,
                     builder: (context, valor, _) {
                       final emModoFormula = valor.text.trim().startsWith('=');
-                      return Container(
-                        key: campoPesoKey,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: emModoFormula
-                              ? Colors.blue.shade50
-                              : (camposLiberados
-                                  ? Colors.white
-                                  : Colors.grey[200]),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: TextFormField(
-                          controller: pesoController,
-                          focusNode: focoNoPeso,
-                          // SEMPRE readOnly, mesmo com camposLiberados=true
-                          // (digitação ativa) — toda escrita de verdade
-                          // acontece só programaticamente, via
-                          // TecladoPesoWidget. Deixar o campo "editável"
-                          // (readOnly: false) mesmo com
-                          // keyboardType: none ainda mantém uma conexão viva
-                          // com o teclado do sistema em alguns aparelhos —
-                          // essa conexão residual podia mandar uma
-                          // atualização por trás e "engolir" um dígito
-                          // digitado rápido no teclado customizado (bug
-                          // real: "283" virava "23"). readOnly não impede
-                          // nada programático (foco, cursor, e as
-                          // atualizações de texto continuam funcionando
-                          // normal).
-                          readOnly: true,
-                          enabled: infoAnimal != null,
-                          showCursor: true,
-                          // Nunca abre o teclado do sistema — a digitação
-                          // acontece só pelo TecladoPesoWidget (customizado),
-                          // que fica idêntico no Android e no iOS e já
-                          // inclui "=" e os operadores pra usar o campo como
-                          // fórmula (ex: "=34+10,5"). inputFormatters fica
-                          // como trava extra contra colar texto por fora.
-                          keyboardType: TextInputType.none,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                              RegExp(r'[0-9,.+\-*/()=]'),
-                            ),
-                          ],
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
+                      return MolduraFoco(
+                        child: Container(
+                          key: campoPesoKey,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: emModoFormula
+                                ? Colors.blue.shade50
+                                : (camposLiberados
+                                      ? Colors.white
+                                      : Colors.grey[200]),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          decoration: InputDecoration(
-                            labelText: "Peso (Kg)",
-                            labelStyle: TextStyle(
-                              fontSize: 14,
-                              color:
-                                  camposLiberados ? corDoRotulo : Colors.grey,
+                          child: TextFormField(
+                            controller: pesoController,
+                            focusNode: focoNoPeso,
+                            // SEMPRE readOnly, mesmo com camposLiberados=true
+                            // (digitação ativa) — toda escrita de verdade
+                            // acontece só programaticamente, via
+                            // TecladoPesoWidget. Deixar o campo "editável"
+                            // (readOnly: false) mesmo com
+                            // keyboardType: none ainda mantém uma conexão viva
+                            // com o teclado do sistema em alguns aparelhos —
+                            // essa conexão residual podia mandar uma
+                            // atualização por trás e "engolir" um dígito
+                            // digitado rápido no teclado customizado (bug
+                            // real: "283" virava "23"). readOnly não impede
+                            // nada programático (foco, cursor, e as
+                            // atualizações de texto continuam funcionando
+                            // normal).
+                            readOnly: true,
+                            enabled: infoAnimal != null,
+                            showCursor: true,
+                            // Nunca abre o teclado do sistema — a digitação
+                            // acontece só pelo TecladoPesoWidget (customizado),
+                            // que fica idêntico no Android e no iOS e já
+                            // inclui "=" e os operadores pra usar o campo como
+                            // fórmula (ex: "=34+10,5"). inputFormatters fica
+                            // como trava extra contra colar texto por fora.
+                            keyboardType: TextInputType.none,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'[0-9,.+\-*/()=]'),
+                              ),
+                            ],
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
                             ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 15,
-                              horizontal: 12,
+                            decoration: InputDecoration(
+                              labelText: "Peso (Kg)",
+                              labelStyle: TextStyle(
+                                fontSize: 14,
+                                color: camposLiberados
+                                    ? corDoRotulo
+                                    : Colors.grey,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 15,
+                                horizontal: 12,
+                              ),
                             ),
                           ),
                         ),

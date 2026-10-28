@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../utils/estilo_app.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/sync_service.dart';
 import '../services/animal_cache_service.dart';
@@ -52,14 +53,20 @@ class _PesagemScreenState extends State<PesagemScreen> {
   bool carregandoPendentes = false;
   bool _baixandoAnimais = false;
   void _ouvirBaixandoAnimais() {
-    if (mounted) setState(() => _baixandoAnimais = AnimalCacheService.instance.baixando.value);
+    if (mounted) {
+      setState(
+        () => _baixandoAnimais = AnimalCacheService.instance.baixando.value,
+      );
+    }
   }
 
   bool _baixandoItensPendentes = false;
   void _ouvirBaixandoItensPendentes() {
     if (mounted) {
-      setState(() => _baixandoItensPendentes =
-          PesagemRepository.instance.baixandoItensPendentes.value);
+      setState(
+        () => _baixandoItensPendentes =
+            PesagemRepository.instance.baixandoItensPendentes.value,
+      );
     }
   }
 
@@ -108,7 +115,9 @@ class _PesagemScreenState extends State<PesagemScreen> {
         ? "${resultado.processadas} sincronizado(s) com sucesso."
         : "Sem sinal ou nada novo para sincronizar.";
 
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensagem)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mensagem)));
   }
 
   static const _corIndicador = Color(0xFF18385F);
@@ -164,7 +173,11 @@ class _PesagemScreenState extends State<PesagemScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Row(
         children: [
-          const Icon(Icons.cloud_upload_outlined, color: Colors.white, size: 16),
+          const Icon(
+            Icons.cloud_upload_outlined,
+            color: Colors.white,
+            size: 16,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -231,7 +244,11 @@ class _PesagemScreenState extends State<PesagemScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           child: Row(
             children: [
-              const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 16),
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.white,
+                size: 16,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -407,10 +424,7 @@ class _PesagemScreenState extends State<PesagemScreen> {
             onPressed: widget.onBack,
           ),
           title: const Text('Pesagem', style: TextStyle(fontSize: 18)),
-          actions: const [
-            IndicadorConectividadeWidget(),
-            SizedBox(width: 4),
-          ],
+          actions: const [IndicadorConectividadeWidget(), SizedBox(width: 4)],
         ),
       ),
       body: Stack(
@@ -421,119 +435,121 @@ class _PesagemScreenState extends State<PesagemScreen> {
               if (_pendentesSync > 0) _buildIndicadorSync(),
               Expanded(
                 child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 10.0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_mostrarFormulario)
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.scale,
-                          color: Color(0xFF18385F),
-                          size: 24,
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Nova Pesagem',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF18385F),
-                          ),
-                        ),
-                        const Spacer(),
-                        SizedBox(
-                          height: 32,
-                          child: ElevatedButton(
-                            onPressed: () =>
-                                setState(() => _mostrarFormulario = false),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF4BBAEB),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 10.0,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_mostrarFormulario)
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.scale,
+                              color: Color(0xFF18385F),
+                              size: 24,
                             ),
-                            child: const Text(
-                              'Voltar',
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Nova Pesagem',
                               style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
+                                fontSize: 16,
                                 fontWeight: FontWeight.bold,
+                                color: Color(0xFF18385F),
+                              ),
+                            ),
+                            const Spacer(),
+                            SizedBox(
+                              height: 32,
+                              child: ElevatedButton(
+                                onPressed: () =>
+                                    setState(() => _mostrarFormulario = false),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF4BBAEB),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Voltar',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        // Puxar para baixo a partir do "Nova Pesagem" atualiza
+                        // a tela (só com internet) — ver _atualizarPesagens.
+                        PuxarParaAtualizarWidget(
+                          onAtualizar: _atualizarPesagens,
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: ElevatedButton.icon(
+                              onPressed: () => setState(() {
+                                _mostrarFormulario = true;
+                                exibirFinalizadas = false;
+                              }),
+                              icon: const Icon(
+                                Icons.scale,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                              label: const Text(
+                                'Nova Pesagem',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF007AFF),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                elevation: 2,
                               ),
                             ),
                           ),
                         ),
-                      ],
-                    )
-                  else
-                    // Puxar para baixo a partir do "Nova Pesagem" atualiza
-                    // a tela (só com internet) — ver _atualizarPesagens.
-                    PuxarParaAtualizarWidget(
-                      onAtualizar: _atualizarPesagens,
-                      child: SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton.icon(
-                        onPressed: () => setState(() {
-                          _mostrarFormulario = true;
-                          exibirFinalizadas = false;
-                        }),
-                        icon: const Icon(
-                          Icons.scale,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                        label: const Text(
-                          'Nova Pesagem',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF007AFF),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 2,
-                        ),
-                      ),
-                    ),
-                    ),
 
-                  if (_mostrarFormulario) ...[
-                    const SizedBox(height: 15),
-                    _buildFormularioNovaPesagem(),
-                    const SizedBox(height: 30),
-                  ],
-                  if (!_mostrarFormulario) ...[const SizedBox(height: 25)],
-                  _buildNavegacaoAbas(),
-                  const SizedBox(height: 2),
-                  if (!_mostrarFormulario) ...[
-                    _buildTituloDinamico(),
-                    if (_mostraLinkConsultar)
-                      _buildConsultarAnimaisPesadosLink()
-                    else
-                      const SizedBox(height: 5),
-                    exibirFinalizadas
-                        ? _buildListaFinalizadas()
-                        : _buildListaPendentes(),
-                  ],
-                ],
+                      if (_mostrarFormulario) ...[
+                        const SizedBox(height: 15),
+                        _buildFormularioNovaPesagem(),
+                        const SizedBox(height: 30),
+                      ],
+                      if (!_mostrarFormulario) ...[const SizedBox(height: 25)],
+                      _buildNavegacaoAbas(),
+                      const SizedBox(height: 2),
+                      if (!_mostrarFormulario) ...[
+                        _buildTituloDinamico(),
+                        if (_mostraLinkConsultar)
+                          _buildConsultarAnimaisPesadosLink()
+                        else
+                          const SizedBox(height: 5),
+                        exibirFinalizadas
+                            ? _buildListaFinalizadas()
+                            : _buildListaPendentes(),
+                      ],
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-          if (carregandoPendentes || _baixandoAnimais || _baixandoItensPendentes)
+          if (carregandoPendentes ||
+              _baixandoAnimais ||
+              _baixandoItensPendentes)
             _buildIndicadorCarregando(),
         ],
       ),
@@ -643,30 +659,32 @@ class _PesagemScreenState extends State<PesagemScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          height: 55,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: TextField(
-            controller: _criterioController,
-            style: const TextStyle(fontSize: 14),
-            decoration: InputDecoration(
-              labelText: "Critérios de Apartação",
-              labelStyle: TextStyle(color: corDoRotulo, fontSize: 13),
-              border: InputBorder.none,
-              suffixIcon: IconButton(
-                icon: const Icon(
-                  Icons.add_circle,
-                  color: Color(0xFF18385F),
-                  size: 22,
-                ),
-                onPressed: () => _adicionarCriterio(_criterioController.text),
-              ),
+        MolduraFoco(
+          child: Container(
+            height: 55,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
             ),
-            onSubmitted: (val) => _adicionarCriterio(val),
+            child: TextField(
+              controller: _criterioController,
+              style: const TextStyle(fontSize: 14),
+              decoration: InputDecoration(
+                labelText: "Critérios de Apartação",
+                labelStyle: TextStyle(color: corDoRotulo, fontSize: 13),
+                border: InputBorder.none,
+                suffixIcon: IconButton(
+                  icon: const Icon(
+                    Icons.add_circle,
+                    color: Color(0xFF18385F),
+                    size: 22,
+                  ),
+                  onPressed: () => _adicionarCriterio(_criterioController.text),
+                ),
+              ),
+              onSubmitted: (val) => _adicionarCriterio(val),
+            ),
           ),
         ),
         if (_criteriosApartacao.isNotEmpty)
@@ -1093,23 +1111,25 @@ class _PesagemScreenState extends State<PesagemScreen> {
     Function(String) onChanged, {
     bool isNumber = false,
   }) {
-    return Container(
-      height: 55,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: TextFormField(
-        controller: controller,
-        onChanged: onChanged,
-        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-        style: const TextStyle(fontSize: 14),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(color: corDoRotulo, fontSize: 13),
-          border: InputBorder.none,
-          floatingLabelBehavior: FloatingLabelBehavior.auto,
+    return MolduraFoco(
+      child: Container(
+        height: 55,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: TextFormField(
+          controller: controller,
+          onChanged: onChanged,
+          keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
+            labelText: label,
+            labelStyle: TextStyle(color: corDoRotulo, fontSize: 13),
+            border: InputBorder.none,
+            floatingLabelBehavior: FloatingLabelBehavior.auto,
+          ),
         ),
       ),
     );

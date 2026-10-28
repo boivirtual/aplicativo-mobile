@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../utils/estilo_app.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../repositories/chuva_repository.dart';
@@ -277,7 +278,10 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text('Confirmação', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Confirmação',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: Text(mensagem),
         actions: [
           TextButton(
@@ -288,7 +292,10 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
             onPressed: () => Navigator.pop(context, true),
             child: const Text(
               'Confirmar',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF007AFF)),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF007AFF),
+              ),
             ),
           ),
         ],
@@ -360,16 +367,16 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                 Expanded(
                   child: fazendaSelecionada == null
                       ? _sincronizando
-                      ? _buildAguarde()
-                      : Center(
-                          child: Text(
-                            'Selecione uma fazenda.',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        )
+                            ? _buildAguarde()
+                            : Center(
+                                child: Text(
+                                  'Selecione uma fazenda.',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              )
                       : RefreshIndicator(
                           onRefresh: _sincronizarEAtualizar,
                           child: ListView(
@@ -483,7 +490,10 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
                           vertical: 15,
                           horizontal: 6,
                         ),
-                        suffixIconConstraints: BoxConstraints(minWidth: 24, minHeight: 24),
+                        suffixIconConstraints: BoxConstraints(
+                          minWidth: 24,
+                          minHeight: 24,
+                        ),
                         suffixIcon: Icon(
                           Icons.calendar_today,
                           size: 14,
@@ -508,30 +518,32 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
               const SizedBox(width: 10),
               Expanded(
                 flex: 1,
-                child: Container(
-                  height: 80,
-                  decoration: _decoracaoInputBranco,
-                  child: TextField(
-                    controller: _volumeController,
-                    focusNode: _volumeFocus,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-                    ],
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: 'Volume (mm)',
-                      labelStyle: TextStyle(fontSize: 14, color: Colors.grey),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 15,
+                child: MolduraFoco(
+                  child: Container(
+                    height: 80,
+                    decoration: _decoracaoInputBranco,
+                    child: TextField(
+                      controller: _volumeController,
+                      focusNode: _volumeFocus,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                      ],
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'Volume (mm)',
+                        labelStyle: TextStyle(fontSize: 14, color: Colors.grey),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 15,
+                        ),
                       ),
                     ),
                   ),

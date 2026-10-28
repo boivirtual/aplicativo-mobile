@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/estilo_app.dart';
 import 'package:boivirtual/utils/app_alert.dart';
 
 class PesagemEdicaoResultado {
@@ -280,23 +281,25 @@ class _PesagemEdicaoModalState extends State<PesagemEdicaoModal> {
     Function(String) onChanged, {
     bool isNumber = false,
   }) {
-    return Container(
-      height: 55,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: TextFormField(
-        controller: controller,
-        onChanged: onChanged,
-        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-        style: const TextStyle(fontSize: 14),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(color: corDoRotulo, fontSize: 13),
-          border: InputBorder.none,
-          floatingLabelBehavior: FloatingLabelBehavior.auto,
+    return MolduraFoco(
+      child: Container(
+        height: 55,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: TextFormField(
+          controller: controller,
+          onChanged: onChanged,
+          keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
+            labelText: label,
+            labelStyle: TextStyle(color: corDoRotulo, fontSize: 13),
+            border: InputBorder.none,
+            floatingLabelBehavior: FloatingLabelBehavior.auto,
+          ),
         ),
       ),
     );
@@ -346,30 +349,32 @@ class _PesagemEdicaoModalState extends State<PesagemEdicaoModal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          height: 55,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: TextField(
-            controller: _criterioController,
-            style: const TextStyle(fontSize: 14),
-            decoration: InputDecoration(
-              labelText: "Critérios de Apartação",
-              labelStyle: TextStyle(color: corDoRotulo, fontSize: 13),
-              border: InputBorder.none,
-              suffixIcon: IconButton(
-                icon: const Icon(
-                  Icons.add_circle,
-                  color: Color(0xFF18385F),
-                  size: 22,
-                ),
-                onPressed: _adicionarCriterio,
-              ),
+        MolduraFoco(
+          child: Container(
+            height: 55,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
             ),
-            onSubmitted: (_) => _adicionarCriterio(),
+            child: TextField(
+              controller: _criterioController,
+              style: const TextStyle(fontSize: 14),
+              decoration: InputDecoration(
+                labelText: "Critérios de Apartação",
+                labelStyle: TextStyle(color: corDoRotulo, fontSize: 13),
+                border: InputBorder.none,
+                suffixIcon: IconButton(
+                  icon: const Icon(
+                    Icons.add_circle,
+                    color: Color(0xFF18385F),
+                    size: 22,
+                  ),
+                  onPressed: _adicionarCriterio,
+                ),
+              ),
+              onSubmitted: (_) => _adicionarCriterio(),
+            ),
           ),
         ),
         if (_criterios.isNotEmpty)

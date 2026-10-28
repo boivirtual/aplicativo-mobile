@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../utils/estilo_app.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -960,38 +961,44 @@ class _MapaScreenState extends State<MapaScreen> with WidgetsBindingObserver {
                   },
                 ),
                 const SizedBox(height: 8),
-                Container(
-                  height: 56,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: TextField(
-                    controller: _buscaController,
-                    onChanged: (v) {
-                      setState(() => _termoBusca = v.trim());
-                      setModal(() {});
-                    },
-                    textCapitalization: TextCapitalization.characters,
-                    style: const TextStyle(fontSize: 15),
-                    decoration: InputDecoration(
-                      hintText: 'Buscar pasto...',
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                      prefixIconConstraints: const BoxConstraints(minWidth: 40),
-                      suffixIcon: _termoBusca.isEmpty
-                          ? null
-                          : IconButton(
-                              icon: const Icon(Icons.cancel, size: 18),
-                              onPressed: () {
-                                _buscaController.clear();
-                                setState(() => _termoBusca = '');
-                                setModal(() {});
-                              },
-                            ),
+                MolduraFoco(
+                  child: Container(
+                    height: 56,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: TextField(
+                      controller: _buscaController,
+                      onChanged: (v) {
+                        setState(() => _termoBusca = v.trim());
+                        setModal(() {});
+                      },
+                      textCapitalization: TextCapitalization.characters,
+                      style: const TextStyle(fontSize: 15),
+                      decoration: InputDecoration(
+                        hintText: 'Buscar pasto...',
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
+                        prefixIcon: const Icon(Icons.search, size: 20),
+                        prefixIconConstraints: const BoxConstraints(
+                          minWidth: 40,
+                        ),
+                        suffixIcon: _termoBusca.isEmpty
+                            ? null
+                            : IconButton(
+                                icon: const Icon(Icons.cancel, size: 18),
+                                onPressed: () {
+                                  _buscaController.clear();
+                                  setState(() => _termoBusca = '');
+                                  setModal(() {});
+                                },
+                              ),
+                      ),
                     ),
                   ),
                 ),

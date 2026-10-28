@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../utils/estilo_app.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../repositories/animal_repository.dart';
@@ -236,58 +237,60 @@ class _PesagemConsultaMaeModalState extends State<PesagemConsultaMaeModal> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: TextField(
-                            controller: _buscaController,
-                            focusNode: _focoBusca,
-                            // SEMPRE readOnly — toda escrita já acontece
-                            // programaticamente via TecladoPesoWidget;
-                            // deixar o campo editável mesmo com
-                            // keyboardType: none podia manter uma conexão
-                            // residual com o teclado do sistema em alguns
-                            // aparelhos, arriscando engolir um dígito
-                            // digitado rápido (mesmo ajuste feito no Peso e
-                            // no Nº do Animal da tela de itens).
-                            readOnly: true,
-                            // Nunca abre o teclado do sistema — digitação
-                            // pelo TecladoPesoWidget (modo apenas dígitos),
-                            // igual ao Nº do Animal na tela de itens.
-                            keyboardType: TextInputType.none,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            textAlign: TextAlign.left,
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
+                        MolduraFoco(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            decoration: const InputDecoration(
-                              labelText: "Nº da Mãe",
-                              labelStyle: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.normal,
+                            child: TextField(
+                              controller: _buscaController,
+                              focusNode: _focoBusca,
+                              // SEMPRE readOnly — toda escrita já acontece
+                              // programaticamente via TecladoPesoWidget;
+                              // deixar o campo editável mesmo com
+                              // keyboardType: none podia manter uma conexão
+                              // residual com o teclado do sistema em alguns
+                              // aparelhos, arriscando engolir um dígito
+                              // digitado rápido (mesmo ajuste feito no Peso e
+                              // no Nº do Animal da tela de itens).
+                              readOnly: true,
+                              // Nunca abre o teclado do sistema — digitação
+                              // pelo TecladoPesoWidget (modo apenas dígitos),
+                              // igual ao Nº do Animal na tela de itens.
+                              keyboardType: TextInputType.none,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              textAlign: TextAlign.left,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
                               ),
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(
-                                vertical: 10,
+                              decoration: const InputDecoration(
+                                labelText: "Nº da Mãe",
+                                labelStyle: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
                               ),
+                              onTap: () {
+                                setState(() {
+                                  _buscaController.clear();
+                                  infoMae = null;
+                                  sugestoesAnimais = [];
+                                  mostrandoSugestoes = false;
+                                  _naoEncontrado = false;
+                                  _semFilhosAtivos = false;
+                                });
+                              },
+                              onChanged: _aoAlterarTexto,
                             ),
-                            onTap: () {
-                              setState(() {
-                                _buscaController.clear();
-                                infoMae = null;
-                                sugestoesAnimais = [];
-                                mostrandoSugestoes = false;
-                                _naoEncontrado = false;
-                                _semFilhosAtivos = false;
-                              });
-                            },
-                            onChanged: _aoAlterarTexto,
                           ),
                         ),
                         if (mostrandoSugestoes)

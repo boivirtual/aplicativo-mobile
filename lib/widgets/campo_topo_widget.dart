@@ -175,6 +175,7 @@ class _CampoTextoTopoState extends State<CampoTextoTopo> {
         // já marcado (foco sem teclado, ex.: Nº Mãe do Nascimento): o toque
         // abre o teclado
         if (_foco.hasFocus) {
+          _garantirCursor();
           SystemChannels.textInput.invokeMethod('TextInput.show');
         }
         _foco.requestFocus();

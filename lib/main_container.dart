@@ -277,7 +277,8 @@ class _MainContainerState extends State<MainContainer>
                   'Resumo Diário',
                   4,
                   azulBarra,
-                  cinzaInativo,
+                  // fora desta versão: ícone bem clarinho
+                  resumoDiarioLiberado ? cinzaInativo : Colors.grey.shade300,
                 ),
               ],
             ),

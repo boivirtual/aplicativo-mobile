@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../utils/estilo_app.dart';
+
 /// Campos no padrão dos campos da Pesagem ("Nº do Animal"): caixa branca,
 /// cantos 8; vazio, o rótulo fica no meio da caixa; preenchido (ou
 /// digitando), o rótulo vai para o topo e o valor aparece embaixo, em
@@ -191,26 +193,12 @@ class _CampoTextoTopoState extends State<CampoTextoTopo> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
-          boxShadow: !widget.erro && (_foco.hasFocus || widget.destacado)
-              ? const [BoxShadow(color: Color(0x5566AFE9), blurRadius: 6)]
-              : null,
         ),
-        // A borda vai SEMPRE por cima (foregroundDecoration), só mudando de
-        // cor. Se ela aparecesse e sumisse (ou entrasse como borda normal),
-        // o Container mudaria a estrutura por dentro e o Flutter recriaria
-        // o campo de texto: ele ficava com o foco mas desligado do teclado
-        // — cursor sumia e o que se digitava não entrava.
-        foregroundDecoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: widget.erro
-                ? Colors.red
-                : _foco.hasFocus || widget.destacado
-                // mesmo azul claro do campo em foco do web (Bootstrap 3)
-                ? const Color(0xFF66AFE9)
-                : Colors.transparent,
-            width: widget.erro ? 1 : 1.5,
-          ),
+        // Borda padrão do app (EstiloApp.molduraCampo): sempre por cima,
+        // só mudando a cor — ver o comentário lá.
+        foregroundDecoration: EstiloApp.molduraCampo(
+          ativo: _foco.hasFocus || widget.destacado,
+          erro: widget.erro,
         ),
         child: ListenableBuilder(
           listenable: Listenable.merge([widget.controller, _foco]),

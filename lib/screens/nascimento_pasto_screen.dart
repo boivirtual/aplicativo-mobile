@@ -935,6 +935,7 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
   /// No web, tocar no campo já preenchido limpa a fêmea para digitar outra
   /// (e some o aviso vermelho ao lado da estação).
   void _aoTocarMae() {
+    if (_maeDestacada) setState(() => _maeDestacada = false);
     if (_maeInvalida) setState(() => _maeInvalida = false);
     if (_mae == null && _maeController.text.isEmpty) return;
     if (_mae == null) return;
@@ -1357,21 +1358,13 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     _marcarMae();
   }
 
-  /// Deixa o Nº Mãe (Nº Fêmea) marcado para digitação, mas sem abrir o
-  /// teclado: o usuário vê por onde começar; o toque no campo abre o
-  /// teclado.
+  /// Nº Mãe (Nº Fêmea) destacado com a borda azul, sem foco e sem teclado:
+  /// o usuário vê por onde começar; o toque no campo abre o teclado (foco
+  /// normal, com o cursor). O destaque sai no primeiro toque.
+  bool _maeDestacada = false;
+
   void _marcarMae() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_maeFoco.canRequestFocus) return;
-      // o campo foi limpo (clear) e ficou sem posição de cursor: põe no fim
-      _maeController.selection = TextSelection.collapsed(
-        offset: _maeController.text.length,
-      );
-      _maeFoco.requestFocus();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        SystemChannels.textInput.invokeMethod('TextInput.hide');
-      });
-    });
+    if (mounted) setState(() => _maeDestacada = true);
   }
 
   // ---------------------------------------------------------------------
@@ -1924,6 +1917,7 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
     focusNode: _maeFoco,
     enabled: _temCadastro,
     erro: _maeInvalida,
+    destacado: _maeDestacada,
     // teclado numérico: a mãe é procurada pelo número
     keyboardType: TextInputType.number,
     textCapitalization: TextCapitalization.characters,

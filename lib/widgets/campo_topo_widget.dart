@@ -44,6 +44,10 @@ class CampoTextoTopo extends StatefulWidget {
   /// Complemento do rótulo em fonte menor e cinza (ex.: "(opcional)").
   final String? rotuloComplemento;
 
+  /// Borda azul mesmo sem o foco: mostra por onde começar (ex.: o Nº Mãe
+  /// do Nascimento), sem abrir o teclado.
+  final bool destacado;
+
   const CampoTextoTopo({
     super.key,
     required this.rotulo,
@@ -62,6 +66,7 @@ class CampoTextoTopo extends StatefulWidget {
     this.rotuloNegrito,
     this.dica,
     this.rotuloComplemento,
+    this.destacado = false,
   });
 
   @override
@@ -186,7 +191,7 @@ class _CampoTextoTopoState extends State<CampoTextoTopo> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
-          boxShadow: !widget.erro && _foco.hasFocus
+          boxShadow: !widget.erro && (_foco.hasFocus || widget.destacado)
               ? const [BoxShadow(color: Color(0x5566AFE9), blurRadius: 6)]
               : null,
         ),
@@ -200,7 +205,7 @@ class _CampoTextoTopoState extends State<CampoTextoTopo> {
           border: Border.all(
             color: widget.erro
                 ? Colors.red
-                : _foco.hasFocus
+                : _foco.hasFocus || widget.destacado
                 // mesmo azul claro do campo em foco do web (Bootstrap 3)
                 ? const Color(0xFF66AFE9)
                 : Colors.transparent,

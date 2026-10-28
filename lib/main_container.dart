@@ -12,6 +12,7 @@ import 'package:boivirtual/services/connectivity_service.dart';
 import 'package:boivirtual/widgets/indicador_conectividade_widget.dart';
 import 'package:boivirtual/widgets/indicador_sincronizando_widget.dart';
 import 'auth_service.dart';
+import 'config/recursos.dart';
 
 class MainContainer extends StatefulWidget {
   const MainContainer({super.key});

@@ -21,6 +21,33 @@ class EstiloApp {
   /// Nº do Animal da Pesagem).
   static const azulBordaFoco = Color(0xFF81D4FA);
 
+  /// Negrito do app: a fonte (FuturaStd) só tem a versão fina, então o
+  /// traço é engrossado com "sombras" da mesma cor (FontWeight.bold sozinho
+  /// não muda nada na tela).
+  static TextStyle negrito(double tamanho, Color cor) => TextStyle(
+    fontSize: tamanho,
+    color: cor,
+    fontWeight: FontWeight.w900,
+    shadows: [
+      Shadow(color: cor, offset: const Offset(0.4, 0)),
+      Shadow(color: cor, offset: const Offset(-0.4, 0)),
+      Shadow(color: cor, offset: const Offset(0, 0.4)),
+    ],
+  );
+
+  /// Tarja azul clara do topo (fazenda e pasto): o nome do pasto em negrito.
+  static Widget textoTarjaPasto(String fazenda, String pasto) => Text.rich(
+    TextSpan(
+      style: const TextStyle(fontSize: 13, color: Colors.blue),
+      children: [
+        TextSpan(text: '$fazenda  -  '),
+        TextSpan(text: pasto, style: negrito(13, Colors.blue)),
+      ],
+    ),
+    maxLines: 1,
+    softWrap: false,
+  );
+
   /// Moldura de um campo: transparente sem foco, azul claro com foco (ou
   /// destacado), vermelha com erro. Sempre usada como foregroundDecoration
   /// (por cima), só mudando a cor — uma borda que aparece e some muda a

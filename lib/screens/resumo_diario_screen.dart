@@ -533,7 +533,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   Future<void> _conferirDiaAnterior() async {
     final bd = _bd;
-    if (!mounted || bd == null || _nomeUsuario.isEmpty) return;
+    final fazenda = _fazenda;
+    if (!mounted || bd == null || fazenda == null) return;
     final minha = ++_conferencia;
     final data = _data;
     setState(() {

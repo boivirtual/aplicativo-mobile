@@ -628,6 +628,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       await AppAlert.erro(context, erro);
       if (!mounted) return;
     } else {
+      await AppAlert.sucesso(
+        context,
+        'Folga do dia ${_formatar(dia)} registrada com sucesso.',
+      );
+      if (!mounted) return;
       setState(() => _data = _hoje());
     }
     await _conferirDiaAnterior();

@@ -764,6 +764,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             ),
           ),
         ),
+      if (_fazenda != null) ..._dataDaTelaInicial(),
       Expanded(
         child: _fazenda == null
             ? Center(

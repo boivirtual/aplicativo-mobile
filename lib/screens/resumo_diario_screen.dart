@@ -742,7 +742,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         CabecalhoFazendaWidget(
           fazendaSelecionada: _fazenda,
           fazendasCarregadas: _fazendasLista,
-          onChanged: (v) => setState(() => _fazenda = v),
+          onChanged: _selecionarFazenda,
           mostrarIcone: false,
           textoVazio: 'Selecione uma Fazenda',
         )

@@ -573,14 +573,26 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       _diaPendente = pendente == true;
       _erroConferencia = erro;
     });
+    // Dia anterior sem resumo: avisa num modal e, no OK, já abre o
+    // calendário nesse dia (só com o Resumo na tela).
+    if (_diaPendente && TickerMode.of(context)) {
+      final dia = data.subtract(const Duration(days: 1));
+      await AppAlert.erro(
+        context,
+        'Não foi registrado o resumo do dia ${_formatar(dia)}.',
+      );
+      if (!mounted || minha != _conferencia) return;
+      await _escolherDataInicial(inicial: dia);
+    }
   }
 
   /// Calendário da tela inicial: hoje ou uma data anterior (futura não
-  /// pode); a cada data escolhida, confere o dia anterior a ela.
-  Future<void> _escolherDataInicial() async {
+  /// pode); a cada data escolhida, confere o dia anterior a ela. [inicial]:
+  /// dia já marcado ao abrir (o dia sem resumo, vindo do aviso).
+  Future<void> _escolherDataInicial({DateTime? inicial}) async {
     final d = await showDatePicker(
       context: context,
-      initialDate: _data,
+      initialDate: inicial ?? _data,
       firstDate: DateTime(2000),
       lastDate: _hoje(),
       helpText: 'Data do resumo',

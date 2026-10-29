@@ -515,7 +515,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         : (json.decode(fazendasJson) as List);
     if (!mounted) return;
     setState(() {
-      _responsavel = (prefs.getString('userName') ?? '').toUpperCase();
+      _nomeUsuario = (prefs.getString('userName') ?? '').trim();
+      _responsavel = _nomeUsuario.toUpperCase();
       _bd = prefs.getString('userCNPJ');
       _fazendas = [
         for (final f in lista)

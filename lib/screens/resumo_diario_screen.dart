@@ -429,6 +429,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   DateTime _data = _hoje();
   List<MapEntry<String, String>> _fazendas = [];
   String? _fazenda;
+
+  /// Fazendas como vêm do login (o select e o modal de troca usam assim).
+  List<dynamic> _fazendasLista = const [];
+
+  /// Fazendas já lidas do aparelho (até lá, só o "carregando").
+  bool _carregado = false;
   String _responsavel = '';
   String? _bd;
 

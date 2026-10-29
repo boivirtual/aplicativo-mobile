@@ -161,7 +161,7 @@ class _MainContainerState extends State<MainContainer>
       AgendaScreen(onBack: () => setState(() => _currentIndex = 5)),
       const SizedBox.shrink(),
       // AJUSTE: Passando a função onNavigate para a HomeScreen
-      HomeScreen(onNavigate: (index) => setState(() => _currentIndex = index)),
+      HomeScreen(onNavigate: _irPara),
     ];
 
     return Scaffold(

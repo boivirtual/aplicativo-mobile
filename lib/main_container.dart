@@ -106,6 +106,40 @@ class _MainContainerState extends State<MainContainer>
     });
   }
 
+  bool _conferindoInternet = false;
+
+  /// Troca de programa (card da Home ou ícone do rodapé). O Resumo Diário,
+  /// como o Nascimento, só pode ser feito com o aplicativo online: confere
+  /// a internet na hora do toque (e não o último estado medido) e, sem
+  /// internet ou com ela ruim/intermitente, avisa e não abre.
+  Future<void> _irPara(int index) async {
+    if (index == 4 && _currentIndex != 4) {
+      if (_conferindoInternet) return;
+      _conferindoInternet = true;
+      final nivel = await ConnectivityService.instance.verificarAgora();
+      _conferindoInternet = false;
+      if (!mounted) return;
+      if (nivel == NivelConexao.semInternet) {
+        await AppAlert.erro(
+          context,
+          'Sem internet!\n\nO Resumo Diário só pode ser feito com o '
+          'aplicativo online. Conecte-se à internet e tente novamente.',
+        );
+        return;
+      }
+      if (nivel == NivelConexao.internetRuim) {
+        await AppAlert.erro(
+          context,
+          'Internet ruim ou intermitente!\n\nO Resumo Diário só pode ser '
+          'feito com o aplicativo online. Tente novamente quando a internet '
+          'estiver estável.',
+        );
+        return;
+      }
+    }
+    setState(() => _currentIndex = index);
+  }
+
   void _abrirAtualizacoes(BuildContext context) {
     Navigator.push(
       context,

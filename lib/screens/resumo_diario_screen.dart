@@ -545,17 +545,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     // checagem da internet na hora (o Resumo Diário só funciona online)
     final nivel = await ConnectivityService.instance.verificarAgora();
     bool? pendente;
-    String? erro;
-    if (nivel == NivelConexao.semInternet) {
-      erro =
-          'Sem internet! O Resumo Diário só pode ser feito com o aplicativo '
-          'online. Conecte-se à internet e tente novamente.';
-    } else if (nivel == NivelConexao.internetRuim) {
-      erro =
-          'Internet ruim ou intermitente! O Resumo Diário só pode ser feito '
-          'com o aplicativo online. Tente novamente quando a internet estiver '
-          'estável.';
-    } else {
+    String? erro = _mensagemSemInternet(nivel);
+    if (erro == null) {
       pendente = await ResumoDiarioService.instance.diaAnteriorPendente(
         bd,
         fazenda,

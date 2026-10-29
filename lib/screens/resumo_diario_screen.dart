@@ -531,27 +531,37 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     }
   }
 
-  /// Mais de uma fazenda e nenhuma escolhida ainda: só o select (igual à
-  /// Chuva); escolhida, entra a tarja azul e o Resumo.
-  Widget _escolhaDaFazenda() => Column(
+  /// Tela inicial do Resumo (antes das seções). Uma fazenda só: já vem na
+  /// tarja azul. Mais de uma: primeiro o select (igual à Chuva); escolhida,
+  /// a tarja azul com o ícone de edição para trocar.
+  Widget _telaInicial() => Column(
     children: [
-      CabecalhoFazendaWidget(
-        fazendaSelecionada: _fazenda,
-        fazendasCarregadas: _fazendasLista,
-        onChanged: (v) => setState(() => _fazenda = v),
-        mostrarIcone: false,
-        textoVazio: 'Selecione uma Fazenda',
-      ),
-      Expanded(
-        child: Center(
-          child: Text(
-            'Selecione uma fazenda.',
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontStyle: FontStyle.italic,
-            ),
-          ),
+      if (_fazenda == null)
+        CabecalhoFazendaWidget(
+          fazendaSelecionada: _fazenda,
+          fazendasCarregadas: _fazendasLista,
+          onChanged: (v) => setState(() => _fazenda = v),
+          mostrarIcone: false,
+          textoVazio: 'Selecione uma Fazenda',
+        )
+      else
+        TarjaFazendaWidget(
+          nomeFazenda: _nomeFazenda,
+          temOutras: _fazendas.length > 1,
+          onTrocar: _escolherOutraFazenda,
         ),
+      Expanded(
+        child: _fazenda == null
+            ? Center(
+                child: Text(
+                  'Selecione uma fazenda.',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              )
+            : const SizedBox.shrink(),
       ),
     ],
   );

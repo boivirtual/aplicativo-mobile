@@ -722,7 +722,15 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     );
     if (escolhida != null && escolhida != _fazenda && mounted) {
       setState(() => _fazenda = escolhida);
+      await _conferirDiaAnterior();
     }
+  }
+
+  /// Fazenda escolhida no select da tela inicial: confere o dia anterior
+  /// dela.
+  void _selecionarFazenda(String? id) {
+    setState(() => _fazenda = id);
+    _conferirDiaAnterior();
   }
 
   /// Tela inicial do Resumo (antes das seções). Uma fazenda só: já vem na

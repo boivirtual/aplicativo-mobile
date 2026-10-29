@@ -75,7 +75,7 @@ class ResumoDiarioService {
               "${ApiConfig.baseUrl}/rest/resumo-diario/dia_pendente.php",
             ),
             headers: {"Content-Type": "application/json"},
-            body: json.encode({'bd': bd, 'usuario': usuario, 'data': dia}),
+            body: json.encode({'bd': bd, 'fazenda': fazenda, 'data': dia}),
           )
           .timeout(const Duration(seconds: 15));
       if (response.statusCode != 200) return null;

@@ -692,15 +692,15 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Flexible(
-                child: TextButton(
-                  onPressed: () => Navigator.pop(ctx, 'folga'),
-                  child: Text(
-                    'Registrar Folga',
-                    style: EstiloApp.negrito(14, texto),
-                  ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, 'folga'),
+                child: Text(
+                  'Registrar Folga',
+                  style: EstiloApp.negrito(14, texto),
                 ),
               ),
+              // fica com o resto da largura (só quebra a linha num celular
+              // muito estreito)
               Flexible(
                 child: TextButton(
                   onPressed: () => Navigator.pop(ctx, 'resumo'),

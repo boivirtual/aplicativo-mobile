@@ -675,7 +675,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           texto,
           style: EstiloApp.negrito(15, const Color(0xFFA94442)),
         ),
-        ?acao,
+        if (acao != null) acao,
       ],
     ),
   );

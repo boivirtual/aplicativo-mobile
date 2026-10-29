@@ -636,7 +636,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
               size: 28,
             ),
             tooltip: 'Escolher a data',
-            onPressed: _conferindoDia ? null : _escolherDataInicial,
+            onPressed: _conferindoDia ? null : () => _escolherDataInicial(),
           ),
         ],
       ),

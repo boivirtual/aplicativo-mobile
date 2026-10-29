@@ -1469,15 +1469,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       icone: Icon(Icons.calendar_month, color: _corRotulo, size: 20),
       onTap: _escolherData,
     ),
-    const SizedBox(height: 10),
-    SeletorCampoWidget<String>(
-      rotulo: '* Fazenda',
-      corRotulo: _corRotulo,
-      valor: _fazenda,
-      opcoes: _fazendas,
-      destaque: true,
-      onChanged: (v) => setState(() => _fazenda = v),
-    ),
+    // a Fazenda fica na tarja azul do topo
     const SizedBox(height: 10),
     // o usuário logado, sem digitar
     CampoValorTopo(

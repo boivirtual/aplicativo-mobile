@@ -589,7 +589,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
               const TextSpan(text: '!'),
             ],
           ),
-          textAlign: TextAlign.center,
         ),
       ),
       Expanded(

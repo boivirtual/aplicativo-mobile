@@ -573,26 +573,29 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       _diaPendente = pendente == true;
       _erroConferencia = erro;
     });
-    // Dia anterior sem resumo: avisa num modal e, no OK, já abre o
-    // calendário nesse dia (só com o Resumo na tela).
+    // Dia anterior sem resumo: avisa num modal (só com o Resumo na tela).
+    // "Executar o Resumo" já abre o calendário nesse dia; "Registrar
+    // Folga" por enquanto só fecha o modal (a folga vem nas próximas
+    // etapas).
     if (_diaPendente && TickerMode.of(context)) {
       final dia = data.subtract(const Duration(days: 1));
-      await _avisoDiaSemResumo(
+      final escolha = await _avisoDiaSemResumo(
         'Não foi registrado o resumo do dia ${_formatar(dia)}.',
       );
       if (!mounted || minha != _conferencia) return;
-      await _escolherDataInicial(inicial: dia);
+      if (escolha == 'resumo') await _escolherDataInicial(inicial: dia);
     }
   }
 
   /// Modal do dia sem resumo: mesmo vermelho e branco do alerta de erro da
-  /// Pesagem (pesagem_itens_screen.dart), ícone de atenção e OK. Feito aqui
+  /// Pesagem (pesagem_itens_screen.dart) e ícone de atenção. Devolve
+  /// 'folga' (Registrar Folga) ou 'resumo' (Executar o Resumo). Feito aqui
   /// para não mexer no AppAlert, que é usado pelos outros programas.
-  Future<void> _avisoDiaSemResumo(String mensagem) {
+  Future<String?> _avisoDiaSemResumo(String mensagem) {
     final fundo = Colors.red[900]!.withValues(alpha: 0.95);
     const texto = Colors.white;
     FocusManager.instance.primaryFocus?.unfocus();
-    return showDialog<void>(
+    return showDialog<String>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(

@@ -577,13 +577,49 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     // calendário nesse dia (só com o Resumo na tela).
     if (_diaPendente && TickerMode.of(context)) {
       final dia = data.subtract(const Duration(days: 1));
-      await AppAlert.erro(
-        context,
+      await _avisoDiaSemResumo(
         'Não foi registrado o resumo do dia ${_formatar(dia)}.',
       );
       if (!mounted || minha != _conferencia) return;
       await _escolherDataInicial(inicial: dia);
     }
+  }
+
+  /// Modal do dia sem resumo: fundo vermelho claro, ícone de atenção e OK
+  /// (cores do alert-danger do web). Feito aqui para não mexer no AppAlert,
+  /// que é usado pelos outros programas.
+  Future<void> _avisoDiaSemResumo(String mensagem) {
+    const fundo = Color(0xFFF2DEDE);
+    const texto = Color(0xFFA94442);
+    FocusManager.instance.primaryFocus?.unfocus();
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: fundo,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Color(0xFFEBCCD1)),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: texto, size: 30),
+            const SizedBox(width: 10),
+            Text('Atenção', style: EstiloApp.negrito(18, texto)),
+          ],
+        ),
+        content: Text(
+          mensagem,
+          style: const TextStyle(fontSize: 15, color: texto),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('OK', style: EstiloApp.negrito(15, texto)),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Calendário da tela inicial: hoje ou uma data anterior (futura não

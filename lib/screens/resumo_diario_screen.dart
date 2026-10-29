@@ -689,10 +689,14 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   }
 
   /// Seta do título (e "voltar" do Android): volta para a seção anterior;
-  /// só na Seção 1 sai para a Home.
+  /// da Seção 1 volta para a tela inicial; só da tela inicial sai para a
+  /// Home.
   void _voltar() {
     if (_secao > 1) {
       _anterior();
+    } else if (_secao == 1) {
+      FocusManager.instance.primaryFocus?.unfocus();
+      setState(() => _secao = 0);
     } else if (widget.onBack != null) {
       widget.onBack!();
     } else {

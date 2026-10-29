@@ -571,10 +571,13 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           temOutras: _fazendas.length > 1,
           onTrocar: _escolherOutraFazenda,
         ),
-      // saudação: "Olá <usuário>!", com o nome em negrito
-      Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-        child: Text.rich(
+      // saudação: "Olá <usuário>!", com o nome em negrito, à esquerda; só
+      // depois de escolher a fazenda
+      if (_fazenda != null)
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
+          child: Text.rich(
           TextSpan(
             style: const TextStyle(fontSize: 20, color: EstiloApp.azulBarra),
             children: [

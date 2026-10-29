@@ -120,7 +120,11 @@ class ResumoDiarioService {
       if (response.statusCode != 200) return null;
       final dados = json.decode(response.body);
       if (dados is Map && dados['success'] == true) {
-        return dados['pendente'] == true;
+        final tipo = dados['tipo_no_dia']?.toString();
+        return (
+          pendente: dados['pendente'] == true,
+          tipoNoDia: tipo == null || tipo.isEmpty ? null : tipo,
+        );
       }
     } catch (e) {
       debugPrint('[ResumoDiario] dia pendente: falhou -> $e');

@@ -12,7 +12,6 @@ import '../widgets/tarja_fazenda_widget.dart';
 import 'aplicacao_modal.dart';
 import 'tratamento_modal.dart';
 import '../widgets/indicador_conectividade_widget.dart';
-import '../widgets/seletor_campo_widget.dart';
 
 /// "Resumo Diário da Fazenda": conferência, por usuário logado, dos
 /// serviços feitos na fazenda no dia. São 10 seções, mostradas uma de cada
@@ -511,7 +510,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   }
 
   String get _nomeFazenda => _fazendas
-      .firstWhere((f) => f.key == _fazenda, orElse: () => const MapEntry('', ''))
+      .firstWhere(
+        (f) => f.key == _fazenda,
+        orElse: () => const MapEntry('', ''),
+      )
       .value;
 
   /// Ícone de edição da tarja: modal para escolher outra fazenda (igual à
@@ -731,144 +733,151 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           : _fazenda == null
           ? _escolhaDaFazenda()
           : Column(
-        children: [
-          // tarja azul com a fazenda; o ícone de edição só aparece com mais
-          // de uma fazenda
-          TarjaFazendaWidget(
-            nomeFazenda: _nomeFazenda,
-            temOutras: _fazendas.length > 1,
-            onTrocar: _escolherOutraFazenda,
-          ),
-          _progresso(),
-          // Parte fixa da seção (não rola): na Seção 1, a Identificação e o
-          // título das Atividades do Dia.
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: _fixoDaSecao(),
-            ),
-          ),
-          Expanded(
-            child: Stack(
               children: [
-                // Só esta parte rola (na Seção 1, as Atividades do Dia)
-                ListView(
-                  // espaço no fim para o último item passar do botão Próximo
-                  // (que fica por cima, junto com a barra do celular)
-                  padding: EdgeInsets.fromLTRB(
-                    12,
-                    0,
-                    12,
-                    _tecladoAberto
-                        ? 16
-                        : 96 + MediaQuery.of(context).padding.bottom,
-                  ),
-                  children: _rolavelDaSecao(),
+                // tarja azul com a fazenda; o ícone de edição só aparece com mais
+                // de uma fazenda
+                TarjaFazendaWidget(
+                  nomeFazenda: _nomeFazenda,
+                  temOutras: _fazendas.length > 1,
+                  onTrocar: _escolherOutraFazenda,
                 ),
-                // Próximo sempre visível; a tela rola por trás dele. Com o
-                // teclado aberto ele sai da frente, para não cobrir o campo
-                // que está sendo digitado.
-                if (!_tecladoAberto)
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: SafeArea(
-                      top: false,
-                      // o fundo branco vai até embaixo (atrás da barra do
-                      // celular), para a lista não aparecer ali
-                      bottom: false,
-                      child: Container(
+                _progresso(),
+                // Parte fixa da seção (não rola): na Seção 1, a Identificação e o
+                // título das Atividades do Dia.
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: _fixoDaSecao(),
+                  ),
+                ),
+                Expanded(
+                  child: Stack(
+                    children: [
+                      // Só esta parte rola (na Seção 1, as Atividades do Dia)
+                      ListView(
+                        // espaço no fim para o último item passar do botão Próximo
+                        // (que fica por cima, junto com a barra do celular)
                         padding: EdgeInsets.fromLTRB(
                           12,
-                          10,
+                          0,
                           12,
-                          12 + MediaQuery.of(context).padding.bottom,
+                          _tecladoAberto
+                              ? 16
+                              : 96 + MediaQuery.of(context).padding.bottom,
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.06),
-                              blurRadius: 6,
-                              offset: const Offset(0, -2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            // Anterior (btn-default) a partir da Seção 2
-                            if (_secao > 1) ...[
-                              Expanded(
-                                child: SizedBox(
-                                  height: 48,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFFE9ECEF),
-                                      foregroundColor: const Color(0xFF333333),
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    onPressed: _anterior,
-                                    child: const Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.arrow_back, size: 20),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'Anterior',
-                                          style: TextStyle(fontSize: 16),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                            ] else
-                              const Spacer(),
-                            Expanded(
-                              child: SizedBox(
-                                height: 48,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: _azulBotao,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  onPressed: _proximo,
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Próximo',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      SizedBox(width: 8),
-                                      Icon(Icons.arrow_forward, size: 20),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                        children: _rolavelDaSecao(),
                       ),
-                    ),
+                      // Próximo sempre visível; a tela rola por trás dele. Com o
+                      // teclado aberto ele sai da frente, para não cobrir o campo
+                      // que está sendo digitado.
+                      if (!_tecladoAberto)
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: SafeArea(
+                            top: false,
+                            // o fundo branco vai até embaixo (atrás da barra do
+                            // celular), para a lista não aparecer ali
+                            bottom: false,
+                            child: Container(
+                              padding: EdgeInsets.fromLTRB(
+                                12,
+                                10,
+                                12,
+                                12 + MediaQuery.of(context).padding.bottom,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.06),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, -2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  // Anterior (btn-default) a partir da Seção 2
+                                  if (_secao > 1) ...[
+                                    Expanded(
+                                      child: SizedBox(
+                                        height: 48,
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(
+                                              0xFFE9ECEF,
+                                            ),
+                                            foregroundColor: const Color(
+                                              0xFF333333,
+                                            ),
+                                            elevation: 0,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                          onPressed: _anterior,
+                                          child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.arrow_back, size: 20),
+                                              SizedBox(width: 8),
+                                              Text(
+                                                'Anterior',
+                                                style: TextStyle(fontSize: 16),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                  ] else
+                                    const Spacer(),
+                                  Expanded(
+                                    child: SizedBox(
+                                      height: 48,
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: _azulBotao,
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                        ),
+                                        onPressed: _proximo,
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              'Próximo',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            SizedBox(width: 8),
+                                            Icon(Icons.arrow_forward, size: 20),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
+                ),
               ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1469,7 +1478,15 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       icone: Icon(Icons.calendar_month, color: _corRotulo, size: 20),
       onTap: _escolherData,
     ),
-    // a Fazenda fica na tarja azul do topo
+    const SizedBox(height: 10),
+    SeletorCampoWidget<String>(
+      rotulo: '* Fazenda',
+      corRotulo: _corRotulo,
+      valor: _fazenda,
+      opcoes: _fazendas,
+      destaque: true,
+      onChanged: (v) => setState(() => _fazenda = v),
+    ),
     const SizedBox(height: 10),
     // o usuário logado, sem digitar
     CampoValorTopo(

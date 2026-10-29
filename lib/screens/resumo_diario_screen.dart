@@ -488,6 +488,21 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     if (mounted) setState(() {});
   }
 
+  bool _estavaVisivel = false;
+
+  /// O Resumo fica montado mesmo escondido (main_container.dart). Saiu da
+  /// tela (seta ou rodapé) ainda na tela inicial: com mais de uma fazenda,
+  /// a escolha é desfeita, para pedir a fazenda de novo ao voltar.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final visivel = TickerMode.of(context);
+    if (_estavaVisivel && !visivel && _secao == 0 && _fazendas.length > 1) {
+      _fazenda = null;
+    }
+    _estavaVisivel = visivel;
+  }
+
   Future<void> _carregar() async {
     final prefs = await SharedPreferences.getInstance();
     final fazendasJson = prefs.getString('userFazendas');

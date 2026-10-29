@@ -11,6 +11,7 @@ import 'package:boivirtual/screens/atualizando_dados_screen.dart';
 import 'package:boivirtual/services/connectivity_service.dart';
 import 'package:boivirtual/widgets/indicador_conectividade_widget.dart';
 import 'package:boivirtual/widgets/indicador_sincronizando_widget.dart';
+import 'package:boivirtual/utils/app_alert.dart';
 import 'auth_service.dart';
 import 'config/recursos.dart';
 

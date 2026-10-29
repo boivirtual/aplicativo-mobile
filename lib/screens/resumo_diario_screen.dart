@@ -726,8 +726,19 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ),
         actions: const [IndicadorConectividadeWidget(), SizedBox(width: 8)],
       ),
-      body: Column(
+      body: !_carregado
+          ? const Center(child: CircularProgressIndicator())
+          : _fazenda == null
+          ? _escolhaDaFazenda()
+          : Column(
         children: [
+          // tarja azul com a fazenda; o ícone de edição só aparece com mais
+          // de uma fazenda
+          TarjaFazendaWidget(
+            nomeFazenda: _nomeFazenda,
+            temOutras: _fazendas.length > 1,
+            onTrocar: _escolherOutraFazenda,
+          ),
           _progresso(),
           // Parte fixa da seção (não rola): na Seção 1, a Identificação e o
           // título das Atividades do Dia.

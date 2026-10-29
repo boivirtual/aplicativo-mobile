@@ -585,12 +585,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     }
   }
 
-  /// Modal do dia sem resumo: fundo vermelho claro, ícone de atenção e OK
-  /// (cores do alert-danger do web). Feito aqui para não mexer no AppAlert,
+  /// Modal do dia sem resumo: fundo vermelho (btn-danger do web), fonte e
+  /// ícone de atenção brancos, e OK. Feito aqui para não mexer no AppAlert,
   /// que é usado pelos outros programas.
   Future<void> _avisoDiaSemResumo(String mensagem) {
-    const fundo = Color(0xFFF2DEDE);
-    const texto = Color(0xFFA94442);
+    const fundo = Color(0xFFD9534F);
+    const texto = Colors.white;
     FocusManager.instance.primaryFocus?.unfocus();
     return showDialog<void>(
       context: context,

@@ -246,7 +246,7 @@ class _MainContainerState extends State<MainContainer>
                 // (config/recursos.dart)
                 if (index == 3 && !agendaLiberada) return;
                 if (index == 4 && !resumoDiarioLiberado) return;
-                setState(() => _currentIndex = index);
+                _irPara(index);
               },
               type: BottomNavigationBarType.fixed,
               backgroundColor: Colors.white,

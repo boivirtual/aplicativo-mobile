@@ -503,10 +503,54 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             f['nome'].toString().toUpperCase(),
           ),
       ];
+      _fazendasLista = lista;
       // uma fazenda só: já vem escolhida
       if (_fazendas.length == 1) _fazenda = _fazendas.first.key;
+      _carregado = true;
     });
   }
+
+  String get _nomeFazenda => _fazendas
+      .firstWhere((f) => f.key == _fazenda, orElse: () => const MapEntry('', ''))
+      .value;
+
+  /// Ícone de edição da tarja: modal para escolher outra fazenda (igual à
+  /// Chuva).
+  Future<void> _escolherOutraFazenda() async {
+    final escolhida = await escolherFazendaModal(
+      context,
+      fazendas: _fazendasLista,
+      fazendaSelecionada: _fazenda,
+    );
+    if (escolhida != null && escolhida != _fazenda && mounted) {
+      setState(() => _fazenda = escolhida);
+    }
+  }
+
+  /// Mais de uma fazenda e nenhuma escolhida ainda: só o select (igual à
+  /// Chuva); escolhida, entra a tarja azul e o Resumo.
+  Widget _escolhaDaFazenda() => Column(
+    children: [
+      CabecalhoFazendaWidget(
+        fazendaSelecionada: _fazenda,
+        fazendasCarregadas: _fazendasLista,
+        onChanged: (v) => setState(() => _fazenda = v),
+        mostrarIcone: false,
+        textoVazio: 'Selecione uma Fazenda',
+      ),
+      Expanded(
+        child: Center(
+          child: Text(
+            'Selecione uma fazenda.',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
 
   /// Hoje ou uma data anterior; data futura não pode.
   Future<void> _escolherData() async {

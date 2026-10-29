@@ -620,10 +620,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, 'folga'),
-            child: Text(
-              'Registrar Folga',
-              style: EstiloApp.negrito(15, texto),
-            ),
+            child: Text('Registrar Folga', style: EstiloApp.negrito(15, texto)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, 'resumo'),

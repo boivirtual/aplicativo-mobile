@@ -97,17 +97,16 @@ class ResumoDiarioService {
   }
 
   /// Tela inicial: o dia anterior a [data] ficou sem resumo da [fazenda]
-  /// (um resumo por data e fazenda)? Só online (consulta direto no
-  /// servidor). Devolve true/false; null se não conseguiu conferir (sem
+  /// (um resumo por data e fazenda)? E a própria [data] já tem registro
+  /// (tipoNoDia: 'R' = Resumo, 'F' = Folga, null = livre)? Só online
+  /// (consulta direto no servidor). null se não conseguiu conferir (sem
   /// resposta ou resposta com erro).
-  Future<bool?> diaAnteriorPendente(
+  Future<({bool pendente, String? tipoNoDia})?> diaAnteriorPendente(
     String bd,
     String fazenda,
     DateTime data,
   ) async {
-    final dia =
-        '${data.year}-${data.month.toString().padLeft(2, '0')}-'
-        '${data.day.toString().padLeft(2, '0')}';
+    final dia = _diaApi(data);
     try {
       final response = await http
           .post(

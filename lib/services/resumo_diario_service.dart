@@ -56,12 +56,13 @@ class ResumoDiarioService {
     ];
   }
 
-  /// Tela inicial: o dia anterior a [data] ficou sem resumo do [usuario]?
-  /// Só online (consulta direto no servidor). Devolve true/false; null se
-  /// não conseguiu conferir (sem resposta ou resposta com erro).
+  /// Tela inicial: o dia anterior a [data] ficou sem resumo da [fazenda]
+  /// (um resumo por data e fazenda)? Só online (consulta direto no
+  /// servidor). Devolve true/false; null se não conseguiu conferir (sem
+  /// resposta ou resposta com erro).
   Future<bool?> diaAnteriorPendente(
     String bd,
-    String usuario,
+    String fazenda,
     DateTime data,
   ) async {
     final dia =

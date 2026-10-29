@@ -607,7 +607,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ),
         content: Text(
           mensagem,
-          style: const TextStyle(fontSize: 15, color: texto),
+          style: const TextStyle(fontSize: 16, color: texto),
         ),
         actions: [
           TextButton(

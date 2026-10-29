@@ -710,7 +710,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     // main_container.dart): escondido, não segura o "voltar" do Android.
     final visivel = TickerMode.of(context);
     return PopScope(
-      canPop: !visivel || (_secao == 1 && widget.onBack == null),
+      canPop: !visivel || (_secao == 0 && widget.onBack == null),
       onPopInvokedWithResult: (saiu, _) {
         if (!saiu && visivel) _voltar();
       },

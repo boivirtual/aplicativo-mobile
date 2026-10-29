@@ -606,7 +606,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                   color: EstiloApp.azulBarra,
                 ),
                 children: [
-                  const TextSpan(text: 'Hoje é o dia '),
+                  TextSpan(
+                    text: _data == _hoje() ? 'Hoje é o dia ' : 'Resumo do dia ',
+                  ),
                   TextSpan(
                     text: _formatar(_data),
                     style: EstiloApp.negrito(17, EstiloApp.azulBarra),

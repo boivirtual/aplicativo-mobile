@@ -725,8 +725,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       helpText: 'Data do resumo',
     );
     if (d == null || !mounted) return;
-    setState(() => _data = d);
-    await _conferirDiaAnterior();
+    // a data só muda se o dia escolhido ainda não tem resumo nem folga
+    await _conferirDiaAnterior(nova: d);
   }
 
   /// "Hoje é o dia ..." (ou "Resumo do dia ..." com uma data anterior

@@ -55,4 +55,36 @@ class ResumoDiarioService {
         MapEntry((r as Map)['id'].toString(), r['nome'].toString()),
     ];
   }
+
+  /// Tela inicial: o dia anterior a [data] ficou sem resumo do [usuario]?
+  /// Só online (consulta direto no servidor). Devolve true/false; null se
+  /// não conseguiu conferir (sem resposta ou resposta com erro).
+  Future<bool?> diaAnteriorPendente(
+    String bd,
+    String usuario,
+    DateTime data,
+  ) async {
+    final dia =
+        '${data.year}-${data.month.toString().padLeft(2, '0')}-'
+        '${data.day.toString().padLeft(2, '0')}';
+    try {
+      final response = await http
+          .post(
+            Uri.parse(
+              "${ApiConfig.baseUrl}/rest/resumo-diario/dia_pendente.php",
+            ),
+            headers: {"Content-Type": "application/json"},
+            body: json.encode({'bd': bd, 'usuario': usuario, 'data': dia}),
+          )
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode != 200) return null;
+      final dados = json.decode(response.body);
+      if (dados is Map && dados['success'] == true) {
+        return dados['pendente'] == true;
+      }
+    } catch (e) {
+      debugPrint('[ResumoDiario] dia pendente: falhou -> $e');
+    }
+    return null;
+  }
 }

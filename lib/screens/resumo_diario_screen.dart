@@ -666,11 +666,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           onPressed: _conferirDiaAnterior,
           child: const Text('Tentar novamente'),
         ),
-      )
-    else if (_diaPendente)
-      _avisoTelaInicial(
-        'Atenção! Não foi registrado o resumo do dia '
-        '${_formatar(_data.subtract(const Duration(days: 1)))}.',
       ),
   ];
 

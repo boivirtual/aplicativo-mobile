@@ -703,6 +703,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       if (_fazendas.length == 1) _fazenda = _fazendas.first.key;
       _carregado = true;
     });
+    // já na tela quando terminou de carregar: confere o dia anterior
+    if (TickerMode.of(context) && _secao == 0) await _conferirDiaAnterior();
   }
 
   String get _nomeFazenda => _fazendas

@@ -597,6 +597,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         backgroundColor: fundo,
+        // sem o tom que o Material 3 põe por cima: o vermelho fica igual
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Row(
           children: [

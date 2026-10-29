@@ -666,6 +666,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         // sem o tom que o Material 3 põe por cima: o vermelho fica igual
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        // modal mais largo que o padrão, para "Executar o Resumo" caber
+        // numa linha só ao lado do "Registrar Folga"
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         title: Row(
           children: [
             const Icon(Icons.warning_amber_rounded, color: texto, size: 30),

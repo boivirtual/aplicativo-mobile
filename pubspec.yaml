@@ -2,12 +2,12 @@ name: boivirtual
 description: "A new Flutter project."
 publish_to: 'none'
 
-# O build number (depois do "+") Ã© MÃŠS+DIA+HORA+MINUTO da build, formato
+# O build number (depois do "+") é MÊS+DIA+HORA+MINUTO da build, formato
 # MMDDHHmm (sem ano: o Android exige que isso caiba num inteiro de 32 bits,
-# atÃ© ~2,1 bilhÃµes â€” com ano dava overflow e o build falhava) â€” atualizar
+# até ~2,1 bilhões — com ano dava overflow e o build falhava) — atualizar
 # sempre que uma build nova for gerada pra teste (a hora importa: pode sair
-# mais de uma build no mesmo dia), Ã© assim que o testador confirma na tela
-# "AtualizaÃ§Ãµes" qual versÃ£o estÃ¡ rodando no aparelho.
+# mais de uma build no mesmo dia), é assim que o testador confirma na tela
+# "Atualizações" qual versão está rodando no aparelho.
 version: 3.0.0+10290823
 
 environment:
@@ -37,7 +37,7 @@ dev_dependencies:
   sqflite_common_ffi: ^2.3.4
   shelf: ^1.4.2 # servidor HTTP local de mentira p/ testes de rede ruim
 
-# ConfiguraÃ§Ã£o do Ãcone do App
+# Configuração do Ícone do App
 flutter_launcher_icons:
   android: true
   ios: true
@@ -56,7 +56,7 @@ flutter:
       fonts:
         - asset: assets/fonts/FuturaStd-Light.otf
 
-# ConfiguraÃ§Ã£o do Splash
+# Configuração do Splash
 flutter_native_splash:
   color: "#18385F"
   image: assets/images/logo_foreground.png

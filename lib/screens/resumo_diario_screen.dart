@@ -531,12 +531,15 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Só a última conferência vale (a data pode mudar no meio de uma).
   int _conferencia = 0;
 
-  Future<void> _conferirDiaAnterior() async {
+  /// Confere a data da tela. Com [nova] (data escolhida no calendário),
+  /// confere ela antes de aceitar: dia que já tem resumo ou folga avisa e
+  /// não troca a data.
+  Future<void> _conferirDiaAnterior({DateTime? nova}) async {
     final bd = _bd;
     final fazenda = _fazenda;
     if (!mounted || bd == null || fazenda == null) return;
     final minha = ++_conferencia;
-    final data = _data;
+    final data = nova ?? _data;
     setState(() {
       _conferindoDia = true;
       _diaPendente = false;
@@ -544,24 +547,42 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     });
     // checagem da internet na hora (o Resumo Diário só funciona online)
     final nivel = await ConnectivityService.instance.verificarAgora();
-    bool? pendente;
+    ({bool pendente, String? tipoNoDia})? r;
     String? erro = _mensagemSemInternet(nivel);
     if (erro == null) {
-      pendente = await ResumoDiarioService.instance.diaAnteriorPendente(
+      r = await ResumoDiarioService.instance.diaAnteriorPendente(
         bd,
         fazenda,
         data,
       );
-      if (pendente == null) {
+      if (r == null) {
         erro =
             'Não foi possível conferir os resumos anteriores. Tente '
             'novamente.';
       }
     }
     if (!mounted || minha != _conferencia) return;
+    // dia escolhido no calendário já registrado: avisa, fica na data que
+    // estava e confere ela de novo
+    final tipo = r?.tipoNoDia;
+    if (nova != null && tipo != null) {
+      setState(() => _conferindoDia = false);
+      await AppAlert.erro(
+        context,
+        tipo == 'F'
+            ? 'O dia ${_formatar(nova)} já foi registrado como folga. '
+                  'Escolha outra data.'
+            : 'O dia ${_formatar(nova)} já tem o resumo registrado. '
+                  'Escolha outra data.',
+      );
+      if (!mounted || minha != _conferencia) return;
+      await _conferirDiaAnterior();
+      return;
+    }
     setState(() {
+      if (nova != null && erro == null) _data = nova;
       _conferindoDia = false;
-      _diaPendente = pendente == true;
+      _diaPendente = r?.pendente == true;
       _erroConferencia = erro;
     });
     // Dia anterior sem resumo: avisa num modal (só com o Resumo na tela).

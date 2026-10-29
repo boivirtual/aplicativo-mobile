@@ -614,10 +614,26 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           mensagem,
           style: const TextStyle(fontSize: 16, color: texto),
         ),
+        // dois links no lugar do OK: "Registrar Folga" com o destaque que o
+        // OK tinha; "Executar o Resumo" mais apagado
+        actionsAlignment: MainAxisAlignment.spaceBetween,
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('OK', style: EstiloApp.negrito(15, texto)),
+            onPressed: () => Navigator.pop(ctx, 'folga'),
+            child: Text(
+              'Registrar Folga',
+              style: EstiloApp.negrito(15, texto),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'resumo'),
+            child: Text(
+              'Executar o Resumo',
+              style: TextStyle(
+                fontSize: 15,
+                color: texto.withValues(alpha: 0.6),
+              ),
+            ),
           ),
         ],
       ),

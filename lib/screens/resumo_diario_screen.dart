@@ -498,7 +498,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   /// O Resumo fica montado mesmo escondido (main_container.dart). Saiu da
   /// tela (seta ou rodapé) ainda na tela inicial: com mais de uma fazenda,
-  /// a escolha é desfeita, para pedir a fazenda de novo ao voltar.
+  /// a escolha é desfeita, para pedir a fazenda de novo ao voltar. Voltou
+  /// para a tela inicial: a data volta para hoje e o dia anterior é
+  /// conferido de novo.
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -506,8 +508,177 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     if (_estavaVisivel && !visivel && _secao == 0 && _fazendas.length > 1) {
       _fazenda = null;
     }
+    if (!_estavaVisivel && visivel && _secao == 0) {
+      _data = _hoje();
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _conferirDiaAnterior(),
+      );
+    }
     _estavaVisivel = visivel;
   }
+
+  // Tela inicial — conferência do dia anterior à data escolhida (no
+  // servidor, só online).
+  bool _conferindoDia = false;
+
+  /// true = o dia anterior ficou sem resumo: para tudo até o usuário
+  /// escolher esse dia no calendário.
+  bool _diaPendente = false;
+
+  /// Não deu para conferir (sem internet ou falha): também para tudo.
+  String? _erroConferencia;
+
+  /// Só a última conferência vale (a data pode mudar no meio de uma).
+  int _conferencia = 0;
+
+  Future<void> _conferirDiaAnterior() async {
+    final bd = _bd;
+    if (!mounted || bd == null || _nomeUsuario.isEmpty) return;
+    final minha = ++_conferencia;
+    final data = _data;
+    setState(() {
+      _conferindoDia = true;
+      _diaPendente = false;
+      _erroConferencia = null;
+    });
+    // checagem da internet na hora (o Resumo Diário só funciona online)
+    final nivel = await ConnectivityService.instance.verificarAgora();
+    bool? pendente;
+    String? erro;
+    if (nivel == NivelConexao.semInternet) {
+      erro =
+          'Sem internet! O Resumo Diário só pode ser feito com o aplicativo '
+          'online. Conecte-se à internet e tente novamente.';
+    } else if (nivel == NivelConexao.internetRuim) {
+      erro =
+          'Internet ruim ou intermitente! O Resumo Diário só pode ser feito '
+          'com o aplicativo online. Tente novamente quando a internet estiver '
+          'estável.';
+    } else {
+      pendente = await ResumoDiarioService.instance.diaAnteriorPendente(
+        bd,
+        _nomeUsuario,
+        data,
+      );
+      if (pendente == null) {
+        erro =
+            'Não foi possível conferir os resumos anteriores. Tente '
+            'novamente.';
+      }
+    }
+    if (!mounted || minha != _conferencia) return;
+    setState(() {
+      _conferindoDia = false;
+      _diaPendente = pendente == true;
+      _erroConferencia = erro;
+    });
+  }
+
+  /// Calendário da tela inicial: hoje ou uma data anterior (futura não
+  /// pode); a cada data escolhida, confere o dia anterior a ela.
+  Future<void> _escolherDataInicial() async {
+    final d = await showDatePicker(
+      context: context,
+      initialDate: _data,
+      firstDate: DateTime(2000),
+      lastDate: _hoje(),
+      helpText: 'Data do resumo',
+    );
+    if (d == null || !mounted) return;
+    setState(() => _data = d);
+    await _conferirDiaAnterior();
+  }
+
+  /// "Hoje é o dia ..." + calendário e, embaixo, o aviso do dia anterior
+  /// sem resumo (ou o erro da conferência).
+  List<Widget> _dataDaTelaInicial() => [
+    Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 8, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                style: const TextStyle(
+                  fontSize: 17,
+                  color: EstiloApp.azulBarra,
+                ),
+                children: [
+                  const TextSpan(text: 'Hoje é o dia '),
+                  TextSpan(
+                    text: _formatar(_data),
+                    style: EstiloApp.negrito(17, EstiloApp.azulBarra),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.calendar_month,
+              color: EstiloApp.azulIcone,
+              size: 28,
+            ),
+            tooltip: 'Escolher a data',
+            onPressed: _conferindoDia ? null : _escolherDataInicial,
+          ),
+        ],
+      ),
+    ),
+    if (_conferindoDia)
+      const Padding(
+        padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 10),
+            Text(
+              'Conferindo os resumos anteriores...',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ],
+        ),
+      )
+    else if (_erroConferencia != null)
+      _avisoTelaInicial(
+        _erroConferencia!,
+        acao: TextButton(
+          onPressed: _conferirDiaAnterior,
+          child: const Text('Tentar novamente'),
+        ),
+      )
+    else if (_diaPendente)
+      _avisoTelaInicial(
+        'Atenção! Não foi registrado o resumo do dia '
+        '${_formatar(_data.subtract(const Duration(days: 1)))}.',
+      ),
+  ];
+
+  /// Caixa vermelha de aviso (alert-danger do web).
+  Widget _avisoTelaInicial(String texto, {Widget? acao}) => Container(
+    width: double.infinity,
+    margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF2DEDE),
+      border: Border.all(color: const Color(0xFFEBCCD1)),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          texto,
+          style: EstiloApp.negrito(15, const Color(0xFFA94442)),
+        ),
+        ?acao,
+      ],
+    ),
+  );
 
   Future<void> _carregar() async {
     final prefs = await SharedPreferences.getInstance();

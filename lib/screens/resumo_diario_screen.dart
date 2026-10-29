@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/daos/mapa_gado_dao.dart';
+import '../services/connectivity_service.dart';
+import '../services/resumo_diario_service.dart';
 import '../utils/app_alert.dart';
 import '../utils/estilo_app.dart';
 import '../widgets/cabecalho_fazenda_widget.dart';

@@ -599,7 +599,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         backgroundColor: fundo,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: Color(0xFFEBCCD1)),
         ),
         title: Row(
           children: [

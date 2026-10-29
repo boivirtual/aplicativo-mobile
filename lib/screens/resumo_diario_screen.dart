@@ -597,9 +597,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         backgroundColor: fundo,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Row(
           children: [
             const Icon(Icons.warning_amber_rounded, color: texto, size: 30),

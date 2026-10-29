@@ -676,9 +676,13 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             Text('Atenção', style: EstiloApp.negrito(18, texto)),
           ],
         ),
-        content: Text(
-          mensagem,
-          style: const TextStyle(fontSize: 16, color: texto),
+        // largura toda que o modal permite (senão ele encolhe no texto)
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Text(
+            mensagem,
+            style: const TextStyle(fontSize: 16, color: texto),
+          ),
         ),
         // dois links lado a lado no lugar do OK: "Registrar Folga" com o
         // destaque que o OK tinha; "Executar o Resumo" mais claro, sem

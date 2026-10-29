@@ -590,8 +590,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     await _conferirDiaAnterior();
   }
 
-  /// "Hoje é o dia ..." + calendário e, embaixo, o aviso do dia anterior
-  /// sem resumo (ou o erro da conferência).
+  /// "Hoje é o dia ..." (ou "Resumo do dia ..." com uma data anterior
+  /// escolhida) + calendário e, embaixo, o aviso do dia anterior sem
+  /// resumo (ou o erro da conferência).
   List<Widget> _dataDaTelaInicial() => [
     Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 8, 0),

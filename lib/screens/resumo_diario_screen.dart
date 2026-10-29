@@ -671,10 +671,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          texto,
-          style: EstiloApp.negrito(15, const Color(0xFFA94442)),
-        ),
+        Text(texto, style: EstiloApp.negrito(15, const Color(0xFFA94442))),
         if (acao != null) acao,
       ],
     ),

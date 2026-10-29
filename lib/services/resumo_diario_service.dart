@@ -56,6 +56,46 @@ class ResumoDiarioService {
     ];
   }
 
+  static String _diaApi(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
+
+  /// "Registrar Folga" do modal do dia sem resumo: grava o [dia] da
+  /// [fazenda] como Folga, com o [usuario]. Só online. Devolve null se
+  /// gravou (ou já estava gravado) e a mensagem de erro se não conseguiu.
+  Future<String?> registrarFolga(
+    String bd,
+    String fazenda,
+    String usuario,
+    DateTime dia,
+  ) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse("${ApiConfig.baseUrl}/rest/resumo-diario/folga.php"),
+            headers: {"Content-Type": "application/json"},
+            body: json.encode({
+              'bd': bd,
+              'fazenda': fazenda,
+              'usuario': usuario,
+              'data': _diaApi(dia),
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        final dados = json.decode(response.body);
+        if (dados is Map) {
+          if (dados['success'] == true) return null;
+          final msg = dados['message']?.toString();
+          if (msg != null && msg.isNotEmpty) return msg;
+        }
+      }
+    } catch (e) {
+      debugPrint('[ResumoDiario] registrar folga: falhou -> $e');
+    }
+    return 'Não foi possível registrar a folga. Tente novamente.';
+  }
+
   /// Tela inicial: o dia anterior a [data] ficou sem resumo da [fazenda]
   /// (um resumo por data e fazenda)? Só online (consulta direto no
   /// servidor). Devolve true/false; null se não conseguiu conferir (sem

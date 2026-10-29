@@ -578,19 +578,19 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
           child: Text.rich(
-          TextSpan(
-            style: const TextStyle(fontSize: 20, color: EstiloApp.azulBarra),
-            children: [
-              const TextSpan(text: 'Olá '),
-              TextSpan(
-                text: _nomeUsuario,
-                style: EstiloApp.negrito(20, EstiloApp.azulBarra),
-              ),
-              const TextSpan(text: '!'),
-            ],
+            TextSpan(
+              style: const TextStyle(fontSize: 20, color: EstiloApp.azulBarra),
+              children: [
+                const TextSpan(text: 'Olá '),
+                TextSpan(
+                  text: _nomeUsuario,
+                  style: EstiloApp.negrito(20, EstiloApp.azulBarra),
+                ),
+                const TextSpan(text: '!'),
+              ],
+            ),
           ),
         ),
-      ),
       Expanded(
         child: _fazenda == null
             ? Center(

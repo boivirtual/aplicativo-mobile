@@ -603,8 +603,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   }
 
   /// "Hoje é o dia ..." (ou "Resumo do dia ..." com uma data anterior
-  /// escolhida) + calendário e, embaixo, o aviso do dia anterior sem
-  /// resumo (ou o erro da conferência).
+  /// escolhida) + calendário e, embaixo, o erro da conferência (o aviso do
+  /// dia anterior sem resumo é um modal, ver [_conferirDiaAnterior]).
   List<Widget> _dataDaTelaInicial() => [
     Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 8, 0),

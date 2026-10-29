@@ -558,7 +558,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     } else {
       pendente = await ResumoDiarioService.instance.diaAnteriorPendente(
         bd,
-        _nomeUsuario,
+        fazenda,
         data,
       );
       if (pendente == null) {

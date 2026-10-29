@@ -737,25 +737,29 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
               size: 28,
             ),
             tooltip: 'Escolher a data',
-            onPressed: _conferindoDia ? null : () => _escolherDataInicial(),
+            onPressed: _conferindoDia || _registrandoFolga
+                ? null
+                : () => _escolherDataInicial(),
           ),
         ],
       ),
     ),
-    if (_conferindoDia)
-      const Padding(
-        padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+    if (_conferindoDia || _registrandoFolga)
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
         child: Row(
           children: [
-            SizedBox(
+            const SizedBox(
               width: 18,
               height: 18,
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Text(
-              'Conferindo os resumos anteriores...',
-              style: TextStyle(color: Colors.grey),
+              _registrandoFolga
+                  ? 'Registrando a folga...'
+                  : 'Conferindo os resumos anteriores...',
+              style: const TextStyle(color: Colors.grey),
             ),
           ],
         ),

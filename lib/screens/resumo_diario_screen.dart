@@ -571,6 +571,24 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           temOutras: _fazendas.length > 1,
           onTrocar: _escolherOutraFazenda,
         ),
+      // saudação: "Olá <usuário>!", com o nome em negrito
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        child: Text.rich(
+          TextSpan(
+            style: const TextStyle(fontSize: 20, color: EstiloApp.azulBarra),
+            children: [
+              const TextSpan(text: 'Olá '),
+              TextSpan(
+                text: _nomeUsuario,
+                style: EstiloApp.negrito(20, EstiloApp.azulBarra),
+              ),
+              const TextSpan(text: '!'),
+            ],
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
       Expanded(
         child: _fazenda == null
             ? Center(

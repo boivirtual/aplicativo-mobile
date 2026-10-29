@@ -574,18 +574,64 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       _erroConferencia = erro;
     });
     // Dia anterior sem resumo: avisa num modal (só com o Resumo na tela).
-    // "Executar o Resumo" já abre o calendário nesse dia; "Registrar
-    // Folga" por enquanto só fecha o modal (a folga vem nas próximas
-    // etapas).
+    // "Executar o Resumo" passa a tela para esse dia (o usuário continua o
+    // resumo dele); "Registrar Folga" grava o dia como Folga e volta para
+    // hoje.
     if (_diaPendente && TickerMode.of(context)) {
       final dia = data.subtract(const Duration(days: 1));
       final escolha = await _avisoDiaSemResumo(
         'Não foi registrado o resumo do dia ${_formatar(dia)}.',
       );
       if (!mounted || minha != _conferencia) return;
-      if (escolha == 'resumo') await _escolherDataInicial(inicial: dia);
+      if (escolha == 'resumo') {
+        setState(() => _data = dia);
+        await _conferirDiaAnterior();
+      } else if (escolha == 'folga') {
+        await _registrarFolga(dia);
+      }
     }
   }
+
+  bool _registrandoFolga = false;
+
+  /// Grava o [dia] como Folga da fazenda (no servidor, só online) e volta
+  /// a tela para hoje. Se não conseguir, avisa e confere de novo.
+  Future<void> _registrarFolga(DateTime dia) async {
+    final bd = _bd;
+    final fazenda = _fazenda;
+    if (bd == null || fazenda == null) return;
+    setState(() => _registrandoFolga = true);
+    // checagem da internet na hora (gravação no servidor)
+    final nivel = await ConnectivityService.instance.verificarAgora();
+    String? erro = _mensagemSemInternet(nivel);
+    erro ??= await ResumoDiarioService.instance.registrarFolga(
+      bd,
+      fazenda,
+      _nomeUsuario,
+      dia,
+    );
+    if (!mounted) return;
+    setState(() => _registrandoFolga = false);
+    if (erro != null) {
+      await AppAlert.erro(context, erro);
+      if (!mounted) return;
+    } else {
+      setState(() => _data = _hoje());
+    }
+    await _conferirDiaAnterior();
+  }
+
+  /// Texto do aviso quando a internet não está boa (null = internet ok).
+  static String? _mensagemSemInternet(NivelConexao nivel) => switch (nivel) {
+    NivelConexao.semInternet =>
+      'Sem internet! O Resumo Diário só pode ser feito com o aplicativo '
+          'online. Conecte-se à internet e tente novamente.',
+    NivelConexao.internetRuim =>
+      'Internet ruim ou intermitente! O Resumo Diário só pode ser feito '
+          'com o aplicativo online. Tente novamente quando a internet estiver '
+          'estável.',
+    _ => null,
+  };
 
   /// Modal do dia sem resumo: mesmo vermelho e branco do alerta de erro da
   /// Pesagem (pesagem_itens_screen.dart) e ícone de atenção. Devolve

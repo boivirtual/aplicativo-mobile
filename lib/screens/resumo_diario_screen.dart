@@ -513,7 +513,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       if (chave != _chaveAtividades) _atividadesMarcadas.clear();
       _chaveAtividades = chave;
       _atividadesRegistradas = {
-        if (chuva != null) 'choveu': 'Choveu ${_mm(chuva)} mm',
+        if (chuva != null) 'choveu': ('Choveu ', '${_mm(chuva)} mm'),
+        if (r?.mudouPasto == true)
+          'mudei_pasto': ('Mudei o Gado de Pasto: ', 'SIM'),
       };
       _atividadesMarcadas.removeWhere(
         (a) => !_atividadesRegistradas.containsKey(a),

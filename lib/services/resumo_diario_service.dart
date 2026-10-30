@@ -97,9 +97,9 @@ class ResumoDiarioService {
   }
 
   /// Seção 1: atividades já registradas no sistema para a [fazenda] no [dia].
-  /// Por enquanto só a chuva (chuvaMm null = não choveu). Só online. null se
-  /// não conseguiu consultar.
-  Future<({double? chuvaMm})?> atividadesDoDia(
+  /// chuvaMm null = não choveu; mudouPasto = teve transferência de animais
+  /// entre pastos no dia. Só online. null se não conseguiu consultar.
+  Future<({double? chuvaMm, bool mudouPasto})?> atividadesDoDia(
     String bd,
     String fazenda,
     DateTime dia,

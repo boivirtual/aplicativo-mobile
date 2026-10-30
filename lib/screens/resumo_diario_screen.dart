@@ -1912,6 +1912,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     bool semCaixa = false,
     // travado: cinza e sem resposta ao toque
     bool habilitado = true,
+    // com valor: o texto fica sem negrito e só o valor em negrito
+    String? valor,
   }) {
     const azulIcone = Color(0xFF228cb9);
     return Opacity(

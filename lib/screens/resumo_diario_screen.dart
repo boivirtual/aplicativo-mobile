@@ -807,6 +807,70 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ),
   ];
 
+  /// Pergunta da tela inicial: Sim (btn-primary) vai para a Seção 1; Não
+  /// (btn-default) sai para a Home.
+  List<Widget> _perguntaAtualizacao() => [
+    Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+      child: Text.rich(
+        TextSpan(
+          style: const TextStyle(fontSize: 17, color: EstiloApp.azulBarra),
+          children: [
+            const TextSpan(text: 'Todos os usuários já '),
+            TextSpan(
+              text: 'Atualizaram',
+              style: EstiloApp.negrito(17, EstiloApp.azulBarra),
+            ),
+            const TextSpan(text: ' os dados On-Line?'),
+          ],
+        ),
+      ),
+    ),
+    Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: EstiloApp.azulPrimario,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: () => setState(() => _secao = 1),
+                child: const Text('Sim', style: TextStyle(fontSize: 16)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: SizedBox(
+              height: 48,
+              child: ElevatedButton(
+                // mesmo btn-default do Anterior das seções
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFE9ECEF),
+                  foregroundColor: const Color(0xFF333333),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: _voltar,
+                child: const Text('Não', style: TextStyle(fontSize: 16)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  ];
+
   /// Caixa vermelha de aviso (alert-danger do web).
   Widget _avisoTelaInicial(String texto, {Widget? acao}) => Container(
     width: double.infinity,

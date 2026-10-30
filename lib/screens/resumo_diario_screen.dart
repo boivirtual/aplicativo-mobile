@@ -1956,11 +1956,26 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                 Icon(icone, size: 24, color: azulIcone),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  texto,
-                  // mesmo peso das opções da Seção 2
-                  style: _textoGrosso(_corRotulo).copyWith(fontSize: 15),
-                ),
+                child: valor == null
+                    ? Text(
+                        texto,
+                        // mesmo peso das opções da Seção 2
+                        style: _textoGrosso(_corRotulo).copyWith(fontSize: 15),
+                      )
+                    : Text.rich(
+                        TextSpan(
+                          style: TextStyle(fontSize: 15, color: _corRotulo),
+                          children: [
+                            TextSpan(text: texto),
+                            TextSpan(
+                              text: valor,
+                              style: _textoGrosso(
+                                _corRotulo,
+                              ).copyWith(fontSize: 15),
+                            ),
+                          ],
+                        ),
+                      ),
               ),
             ],
           ),

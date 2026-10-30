@@ -1441,18 +1441,16 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     );
   }
 
-  Widget _tituloAzul(String texto, {bool negrito = false}) => Padding(
+  Widget _tituloAzul(String texto) => Padding(
     padding: const EdgeInsets.fromLTRB(2, 10, 2, 8),
     child: Text(
       texto,
       textAlign: TextAlign.center,
-      style: negrito
-          ? EstiloApp.negrito(15, Colors.blue[300]!)
-          : TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue[300],
-            ),
+      style: TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.bold,
+        color: Colors.blue[300],
+      ),
     ),
   );
 

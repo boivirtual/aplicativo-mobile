@@ -1879,8 +1879,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   List<Widget> _atividadesDoDia() => [
     // só as já registradas no sistema; sem nenhuma, a lista fica vazia
     for (final a in _atividades)
-      if (_atividadesRegistradas[a.$1] case final texto?) ...[
-        _atividade(a.$1, texto, a.$3, a.$4),
+      if (_atividadesRegistradas[a.$1] case final linha?) ...[
+        _atividade(a.$1, linha.$1, linha.$2, a.$3, a.$4),
         const SizedBox(height: 8),
       ],
   ];

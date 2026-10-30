@@ -1888,6 +1888,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   Widget _atividade(
     String chave,
     String texto,
+    String valor,
     IconData? icone,
     String? imagem,
   ) => _linhaMarcar(
@@ -1896,6 +1897,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     _atividadesMarcadas.contains(chave),
     (v) => _marcarAtividade(chave, v),
     imagem: imagem,
+    valor: valor,
   );
 
   /// Linha com caixa de marcar, ícone azul e texto (Atividades do Dia,

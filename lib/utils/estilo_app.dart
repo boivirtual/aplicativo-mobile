@@ -11,8 +11,8 @@ class EstiloApp {
   /// Azul dos ícones (cards da Home, opções, editar/excluir).
   static const azulIcone = Color(0xFF228cb9);
 
-  /// Azul do btn-primary do web (Bootstrap 3).
-  static const azulPrimario = Color(0xFF337AB7);
+  /// Azul do btn-primary do app (botão principal, como o Iniciar Pesagem).
+  static const azulPrimario = Color(0xFF007AFF);
 
   /// Verde dos botões de confirmar/gravar.
   static const verdeConfirmar = Color(0xFF4CAF50);

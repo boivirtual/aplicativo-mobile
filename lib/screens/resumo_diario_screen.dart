@@ -933,9 +933,18 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       fazendaSelecionada: _fazenda,
     );
     if (escolhida != null && escolhida != _fazenda && mounted) {
-      setState(() => _fazenda = escolhida);
-      await _conferirDiaAnterior();
+      await _iniciarFazenda(escolhida);
     }
+  }
+
+  /// Fazenda escolhida ou trocada: recomeça do zero para ela, com a data de
+  /// hoje e a conferência dos resumos no servidor.
+  Future<void> _iniciarFazenda(String id) async {
+    setState(() {
+      _fazenda = id;
+      _data = _hoje();
+    });
+    await _conferirDiaAnterior();
   }
 
   /// Fazenda escolhida no select da tela inicial: confere o dia anterior

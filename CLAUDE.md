@@ -72,7 +72,7 @@ reaproveitar os componentes e cores abaixo — nunca criar cor, borda ou campo
 ### Cores — `lib/utils/estilo_app.dart` (`EstiloApp`)
 - `azulBarra` (#18385F): AppBar, títulos, item selecionado do rodapé.
 - `azulIcone` (#228CB9): ícones de cards, opções e linhas de marcar.
-- `azulPrimario` (#337AB7, btn-primary do web): ícones de editar/excluir.
+- `azulPrimario` (#007AFF, btn-primary do app): botão principal, como o Iniciar Pesagem.
 - `verdeConfirmar` (#4CAF50): botões Confirmar/Gravar.
 - `azulBordaFoco` (#81D4FA): borda do campo em edição.
 - Tarja do topo das telas: azul bem claro (`Colors.blue` 10% sobre branco).

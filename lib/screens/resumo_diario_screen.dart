@@ -898,13 +898,23 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: EstiloApp.azulPrimario,
+                  disabledBackgroundColor: EstiloApp.azulPrimario,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                onPressed: () => setState(() => _secao = 1),
-                child: const Text('Sim', style: TextStyle(fontSize: 16)),
+                onPressed: _carregandoAtividades ? null : _abrirSecao1,
+                child: _carregandoAtividades
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text('Sim', style: TextStyle(fontSize: 16)),
               ),
             ),
           ),

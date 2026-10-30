@@ -493,11 +493,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     String? erro = _mensagemSemInternet(nivel);
     ({double? chuvaMm})? r;
     if (erro == null) {
-      r = await ResumoDiarioService.instance.atividadesDoDia(
-        bd,
-        fazenda,
-        data,
-      );
+      r = await ResumoDiarioService.instance.atividadesDoDia(bd, fazenda, data);
       if (r == null) {
         erro =
             'Não foi possível consultar as atividades do dia. Tente '
@@ -1877,7 +1873,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ]),
   ];
 
-  /// Seção 1 — "Atividades do Dia"  /// Seção 1 — "Atividades do Dia": caixas de marcar, uma por atividade.
+  /// Seção 1 — "Atividades do Dia Registradas": caixas de marcar, uma por
+  /// atividade.
   List<Widget> _atividadesDoDia() => [
     // só as já registradas no sistema; sem nenhuma, a lista fica vazia
     for (final a in _atividades)

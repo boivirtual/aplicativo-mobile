@@ -464,6 +464,69 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   ];
   final Set<String> _atividadesMarcadas = {};
 
+  /// Atividades já registradas no sistema para a fazenda e a data do resumo
+  /// (chave -> texto da linha): a Seção 1 só mostra estas. Por enquanto só
+  /// a chuva.
+  Map<String, String> _atividadesRegistradas = {};
+
+  /// Fazenda + data das atividades carregadas (trocou, as marcações não
+  /// valem mais).
+  String? _chaveAtividades;
+  bool _carregandoAtividades = false;
+
+  /// 30 -> "30"; 12.5 -> "12,5".
+  static String _mm(double v) => v == v.roundToDouble()
+      ? v.toInt().toString()
+      : v.toString().replaceAll('.', ',');
+
+  /// Botão Sim da tela inicial: consulta no servidor as atividades
+  /// registradas no dia (só online) e abre a Seção 1. Sem internet ou se
+  /// falhar, avisa e fica na tela inicial.
+  Future<void> _abrirSecao1() async {
+    final bd = _bd;
+    final fazenda = _fazenda;
+    if (bd == null || fazenda == null || _carregandoAtividades) return;
+    final data = _data;
+    setState(() => _carregandoAtividades = true);
+    // checagem da internet na hora (o Resumo Diário só funciona online)
+    final nivel = await ConnectivityService.instance.verificarAgora();
+    String? erro = _mensagemSemInternet(nivel);
+    ({double? chuvaMm})? r;
+    if (erro == null) {
+      r = await ResumoDiarioService.instance.atividadesDoDia(
+        bd,
+        fazenda,
+        data,
+      );
+      if (r == null) {
+        erro =
+            'Não foi possível consultar as atividades do dia. Tente '
+            'novamente.';
+      }
+    }
+    if (!mounted) return;
+    setState(() => _carregandoAtividades = false);
+    if (erro != null) {
+      await AppAlert.erro(context, erro);
+      return;
+    }
+    // trocou a fazenda ou a data enquanto consultava: não entra
+    if (fazenda != _fazenda || data != _data) return;
+    final chuva = r?.chuvaMm;
+    final chave = '$fazenda|${_formatar(data)}';
+    setState(() {
+      if (chave != _chaveAtividades) _atividadesMarcadas.clear();
+      _chaveAtividades = chave;
+      _atividadesRegistradas = {
+        if (chuva != null) 'choveu': 'Choveu ${_mm(chuva)} mm',
+      };
+      _atividadesMarcadas.removeWhere(
+        (a) => !_atividadesRegistradas.containsKey(a),
+      );
+      _secao = 1;
+    });
+  }
+
   static DateTime _hoje() {
     final a = DateTime.now();
     return DateTime(a.year, a.month, a.day);

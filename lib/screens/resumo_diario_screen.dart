@@ -1416,7 +1416,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
               const SizedBox(width: 10),
               Text(
                 _formatar(_data),
-                style: const TextStyle(fontSize: 13, color: Colors.blue),
+                style: EstiloApp.negrito(13, Colors.blue),
               ),
             ],
           ),

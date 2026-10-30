@@ -1440,12 +1440,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     3 => [_tituloAzul('Tratamentos Realizados Hoje')],
     4 => [_tituloAzul('Aplicações Realizadas Hoje')],
     5 => [_tituloAzul('O Que Foi Feito Hoje')],
-    _ => [
-      _tituloAzul('Identificação'),
-      // painel cinza com as caixas brancas, como nas outras telas
-      _painelCinza(_camposDaSecao()),
-      _tituloAzul('Atividades do Dia'),
-    ],
+    _ => [_tituloAzul('Atividades do Dia')],
   };
 
   Widget _painelCinza(List<Widget> filhos) => Container(

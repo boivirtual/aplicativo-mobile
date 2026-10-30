@@ -1421,10 +1421,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     _ => '',
   };
 
-  List<Widget> _camposDaSecao() => switch (_secao) {
-    _ => _secaoIdentificacao(),
-  };
-
   Widget _tituloAzul(String texto) => Padding(
     padding: const EdgeInsets.fromLTRB(2, 10, 2, 8),
     child: Text(

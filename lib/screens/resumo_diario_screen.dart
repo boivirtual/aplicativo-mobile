@@ -921,6 +921,13 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           ),
         ),
       if (_fazenda != null) ..._dataDaTelaInicial(),
+      // só com a data já conferida e válida para fazer o resumo
+      if (_fazenda != null &&
+          !_conferindoDia &&
+          !_registrandoFolga &&
+          !_diaPendente &&
+          _erroConferencia == null)
+        ..._perguntaAtualizacao(),
       Expanded(
         child: _fazenda == null
             ? Center(

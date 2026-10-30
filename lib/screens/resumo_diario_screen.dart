@@ -1415,10 +1415,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                 ),
               ),
               const SizedBox(width: 10),
-              Text(
-                _formatar(_data),
-                style: EstiloApp.negrito(13, Colors.blue),
-              ),
+              Text(_formatar(_data), style: EstiloApp.negrito(13, Colors.blue)),
             ],
           ),
           const SizedBox(height: 8),

@@ -1414,7 +1414,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   }
 
   String _tituloDaSecao(int secao) => switch (secao) {
-    1 => 'Identificação/Atividades',
     2 => 'Conferência de Rebanho',
     3 => 'Sanidade Animal',
     4 => 'Vacinas, Vermífugos e Carrapaticidas',

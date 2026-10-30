@@ -1939,31 +1939,4 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ),
     );
   }
-
-  /// Seção 1 — Identificação.
-  List<Widget> _secaoIdentificacao() => [
-    CampoValorTopo(
-      rotulo: '* Data do Registro',
-      corRotulo: _corRotulo,
-      valor: _formatar(_data),
-      icone: Icon(Icons.calendar_month, color: _corRotulo, size: 20),
-      onTap: _escolherData,
-    ),
-    const SizedBox(height: 10),
-    SeletorCampoWidget<String>(
-      rotulo: '* Fazenda',
-      corRotulo: _corRotulo,
-      valor: _fazenda,
-      opcoes: _fazendas,
-      destaque: true,
-      onChanged: (v) => setState(() => _fazenda = v),
-    ),
-    const SizedBox(height: 10),
-    // o usuário logado, sem digitar
-    CampoValorTopo(
-      rotulo: 'Responsável (quem fez o resumo)',
-      corRotulo: _corRotulo,
-      valor: _responsavel,
-    ),
-  ];
 }

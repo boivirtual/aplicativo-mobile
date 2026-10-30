@@ -15,7 +15,6 @@ import '../widgets/tarja_fazenda_widget.dart';
 import 'aplicacao_modal.dart';
 import 'tratamento_modal.dart';
 import '../widgets/indicador_conectividade_widget.dart';
-import '../widgets/seletor_campo_widget.dart';
 
 /// "Resumo Diário da Fazenda": conferência, por usuário logado, dos
 /// serviços feitos na fazenda no dia. São 10 seções, mostradas uma de cada

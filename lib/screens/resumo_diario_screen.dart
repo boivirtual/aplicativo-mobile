@@ -950,8 +950,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Fazenda escolhida no select da tela inicial: confere o dia anterior
   /// dela.
   void _selecionarFazenda(String? id) {
-    setState(() => _fazenda = id);
-    _conferirDiaAnterior();
+    if (id != null) _iniciarFazenda(id);
   }
 
   /// Tela inicial do Resumo (antes das seções). Uma fazenda só: já vem na

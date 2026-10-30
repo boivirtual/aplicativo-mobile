@@ -1349,6 +1349,25 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
       child: Column(
         children: [
+          // Seção 1: primeiro a fazenda e a data do resumo
+          if (_secao == 1) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _nomeFazenda,
+                    style: const TextStyle(fontSize: 13, color: Colors.blue),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  _formatar(_data),
+                  style: const TextStyle(fontSize: 13, color: Colors.blue),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
@@ -1359,13 +1378,16 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             ),
           ),
           const SizedBox(height: 8),
-          // "Seção 1 de 10" menor; o nome da seção em negrito
+          // "Seção 1 de 10" menor; o nome da seção em negrito (a Seção 1 não
+          // tem nome)
           Text.rich(
             TextSpan(
               style: const TextStyle(color: Colors.blue),
               children: [
                 TextSpan(
-                  text: 'Seção $_secao de $_totalSecoes — ',
+                  text: _secao == 1
+                      ? 'Seção $_secao de $_totalSecoes'
+                      : 'Seção $_secao de $_totalSecoes — ',
                   style: const TextStyle(fontSize: 13),
                 ),
                 TextSpan(

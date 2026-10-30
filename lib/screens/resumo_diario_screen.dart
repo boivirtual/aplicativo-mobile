@@ -1879,10 +1879,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   /// Seção 1 — "Atividades do Dia"  /// Seção 1 — "Atividades do Dia": caixas de marcar, uma por atividade.
   List<Widget> _atividadesDoDia() => [
-    for (final a in _atividades) ...[
-      _atividade(a.$1, a.$2, a.$3, a.$4),
-      const SizedBox(height: 8),
-    ],
+    // só as já registradas no sistema; sem nenhuma, a lista fica vazia
+    for (final a in _atividades)
+      if (_atividadesRegistradas[a.$1] case final texto?) ...[
+        _atividade(a.$1, texto, a.$3, a.$4),
+        const SizedBox(height: 8),
+      ],
   ];
 
   Widget _atividade(

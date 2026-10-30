@@ -440,7 +440,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   /// Fazendas já lidas do aparelho (até lá, só o "carregando").
   bool _carregado = false;
-  String _responsavel = '';
 
   /// Nome do usuário logado como veio do login (saudação da tela inicial).
   String _nomeUsuario = '';

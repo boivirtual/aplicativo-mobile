@@ -1016,18 +1016,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ],
   );
 
-  /// Hoje ou uma data anterior; data futura não pode.
-  Future<void> _escolherData() async {
-    final d = await showDatePicker(
-      context: context,
-      initialDate: _data,
-      firstDate: DateTime(2000),
-      lastDate: _hoje(),
-      helpText: 'Data do registro',
-    );
-    if (d != null) setState(() => _data = d);
-  }
-
   /// Só avança com a seção atual preenchida. Os dados de cada seção ficam
   /// guardados ao ir e voltar.
   Future<void> _proximo() async {

@@ -96,6 +96,40 @@ class ResumoDiarioService {
     return 'Não foi possível registrar a folga. Tente novamente.';
   }
 
+  /// Seção 1: atividades já registradas no sistema para a [fazenda] no [dia].
+  /// Por enquanto só a chuva (chuvaMm null = não choveu). Só online. null se
+  /// não conseguiu consultar.
+  Future<({double? chuvaMm})?> atividadesDoDia(
+    String bd,
+    String fazenda,
+    DateTime dia,
+  ) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(
+              "${ApiConfig.baseUrl}/rest/resumo-diario/atividades_dia.php",
+            ),
+            headers: {"Content-Type": "application/json"},
+            body: json.encode({
+              'bd': bd,
+              'fazenda': fazenda,
+              'data': _diaApi(dia),
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode != 200) return null;
+      final dados = json.decode(response.body);
+      if (dados is Map && dados['success'] == true) {
+        final mm = dados['chuva_mm'];
+        return (chuvaMm: mm is num ? mm.toDouble() : null);
+      }
+    } catch (e) {
+      debugPrint('[ResumoDiario] atividades do dia: falhou -> $e');
+    }
+    return null;
+  }
+
   /// Tela inicial: o dia anterior a [data] ficou sem resumo da [fazenda]
   /// (um resumo por data e fazenda)? E a própria [data] já tem registro
   /// (tipoNoDia: 'R' = Resumo, 'F' = Folga, null = livre)? Só online

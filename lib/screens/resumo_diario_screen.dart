@@ -1173,11 +1173,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         await AppAlert.erro(context, 'Selecione a Fazenda.');
         return;
       }
-      if (_atividadesMarcadas.isEmpty) {
+      // sem atividade registrada no dia não há o que marcar: segue direto
+      if (_atividadesRegistradas.isNotEmpty && _atividadesMarcadas.isEmpty) {
         await AppAlert.erro(
           context,
-          'Marque pelo menos uma das Atividades do Dia (ou "Nenhuma das '
-          'atividades").',
+          'Marque pelo menos uma das Atividades do Dia Registradas.',
         );
         return;
       }

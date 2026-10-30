@@ -1875,7 +1875,16 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Seção 1 — "Atividades do Dia Registradas": caixas de marcar, uma por
   /// atividade.
   List<Widget> _atividadesDoDia() => [
-    // só as já registradas no sistema; sem nenhuma, a lista fica vazia
+    if (_atividadesRegistradas.isEmpty)
+      Padding(
+        padding: const EdgeInsets.only(top: 24),
+        child: Text(
+          'Nenhuma atividade registrada no sistema nessa data!',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 15, color: _corRotulo),
+        ),
+      ),
+    // só as já registradas no sistema
     for (final a in _atividades)
       if (_atividadesRegistradas[a.$1] case final linha?) ...[
         _atividade(a.$1, linha.$1, linha.$2, a.$3, a.$4),

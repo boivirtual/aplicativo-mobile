@@ -898,7 +898,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     if (!mounted) return;
     setState(() {
       _nomeUsuario = (prefs.getString('userName') ?? '').trim();
-      _responsavel = _nomeUsuario.toUpperCase();
       _bd = prefs.getString('userCNPJ');
       _fazendas = [
         for (final f in lista)

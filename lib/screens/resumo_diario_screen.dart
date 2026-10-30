@@ -1434,59 +1434,28 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             ),
           ),
           const SizedBox(height: 8),
-          // "Seção 1 de 10" menor; o nome da seção em negrito (a Seção 1 não
-          // tem nome)
-          Text.rich(
-            TextSpan(
-              style: const TextStyle(color: Colors.blue),
-              children: [
-                TextSpan(
-                  text: _secao == 1
-                      ? 'Seção $_secao de $_totalSecoes'
-                      : 'Seção $_secao de $_totalSecoes — ',
-                  style: const TextStyle(fontSize: 13),
-                ),
-                TextSpan(
-                  text: _tituloDaSecao(_secao),
-                  // a fonte do app só tem a versão fina: o traço é
-                  // engrossado com "sombras" da mesma cor
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                    shadows: [
-                      Shadow(color: Colors.blue, offset: Offset(0.5, 0)),
-                      Shadow(color: Colors.blue, offset: Offset(-0.5, 0)),
-                      Shadow(color: Colors.blue, offset: Offset(0, 0.5)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+          Text(
+            'Seção $_secao de $_totalSecoes',
             textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 13, color: Colors.blue),
           ),
         ],
       ),
     );
   }
 
-  String _tituloDaSecao(int secao) => switch (secao) {
-    2 => 'Conferência de Rebanho',
-    3 => 'Sanidade Animal',
-    4 => 'Vacinas, Vermífugos e Carrapaticidas',
-    5 => 'Atividades no Curral',
-    _ => '',
-  };
-
-  Widget _tituloAzul(String texto) => Padding(
+  Widget _tituloAzul(String texto, {bool negrito = false}) => Padding(
     padding: const EdgeInsets.fromLTRB(2, 10, 2, 8),
     child: Text(
       texto,
       textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.bold,
-        color: Colors.blue[300],
-      ),
+      style: negrito
+          ? EstiloApp.negrito(15, Colors.blue[300]!)
+          : TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue[300],
+            ),
     ),
   );
 

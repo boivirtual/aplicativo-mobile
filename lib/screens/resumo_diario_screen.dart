@@ -932,7 +932,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                onPressed: _voltar,
+                onPressed: _carregandoAtividades ? null : _voltar,
                 child: const Text('Não', style: TextStyle(fontSize: 16)),
               ),
             ),

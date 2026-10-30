@@ -465,9 +465,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   final Set<String> _atividadesMarcadas = {};
 
   /// Atividades já registradas no sistema para a fazenda e a data do resumo
-  /// (chave -> texto da linha): a Seção 1 só mostra estas. Por enquanto só
-  /// a chuva.
-  Map<String, String> _atividadesRegistradas = {};
+  /// (chave -> texto da linha + valor em negrito): a Seção 1 só mostra estas.
+  Map<String, (String, String)> _atividadesRegistradas = {};
 
   /// Fazenda + data das atividades carregadas (trocou, as marcações não
   /// valem mais).

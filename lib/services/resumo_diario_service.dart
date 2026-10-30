@@ -122,7 +122,10 @@ class ResumoDiarioService {
       final dados = json.decode(response.body);
       if (dados is Map && dados['success'] == true) {
         final mm = dados['chuva_mm'];
-        return (chuvaMm: mm is num ? mm.toDouble() : null);
+        return (
+          chuvaMm: mm is num ? mm.toDouble() : null,
+          mudouPasto: dados['mudou_pasto'] == true,
+        );
       }
     } catch (e) {
       debugPrint('[ResumoDiario] atividades do dia: falhou -> $e');

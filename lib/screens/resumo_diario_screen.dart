@@ -536,7 +536,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       );
       // atividade que passou a ter registro sai da Seção 2
       _naoRegistradasMarcadas.removeWhere(_atividadesRegistradas.containsKey);
-      _secao = 1;
+      final nadaNovoParaMarcar = _atividadesRegistradas.keys.every(
+        _atividadesMarcadas.contains,
+      );
+      _secao = voltandoDoRegistrar && nadaNovoParaMarcar ? 2 : 1;
     });
   }
 

@@ -1470,8 +1470,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     );
   }
 
-  // destaque: trecho no fim do título em negrito (ex.: o NÃO da Seção 2)
-  Widget _tituloAzul(String texto, {String? destaque}) => Padding(
+  // destaque: trecho do título em negrito, entre o texto e o sufixo (ex.: o
+  // NÃO da Seção 2)
+  Widget _tituloAzul(String texto, {String? destaque, String? sufixo}) =>
+      Padding(
     padding: const EdgeInsets.fromLTRB(2, 10, 2, 8),
     child: Text.rich(
       TextSpan(

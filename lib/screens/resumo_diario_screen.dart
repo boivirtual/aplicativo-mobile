@@ -1954,6 +1954,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             (v) => _marcarNaoRegistrada(a.$1, v),
             imagem: a.$4,
             valor: 'NÃO',
+            tamanhoValor: 13,
             acao: _botaoRegistrar(),
           ),
           const SizedBox(height: 8),

@@ -2072,7 +2072,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// enquanto não faz nada (o registro vem nas próximas etapas).
   Widget _botaoRegistrar() => OutlinedButton(
     onPressed: () {},
-    child: const Text('Registrar', style: TextStyle(fontSize: 13)),
     style: OutlinedButton.styleFrom(
       foregroundColor: EstiloApp.azulPrimario,
       backgroundColor: const Color(0xFFE3F2FD),
@@ -2083,5 +2082,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       visualDensity: VisualDensity.compact,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
+    child: const Text('Registrar', style: TextStyle(fontSize: 13)),
   );
 }

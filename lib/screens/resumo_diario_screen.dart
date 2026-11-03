@@ -452,12 +452,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ('mudei_pasto', 'Mudei o Gado de Pasto', Icons.swap_horiz, null),
     ('nutricao', 'Nutrição', Icons.grass, null),
     ('nascimento', 'Nascimento', Icons.child_care, null),
-    (
-      'aborto_natimorto',
-      'Aborto/Natimorto',
-      Icons.warning_amber_rounded,
-      null,
-    ),
+    ('aborto_natimorto', 'Aborto/Natimorto', Icons.warning_amber_rounded, null),
     ('morte', 'Morte', Icons.heart_broken_outlined, null),
   ];
   final Set<String> _atividadesMarcadas = {};

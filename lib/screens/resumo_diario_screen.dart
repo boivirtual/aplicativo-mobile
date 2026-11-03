@@ -44,14 +44,14 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// 0 = tela inicial (escolha da fazenda), antes das seções.
   int _secao = 0;
 
-  // Seção 2 — Conferência de Rebanho
+  // Seção 3 — Conferência de Rebanho
   String? _conferiuGado; // 'todo', 'parte', 'nao'
   final _esperadosController = TextEditingController();
   final _encontradosController = TextEditingController();
   String? _conferiuPrenhas; // 'sim', 'nao', 'sem'
   final _obsRebanhoController = TextEditingController();
 
-  // Seção 3 — Sanidade Animal: "Adicionar Tratamento" ou "Nenhum animal
+  // Seção 4 — Sanidade Animal: "Adicionar Tratamento" ou "Nenhum animal
   // doente ou medicado hoje" (um exclui o outro).
   bool _nenhumDoente = false;
 
@@ -170,7 +170,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ),
   ];
 
-  // Seção 5 — Atividades no Curral: "Teve atividade no curral hoje?"; com
+  // Seção 6 — Atividades no Curral: "Teve atividade no curral hoje?"; com
   // "Sim", as atividades, as categorias trabalhadas, a quantidade e a
   // observação.
   String? _teveCurral; // 'sim' ou 'nao'
@@ -204,8 +204,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     'CAVALOS',
   ];
 
-  // Seção 4 — Vacinas, Vermífugos e Carrapaticidas: "Adicionar Aplicação"
-  // ou "Nenhuma aplicação de vacina ou vermífugo hoje" (como a Seção 3).
+  // Seção 5 — Vacinas, Vermífugos e Carrapaticidas: "Adicionar Aplicação"
+  // ou "Nenhuma aplicação de vacina ou vermífugo hoje" (como a Seção 4).
   bool _nenhumaAplicacao = false;
 
   /// Aplicações adicionadas (a tela "Adicionar Aplicação" vem depois).
@@ -444,25 +444,26 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   String _nomeUsuario = '';
   String? _bd;
 
-  /// "Atividades do Dia" (Seção 1): o que o usuário fez hoje na fazenda.
-  /// Muitas estão ligadas aos programas do app (Chuva, Mapa de Gado,
-  /// Nascimento, Morte...). "Nenhuma das atividades" exclui as outras.
-  static const _nenhuma = 'nenhuma';
+  /// Atividades diárias da fazenda, ligadas aos programas do app (Chuva,
+  /// Mapa de Gado, Nascimento, Morte...). As já registradas no sistema no
+  /// dia vão para a Seção 1; as outras, para a Seção 2 (marcar como NÃO).
   static const _atividades = <(String, String, IconData?, String?)>[
-    ('choveu', 'Choveu', Icons.water_drop_outlined, null),
-    ('mudei_pasto', 'Mudei o gado de pasto', Icons.swap_horiz, null),
-    ('nutricao', 'Distribuí nutrição', Icons.grass, null),
+    ('choveu', 'Chuva', Icons.water_drop_outlined, null),
+    ('mudei_pasto', 'Mudei o Gado de Pasto', Icons.swap_horiz, null),
+    ('nutricao', 'Nutrição', Icons.grass, null),
     ('nascimento', 'Nascimento', Icons.child_care, null),
     (
       'aborto_natimorto',
-      'Aborto / Natimorto',
+      'Aborto/Natimorto',
       Icons.warning_amber_rounded,
       null,
     ),
-    ('morte', 'Morreu animal', Icons.heart_broken_outlined, null),
-    (_nenhuma, 'Nenhuma das atividades', Icons.block, null),
+    ('morte', 'Morte', Icons.heart_broken_outlined, null),
   ];
   final Set<String> _atividadesMarcadas = {};
+
+  /// Seção 2: atividades sem registro no dia marcadas como NÃO.
+  final Set<String> _naoRegistradasMarcadas = {};
 
   /// Atividades já registradas no sistema para a fazenda e a data do resumo
   /// (chave -> texto da linha + valor em negrito): a Seção 1 só mostra estas.
@@ -1087,7 +1088,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// guardados ao ir e voltar.
   Future<void> _proximo() async {
     FocusManager.instance.primaryFocus?.unfocus();
-    if (_secao == 2) {
+    if (_secao == 3) {
       if (_conferiuGado == null) {
         await AppAlert.erro(context, 'Informe se conferiu o gado.');
         return;
@@ -1117,10 +1118,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         await AppAlert.erro(context, 'Informe se conferiu as vacas prenhas.');
         return;
       }
-      setState(() => _secao = 3);
+      setState(() => _secao = 4);
       return;
     }
-    if (_secao == 3) {
+    if (_secao == 4) {
       if (!_nenhumDoente && _tratamentos.isEmpty) {
         await AppAlert.erro(
           context,
@@ -1129,10 +1130,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         );
         return;
       }
-      setState(() => _secao = 4);
+      setState(() => _secao = 5);
       return;
     }
-    if (_secao == 4) {
+    if (_secao == 5) {
       if (!_nenhumaAplicacao && _aplicacoes.isEmpty) {
         await AppAlert.erro(
           context,
@@ -1141,10 +1142,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         );
         return;
       }
-      setState(() => _secao = 5);
+      setState(() => _secao = 6);
       return;
     }
-    if (_secao == 5) {
+    if (_secao == 6) {
       String? erro;
       if (_teveCurral == null) {
         erro = 'Responda se teve atividade no curral hoje.';
@@ -1162,7 +1163,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         await AppAlert.erro(context, erro);
         return;
       }
-      // A Seção 6 vem nas próximas etapas.
+      // A Seção 7 vem nas próximas etapas.
       return;
     }
     if (_secao == 1) {
@@ -1454,10 +1455,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   /// Parte fixa de cada seção (não rola).
   List<Widget> _fixoDaSecao() => switch (_secao) {
-    2 => [_tituloAzul('Contagem de Animais Hoje')],
-    3 => [_tituloAzul('Tratamentos Realizados Hoje')],
-    4 => [_tituloAzul('Aplicações Realizadas Hoje')],
-    5 => [_tituloAzul('O Que Foi Feito Hoje')],
+    3 => [_tituloAzul('Contagem de Animais Hoje')],
+    4 => [_tituloAzul('Tratamentos Realizados Hoje')],
+    5 => [_tituloAzul('Aplicações Realizadas Hoje')],
+    6 => [_tituloAzul('O Que Foi Feito Hoje')],
     _ => [_tituloAzul('Atividades do Dia - Registradas')],
   };
 
@@ -1476,8 +1477,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Parte que rola em cada seção (por trás do botão Próximo).
   List<Widget> _rolavelDaSecao() => switch (_secao) {
     1 => _atividadesDoDia(),
-    2 => _conferenciaRebanho(),
-    3 => [
+    3 => _conferenciaRebanho(),
+    4 => [
       // botão (sem caixa de marcar), pode ser tocado várias vezes; travado
       // com "Nenhum animal doente..." marcado
       _linhaMarcar(
@@ -1506,7 +1507,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ),
       ],
     ],
-    4 => [
+    5 => [
       // botão, pode ser tocado várias vezes; travado com "Nenhuma
       // aplicação..." marcado
       _linhaMarcar(
@@ -1535,12 +1536,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ),
       ],
     ],
-    5 => _atividadesNoCurral(),
+    6 => _atividadesNoCurral(),
     _ => const [],
   };
 
   // ---------------------------------------------------------------------
-  // Seção 5 — Atividades no Curral
+  // Seção 6 — Atividades no Curral
   // ---------------------------------------------------------------------
 
   List<Widget> _atividadesNoCurral() => [
@@ -1688,7 +1689,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   ];
 
   // ---------------------------------------------------------------------
-  // Seção 2 — Conferência de Rebanho
+  // Seção 3 — Conferência de Rebanho
   // ---------------------------------------------------------------------
 
   Widget _pergunta(String texto) => Padding(

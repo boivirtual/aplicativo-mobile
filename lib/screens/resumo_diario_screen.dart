@@ -1093,6 +1093,18 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// guardados ao ir e voltar.
   Future<void> _proximo() async {
     FocusManager.instance.primaryFocus?.unfocus();
+    if (_secao == 2) {
+      // todas as atividades sem registro têm que estar marcadas como NÃO
+      if (!_chavesNaoRegistradas.every(_naoRegistradasMarcadas.contains)) {
+        await AppAlert.erro(
+          context,
+          'Marque todas as atividades não registradas para continuar.',
+        );
+        return;
+      }
+      setState(() => _secao = 3);
+      return;
+    }
     if (_secao == 3) {
       if (_conferiuGado == null) {
         await AppAlert.erro(context, 'Informe se conferiu o gado.');

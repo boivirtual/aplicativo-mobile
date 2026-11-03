@@ -1918,6 +1918,36 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ],
   ];
 
+  /// Seção 2 — "Atividades do Dia - Não Registradas": as atividades sem
+  /// registro no dia, cada uma para marcar como NÃO. (Registrar a atividade
+  /// a partir daqui vem nas próximas etapas.)
+  List<Widget> _atividadesNaoRegistradas() {
+    final chaves = _chavesNaoRegistradas.toSet();
+    return [
+      if (chaves.isEmpty)
+        Padding(
+          padding: const EdgeInsets.only(top: 24),
+          child: Text(
+            'Todas as atividades do dia estão registradas no sistema!',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 15, color: _corRotulo),
+          ),
+        ),
+      for (final a in _atividades)
+        if (chaves.contains(a.$1)) ...[
+          _linhaMarcar(
+            '${a.$2}: ',
+            a.$3,
+            _naoRegistradasMarcadas.contains(a.$1),
+            (v) => _marcarNaoRegistrada(a.$1, v),
+            imagem: a.$4,
+            valor: 'NÃO',
+          ),
+          const SizedBox(height: 8),
+        ],
+    ];
+  }
+
   Widget _atividade(
     String chave,
     String texto,

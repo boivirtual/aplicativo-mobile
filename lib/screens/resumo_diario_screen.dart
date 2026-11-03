@@ -1470,10 +1470,20 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     );
   }
 
-  Widget _tituloAzul(String texto) => Padding(
+  // destaque: trecho no fim do título em negrito (ex.: o NÃO da Seção 2)
+  Widget _tituloAzul(String texto, {String? destaque}) => Padding(
     padding: const EdgeInsets.fromLTRB(2, 10, 2, 8),
-    child: Text(
-      texto,
+    child: Text.rich(
+      TextSpan(
+        text: texto,
+        children: [
+          if (destaque != null)
+            TextSpan(
+              text: destaque,
+              style: EstiloApp.negrito(15, Colors.blue[300]!),
+            ),
+        ],
+      ),
       textAlign: TextAlign.center,
       style: TextStyle(
         fontSize: 15,

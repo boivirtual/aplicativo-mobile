@@ -2067,13 +2067,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     );
   }
 
-  /// Botão "+ Registrar" das atividades da Seção 2: separado do texto (com
+  /// Botão "Registrar" das atividades da Seção 2: separado do texto (com
   /// borda e fundo próprios) para não ser lido junto com o "NÃO". Por
   /// enquanto não faz nada (o registro vem nas próximas etapas).
-  Widget _botaoRegistrar() => OutlinedButton.icon(
+  Widget _botaoRegistrar() => OutlinedButton(
     onPressed: () {},
-    icon: const Icon(Icons.add, size: 16),
-    label: const Text('Registrar', style: TextStyle(fontSize: 13)),
+    child: const Text('Registrar', style: TextStyle(fontSize: 13)),
     style: OutlinedButton.styleFrom(
       foregroundColor: EstiloApp.azulPrimario,
       backgroundColor: const Color(0xFFE3F2FD),

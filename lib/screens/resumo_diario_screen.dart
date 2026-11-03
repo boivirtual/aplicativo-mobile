@@ -511,7 +511,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     final chuva = r?.chuvaMm;
     final chave = '$fazenda|${_formatar(data)}';
     setState(() {
-      if (chave != _chaveAtividades) _atividadesMarcadas.clear();
+      if (chave != _chaveAtividades) {
+        _atividadesMarcadas.clear();
+        _naoRegistradasMarcadas.clear();
+      }
       _chaveAtividades = chave;
       _atividadesRegistradas = {
         if (chuva != null) 'choveu': ('Choveu ', '${_mm(chuva)} mm'),
@@ -521,6 +524,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       _atividadesMarcadas.removeWhere(
         (a) => !_atividadesRegistradas.containsKey(a),
       );
+      // atividade que passou a ter registro sai da Seção 2
+      _naoRegistradasMarcadas.removeWhere(_atividadesRegistradas.containsKey);
       _secao = 1;
     });
   }

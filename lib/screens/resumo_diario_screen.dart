@@ -1965,9 +1965,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             _naoRegistradasMarcadas.contains(a.$1),
             (v) => _marcarNaoRegistrada(a.$1, v),
             imagem: a.$4,
-            valor: 'NÃO',
-            tamanhoValor: 13,
-            // NÃO marcado: o Registrar some (desmarcou, volta)
+            // marcado: o Registrar some (desmarcou, volta)
             acao: _naoRegistradasMarcadas.contains(a.$1)
                 ? null
                 : _botaoRegistrar(a.$1),

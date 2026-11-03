@@ -2083,8 +2083,22 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// de novo o servidor e volta para a Seção 1 (as marcações continuam). As
   /// outras atividades vêm nas próximas etapas.
   Future<void> _registrarAtividade(String chave) async {
-    if (chave != 'choveu') return;
     FocusManager.instance.primaryFocus?.unfocus();
+    if (chave != 'choveu') {
+      // as outras atividades se registram no Mapa de Gado (Tabuleiro), já
+      // com a fazenda do resumo; ao voltar, busca as atividades de novo
+      await Navigator.push<void>(
+        context,
+        MaterialPageRoute(
+          builder: (ctx) => MapaScreen(
+            onBack: () => Navigator.pop(ctx),
+            fazendaInicial: _fazenda,
+          ),
+        ),
+      );
+      if (mounted) await _abrirSecao1();
+      return;
+    }
     final registrou = await Navigator.push<bool>(
       context,
       MaterialPageRoute(

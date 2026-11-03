@@ -2118,7 +2118,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ),
       ),
     );
-    if (registrou == true && mounted) await _abrirSecao1();
+    if (registrou == true && mounted) {
+      await _abrirSecao1(voltandoDoRegistrar: true);
+    }
   }
 
   /// "Registrar" das atividades da Seção 2: link azul claro (sem borda nem

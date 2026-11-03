@@ -134,9 +134,18 @@ class ResumoDiarioService {
       final dados = json.decode(response.body);
       if (dados is Map && dados['success'] == true) {
         final mm = dados['chuva_mm'];
+        int qtd(String campo) {
+          final v = dados[campo];
+          return v is num ? v.toInt() : 0;
+        }
+
         return (
           chuvaMm: mm is num ? mm.toDouble() : null,
           mudouPasto: dados['mudou_pasto'] == true,
+          nutricao: dados['nutricao'] == true,
+          nascimentos: qtd('nascimentos'),
+          abortos: qtd('abortos'),
+          mortes: qtd('mortes'),
         );
       }
     } catch (e) {

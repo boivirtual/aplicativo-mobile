@@ -14,6 +14,7 @@ import '../widgets/campo_topo_widget.dart';
 import '../widgets/tarja_fazenda_widget.dart';
 import 'aplicacao_modal.dart';
 import 'chuva_screen.dart';
+import 'mapa_screen.dart';
 import 'tratamento_modal.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 

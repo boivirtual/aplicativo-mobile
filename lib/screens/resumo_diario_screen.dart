@@ -2115,7 +2115,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   /// "Registrar" das atividades da Seção 2: link azul claro (sem borda nem
   /// fundo, para sobrar espaço ao texto), com a altura da linha para
-  /// facilitar o toque. Só a Chuva já registra (ver [_registrarAtividade]).
+  /// facilitar o toque. A Chuva abre a tela da Chuva; as outras, o Mapa de
+  /// Gado (ver [_registrarAtividade]).
   Widget _botaoRegistrar(String chave) => TextButton(
     onPressed: () => _registrarAtividade(chave),
     style: TextButton.styleFrom(

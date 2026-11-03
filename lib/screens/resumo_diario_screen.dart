@@ -486,7 +486,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     // checagem da internet na hora (o Resumo Diário só funciona online)
     final nivel = await ConnectivityService.instance.verificarAgora();
     String? erro = _mensagemSemInternet(nivel);
-    ({double? chuvaMm, bool mudouPasto})? r;
+    AtividadesDoDia? r;
     if (erro == null) {
       r = await ResumoDiarioService.instance.atividadesDoDia(bd, fazenda, data);
       if (r == null) {

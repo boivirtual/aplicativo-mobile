@@ -2035,10 +2035,31 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                         ),
                       ),
               ),
+              // botão no fim da linha (ex.: Registrar da Seção 2)
+              if (acao != null) ...[const SizedBox(width: 8), acao],
             ],
           ),
         ),
       ),
     );
   }
+
+  /// Botão "+ Registrar" das atividades da Seção 2: separado do texto (com
+  /// borda e fundo próprios) para não ser lido junto com o "NÃO". Por
+  /// enquanto não faz nada (o registro vem nas próximas etapas).
+  Widget _botaoRegistrar() => OutlinedButton.icon(
+    onPressed: () {},
+    icon: const Icon(Icons.add, size: 16),
+    label: const Text('Registrar', style: TextStyle(fontSize: 13)),
+    style: OutlinedButton.styleFrom(
+      foregroundColor: EstiloApp.azulPrimario,
+      backgroundColor: const Color(0xFFE3F2FD),
+      side: const BorderSide(color: EstiloApp.azulPrimario),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      minimumSize: const Size(0, 34),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.compact,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    ),
+  );
 }

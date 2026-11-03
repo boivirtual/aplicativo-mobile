@@ -514,8 +514,16 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       _chaveAtividades = chave;
       _atividadesRegistradas = {
         if (chuva != null) 'choveu': ('Choveu ', '${_mm(chuva)} mm'),
-        if (r?.mudouPasto == true)
-          'mudei_pasto': ('Mudei o Gado de Pasto: ', 'SIM'),
+        if (a.mudouPasto) 'mudei_pasto': ('Mudei o Gado de Pasto: ', 'SIM'),
+        if (a.nutricao) 'nutricao': ('Nutrição: ', 'SIM'),
+        if (a.nascimentos > 0)
+          'nascimento': ('Nascimento: ', _qtdRegistros(a.nascimentos)),
+        if (a.abortos > 0)
+          'aborto_natimorto': (
+            'Aborto/Absorção/Natimorto: ',
+            _qtdRegistros(a.abortos),
+          ),
+        if (a.mortes > 0) 'morte': ('Morte: ', _qtdRegistros(a.mortes)),
       };
       _atividadesMarcadas.removeWhere(
         (a) => !_atividadesRegistradas.containsKey(a),

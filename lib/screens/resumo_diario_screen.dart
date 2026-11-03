@@ -2052,7 +2052,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                               text: valor,
                               style: _textoGrosso(
                                 _corRotulo,
-                              ).copyWith(fontSize: 15),
+                              ).copyWith(fontSize: tamanhoValor),
                             ),
                           ],
                         ),

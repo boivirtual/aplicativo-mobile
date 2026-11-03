@@ -503,7 +503,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     }
     // trocou a fazenda ou a data enquanto consultava: não entra
     if (fazenda != _fazenda || data != _data) return;
-    final chuva = r?.chuvaMm;
+    final a = r!;
+    final chuva = a.chuvaMm;
     final chave = '$fazenda|${_formatar(data)}';
     setState(() {
       if (chave != _chaveAtividades) {

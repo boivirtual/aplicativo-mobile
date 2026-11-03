@@ -454,7 +454,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ('nascimento', 'Nascimento', Icons.child_care, null),
     (
       'aborto_natimorto',
-      'Aborto/Absorção/Natimorto',
+      'Aborto/Natimorto',
       Icons.warning_amber_rounded,
       null,
     ),
@@ -528,7 +528,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           'nascimento': ('Nascimento: ', _qtdRegistros(a.nascimentos)),
         if (a.abortos > 0)
           'aborto_natimorto': (
-            'Aborto/Absorção/Natimorto: ',
+            'Aborto/Natimorto: ',
             _qtdRegistros(a.abortos),
           ),
         if (a.mortes > 0) 'morte': ('Morte: ', _qtdRegistros(a.mortes)),

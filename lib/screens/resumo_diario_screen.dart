@@ -13,6 +13,7 @@ import '../widgets/cabecalho_fazenda_widget.dart';
 import '../widgets/campo_topo_widget.dart';
 import '../widgets/tarja_fazenda_widget.dart';
 import 'aplicacao_modal.dart';
+import 'chuva_screen.dart';
 import 'tratamento_modal.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 
@@ -1955,7 +1956,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             imagem: a.$4,
             valor: 'NÃO',
             tamanhoValor: 13,
-            acao: _botaoRegistrar(),
+            acao: _botaoRegistrar(a.$1),
           ),
           const SizedBox(height: 8),
         ],
@@ -2067,11 +2068,32 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     );
   }
 
+  /// "Registrar" de uma atividade da Seção 2. Chuva: abre o programa da
+  /// Chuva com a fazenda e a data do resumo; registrada a chuva, consulta
+  /// de novo o servidor e volta para a Seção 1 (as marcações continuam). As
+  /// outras atividades vêm nas próximas etapas.
+  Future<void> _registrarAtividade(String chave) async {
+    if (chave != 'choveu') return;
+    FocusManager.instance.primaryFocus?.unfocus();
+    final registrou = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (ctx) => ChuvaScreen(
+          onBack: () => Navigator.pop(ctx, false),
+          fazendaInicial: _fazenda,
+          dataInicial: _data,
+          aoRegistrar: () => Navigator.pop(ctx, true),
+        ),
+      ),
+    );
+    if (registrou == true && mounted) await _abrirSecao1();
+  }
+
   /// Botão "Registrar" das atividades da Seção 2: separado do texto (com
-  /// borda e fundo próprios) para não ser lido junto com o "NÃO". Por
-  /// enquanto não faz nada (o registro vem nas próximas etapas).
-  Widget _botaoRegistrar() => OutlinedButton(
-    onPressed: () {},
+  /// borda e fundo próprios) para não ser lido junto com o "NÃO". Só a
+  /// Chuva já registra (ver [_registrarAtividade]).
+  Widget _botaoRegistrar(String chave) => OutlinedButton(
+    onPressed: () => _registrarAtividade(chave),
     style: OutlinedButton.styleFrom(
       foregroundColor: EstiloApp.azulPrimario,
       backgroundColor: const Color(0xFFE3F2FD),

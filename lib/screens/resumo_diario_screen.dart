@@ -39,7 +39,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   static const _azulBotao = Color(0xFF007AFF);
   static final _corRotulo = Colors.blueGrey[800]!;
 
-  static const _totalSecoes = 10;
+  static const _totalSecoes = 11;
 
   /// 0 = tela inicial (escolha da fazenda), antes das seções.
   int _secao = 0;

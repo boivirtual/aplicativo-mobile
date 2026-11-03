@@ -1948,7 +1948,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             imagem: a.$4,
             valor: 'NÃO',
             tamanhoValor: 13,
-            acao: _botaoRegistrar(a.$1),
+            // NÃO marcado: o Registrar some (desmarcou, volta)
+            acao: _naoRegistradasMarcadas.contains(a.$1)
+                ? null
+                : _botaoRegistrar(a.$1),
           ),
           const SizedBox(height: 8),
         ],
@@ -2090,10 +2093,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       foregroundColor: EstiloApp.azulPrimario,
       backgroundColor: const Color(0xFFE3F2FD),
       side: const BorderSide(color: EstiloApp.azulPrimario),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      minimumSize: const Size(0, 34),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      minimumSize: const Size(0, 42),
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      visualDensity: VisualDensity.compact,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
     child: const Text('Registrar', style: TextStyle(fontSize: 13)),

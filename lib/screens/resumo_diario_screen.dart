@@ -2104,7 +2104,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           ),
         ),
       );
-      if (mounted) await _abrirSecao1();
+      if (mounted) await _abrirSecao1(voltandoDoRegistrar: true);
       return;
     }
     final registrou = await Navigator.push<bool>(

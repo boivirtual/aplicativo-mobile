@@ -659,7 +659,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     setState(() {
       if (nova != null && erro == null) _data = nova;
       _conferindoDia = false;
-      _diaPendente = r?.pendente == true;
+      // só o dia de hoje cobra o dia anterior: no resumo de um dia passado
+      // (ex.: depois do "Executar o Resumo") não cobra o dia antes dele, senão
+      // voltaria um dia por vez sem fim
+      _diaPendente =
+          r?.pendente == true && DateUtils.isSameDay(data, _hoje());
       _erroConferencia = erro;
     });
     // Dia anterior sem resumo: avisa num modal (só com o Resumo na tela).

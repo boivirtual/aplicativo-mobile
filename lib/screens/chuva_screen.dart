@@ -118,7 +118,17 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
         if (fazendasCarregadas.length == 1) {
           fazendaSelecionada = fazendasCarregadas[0]['id'].toString();
         }
+        // vinda do Resumo Diário: a fazenda do resumo já escolhida
+        final inicial = int.tryParse(widget.fazendaInicial ?? '');
+        if (inicial != null) {
+          for (final f in fazendasCarregadas) {
+            if (int.tryParse((f as Map)['id'].toString()) == inicial) {
+              fazendaSelecionada = f['id'].toString();
+            }
+          }
+        }
       }
+      if (widget.dataInicial != null) _dataSelecionada = widget.dataInicial!;
       carregando = false;
     });
     await _sincronizarEAtualizar();

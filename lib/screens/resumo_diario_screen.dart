@@ -1484,6 +1484,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
               text: destaque,
               style: EstiloApp.negrito(15, Colors.blue[300]!),
             ),
+          if (sufixo != null) TextSpan(text: sufixo),
         ],
       ),
       textAlign: TextAlign.center,

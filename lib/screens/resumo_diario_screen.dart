@@ -2084,19 +2084,16 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     if (registrou == true && mounted) await _abrirSecao1();
   }
 
-  /// Botão "Registrar" das atividades da Seção 2: separado do texto (com
-  /// borda e fundo próprios) para não ser lido junto com o "NÃO". Só a
-  /// Chuva já registra (ver [_registrarAtividade]).
-  Widget _botaoRegistrar(String chave) => OutlinedButton(
+  /// "Registrar" das atividades da Seção 2: link azul claro (sem borda nem
+  /// fundo, para sobrar espaço ao texto), com a altura da linha para
+  /// facilitar o toque. Só a Chuva já registra (ver [_registrarAtividade]).
+  Widget _botaoRegistrar(String chave) => TextButton(
     onPressed: () => _registrarAtividade(chave),
-    style: OutlinedButton.styleFrom(
-      foregroundColor: EstiloApp.azulPrimario,
-      backgroundColor: const Color(0xFFE3F2FD),
-      side: const BorderSide(color: EstiloApp.azulPrimario),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+    style: TextButton.styleFrom(
+      foregroundColor: Colors.blue[300],
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       minimumSize: const Size(0, 42),
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
     child: const Text('Registrar', style: TextStyle(fontSize: 13)),
   );

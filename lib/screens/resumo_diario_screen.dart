@@ -1196,20 +1196,28 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   void _marcarAtividade(String chave, bool marcada) {
     setState(() {
-      if (!marcada) {
-        _atividadesMarcadas.remove(chave);
-      } else if (chave == _nenhuma) {
-        // "Nenhuma" desmarca as outras
-        _atividadesMarcadas
-          ..clear()
-          ..add(_nenhuma);
+      if (marcada) {
+        _atividadesMarcadas.add(chave);
       } else {
-        _atividadesMarcadas
-          ..remove(_nenhuma)
-          ..add(chave);
+        _atividadesMarcadas.remove(chave);
       }
     });
   }
+
+  void _marcarNaoRegistrada(String chave, bool marcada) {
+    setState(() {
+      if (marcada) {
+        _naoRegistradasMarcadas.add(chave);
+      } else {
+        _naoRegistradasMarcadas.remove(chave);
+      }
+    });
+  }
+
+  /// Chaves das atividades sem registro no dia (as da Seção 2).
+  Iterable<String> get _chavesNaoRegistradas => _atividades
+      .map((a) => a.$1)
+      .where((c) => !_atividadesRegistradas.containsKey(c));
 
   /// Seta do título (e "voltar" do Android): volta para a seção anterior;
   /// da Seção 1 volta para a tela inicial; só da tela inicial sai para a

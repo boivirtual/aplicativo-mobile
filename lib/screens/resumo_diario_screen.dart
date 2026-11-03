@@ -2095,6 +2095,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       minimumSize: const Size(0, 42),
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
     ),
-    child: const Text('Registrar', style: TextStyle(fontSize: 13)),
+    child: Text('Registrar', style: EstiloApp.negrito(13, Colors.blue[300]!)),
   );
 }

@@ -482,7 +482,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Botão Sim da tela inicial: consulta no servidor as atividades
   /// registradas no dia (só online) e abre a Seção 1. Sem internet ou se
   /// falhar, avisa e fica na tela inicial.
-  Future<void> _abrirSecao1() async {
+  ///
+  /// [voltandoDoRegistrar]: volta do "Registrar" da Seção 2 — relê as
+  /// atividades e, se a Seção 1 não ganhou nenhuma atividade nova para
+  /// marcar (ou não tem nenhuma), fica direto na Seção 2.
+  Future<void> _abrirSecao1({bool voltandoDoRegistrar = false}) async {
     final bd = _bd;
     final fazenda = _fazenda;
     if (bd == null || fazenda == null || _carregandoAtividades) return;

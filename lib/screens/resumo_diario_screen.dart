@@ -1503,6 +1503,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Parte que rola em cada seção (por trás do botão Próximo).
   List<Widget> _rolavelDaSecao() => switch (_secao) {
     1 => _atividadesDoDia(),
+    2 => _atividadesNaoRegistradas(),
     3 => _conferenciaRebanho(),
     4 => [
       // botão (sem caixa de marcar), pode ser tocado várias vezes; travado

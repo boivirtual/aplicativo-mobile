@@ -346,6 +346,8 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
       await _recarregarGraficos();
       if (!mounted) return;
       await AppAlert.sucesso(context, 'Volume registrado com sucesso.');
+      // vinda do Resumo Diário: volta para ele
+      if (mounted) widget.aoRegistrar?.call();
     } finally {
       if (mounted) setState(() => _salvando = false);
     }

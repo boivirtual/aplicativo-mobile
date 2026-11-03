@@ -53,9 +53,23 @@ const _mesesCompletos = [
 /// só seria tentada de novo ao reabrir o app inteiro — aqui não precisa.
 /// Os gráficos sempre leem do cache local, então continuam funcionando sem
 /// internet depois da primeira sincronização.
+///
+/// Aberta pelo Resumo Diário ("Registrar" da Chuva): [fazendaInicial] e
+/// [dataInicial] já vêm escolhidas e, depois do "Volume registrado com
+/// sucesso", [aoRegistrar] fecha a tela e volta para o Resumo. Pelo rodapé
+/// ou pela Home, os três ficam vazios e a tela funciona como sempre.
 class ChuvaScreen extends StatefulWidget {
   final VoidCallback onBack;
-  const ChuvaScreen({super.key, required this.onBack});
+  final String? fazendaInicial;
+  final DateTime? dataInicial;
+  final VoidCallback? aoRegistrar;
+  const ChuvaScreen({
+    super.key,
+    required this.onBack,
+    this.fazendaInicial,
+    this.dataInicial,
+    this.aoRegistrar,
+  });
 
   @override
   State<ChuvaScreen> createState() => _ChuvaScreenState();

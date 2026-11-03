@@ -7,6 +7,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import 'connectivity_service.dart';
 
+/// Atividades já registradas no sistema para a fazenda no dia (Seção 1 do
+/// Resumo): chuvaMm null = não choveu; mudouPasto = teve transferência de
+/// animais entre pastos; nutricao = teve nutrição; nascimentos, abortos
+/// (Aborto, Absorção e Natimorto) e mortes = quantos registros no dia.
+typedef AtividadesDoDia = ({
+  double? chuvaMm,
+  bool mudouPasto,
+  bool nutricao,
+  int nascimentos,
+  int abortos,
+  int mortes,
+});
+
 /// Dados do servidor usados pelo Resumo Diário da Fazenda.
 class ResumoDiarioService {
   ResumoDiarioService._();

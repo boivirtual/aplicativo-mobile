@@ -1972,6 +1972,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     bool habilitado = true,
     // com valor: o texto fica sem negrito e só o valor em negrito
     String? valor,
+    // botão no fim da linha, separado do texto
+    Widget? acao,
   }) {
     const azulIcone = Color(0xFF228cb9);
     return Opacity(

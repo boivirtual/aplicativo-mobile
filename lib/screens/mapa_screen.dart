@@ -37,9 +37,14 @@ import 'composicao_descricao_lote_screen.dart';
 /// aplica no cache na hora e entra numa fila que sobe sozinha quando houver
 /// internet (MapaGadoSyncService). O cache é atualizado na abertura do app
 /// (AtualizandoDadosScreen), ao abrir esta tela e no "puxar pra atualizar".
+///
+/// Aberta pelo Resumo Diário ("Registrar" da Seção 2): [fazendaInicial] já
+/// vem escolhida. Pelo rodapé ou pela Home fica vazia e a tela funciona como
+/// sempre.
 class MapaScreen extends StatefulWidget {
   final VoidCallback onBack;
-  const MapaScreen({super.key, required this.onBack});
+  final String? fazendaInicial;
+  const MapaScreen({super.key, required this.onBack, this.fazendaInicial});
 
   @override
   State<MapaScreen> createState() => _MapaScreenState();

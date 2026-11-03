@@ -453,12 +453,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ('mudei_pasto', 'Mudei o Gado de Pasto', Icons.swap_horiz, null),
     ('nutricao', 'Nutrição', Icons.grass, null),
     ('nascimento', 'Nascimento', Icons.child_care, null),
-    (
-      'aborto_natimorto',
-      'Aborto/Natimorto',
-      Icons.warning_amber_rounded,
-      null,
-    ),
+    ('aborto_natimorto', 'Aborto/Natimorto', Icons.warning_amber_rounded, null),
     ('morte', 'Morte', Icons.heart_broken_outlined, null),
   ];
   final Set<String> _atividadesMarcadas = {};
@@ -528,10 +523,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         if (a.nascimentos > 0)
           'nascimento': ('Nascimento: ', _qtdRegistros(a.nascimentos)),
         if (a.abortos > 0)
-          'aborto_natimorto': (
-            'Aborto/Natimorto: ',
-            _qtdRegistros(a.abortos),
-          ),
+          'aborto_natimorto': ('Aborto/Natimorto: ', _qtdRegistros(a.abortos)),
         if (a.mortes > 0) 'morte': ('Morte: ', _qtdRegistros(a.mortes)),
       };
       _atividadesMarcadas.removeWhere(

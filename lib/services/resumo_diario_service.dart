@@ -109,10 +109,9 @@ class ResumoDiarioService {
     return 'Não foi possível registrar a folga. Tente novamente.';
   }
 
-  /// Seção 1: atividades já registradas no sistema para a [fazenda] no [dia].
-  /// chuvaMm null = não choveu; mudouPasto = teve transferência de animais
-  /// entre pastos no dia. Só online. null se não conseguiu consultar.
-  Future<({double? chuvaMm, bool mudouPasto})?> atividadesDoDia(
+  /// Seção 1: atividades já registradas no sistema para a [fazenda] no [dia]
+  /// (ver [AtividadesDoDia]). Só online. null se não conseguiu consultar.
+  Future<AtividadesDoDia?> atividadesDoDia(
     String bd,
     String fazenda,
     DateTime dia,

@@ -469,6 +469,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   String? _chaveAtividades;
   bool _carregandoAtividades = false;
 
+  /// 1 -> "1 registro"; 3 -> "3 registros".
+  static String _qtdRegistros(int n) => n == 1 ? '1 registro' : '$n registros';
+
   /// 30 -> "30"; 12.5 -> "12,5".
   static String _mm(double v) => v == v.roundToDouble()
       ? v.toInt().toString()

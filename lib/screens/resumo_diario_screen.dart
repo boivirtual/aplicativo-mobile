@@ -1960,7 +1960,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       for (final a in _atividades)
         if (chaves.contains(a.$1)) ...[
           _linhaMarcar(
-            '${a.$2}: ',
+            a.$2,
             a.$3,
             _naoRegistradasMarcadas.contains(a.$1),
             (v) => _marcarNaoRegistrada(a.$1, v),

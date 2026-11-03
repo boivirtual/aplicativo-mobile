@@ -2004,8 +2004,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     bool habilitado = true,
     // com valor: o texto fica sem negrito e só o valor em negrito
     String? valor,
-    // tamanho da fonte do valor (o NÃO da Seção 2 é menor)
-    double tamanhoValor = 15,
     // botão no fim da linha, separado do texto
     Widget? acao,
   }) {

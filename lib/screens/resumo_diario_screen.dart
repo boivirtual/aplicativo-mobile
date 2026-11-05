@@ -1941,14 +1941,14 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ]),
   ];
 
-  /// Seção 1 — "Atividades do Dia Registradas": caixas de marcar, uma por
-  /// atividade.
+  /// Seção 1 — "Atividades Registradas": uma linha por atividade registrada
+  /// no dia, sem caixa de marcar; a Chuva tem Sim/Não no fim da linha.
   List<Widget> _atividadesDoDia() => [
     if (_atividadesRegistradas.isEmpty)
       Padding(
         padding: const EdgeInsets.only(top: 24),
         child: Text(
-          'Nenhuma atividade registrada no sistema nessa data!',
+          'Nenhuma Atividade',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 15, color: _corRotulo),
         ),

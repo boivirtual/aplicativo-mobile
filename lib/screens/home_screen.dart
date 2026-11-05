@@ -157,13 +157,18 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Quadros MENORES
-  Widget _buildMenuCard(
+  // Quadros MENORES. fundo/cor/meio: card em alerta (ex.: Resumo Diário
+  // com o dia anterior sem resumo) — fundo, cor do ícone e do nome e um
+  // aviso no meio do card.
+  static Widget _buildMenuCard(
     String title,
     String img,
     int index,
-    Function(int)? tap,
-  ) {
+    Function(int)? tap, {
+    Color fundo = Colors.white,
+    Color? cor,
+    String? meio,
+  }) {
     const Color azulIcone = Color(0xFF228cb9);
 
     return GestureDetector(
@@ -171,7 +176,7 @@ class HomeScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: fundo,
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(

@@ -2016,58 +2016,74 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ];
   }
 
-  Widget _atividade(
-    String chave,
-    String texto,
-    String valor,
-    IconData? icone,
-    String? imagem,
-  ) => _linhaMarcar(
-    texto,
-    icone,
-    _atividadesMarcadas.contains(chave),
-    // o toque na linha não marca: a resposta é pelo Sim/Não
-    (_) {},
-    imagem: imagem,
-    // vazio: só o texto, sem negrito, igual ao "Choveu"
-    valor: valor,
-    semCaixa: true,
-    semIcone: true,
-    acao: _atividadesComSimNao.contains(chave) ? _simNao(chave) : null,
+  /// Linha da Seção 1: texto (o valor em negrito) e, nas atividades com
+  /// Sim/Não, os dois botões nas colunas de "Confirmar". Traço fino embaixo.
+  Widget _atividade(String chave, String texto, String valor) => Container(
+    constraints: const BoxConstraints(minHeight: 52),
+    padding: const EdgeInsets.symmetric(vertical: 6),
+    decoration: const BoxDecoration(
+      border: Border(bottom: BorderSide(color: Color(0xFFE0E6EA))),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text.rich(
+            TextSpan(
+              style: TextStyle(fontSize: 15, color: _corRotulo),
+              children: [
+                TextSpan(text: texto),
+                TextSpan(
+                  text: valor,
+                  style: _textoGrosso(_corRotulo).copyWith(fontSize: 15),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        if (_atividadesComSimNao.contains(chave))
+          _simNao(chave)
+        else
+          // as que ainda não têm Sim/Não: o espaço das colunas fica vazio
+          const SizedBox(width: _larguraSimNao * 2 + 6),
+      ],
+    ),
   );
 
-  /// Sim/Não no fim da linha da Seção 1: Sim marca a linha (confirma a
-  /// atividade); Não abre o programa para registrar ou ajustar (ver
-  /// [_ajustarAtividade]).
+  /// Sim/Não da Seção 1, em botões tipo pílula: Sim (azul quando escolhido)
+  /// confirma a atividade; Não abre o programa para registrar ou ajustar
+  /// (ver [_ajustarAtividade]).
   Widget _simNao(String chave) {
     final sim = _atividadesMarcadas.contains(chave);
-    Widget opcao(String rotulo, bool marcada, VoidCallback aoTocar) => InkWell(
-      borderRadius: BorderRadius.circular(6),
-      onTap: aoTocar,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Checkbox(
-              value: marcada,
-              activeColor: _azulBotao,
-              side: const BorderSide(width: 1.2, color: Color(0xFF90A4AE)),
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              onChanged: (_) => aoTocar(),
+    Widget botao(String rotulo, bool escolhido, VoidCallback aoTocar) =>
+        SizedBox(
+          width: _larguraSimNao,
+          height: 34,
+          child: OutlinedButton(
+            onPressed: aoTocar,
+            style: OutlinedButton.styleFrom(
+              padding: EdgeInsets.zero,
+              backgroundColor: escolhido ? _azulBotao : Colors.white,
+              foregroundColor: escolhido ? Colors.white : _corRotulo,
+              side: BorderSide(
+                color: escolhido ? _azulBotao : const Color(0xFFB0BEC5),
+              ),
+              shape: const StadiumBorder(),
             ),
-            Text(rotulo, style: TextStyle(fontSize: 14, color: _corRotulo)),
-          ],
-        ),
-      ),
-    );
+            child: Text(
+              rotulo,
+              style: escolhido
+                  ? EstiloApp.negrito(14, Colors.white)
+                  : TextStyle(fontSize: 14, color: _corRotulo),
+            ),
+          ),
+        );
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        opcao('Sim', sim, () => _marcarAtividade(chave, !sim)),
-        const SizedBox(width: 4),
-        opcao('Não', false, () => _ajustarAtividade(chave)),
+        botao('Sim', sim, () => _marcarAtividade(chave, !sim)),
+        const SizedBox(width: 6),
+        botao('Não', false, () => _ajustarAtividade(chave)),
       ],
     );
   }

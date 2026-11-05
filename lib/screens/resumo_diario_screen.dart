@@ -733,7 +733,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   /// Modal do dia sem resumo: mesmo vermelho e branco do alerta de erro da
   /// Pesagem (pesagem_itens_screen.dart) e ícone de atenção. Devolve
-  /// 'folga' (Registrar Folga) ou 'resumo' (Executar o Resumo). Feito aqui
+  /// 'resumo' (Registrar) ou 'folga' (Dia de Folga). Feito aqui
   /// para não mexer no AppAlert, que é usado pelos outros programas.
   Future<String?> _avisoDiaSemResumo(String mensagem) {
     final fundo = Colors.red[900]!.withValues(alpha: 0.95);

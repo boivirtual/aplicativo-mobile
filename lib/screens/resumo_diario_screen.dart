@@ -1538,13 +1538,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ],
   };
 
-  /// Fundo da tela na Seção 1 (em teste): azul dois tons mais escuro que a
-  /// tarja da fazenda ([_progresso], azul a 10% sobre o branco).
-  static final _fundoSecao1 = Color.alphaBlend(
-    Colors.blue.withValues(alpha: 0.22),
-    Colors.white,
-  );
-
   Widget _painelCinza(List<Widget> filhos) => Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(

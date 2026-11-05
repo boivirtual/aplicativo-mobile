@@ -1943,8 +1943,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ]),
   ];
 
+  /// Largura de cada coluna (Sim / Não) da Seção 1.
+  static const _larguraSimNao = 58.0;
+
   /// Seção 1 — "Atividades Registradas": uma linha por atividade registrada
-  /// no dia, sem caixa de marcar; a Chuva tem Sim/Não no fim da linha.
+  /// no dia, sem card, separadas por um traço fino; à direita, as colunas
+  /// Sim/Não com o título "Confirmar" em cima.
   List<Widget> _atividadesDoDia() => [
     if (_atividadesRegistradas.isEmpty)
       Padding(
@@ -1954,13 +1958,29 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 15, color: _corRotulo),
         ),
+      )
+    else
+      // título das colunas Sim/Não
+      Padding(
+        padding: const EdgeInsets.only(bottom: 2),
+        child: Row(
+          children: [
+            const Spacer(),
+            SizedBox(
+              width: _larguraSimNao * 2 + 6,
+              child: Text(
+                'Confirmar',
+                textAlign: TextAlign.center,
+                style: _textoGrosso(_corRotulo).copyWith(fontSize: 13),
+              ),
+            ),
+          ],
+        ),
       ),
     // só as já registradas no sistema
     for (final a in _atividades)
-      if (_atividadesRegistradas[a.$1] case final linha?) ...[
-        _atividade(a.$1, linha.$1, linha.$2, a.$3, a.$4),
-        const SizedBox(height: 8),
-      ],
+      if (_atividadesRegistradas[a.$1] case final linha?)
+        _atividade(a.$1, linha.$1, linha.$2),
   ];
 
   /// Seção 2 — "Atividades do Dia - Não Registradas": as atividades sem

@@ -2012,6 +2012,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     // vazio: só o texto, sem negrito, igual ao "Choveu"
     valor: valor,
     semCaixa: true,
+    semIcone: true,
     acao: _atividadesComSimNao.contains(chave) ? _simNao(chave) : null,
   );
 

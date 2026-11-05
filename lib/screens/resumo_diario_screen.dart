@@ -1400,13 +1400,22 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: _azulBotao,
                                           foregroundColor: Colors.white,
+                                          // inativo: o mesmo azul, clareado
+                                          disabledBackgroundColor: _azulBotao
+                                              .withValues(alpha: 0.35),
+                                          disabledForegroundColor: Colors.white,
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
                                               8,
                                             ),
                                           ),
                                         ),
-                                        onPressed: _proximo,
+                                        // Seção 1: inativo até confirmar as
+                                        // atividades registradas
+                                        onPressed:
+                                            _secao == 1 && !_secao1Completa
+                                            ? null
+                                            : _proximo,
                                         child: const Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [

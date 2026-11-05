@@ -1221,7 +1221,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   /// Atividades da Seção 1 com o Sim/Não (as outras vêm nas próximas
   /// etapas).
-  static const _atividadesComSimNao = {'choveu'};
+  static const _atividadesComSimNao = {'choveu', 'mudei_pasto'};
 
   void _marcarAtividade(String chave, bool marcada) {
     setState(() {

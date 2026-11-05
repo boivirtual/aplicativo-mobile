@@ -218,16 +218,87 @@ class HomeScreen extends StatelessWidget {
               child: Text(
                 title,
                 maxLines: 1,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF18385F),
+                  color: cor ?? const Color(0xFF18385F),
                 ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Card do Resumo Diário na Home. Com UMA fazenda só, confere no servidor
+/// (só com internet boa, sem avisos) se o dia anterior ficou sem resumo e
+/// sem folga — mesma conferência da tela inicial do Resumo
+/// (ResumoDiarioService.diaAnteriorPendente). Pendente: card vermelho com
+/// "Falta Resumo dd/mm/aaaa". Com mais de uma fazenda, card normal. A Home
+/// é montada de novo cada vez que volta para ela, então a conferência se
+/// refaz (ex.: depois de registrar o resumo ou a folga).
+class _CardResumoDiario extends StatefulWidget {
+  final Function(int)? onNavigate;
+  const _CardResumoDiario({this.onNavigate});
+
+  @override
+  State<_CardResumoDiario> createState() => _CardResumoDiarioState();
+}
+
+class _CardResumoDiarioState extends State<_CardResumoDiario> {
+  /// Dia anterior sem resumo nem folga (null = em dia ou não conferido).
+  DateTime? _faltaResumo;
+
+  @override
+  void initState() {
+    super.initState();
+    _conferir();
+  }
+
+  Future<void> _conferir() async {
+    final prefs = await SharedPreferences.getInstance();
+    final bd = prefs.getString('userCNPJ');
+    final fazendasJson = prefs.getString('userFazendas');
+    if (bd == null || fazendasJson == null) return;
+    final fazendas = json.decode(fazendasJson);
+    if (fazendas is! List || fazendas.length != 1) return;
+    if (!ConnectivityService.instance.temInternetReal) return;
+    final agora = DateTime.now();
+    final hoje = DateTime(agora.year, agora.month, agora.day);
+    final r = await ResumoDiarioService.instance.diaAnteriorPendente(
+      bd,
+      (fazendas[0] as Map)['id'].toString(),
+      hoje,
+    );
+    if (!mounted || r == null || !r.pendente) return;
+    setState(() => _faltaResumo = hoje.subtract(const Duration(days: 1)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dia = _faltaResumo;
+    if (dia == null) {
+      return HomeScreen._buildMenuCard(
+        "Resumo Diário",
+        'farmer.png',
+        4,
+        widget.onNavigate,
+      );
+    }
+    final data =
+        '${dia.day.toString().padLeft(2, '0')}/'
+        '${dia.month.toString().padLeft(2, '0')}/${dia.year}';
+    return HomeScreen._buildMenuCard(
+      "Resumo Diário",
+      'farmer.png',
+      4,
+      widget.onNavigate,
+      // vermelho bem claro; ícone e textos em vermelho escuro
+      fundo: const Color(0xFFFFEBEE),
+      cor: const Color(0xFFB71C1C),
+      meio: 'Falta Resumo $data',
     );
   }
 }

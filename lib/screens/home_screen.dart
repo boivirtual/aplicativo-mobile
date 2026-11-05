@@ -194,8 +194,22 @@ class HomeScreen extends StatelessWidget {
               'assets/images/$img',
               width: 32,
               height: 32,
-              color: azulIcone,
+              color: cor ?? azulIcone,
             ),
+            if (meio != null)
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  meio,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: cor,
+                  ),
+                ),
+              ),
             // sempre em uma linha: nos cards menores (3 por linha) a fonte
             // encolhe um pouco em vez de quebrar o nome
             FittedBox(

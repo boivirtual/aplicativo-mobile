@@ -2011,7 +2011,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       valor: valor,
       semCaixa: true,
       acao: marcada
-          ? Icon(Icons.check_circle, color: Colors.green[600], size: 26)
+          ? Icon(Icons.check, color: Colors.green[600], size: 28)
           : null,
     );
   }

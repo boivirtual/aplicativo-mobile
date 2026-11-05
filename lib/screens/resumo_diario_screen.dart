@@ -1991,104 +1991,29 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ];
   }
 
-  /// Linha da Seção 1: texto (o valor em negrito) e, nas atividades com
-  /// Sim/Não, os dois botões nas colunas de "Confirmar". Traço fino embaixo.
-  Widget _atividade(String chave, String texto, String valor) => Container(
-    constraints: const BoxConstraints(minHeight: 52),
-    padding: const EdgeInsets.symmetric(vertical: 6),
-    decoration: const BoxDecoration(
-      border: Border(bottom: BorderSide(color: Color(0xFFE0E6EA))),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text.rich(
-            TextSpan(
-              style: TextStyle(fontSize: 15, color: _corRotulo),
-              children: [
-                TextSpan(text: texto),
-                TextSpan(
-                  text: valor,
-                  style: _textoGrosso(_corRotulo).copyWith(fontSize: 15),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        if (_atividadesComSimNao.contains(chave))
-          _simNao(chave)
-        else
-          // as que ainda não têm Sim/Não: o espaço das colunas fica vazio
-          const SizedBox(width: _larguraSimNao * 2 + 6),
-      ],
-    ),
-  );
-
-  /// Sim/Não da Seção 1, em botões tipo pílula: Sim (azul quando escolhido)
-  /// confirma a atividade; Não abre o programa para registrar ou ajustar
-  /// (ver [_ajustarAtividade]).
-  Widget _simNao(String chave) {
-    final sim = _atividadesMarcadas.contains(chave);
-    Widget botao(String rotulo, bool escolhido, VoidCallback aoTocar) =>
-        SizedBox(
-          width: _larguraSimNao,
-          height: 34,
-          child: OutlinedButton(
-            onPressed: aoTocar,
-            style: OutlinedButton.styleFrom(
-              padding: EdgeInsets.zero,
-              backgroundColor: escolhido ? _azulBotao : Colors.white,
-              foregroundColor: escolhido ? Colors.white : _corRotulo,
-              side: BorderSide(
-                color: escolhido ? _azulBotao : const Color(0xFFB0BEC5),
-              ),
-              shape: const StadiumBorder(),
-            ),
-            child: Text(
-              rotulo,
-              style: escolhido
-                  ? EstiloApp.negrito(14, Colors.white)
-                  : TextStyle(fontSize: 14, color: _corRotulo),
-            ),
-          ),
-        );
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        botao('Sim', sim, () => _marcarAtividade(chave, !sim)),
-        const SizedBox(width: 6),
-        botao('Não', false, () => _ajustarAtividade(chave)),
-      ],
+  /// Card de uma atividade da Seção 1: ícone, texto (o valor em negrito) e,
+  /// marcado, o check verde à direita.
+  Widget _atividade(
+    String chave,
+    String texto,
+    String valor,
+    IconData? icone,
+    String? imagem,
+  ) {
+    final marcada = _atividadesMarcadas.contains(chave);
+    return _linhaMarcar(
+      texto,
+      icone,
+      marcada,
+      (v) => _marcarAtividade(chave, v),
+      imagem: imagem,
+      // vazio: só o texto, sem negrito (ex.: Trocamos animais de pasto)
+      valor: valor,
+      semCaixa: true,
+      acao: marcada
+          ? Icon(Icons.check_circle, color: Colors.green[600], size: 26)
+          : null,
     );
-  }
-
-  /// "Não" de uma atividade da Seção 1. Chuva: abre o programa da Chuva com
-  /// a fazenda e a data do resumo para registrar ou ajustar o volume.
-  /// Troca de pasto: abre o Mapa de Gado (Tabuleiro) já com a fazenda do
-  /// resumo. Ao voltar (registrando ou não), consulta de novo o servidor e
-  /// fica na Seção 1 atualizada.
-  Future<void> _ajustarAtividade(String chave) async {
-    if (!_atividadesComSimNao.contains(chave)) return;
-    FocusManager.instance.primaryFocus?.unfocus();
-    _marcarAtividade(chave, false);
-    await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (ctx) => chave == 'mudei_pasto'
-            ? MapaScreen(
-                onBack: () => Navigator.pop(ctx, false),
-                fazendaInicial: _fazenda,
-              )
-            : ChuvaScreen(
-                onBack: () => Navigator.pop(ctx, false),
-                fazendaInicial: _fazenda,
-                dataInicial: _data,
-                aoRegistrar: () => Navigator.pop(ctx, true),
-              ),
-      ),
-    );
-    if (mounted) await _abrirSecao1();
   }
 
   /// Linha com caixa de marcar, ícone azul e texto (Atividades do Dia,

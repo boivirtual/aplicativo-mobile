@@ -660,15 +660,15 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       if (nova != null && erro == null) _data = nova;
       _conferindoDia = false;
       // só o dia de hoje cobra o dia anterior: no resumo de um dia passado
-      // (ex.: depois do "Executar o Resumo") não cobra o dia antes dele, senão
+      // (ex.: depois do "Registrar" do aviso) não cobra o dia antes dele, senão
       // voltaria um dia por vez sem fim
       _diaPendente =
           r?.pendente == true && DateUtils.isSameDay(data, _hoje());
       _erroConferencia = erro;
     });
     // Dia anterior sem resumo: avisa num modal (só com o Resumo na tela).
-    // "Executar o Resumo" passa a tela para esse dia (o usuário continua o
-    // resumo dele); "Registrar Folga" grava o dia como Folga e volta para
+    // "Registrar" passa a tela para esse dia (o usuário continua o
+    // resumo dele); "Dia de Folga" grava o dia como Folga e volta para
     // hoje.
     if (_diaPendente && TickerMode.of(context)) {
       final dia = data.subtract(const Duration(days: 1));

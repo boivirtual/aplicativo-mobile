@@ -1494,7 +1494,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             style: const TextStyle(fontSize: 13, color: Colors.blue),
           ),
         ],
-      ),
     );
   }
 

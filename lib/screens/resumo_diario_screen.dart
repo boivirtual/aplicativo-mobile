@@ -2105,9 +2105,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                             TextSpan(text: texto),
                             TextSpan(
                               text: valor,
+                              // 14: o negrito (e os números) parecem maiores
+                              // que o texto de 15
                               style: _textoGrosso(
                                 _corRotulo,
-                              ).copyWith(fontSize: 15),
+                              ).copyWith(fontSize: 14),
                             ),
                           ],
                         ),

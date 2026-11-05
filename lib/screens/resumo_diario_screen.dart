@@ -524,7 +524,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       _chaveAtividades = chave;
       _atividadesRegistradas = {
         if (chuva != null) 'choveu': ('Choveu ', '${_mm(chuva)} mm'),
-        if (a.mudouPasto) 'mudei_pasto': ('Mudei o Gado de Pasto: ', 'SIM'),
+        // sem valor em negrito: a resposta é pelo Sim/Não
+        if (a.mudouPasto) 'mudei_pasto': ('Trocamos animais de pasto', ''),
         if (a.nutricao) 'nutricao': ('Nutrição: ', 'SIM'),
         if (a.nascimentos > 0)
           'nascimento': ('Nascimento: ', _qtdRegistros(a.nascimentos)),

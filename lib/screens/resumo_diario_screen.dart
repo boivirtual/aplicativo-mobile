@@ -1542,7 +1542,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         Padding(
           padding: const EdgeInsets.only(bottom: 10),
           child: Text(
-            'Clique na(s) Atividade(s) para Confirmar!',
+            _atividadesRegistradas.length == 1
+                ? 'Clique na Atividade para Confirmar!'
+                : 'Clique nas Atividades para Confirmar!',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: _corRotulo),
           ),

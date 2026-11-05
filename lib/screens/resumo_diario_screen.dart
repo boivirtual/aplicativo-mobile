@@ -1274,7 +1274,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   Widget _tela(BuildContext context) {
     return Scaffold(
-      backgroundColor: _secao == 1 ? _fundoSecao1 : Colors.white,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           'Resumo Diário da Fazenda',

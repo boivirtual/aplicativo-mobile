@@ -1442,14 +1442,27 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     );
   }
 
-  /// Barra de progresso (seção atual de 10) e o título da seção.
+  /// Tarja de todas as seções: fazenda, data, barra de progresso e "Seção X
+  /// de 11". Mesmo padrão da TarjaFazendaWidget (tela inicial, Mapa de
+  /// Gado): card azul claro de bordas arredondadas sobre a faixa cinza.
   Widget _progresso() {
     return Container(
       width: double.infinity,
-      // mesmo azul da tarja dos outros programas (Mapa de Gado, Pesagem)
-      color: Color.alphaBlend(Colors.blue.withValues(alpha: 0.1), Colors.white),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-      child: Column(
+      color: const Color(0xFFF1F3F6),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
+        decoration: BoxDecoration(
+          color: Colors.blue.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: _conteudoProgresso(),
+      ),
+    );
+  }
+
+  Widget _conteudoProgresso() {
+    return Column(
         children: [
           // primeiro a fazenda e a data do resumo
           Row(

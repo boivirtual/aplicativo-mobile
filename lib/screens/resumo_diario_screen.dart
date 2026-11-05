@@ -2010,8 +2010,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     // o toque na linha não marca: a resposta é pelo Sim/Não
     (_) {},
     imagem: imagem,
-    // vazio: só o texto, sem negrito (ex.: Trocamos animais de pasto)
-    valor: valor.isEmpty ? null : valor,
+    // vazio: só o texto, sem negrito, igual ao "Choveu"
+    valor: valor,
     semCaixa: true,
     acao: _atividadesComSimNao.contains(chave) ? _simNao(chave) : null,
   );

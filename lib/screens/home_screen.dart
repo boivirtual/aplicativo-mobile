@@ -77,12 +77,14 @@ class HomeScreen extends StatelessWidget {
                   // e sem abrir
                   Opacity(
                     opacity: resumoDiarioLiberado ? 1 : 0.45,
-                    child: _buildMenuCard(
-                      "Resumo Diário",
-                      'farmer.png',
-                      4,
-                      resumoDiarioLiberado ? onNavigate : null,
-                    ),
+                    child: resumoDiarioLiberado
+                        ? _CardResumoDiario(onNavigate: onNavigate)
+                        : _buildMenuCard(
+                            "Resumo Diário",
+                            'farmer.png',
+                            4,
+                            null,
+                          ),
                   ),
                 ],
               ),

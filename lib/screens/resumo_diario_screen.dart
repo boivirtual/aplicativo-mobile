@@ -2004,10 +2004,71 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     texto,
     icone,
     _atividadesMarcadas.contains(chave),
-    (v) => _marcarAtividade(chave, v),
+    // o toque na linha não marca: a resposta é pelo Sim/Não
+    (_) {},
     imagem: imagem,
     valor: valor,
+    semCaixa: true,
+    acao: _atividadesComSimNao.contains(chave) ? _simNao(chave) : null,
   );
+
+  /// Sim/Não no fim da linha da Seção 1: Sim marca a linha (confirma a
+  /// atividade); Não abre o programa para registrar ou ajustar (ver
+  /// [_ajustarAtividade]).
+  Widget _simNao(String chave) {
+    final sim = _atividadesMarcadas.contains(chave);
+    Widget opcao(String rotulo, bool marcada, VoidCallback aoTocar) => InkWell(
+      borderRadius: BorderRadius.circular(6),
+      onTap: aoTocar,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Checkbox(
+              value: marcada,
+              activeColor: _azulBotao,
+              side: const BorderSide(width: 1.2, color: Color(0xFF90A4AE)),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              onChanged: (_) => aoTocar(),
+            ),
+            Text(rotulo, style: TextStyle(fontSize: 14, color: _corRotulo)),
+          ],
+        ),
+      ),
+    );
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        opcao('Sim', sim, () => _marcarAtividade(chave, !sim)),
+        const SizedBox(width: 4),
+        opcao('Não', false, () => _ajustarAtividade(chave)),
+      ],
+    );
+  }
+
+  /// "Não" de uma atividade da Seção 1. Chuva: abre o programa da Chuva com
+  /// a fazenda e a data do resumo para registrar ou ajustar o volume; ao
+  /// voltar (registrando ou não), consulta de novo o servidor e fica na
+  /// Seção 1 com a chuva atualizada.
+  Future<void> _ajustarAtividade(String chave) async {
+    if (chave != 'choveu') return;
+    FocusManager.instance.primaryFocus?.unfocus();
+    _marcarAtividade(chave, false);
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (ctx) => ChuvaScreen(
+          onBack: () => Navigator.pop(ctx, false),
+          fazendaInicial: _fazenda,
+          dataInicial: _data,
+          aoRegistrar: () => Navigator.pop(ctx, true),
+        ),
+      ),
+    );
+    if (mounted) await _abrirSecao1();
+  }
 
   /// Linha com caixa de marcar, ícone azul e texto (Atividades do Dia,
   /// Sanidade Animal...): marcada fica com fundo azul claro e borda azul.

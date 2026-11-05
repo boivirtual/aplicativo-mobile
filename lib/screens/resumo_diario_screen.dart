@@ -2128,7 +2128,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                   visualDensity: VisualDensity.compact,
                   onChanged: (v) => aoMarcar(v ?? false),
                 ),
-              if (imagem != null)
+              if (semIcone)
+                const SizedBox.shrink()
+              else if (imagem != null)
                 Image.asset(
                   'assets/images/$imagem',
                   width: 24,
@@ -2137,7 +2139,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                 )
               else
                 Icon(icone, size: 24, color: azulIcone),
-              const SizedBox(width: 10),
+              if (!semIcone) const SizedBox(width: 10),
               Expanded(
                 child: valor == null
                     ? Text(

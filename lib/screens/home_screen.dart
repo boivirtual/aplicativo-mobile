@@ -264,7 +264,9 @@ class _CardResumoDiarioState extends State<_CardResumoDiario> {
     if (bd == null || fazendasJson == null) return;
     final fazendas = json.decode(fazendasJson);
     if (fazendas is! List || fazendas.length != 1) return;
-    if (!ConnectivityService.instance.temInternetReal) return;
+    // na hora (logo depois do login a última medição pode não existir)
+    final nivel = await ConnectivityService.instance.verificarAgora();
+    if (nivel != NivelConexao.internetOk) return;
     final agora = DateTime.now();
     final hoje = DateTime(agora.year, agora.month, agora.day);
     final r = await ResumoDiarioService.instance.diaAnteriorPendente(

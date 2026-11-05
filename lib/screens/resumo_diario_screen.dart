@@ -524,7 +524,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       _chaveAtividades = chave;
       _atividadesRegistradas = {
         if (chuva != null) 'choveu': ('Choveu ', '${_mm(chuva)} mm'),
-        // sem valor em negrito: a resposta é pelo Sim/Não
+        // sem valor em negrito (a resposta é pelo Sim/Não)
         if (a.mudouPasto) 'mudei_pasto': ('Trocamos animais de pasto', ''),
         if (a.nutricao) 'nutricao': ('Nutrição: ', 'SIM'),
         if (a.nascimentos > 0)
@@ -665,8 +665,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       // só o dia de hoje cobra o dia anterior: no resumo de um dia passado
       // (ex.: depois do "Registrar" do aviso) não cobra o dia antes dele, senão
       // voltaria um dia por vez sem fim
-      _diaPendente =
-          r?.pendente == true && DateUtils.isSameDay(data, _hoje());
+      _diaPendente = r?.pendente == true && DateUtils.isSameDay(data, _hoje());
       _erroConferencia = erro;
     });
     // Dia anterior sem resumo: avisa num modal (só com o Resumo na tela).
@@ -1496,27 +1495,27 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   // NÃO da Seção 2)
   Widget _tituloAzul(String texto, {String? destaque, String? sufixo}) =>
       Padding(
-    padding: const EdgeInsets.fromLTRB(2, 10, 2, 8),
-    child: Text.rich(
-      TextSpan(
-        text: texto,
-        children: [
-          if (destaque != null)
-            TextSpan(
-              text: destaque,
-              style: EstiloApp.negrito(15, Colors.blue[300]!),
-            ),
-          if (sufixo != null) TextSpan(text: sufixo),
-        ],
-      ),
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.bold,
-        color: Colors.blue[300],
-      ),
-    ),
-  );
+        padding: const EdgeInsets.fromLTRB(2, 10, 2, 8),
+        child: Text.rich(
+          TextSpan(
+            text: texto,
+            children: [
+              if (destaque != null)
+                TextSpan(
+                  text: destaque,
+                  style: EstiloApp.negrito(15, Colors.blue[300]!),
+                ),
+              if (sufixo != null) TextSpan(text: sufixo),
+            ],
+          ),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            color: Colors.blue[300],
+          ),
+        ),
+      );
 
   /// Parte fixa de cada seção (não rola).
   List<Widget> _fixoDaSecao() => switch (_secao) {
@@ -2070,11 +2069,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                 fazendaInicial: _fazenda,
               )
             : ChuvaScreen(
-          onBack: () => Navigator.pop(ctx, false),
-          fazendaInicial: _fazenda,
-          dataInicial: _data,
-          aoRegistrar: () => Navigator.pop(ctx, true),
-        ),
+                onBack: () => Navigator.pop(ctx, false),
+                fazendaInicial: _fazenda,
+                dataInicial: _data,
+                aoRegistrar: () => Navigator.pop(ctx, true),
+              ),
       ),
     );
     if (mounted) await _abrirSecao1();

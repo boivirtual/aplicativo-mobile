@@ -2051,17 +2051,23 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   }
 
   /// "Não" de uma atividade da Seção 1. Chuva: abre o programa da Chuva com
-  /// a fazenda e a data do resumo para registrar ou ajustar o volume; ao
-  /// voltar (registrando ou não), consulta de novo o servidor e fica na
-  /// Seção 1 com a chuva atualizada.
+  /// a fazenda e a data do resumo para registrar ou ajustar o volume.
+  /// Troca de pasto: abre o Mapa de Gado (Tabuleiro) já com a fazenda do
+  /// resumo. Ao voltar (registrando ou não), consulta de novo o servidor e
+  /// fica na Seção 1 atualizada.
   Future<void> _ajustarAtividade(String chave) async {
-    if (chave != 'choveu') return;
+    if (!_atividadesComSimNao.contains(chave)) return;
     FocusManager.instance.primaryFocus?.unfocus();
     _marcarAtividade(chave, false);
     await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (ctx) => ChuvaScreen(
+        builder: (ctx) => chave == 'mudei_pasto'
+            ? MapaScreen(
+                onBack: () => Navigator.pop(ctx, false),
+                fazendaInicial: _fazenda,
+              )
+            : ChuvaScreen(
           onBack: () => Navigator.pop(ctx, false),
           fazendaInicial: _fazenda,
           dataInicial: _data,

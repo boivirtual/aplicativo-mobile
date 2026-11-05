@@ -1198,15 +1198,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         await AppAlert.erro(context, 'Selecione a Fazenda.');
         return;
       }
-      // todas as atividades exibidas têm que estar marcadas; sem nenhuma
-      // registrada no dia, segue direto
-      if (!_atividadesRegistradas.keys.every(_atividadesMarcadas.contains)) {
-        await AppAlert.erro(
-          context,
-          'Marque todas as atividades registradas para continuar.',
-        );
-        return;
-      }
+      // o Próximo fica inativo até confirmar as atividades (ver
+      // [_secao1Completa])
+      if (!_secao1Completa) return;
       setState(() => _secao = 2);
     }
   }

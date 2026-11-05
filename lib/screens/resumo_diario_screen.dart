@@ -2172,7 +2172,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                 )
               else
                 Icon(icone, size: 24, color: azulIcone),
-              if (!semIcone) const SizedBox(width: 10),
+              const SizedBox(width: 10),
               Expanded(
                 child: valor == null
                     ? Text(

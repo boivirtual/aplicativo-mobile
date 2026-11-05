@@ -1532,7 +1532,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           child: Text(
             'Clique na Atividade para confirmar!',
             textAlign: TextAlign.center,
-            style: EstiloApp.negrito(14, _corRotulo),
+            style: TextStyle(fontSize: 14, color: _corRotulo),
           ),
         ),
     ],

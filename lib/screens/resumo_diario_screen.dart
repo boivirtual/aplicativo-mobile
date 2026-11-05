@@ -515,6 +515,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     final a = r!;
     final chuva = a.chuvaMm;
     final chave = '$fazenda|${_formatar(data)}';
+    final anteriores = _atividadesRegistradas.keys.toSet();
     setState(() {
       if (chave != _chaveAtividades) {
         _atividadesMarcadas.clear();

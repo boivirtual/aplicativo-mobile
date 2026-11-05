@@ -2034,7 +2034,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       valor: valor,
       semCaixa: true,
       // azul bem claro: o marcado (azul mais forte) se destaca
-      fundo: const Color(0xFFF3F9FF),
+      fundo: const Color(0xFFF9FCFF),
       acao: marcada
           ? Icon(Icons.check, color: Colors.green[600], size: 28)
           : null,

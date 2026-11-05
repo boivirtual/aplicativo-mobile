@@ -1213,15 +1213,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   }
 
   /// Seção 1 pronta para o Próximo: sem atividade registrada no dia, ou com
-  /// as atividades que têm Sim/Não respondidas com Sim (por enquanto só a
-  /// Chuva tem Sim/Não — ver [_atividadesComSimNao]).
-  bool get _secao1Completa => _atividadesRegistradas.keys
-      .where(_atividadesComSimNao.contains)
-      .every(_atividadesMarcadas.contains);
-
-  /// Atividades da Seção 1 com o Sim/Não (as outras vêm nas próximas
-  /// etapas).
-  static const _atividadesComSimNao = {'choveu', 'mudei_pasto'};
+  /// todas as atividades marcadas (tocadas).
+  bool get _secao1Completa =>
+      _atividadesRegistradas.keys.every(_atividadesMarcadas.contains);
 
   void _marcarAtividade(String chave, bool marcada) {
     setState(() {

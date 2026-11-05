@@ -1463,37 +1463,37 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   Widget _conteudoProgresso() {
     return Column(
-        children: [
-          // primeiro a fazenda e a data do resumo
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _nomeFazenda,
-                  style: const TextStyle(fontSize: 13, color: Colors.blue),
-                ),
+      children: [
+        // primeiro a fazenda e a data do resumo
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                _nomeFazenda,
+                style: const TextStyle(fontSize: 13, color: Colors.blue),
               ),
-              const SizedBox(width: 10),
-              Text(_formatar(_data), style: EstiloApp.negrito(13, Colors.blue)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: _secao / _totalSecoes,
-              minHeight: 10,
-              color: _azulBotao,
-              backgroundColor: const Color(0xFFD5DCE4),
             ),
+            const SizedBox(width: 10),
+            Text(_formatar(_data), style: EstiloApp.negrito(13, Colors.blue)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: LinearProgressIndicator(
+            value: _secao / _totalSecoes,
+            minHeight: 10,
+            color: _azulBotao,
+            backgroundColor: const Color(0xFFD5DCE4),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Seção $_secao de $_totalSecoes',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 13, color: Colors.blue),
-          ),
-        ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Seção $_secao de $_totalSecoes',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 13, color: Colors.blue),
+        ),
+      ],
     );
   }
 

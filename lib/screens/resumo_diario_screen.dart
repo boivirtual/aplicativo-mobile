@@ -2132,8 +2132,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     String? valor,
     // botão no fim da linha, separado do texto
     Widget? acao,
-    // só o texto, sem o ícone (ex.: Seção 1)
-    bool semIcone = false,
   }) {
     const azulIcone = Color(0xFF228cb9);
     return Opacity(

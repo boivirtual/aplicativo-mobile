@@ -1,6 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/recursos.dart';
+import '../services/connectivity_service.dart';
+import '../services/resumo_diario_service.dart';
 
 class HomeScreen extends StatelessWidget {
   final Function(int)? onNavigate;

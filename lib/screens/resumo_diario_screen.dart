@@ -765,32 +765,25 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             style: const TextStyle(fontSize: 16, color: texto),
           ),
         ),
-        // dois links lado a lado no lugar do OK: "Registrar Folga" com o
-        // destaque que o OK tinha; "Executar o Resumo" mais claro, sem
-        // negrito
+        // dois links lado a lado no lugar do OK: "Registrar" (faz o resumo
+        // do dia) com o destaque que o OK tinha; "Dia de Folga" mais claro,
+        // sem negrito
         actionsPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
         actions: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               TextButton(
+                onPressed: () => Navigator.pop(ctx, 'resumo'),
+                child: Text('Registrar', style: EstiloApp.negrito(14, texto)),
+              ),
+              TextButton(
                 onPressed: () => Navigator.pop(ctx, 'folga'),
                 child: Text(
-                  'Registrar Folga',
-                  style: EstiloApp.negrito(14, texto),
-                ),
-              ),
-              // fica com o resto da largura (só quebra a linha num celular
-              // muito estreito)
-              Flexible(
-                child: TextButton(
-                  onPressed: () => Navigator.pop(ctx, 'resumo'),
-                  child: Text(
-                    'Executar o Resumo',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: texto.withValues(alpha: 0.85),
-                    ),
+                  'Dia de Folga',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: texto.withValues(alpha: 0.85),
                   ),
                 ),
               ),

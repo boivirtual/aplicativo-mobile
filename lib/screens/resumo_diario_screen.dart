@@ -1524,8 +1524,26 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     4 => [_tituloAzul('Tratamentos Realizados Hoje')],
     5 => [_tituloAzul('Aplicações Realizadas Hoje')],
     6 => [_tituloAzul('O Que Foi Feito Hoje')],
-    _ => [_tituloAzul('Atividades Registradas')],
+    _ => [
+      _tituloAzul('Atividades Registradas'),
+      if (_atividadesRegistradas.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Text(
+            'Clique na Atividade para confirmar!',
+            textAlign: TextAlign.center,
+            style: EstiloApp.negrito(14, _corRotulo),
+          ),
+        ),
+    ],
   };
+
+  /// Fundo da tela na Seção 1 (em teste): azul dois tons mais escuro que a
+  /// tarja da fazenda ([_progresso], azul a 10% sobre o branco).
+  static final _fundoSecao1 = Color.alphaBlend(
+    Colors.blue.withValues(alpha: 0.22),
+    Colors.white,
+  );
 
   Widget _painelCinza(List<Widget> filhos) => Container(
     padding: const EdgeInsets.all(12),

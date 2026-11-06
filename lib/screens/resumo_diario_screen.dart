@@ -2058,22 +2058,30 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
               width: 140,
               height: 44,
               child: ElevatedButton(
-                // branco até tocar; confirmado, fica azul
+                // azul clarinho até tocar; confirmado, azul forte com o check
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _secao2Confirmada
                       ? _azulBotao
-                      : Colors.white,
+                      : const Color(0xFFB9DCFF),
                   foregroundColor: _secao2Confirmada
                       ? Colors.white
-                      : _azulBotao,
-                  side: const BorderSide(color: _azulBotao),
+                      : const Color(0xFF0D47A1),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
                 onPressed: _confirmarSecao2,
-                child: const Text('Sim', style: TextStyle(fontSize: 16)),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_secao2Confirmada) ...[
+                      const Icon(Icons.check, size: 20),
+                      const SizedBox(width: 6),
+                    ],
+                    const Text('Sim', style: TextStyle(fontSize: 16)),
+                  ],
+                ),
               ),
             ),
           ],

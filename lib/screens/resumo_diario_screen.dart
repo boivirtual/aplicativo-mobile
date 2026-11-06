@@ -1340,16 +1340,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                 12,
                                 12 + MediaQuery.of(context).padding.bottom,
                               ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.06),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, -2),
-                                  ),
-                                ],
-                              ),
+                              // sem a sombra em cima: fica junto com a tela
+                              color: _fundoTela,
                               child: Row(
                                 children: [
                                   // Anterior (btn-default) a partir da Seção 2

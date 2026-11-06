@@ -1089,7 +1089,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   Future<void> _proximo() async {
     FocusManager.instance.primaryFocus?.unfocus();
     if (_secao == 2) {
-      // só leitura (a conversa com o usuário): segue direto
+      // por enquanto o Próximo fica desativado na Seção 2 (ver o botão)
       setState(() => _secao = 3);
       return;
     }
@@ -1365,9 +1365,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                           ),
                                         ),
                                         // Seção 1: inativo até confirmar as
-                                        // atividades registradas
+                                        // atividades registradas; Seção 2: desativado por enquanto
                                         onPressed:
-                                            _secao == 1 && !_secao1Completa
+                                            (_secao == 1 && !_secao1Completa) ||
+                                                _secao == 2
                                             ? null
                                             : _proximo,
                                         child: const Row(
@@ -1938,20 +1939,22 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   ];
 
   /// Seção 2: como cada atividade sem registro no dia aparece na conversa
-  /// (texto normal, palavra em destaque em negrito).
+  /// (texto normal + a palavra que vira link para o programa).
   static const _frasesNaoRegistradas = <String, (String, String)>{
-    'choveu': ('não ', 'CHOVEU'),
-    'mudei_pasto': ('os animais estão nos mesmos ', 'PASTOS'),
-    'nutricao': ('ninguém distribuiu ', 'NUTRIÇÃO'),
-    'nascimento': ('não houve ', 'NASCIMENTOS'),
-    'aborto_natimorto': ('nenhum animal ', 'ABORTOU/NATIMORTO'),
-    'morte': ('nenhum animal ', 'MORREU'),
+    'choveu': ('não ', 'Choveu'),
+    'mudei_pasto': ('os animais estão nos mesmos ', 'Pastos'),
+    'nutricao': ('ninguém distribuiu ', 'Nutrição'),
+    'nascimento': ('não houve ', 'Nascimentos'),
+    'aborto_natimorto': ('nenhum animal ', 'Abortou/Natimorto'),
+    'morte': ('nenhum animal ', 'Morreu'),
   };
 
   /// Seção 2 — "Atividades NÃO Registradas": uma conversa com o usuário
   /// logado contando o que não tem registro da fazenda no dia, ex.:
-  /// "Reinaldo! Hoje não CHOVEU, os animais estão nos mesmos PASTOS, ...".
-  /// Só leitura. No mesmo card azul claro da Seção 1.
+  /// "Reinaldo! Hoje não Choveu, os animais estão nos mesmos Pastos, ...",
+  /// direto no fundo azul (sem card). As palavras de cada atividade aparecem
+  /// como link (azul, negrito e sublinhado): vão abrir os programas (ainda
+  /// sem ação).
   List<Widget> _atividadesNaoRegistradas() {
     final chaves = _chavesNaoRegistradas.toList();
     if (chaves.isEmpty) {
@@ -1967,15 +1970,14 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ];
     }
     final hoje = DateUtils.isSameDay(_data, _hoje());
-    final negrito = _textoGrosso(_corRotulo).copyWith(fontSize: 14);
+    // visual de link: azul do botão, negrito e sublinhado
+    final link = EstiloApp.negrito(15, _azulBotao).copyWith(
+      decoration: TextDecoration.underline,
+      decorationColor: _azulBotao,
+    );
     return [
-      Container(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF9FCFF),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFCFD8DC)),
-        ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(4, 4, 4, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1994,7 +1996,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                     TextSpan(text: _frasesNaoRegistradas[chaves[i]]!.$1),
                     TextSpan(
                       text: _frasesNaoRegistradas[chaves[i]]!.$2,
-                      style: negrito,
+                      style: link,
                     ),
                   ],
                   const TextSpan(text: '.'),

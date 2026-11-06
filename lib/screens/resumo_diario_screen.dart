@@ -1190,13 +1190,23 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       // o Próximo fica inativo até confirmar as atividades (ver
       // [_secao1Completa])
       if (!_secao1Completa) return;
-      setState(() => _secao = 2);
+      setState(() {
+        _secao = 2;
+        // toda vez que entra na Seção 2 confirma de novo
+        _secao2Confirmada = false;
+      });
     }
   }
 
   void _anterior() {
     FocusManager.instance.primaryFocus?.unfocus();
-    if (_secao > 1) setState(() => _secao--);
+    if (_secao > 1) {
+      setState(() {
+        _secao--;
+        // voltou para a Seção 2: confirma de novo
+        if (_secao == 2) _secao2Confirmada = false;
+      });
+    }
   }
 
   /// Seção 1 pronta para o Próximo: sem atividade registrada no dia, ou com
@@ -1520,7 +1530,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       _tituloAzul('Atividades Registradas', tamanho: 17),
       if (_atividadesRegistradas.isNotEmpty)
         Padding(
-          padding: const EdgeInsets.only(left: 2, top: 6, bottom: 10),
+          // mesmo espaço depois do título da Seção 2
+          padding: const EdgeInsets.only(left: 2, top: 16, bottom: 10),
           child: Text(
             _atividadesRegistradas.length == 1
                 ? 'Clique na Atividade para Confirmar!'
@@ -1977,7 +1988,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// logado contando o que não tem registro da fazenda no dia, ex.:
   /// "Reinaldo! Hoje não Choveu, os animais estão nos mesmos Pastos, ...",
   /// direto no fundo azul (sem card). As palavras de cada atividade aparecem
-  /// como link (negrito e sublinhado) para o programa (ver
+  /// como link (sublinhado) para o programa (ver
   /// [_abrirPrograma]). Embaixo, a confirmação com o botão Sim (ver
   /// [_confirmarSecao2]).
   List<Widget> _atividadesNaoRegistradas() {
@@ -1995,8 +2006,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ];
     }
     final hoje = DateUtils.isSameDay(_data, _hoje());
-    // visual de link: negrito e sublinhado, na cor do texto
-    final link = EstiloApp.negrito(17, _corRotulo).copyWith(
+    // visual de link: só sublinhado, na cor do texto
+    final link = TextStyle(
+      fontSize: 17,
+      color: _corRotulo,
       decoration: TextDecoration.underline,
       decorationColor: _corRotulo,
     );
@@ -2045,9 +2058,16 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
               width: 140,
               height: 44,
               child: ElevatedButton(
+                // branco até tocar; confirmado, fica azul
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _azulBotao,
-                  foregroundColor: Colors.white,
+                  backgroundColor: _secao2Confirmada
+                      ? _azulBotao
+                      : Colors.white,
+                  foregroundColor: _secao2Confirmada
+                      ? Colors.white
+                      : _azulBotao,
+                  side: const BorderSide(color: _azulBotao),
+                  elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -2128,6 +2148,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         fundo: const Color(0xFFF9FCFF),
         fundoMarcado: const Color(0xFFCFE5FA),
         ajustado: true,
+        semBorda: true,
         // o espaço do check fica sempre reservado: o card não muda de
         // tamanho ao marcar
         acao: SizedBox(
@@ -2161,6 +2182,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     Color fundoMarcado = const Color(0xFFE3F2FD),
     // card do tamanho do conteúdo (não ocupa a largura toda)
     bool ajustado = false,
+    // sem a borda (antes e depois de marcar)
+    bool semBorda = false,
   }) {
     const azulIcone = Color(0xFF228cb9);
     return Opacity(
@@ -2175,9 +2198,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           decoration: BoxDecoration(
             color: marcada ? fundoMarcado : fundo,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: marcada ? _azulBotao : const Color(0xFFCFD8DC),
-            ),
+            border: semBorda
+                ? null
+                : Border.all(
+                    color: marcada ? _azulBotao : const Color(0xFFCFD8DC),
+                  ),
           ),
           child: Row(
             mainAxisSize: ajustado ? MainAxisSize.min : MainAxisSize.max,

@@ -1442,22 +1442,25 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     );
   }
 
+  /// Azul claro da tarja (azul a 10% sobre o branco). Na Seção 1 (em teste)
+  /// é também o fundo da tela toda.
+  static final _azulTarja = Color.alphaBlend(
+    Colors.blue.withValues(alpha: 0.1),
+    Colors.white,
+  );
+
+  /// Fundo da tela e da barra do Próximo: azul da tarja na Seção 1 (em
+  /// teste), branco nas outras.
+  Color get _fundoTela => _secao == 1 ? _azulTarja : Colors.white;
+
   /// Tarja de todas as seções: fazenda, data, barra de progresso e "Seção X
-  /// de 11". Mesmo padrão da TarjaFazendaWidget (tela inicial, Mapa de
-  /// Gado): card azul claro de bordas arredondadas sobre a faixa cinza.
+  /// de 11", de ponta a ponta, sem bordas arredondadas.
   Widget _progresso() {
     return Container(
       width: double.infinity,
-      color: const Color(0xFFF1F3F6),
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
-        decoration: BoxDecoration(
-          color: Colors.blue.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: _conteudoProgresso(),
-      ),
+      color: _azulTarja,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+      child: _conteudoProgresso(),
     );
   }
 

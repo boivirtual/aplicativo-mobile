@@ -1957,6 +1957,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ]),
   ];
 
+  /// Seção 1 — "Atividades Registradas": uma linha por atividade registrada
   /// no dia (em teste: linhas sem card, ver [_atividade]). Tocar na linha
   /// marca (check verde à direita); tocar de novo desmarca.
   List<Widget> _atividadesDoDia() => [

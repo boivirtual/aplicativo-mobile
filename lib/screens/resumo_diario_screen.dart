@@ -532,7 +532,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       );
       // o texto da Seção 2 pode ter mudado: confirma de novo
       _secao2Confirmada = false;
-      _secao = naSecao2 ? 2 : 1;
+      // voltando dos links: fica na Seção 2, a não ser que ela tenha ficado
+      // sem nenhuma afirmativa e a Seção 1 ganhou atividade para marcar
+      _secao = naSecao2 && (_chavesNaoRegistradas.isNotEmpty || _secao1Completa)
+          ? 2
+          : 1;
     });
   }
 
@@ -1204,10 +1208,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// tocado com a Seção 1 toda marcada.
   bool _secao2Confirmada = false;
 
-  /// Seção 2 pronta para o Próximo: confirmada no Sim, ou sem nenhuma
-  /// atividade sem registro (sem afirmativa para confirmar).
+  /// Seção 2 pronta para o Próximo: Seção 1 toda marcada e confirmada no
+  /// Sim (ou sem nenhuma atividade sem registro, sem afirmativa para
+  /// confirmar).
   bool get _secao2Completa =>
-      _secao2Confirmada || _chavesNaoRegistradas.isEmpty;
+      _secao1Completa && (_secao2Confirmada || _chavesNaoRegistradas.isEmpty);
 
   void _marcarAtividade(String chave, bool marcada) {
     setState(() {
@@ -1385,7 +1390,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                         // confirmação
                                         onPressed:
                                             (_secao == 1 && !_secao1Completa) ||
-                                                (_secao == 2 && !_secao2Completa)
+                                                (_secao == 2 &&
+                                                    !_secao2Completa)
                                             ? null
                                             : _proximo,
                                         child: const Row(

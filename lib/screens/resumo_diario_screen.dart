@@ -1499,11 +1499,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Parte fixa de cada seção (não rola).
   List<Widget> _fixoDaSecao() => switch (_secao) {
     2 => [
-      _tituloAzul(
-        'Atividades do Dia - ',
-        destaque: 'NÃO',
-        sufixo: ' Registradas',
-      ),
+      // mesmo título da Seção 1 (maior e em negrito)
+      _tituloAzul('Atividades NÃO Registradas', negrito: true, tamanho: 17),
+      const SizedBox(height: 6),
     ],
     3 => [_tituloAzul('Contagem de Animais Hoje')],
     4 => [_tituloAzul('Tratamentos Realizados Hoje')],

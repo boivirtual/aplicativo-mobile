@@ -2006,12 +2006,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ];
     }
     final hoje = DateUtils.isSameDay(_data, _hoje());
-    // visual de link: só sublinhado, na cor do texto
+    // visual de link: só sublinhado, no azul claro dos títulos (em teste)
     final link = TextStyle(
       fontSize: 17,
-      color: _corRotulo,
+      color: Colors.blue[300],
       decoration: TextDecoration.underline,
-      decorationColor: _corRotulo,
+      decorationColor: Colors.blue[300],
     );
     return [
       Padding(

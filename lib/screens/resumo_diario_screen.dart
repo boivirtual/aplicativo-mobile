@@ -1409,8 +1409,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   );
 
   /// Fundo da tela e da barra do Próximo: azul da tarja nas Seções 1 e 2 (em
-  /// teste), branco nas outras.
-  Color get _fundoTela => _secao <= 2 ? _azulTarja : Colors.white;
+  /// teste), branco na tela inicial e nas outras.
+  Color get _fundoTela =>
+      _secao == 1 || _secao == 2 ? _azulTarja : Colors.white;
 
   /// Tarja de todas as seções: fazenda, data, barra de progresso e "Seção X
   /// de 11", de ponta a ponta, sem bordas arredondadas.
@@ -1486,7 +1487,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     2 => [
       // mesmo título da Seção 1 (maior e em negrito)
       _tituloAzul('Atividades NÃO Registradas', negrito: true, tamanho: 17),
-      const SizedBox(height: 6),
+      const SizedBox(height: 16),
     ],
     3 => [_tituloAzul('Contagem de Animais Hoje')],
     4 => [_tituloAzul('Tratamentos Realizados Hoje')],
@@ -1953,7 +1954,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// logado contando o que não tem registro da fazenda no dia, ex.:
   /// "Reinaldo! Hoje não Choveu, os animais estão nos mesmos Pastos, ...",
   /// direto no fundo azul (sem card). As palavras de cada atividade aparecem
-  /// como link (azul, negrito e sublinhado): vão abrir os programas (ainda
+  /// como link (negrito e sublinhado): vão abrir os programas (ainda
   /// sem ação).
   List<Widget> _atividadesNaoRegistradas() {
     final chaves = _chavesNaoRegistradas.toList();
@@ -1970,10 +1971,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ];
     }
     final hoje = DateUtils.isSameDay(_data, _hoje());
-    // visual de link: azul do botão, negrito e sublinhado
-    final link = EstiloApp.negrito(15, _azulBotao).copyWith(
+    // visual de link: negrito e sublinhado, na cor do texto
+    final link = EstiloApp.negrito(17, _corRotulo).copyWith(
       decoration: TextDecoration.underline,
-      decorationColor: _azulBotao,
+      decorationColor: _corRotulo,
     );
     return [
       Padding(
@@ -1981,11 +1982,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('$_nomeUsuario!', style: EstiloApp.negrito(16, _corRotulo)),
+            Text('$_nomeUsuario!', style: EstiloApp.negrito(19, _corRotulo)),
             const SizedBox(height: 10),
             Text.rich(
               TextSpan(
-                style: TextStyle(fontSize: 15, height: 1.5, color: _corRotulo),
+                style: TextStyle(fontSize: 17, height: 1.5, color: _corRotulo),
                 children: [
                   // dia passado: a data no lugar do "Hoje"
                   TextSpan(

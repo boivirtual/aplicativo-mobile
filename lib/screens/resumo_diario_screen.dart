@@ -2068,7 +2068,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           constraints: const BoxConstraints(minHeight: 54),
           padding: const EdgeInsets.only(left: 4, right: 12),
           decoration: BoxDecoration(
-            color: marcada ? const Color(0xFFE3F2FD) : Colors.white,
+            color: marcada ? const Color(0xFFE3F2FD) : fundo,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: marcada ? _azulBotao : const Color(0xFFCFD8DC),

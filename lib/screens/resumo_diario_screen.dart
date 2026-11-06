@@ -1220,16 +1220,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     });
   }
 
-  void _marcarNaoRegistrada(String chave, bool marcada) {
-    setState(() {
-      if (marcada) {
-        _naoRegistradasMarcadas.add(chave);
-      } else {
-        _naoRegistradasMarcadas.remove(chave);
-      }
-    });
-  }
-
   /// Chaves das atividades sem registro no dia (as da Seção 2).
   Iterable<String> get _chavesNaoRegistradas => _atividades
       .map((a) => a.$1)

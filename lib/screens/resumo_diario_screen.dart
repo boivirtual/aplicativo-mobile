@@ -1486,9 +1486,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         Align(
           alignment: Alignment.centerLeft,
           child: Text(
-          'Seção $_secao de $_totalSecoes',
-          style: const TextStyle(fontSize: 13, color: Colors.blue),
-        ),
+            'Seção $_secao de $_totalSecoes',
+            style: const TextStyle(fontSize: 13, color: Colors.blue),
+          ),
         ),
       ],
     );

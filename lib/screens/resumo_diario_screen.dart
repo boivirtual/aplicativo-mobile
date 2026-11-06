@@ -2052,7 +2052,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             const SizedBox(height: 24),
             Text(
               'Você Confirma todas as afirmativas acima?',
-              style: TextStyle(fontSize: 17, color: _corRotulo),
+              style: EstiloApp.negrito(17, _corRotulo),
             ),
             const SizedBox(height: 12),
             SizedBox(

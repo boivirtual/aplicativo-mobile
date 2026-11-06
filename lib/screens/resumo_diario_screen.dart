@@ -459,9 +459,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   ];
   final Set<String> _atividadesMarcadas = {};
 
-  /// Seção 2: atividades sem registro no dia marcadas como NÃO.
-  final Set<String> _naoRegistradasMarcadas = {};
-
   /// Atividades já registradas no sistema para a fazenda e a data do resumo
   /// (chave -> texto da linha + valor em negrito): a Seção 1 só mostra estas.
   Map<String, (String, String)> _atividadesRegistradas = {};
@@ -482,11 +479,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Botão Sim da tela inicial: consulta no servidor as atividades
   /// registradas no dia (só online) e abre a Seção 1. Sem internet ou se
   /// falhar, avisa e fica na tela inicial.
-  ///
-  /// [voltandoDoRegistrar]: volta do "Registrar" da Seção 2 — relê as
-  /// atividades e, se a Seção 1 não ganhou nenhuma atividade nova para
-  /// marcar (ou não tem nenhuma), fica direto na Seção 2.
-  Future<void> _abrirSecao1({bool voltandoDoRegistrar = false}) async {
+  Future<void> _abrirSecao1() async {
     final bd = _bd;
     final fazenda = _fazenda;
     if (bd == null || fazenda == null || _carregandoAtividades) return;
@@ -515,16 +508,14 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     final a = r!;
     final chuva = a.chuvaMm;
     final chave = '$fazenda|${_formatar(data)}';
-    final anteriores = _atividadesRegistradas.keys.toSet();
     setState(() {
       if (chave != _chaveAtividades) {
         _atividadesMarcadas.clear();
-        _naoRegistradasMarcadas.clear();
       }
       _chaveAtividades = chave;
       _atividadesRegistradas = {
         if (chuva != null) 'choveu': ('Choveu ', '${_mm(chuva)} mm'),
-        // sem valor em negrito (a resposta é pelo Sim/Não)
+        // sem valor em negrito
         if (a.mudouPasto) 'mudei_pasto': ('Trocamos animais de pasto', ''),
         if (a.nutricao) 'nutricao': ('Nutrição: ', 'SIM'),
         if (a.nascimentos > 0)
@@ -536,13 +527,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       _atividadesMarcadas.removeWhere(
         (a) => !_atividadesRegistradas.containsKey(a),
       );
-      // atividade que passou a ter registro sai da Seção 2
-      _naoRegistradasMarcadas.removeWhere(_atividadesRegistradas.containsKey);
-      // nenhuma atividade nova na Seção 1 e as que já estavam confirmadas
-      final nadaNovoParaMarcar =
-          _atividadesRegistradas.keys.every(anteriores.contains) &&
-          _secao1Completa;
-      _secao = voltandoDoRegistrar && nadaNovoParaMarcar ? 2 : 1;
+      _secao = 1;
     });
   }
 
@@ -1424,9 +1409,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     Colors.white,
   );
 
-  /// Fundo da tela e da barra do Próximo: azul da tarja na Seção 1 (em
+  /// Fundo da tela e da barra do Próximo: azul da tarja nas Seções 1 e 2 (em
   /// teste), branco nas outras.
-  Color get _fundoTela => _secao == 1 ? _azulTarja : Colors.white;
+  Color get _fundoTela => _secao <= 2 ? _azulTarja : Colors.white;
 
   /// Tarja de todas as seções: fazenda, data, barra de progresso e "Seção X
   /// de 11", de ponta a ponta, sem bordas arredondadas.
@@ -1970,13 +1955,25 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ],
   ];
 
-  /// Seção 2 — "Atividades do Dia - Não Registradas": as atividades sem
-  /// registro no dia, cada uma para marcar como NÃO. (Registrar a atividade
-  /// a partir daqui vem nas próximas etapas.)
+  /// Seção 2: como cada atividade sem registro no dia aparece na conversa
+  /// (texto normal, palavra em destaque em negrito).
+  static const _frasesNaoRegistradas = <String, (String, String)>{
+    'choveu': ('não ', 'CHOVEU'),
+    'mudei_pasto': ('os animais estão nos mesmos ', 'PASTOS'),
+    'nutricao': ('ninguém distribuiu ', 'NUTRIÇÃO'),
+    'nascimento': ('não houve ', 'NASCIMENTOS'),
+    'aborto_natimorto': ('nenhum animal ', 'ABORTOU/NATIMORTO'),
+    'morte': ('nenhum animal ', 'MORREU'),
+  };
+
+  /// Seção 2 — "Atividades NÃO Registradas": uma conversa com o usuário
+  /// logado contando o que não tem registro da fazenda no dia, ex.:
+  /// "Reinaldo! Hoje não CHOVEU, os animais estão nos mesmos PASTOS, ...".
+  /// Só leitura. No mesmo card azul claro da Seção 1.
   List<Widget> _atividadesNaoRegistradas() {
-    final chaves = _chavesNaoRegistradas.toSet();
-    return [
-      if (chaves.isEmpty)
+    final chaves = _chavesNaoRegistradas.toList();
+    if (chaves.isEmpty) {
+      return [
         Padding(
           padding: const EdgeInsets.only(top: 24),
           child: Text(
@@ -1985,21 +1982,48 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             style: TextStyle(fontSize: 15, color: _corRotulo),
           ),
         ),
-      for (final a in _atividades)
-        if (chaves.contains(a.$1)) ...[
-          _linhaMarcar(
-            a.$2,
-            a.$3,
-            _naoRegistradasMarcadas.contains(a.$1),
-            (v) => _marcarNaoRegistrada(a.$1, v),
-            imagem: a.$4,
-            // marcado: o Registrar some (desmarcou, volta)
-            acao: _naoRegistradasMarcadas.contains(a.$1)
-                ? null
-                : _botaoRegistrar(a.$1),
-          ),
-          const SizedBox(height: 8),
-        ],
+      ];
+    }
+    final hoje = DateUtils.isSameDay(_data, _hoje());
+    final negrito = _textoGrosso(_corRotulo).copyWith(fontSize: 14);
+    return [
+      Container(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FCFF),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFCFD8DC)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('$_nomeUsuario!', style: EstiloApp.negrito(16, _corRotulo)),
+            const SizedBox(height: 10),
+            Text.rich(
+              TextSpan(
+                style: TextStyle(
+                  fontSize: 15,
+                  height: 1.5,
+                  color: _corRotulo,
+                ),
+                children: [
+                  // dia passado: a data no lugar do "Hoje"
+                  TextSpan(text: hoje ? 'Hoje ' : 'No dia ${_formatar(_data)} '),
+                  for (var i = 0; i < chaves.length; i++) ...[
+                    if (i > 0) const TextSpan(text: ', '),
+                    TextSpan(text: _frasesNaoRegistradas[chaves[i]]!.$1),
+                    TextSpan(
+                      text: _frasesNaoRegistradas[chaves[i]]!.$2,
+                      style: negrito,
+                    ),
+                  ],
+                  const TextSpan(text: '.'),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     ];
   }
 

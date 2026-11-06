@@ -2006,12 +2006,13 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ];
     }
     final hoje = DateUtils.isSameDay(_data, _hoje());
-    // visual de link: só sublinhado, no azul claro dos títulos (em teste)
-    final link = TextStyle(
+    // visual de link: azul padrão de link (o da internet) e sublinhado
+    const azulLink = Color(0xFF0645AD);
+    const link = TextStyle(
       fontSize: 17,
-      color: Colors.blue[300],
+      color: azulLink,
       decoration: TextDecoration.underline,
-      decorationColor: Colors.blue[300],
+      decorationColor: azulLink,
     );
     return [
       Padding(
@@ -2058,15 +2059,16 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
               width: 140,
               height: 44,
               child: ElevatedButton(
-                // azul clarinho até tocar; confirmado, azul forte com o check
+                // branco com sombra leve até tocar; confirmado, azul com o check
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _secao2Confirmada
                       ? _azulBotao
-                      : const Color(0xFFB9DCFF),
+                      : Colors.white,
                   foregroundColor: _secao2Confirmada
                       ? Colors.white
-                      : const Color(0xFF0D47A1),
-                  elevation: 0,
+                      : _azulBotao,
+                  elevation: _secao2Confirmada ? 0 : 2,
+                  shadowColor: Colors.black.withValues(alpha: 0.4),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

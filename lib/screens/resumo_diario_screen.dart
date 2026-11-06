@@ -13,6 +13,8 @@ import '../widgets/cabecalho_fazenda_widget.dart';
 import '../widgets/campo_topo_widget.dart';
 import '../widgets/tarja_fazenda_widget.dart';
 import 'aplicacao_modal.dart';
+import 'chuva_screen.dart';
+import 'mapa_screen.dart';
 import 'tratamento_modal.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 
@@ -477,7 +479,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Botão Sim da tela inicial: consulta no servidor as atividades
   /// registradas no dia (só online) e abre a Seção 1. Sem internet ou se
   /// falhar, avisa e fica na tela inicial.
-  Future<void> _abrirSecao1() async {
+  ///
+  /// [naSecao2]: volta dos programas abertos pelos links da Seção 2 — relê
+  /// as atividades e fica na Seção 2, com o texto refeito.
+  Future<void> _abrirSecao1({bool naSecao2 = false}) async {
     final bd = _bd;
     final fazenda = _fazenda;
     if (bd == null || fazenda == null || _carregandoAtividades) return;
@@ -525,7 +530,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       _atividadesMarcadas.removeWhere(
         (a) => !_atividadesRegistradas.containsKey(a),
       );
-      _secao = 1;
+      // o texto da Seção 2 pode ter mudado: confirma de novo
+      _secao2Confirmada = false;
+      _secao = naSecao2 ? 2 : 1;
     });
   }
 
@@ -1089,7 +1096,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   Future<void> _proximo() async {
     FocusManager.instance.primaryFocus?.unfocus();
     if (_secao == 2) {
-      // por enquanto o Próximo fica desativado na Seção 2 (ver o botão)
+      if (!_secao2Completa) return;
       setState(() => _secao = 3);
       return;
     }
@@ -1192,6 +1199,15 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// todas as atividades marcadas (tocadas).
   bool get _secao1Completa =>
       _atividadesRegistradas.keys.every(_atividadesMarcadas.contains);
+
+  /// Seção 2: o Sim do "Você Confirma todas as afirmativas acima?" foi
+  /// tocado com a Seção 1 toda marcada.
+  bool _secao2Confirmada = false;
+
+  /// Seção 2 pronta para o Próximo: confirmada no Sim, ou sem nenhuma
+  /// atividade sem registro (sem afirmativa para confirmar).
+  bool get _secao2Completa =>
+      _secao2Confirmada || _chavesNaoRegistradas.isEmpty;
 
   void _marcarAtividade(String chave, bool marcada) {
     setState(() {
@@ -1365,10 +1381,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                           ),
                                         ),
                                         // Seção 1: inativo até confirmar as
-                                        // atividades registradas; Seção 2: desativado por enquanto
+                                        // atividades registradas; Seção 2: até o Sim da
+                                        // confirmação
                                         onPressed:
                                             (_secao == 1 && !_secao1Completa) ||
-                                                _secao == 2
+                                                (_secao == 2 && !_secao2Completa)
                                             ? null
                                             : _proximo,
                                         child: const Row(
@@ -1486,7 +1503,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   List<Widget> _fixoDaSecao() => switch (_secao) {
     2 => [
       // mesmo título da Seção 1 (maior e em negrito)
-      _tituloAzul('Atividades NÃO Registradas', negrito: true, tamanho: 17),
+      _tituloAzul('Atividades NÃO Registradas', tamanho: 17),
       const SizedBox(height: 16),
     ],
     3 => [_tituloAzul('Contagem de Animais Hoje')],
@@ -1494,7 +1511,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     5 => [_tituloAzul('Aplicações Realizadas Hoje')],
     6 => [_tituloAzul('O Que Foi Feito Hoje')],
     _ => [
-      _tituloAzul('Atividades Registradas', negrito: true, tamanho: 17),
+      _tituloAzul('Atividades Registradas', tamanho: 17),
       if (_atividadesRegistradas.isNotEmpty)
         Padding(
           padding: const EdgeInsets.only(left: 2, top: 6, bottom: 10),
@@ -1954,8 +1971,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// logado contando o que não tem registro da fazenda no dia, ex.:
   /// "Reinaldo! Hoje não Choveu, os animais estão nos mesmos Pastos, ...",
   /// direto no fundo azul (sem card). As palavras de cada atividade aparecem
-  /// como link (negrito e sublinhado): vão abrir os programas (ainda
-  /// sem ação).
+  /// como link (negrito e sublinhado) para o programa (ver
+  /// [_abrirPrograma]). Embaixo, a confirmação com o botão Sim (ver
+  /// [_confirmarSecao2]).
   List<Widget> _atividadesNaoRegistradas() {
     final chaves = _chavesNaoRegistradas.toList();
     if (chaves.isEmpty) {
@@ -1995,19 +2013,86 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                   for (var i = 0; i < chaves.length; i++) ...[
                     if (i > 0) const TextSpan(text: ', '),
                     TextSpan(text: _frasesNaoRegistradas[chaves[i]]!.$1),
-                    TextSpan(
-                      text: _frasesNaoRegistradas[chaves[i]]!.$2,
-                      style: link,
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.baseline,
+                      baseline: TextBaseline.alphabetic,
+                      child: GestureDetector(
+                        onTap: () => _abrirPrograma(chaves[i]),
+                        child: Text(
+                          _frasesNaoRegistradas[chaves[i]]!.$2,
+                          style: link,
+                        ),
+                      ),
                     ),
                   ],
                   const TextSpan(text: '.'),
                 ],
               ),
             ),
+            const SizedBox(height: 24),
+            Text(
+              'Você Confirma todas as afirmativas acima?',
+              style: TextStyle(fontSize: 17, color: _corRotulo),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: 140,
+              height: 44,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _azulBotao,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: _confirmarSecao2,
+                child: const Text('Sim', style: TextStyle(fontSize: 16)),
+              ),
+            ),
           ],
         ),
       ),
     ];
+  }
+
+  /// Link de uma atividade da Seção 2: Choveu abre o programa da Chuva (com
+  /// a fazenda e a data do resumo); as outras, o Mapa de Gado (Tabuleiro)
+  /// com a fazenda do resumo. Ao voltar, relê as atividades e fica na
+  /// Seção 2 com o texto refeito.
+  Future<void> _abrirPrograma(String chave) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (ctx) => chave == 'choveu'
+            ? ChuvaScreen(
+                onBack: () => Navigator.pop(ctx, false),
+                fazendaInicial: _fazenda,
+                dataInicial: _data,
+                aoRegistrar: () => Navigator.pop(ctx, true),
+              )
+            : MapaScreen(
+                onBack: () => Navigator.pop(ctx, false),
+                fazendaInicial: _fazenda,
+              ),
+      ),
+    );
+    if (mounted) await _abrirSecao1(naSecao2: true);
+  }
+
+  /// Sim do "Você Confirma todas as afirmativas acima?": com alguma
+  /// atividade da Seção 1 sem marcar (ex.: uma nova, registrada pelos
+  /// links), volta para a Seção 1 (o Próximo dela fica desativado até
+  /// marcar); com a Seção 1 toda marcada, ativa o Próximo da Seção 2.
+  void _confirmarSecao2() {
+    setState(() {
+      if (_secao1Completa) {
+        _secao2Confirmada = true;
+      } else {
+        _secao = 1;
+      }
+    });
   }
 
   /// Card de uma atividade da Seção 1: ícone, texto (o valor em negrito) e,

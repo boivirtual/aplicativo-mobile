@@ -2016,8 +2016,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ];
   }
 
-  /// Card de uma atividade da Seção 1: ícone, texto (o valor em negrito) e,
-  /// marcado, o check verde à direita.
+  /// Linha de uma atividade da Seção 1 (em teste, sem card): ícone, texto
+  /// (o valor em negrito) e, marcada, o check verde à direita. Traço fino
+  /// embaixo para separar as linhas; tocar marca e desmarca.
   Widget _atividade(
     String chave,
     String texto,
@@ -2025,21 +2026,53 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     IconData? icone,
     String? imagem,
   ) {
+    const azulIcone = Color(0xFF228cb9);
     final marcada = _atividadesMarcadas.contains(chave);
-    return _linhaMarcar(
-      texto,
-      icone,
-      marcada,
-      (v) => _marcarAtividade(chave, v),
-      imagem: imagem,
-      // vazio: só o texto, sem negrito (ex.: Trocamos animais de pasto)
-      valor: valor,
-      semCaixa: true,
-      // azul bem claro: o marcado (azul mais forte) se destaca
-      fundo: const Color(0xFFF9FCFF),
-      acao: marcada
-          ? Icon(Icons.check, color: Colors.green[600], size: 28)
-          : null,
+    return InkWell(
+      onTap: () => _marcarAtividade(chave, !marcada),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 52),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: Color(0xFFC9DDF0))),
+        ),
+        child: Row(
+          children: [
+            if (imagem != null)
+              Image.asset(
+                'assets/images/$imagem',
+                width: 24,
+                height: 24,
+                color: azulIcone,
+              )
+            else
+              Icon(icone, size: 24, color: azulIcone),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  style: TextStyle(fontSize: 15, color: _corRotulo),
+                  children: [
+                    TextSpan(text: texto),
+                    // vazio: só o texto (ex.: Trocamos animais de pasto)
+                    TextSpan(
+                      text: valor,
+                      style: _textoGrosso(_corRotulo).copyWith(fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // o espaço do check fica reservado: o texto não pula ao marcar
+            SizedBox(
+              width: 32,
+              child: marcada
+                  ? Icon(Icons.check, color: Colors.green[600], size: 28)
+                  : null,
+            ),
+          ],
+        ),
+      ),
     );
   }
 

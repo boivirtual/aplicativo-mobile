@@ -1531,7 +1531,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       if (_atividadesRegistradas.isNotEmpty)
         Padding(
           // mesmo espaço depois do título da Seção 2; alinhado aos cards
-          padding: const EdgeInsets.only(top: 16, bottom: 10),
+          padding: const EdgeInsets.only(left: 10, top: 16, bottom: 10),
           child: Text(
             _atividadesRegistradas.length == 1
                 ? 'Clique na Atividade para Confirmar!'
@@ -2142,9 +2142,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   ) {
     final marcada = _atividadesMarcadas.contains(chave);
     // card do tamanho da informação (cada um de um tamanho, chamando a
-    // atenção para o dado), encostado à esquerda
-    return Align(
+    // atenção para o dado), à esquerda, afastado um pouco da borda da tela
+    return Container(
       alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.only(left: 10),
       child: _linhaMarcar(
         texto,
         icone,
@@ -2159,7 +2160,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         fundoMarcado: const Color(0xFFCFE5FA),
         ajustado: true,
         semBorda: true,
-        recuo: 20,
         // o espaço do check fica sempre reservado: o card não muda de
         // tamanho ao marcar
         acao: SizedBox(
@@ -2195,8 +2195,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     bool ajustado = false,
     // sem a borda (antes e depois de marcar)
     bool semBorda = false,
-    // espaço à esquerda do ícone quando não tem a caixa de marcar
-    double recuo = 14,
   }) {
     const azulIcone = Color(0xFF228cb9);
     return Opacity(
@@ -2221,7 +2219,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             mainAxisSize: ajustado ? MainAxisSize.min : MainAxisSize.max,
             children: [
               if (semCaixa)
-                SizedBox(width: recuo)
+                const SizedBox(width: 14)
               else
                 Checkbox(
                   value: marcada,

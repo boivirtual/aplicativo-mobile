@@ -13,8 +13,6 @@ import '../widgets/cabecalho_fazenda_widget.dart';
 import '../widgets/campo_topo_widget.dart';
 import '../widgets/tarja_fazenda_widget.dart';
 import 'aplicacao_modal.dart';
-import 'chuva_screen.dart';
-import 'mapa_screen.dart';
 import 'tratamento_modal.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 
@@ -1462,29 +1460,15 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     );
   }
 
-  // destaque: trecho do título em negrito, entre o texto e o sufixo (ex.: o
-  // NÃO da Seção 2). negrito/tamanho: o título todo em negrito e maior (ex.:
-  // Seção 1).
+  // negrito/tamanho: o título em negrito e maior (ex.: Seções 1 e 2).
   Widget _tituloAzul(
     String texto, {
-    String? destaque,
-    String? sufixo,
     bool negrito = false,
     double tamanho = 15,
   }) => Padding(
     padding: const EdgeInsets.fromLTRB(2, 10, 2, 8),
-    child: Text.rich(
-      TextSpan(
-        text: texto,
-        children: [
-          if (destaque != null)
-            TextSpan(
-              text: destaque,
-              style: EstiloApp.negrito(tamanho, Colors.blue[300]!),
-            ),
-          if (sufixo != null) TextSpan(text: sufixo),
-        ],
-      ),
+    child: Text(
+      texto,
       textAlign: TextAlign.center,
       style: negrito
           ? EstiloApp.negrito(tamanho, Colors.blue[300]!)
@@ -1999,14 +1983,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             const SizedBox(height: 10),
             Text.rich(
               TextSpan(
-                style: TextStyle(
-                  fontSize: 15,
-                  height: 1.5,
-                  color: _corRotulo,
-                ),
+                style: TextStyle(fontSize: 15, height: 1.5, color: _corRotulo),
                 children: [
                   // dia passado: a data no lugar do "Hoje"
-                  TextSpan(text: hoje ? 'Hoje ' : 'No dia ${_formatar(_data)} '),
+                  TextSpan(
+                    text: hoje ? 'Hoje ' : 'No dia ${_formatar(_data)} ',
+                  ),
                   for (var i = 0; i < chaves.length; i++) ...[
                     if (i > 0) const TextSpan(text: ', '),
                     TextSpan(text: _frasesNaoRegistradas[chaves[i]]!.$1),
@@ -2160,5 +2142,4 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ),
     );
   }
-
 }

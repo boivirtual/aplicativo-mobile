@@ -1330,7 +1330,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                           bottom: 0,
                           child: SafeArea(
                             top: false,
-                            // o fundo branco vai até embaixo (atrás da barra do
+                            // o fundo da barra vai até embaixo (atrás da barra do
                             // celular), para a lista não aparecer ali
                             bottom: false,
                             child: Container(
@@ -1957,9 +1957,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ]),
   ];
 
-  /// Seção 1 — "Atividades Registradas": um card por atividade registrada
-  /// no dia, com ícone e sem caixa de marcar. Tocar no card marca (fundo
-  /// azul e check verde à direita); tocar de novo desmarca.
+  /// no dia (em teste: linhas sem card, ver [_atividade]). Tocar na linha
+  /// marca (check verde à direita); tocar de novo desmarca.
   List<Widget> _atividadesDoDia() => [
     if (_atividadesRegistradas.isEmpty)
       Padding(

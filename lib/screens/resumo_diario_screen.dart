@@ -1493,30 +1493,38 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   }
 
   // destaque: trecho do título em negrito, entre o texto e o sufixo (ex.: o
-  // NÃO da Seção 2)
-  Widget _tituloAzul(String texto, {String? destaque, String? sufixo}) =>
-      Padding(
-        padding: const EdgeInsets.fromLTRB(2, 10, 2, 8),
-        child: Text.rich(
-          TextSpan(
-            text: texto,
-            children: [
-              if (destaque != null)
-                TextSpan(
-                  text: destaque,
-                  style: EstiloApp.negrito(15, Colors.blue[300]!),
-                ),
-              if (sufixo != null) TextSpan(text: sufixo),
-            ],
-          ),
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-            color: Colors.blue[300],
-          ),
-        ),
-      );
+  // NÃO da Seção 2). negrito/tamanho: o título todo em negrito e maior (ex.:
+  // Seção 1).
+  Widget _tituloAzul(
+    String texto, {
+    String? destaque,
+    String? sufixo,
+    bool negrito = false,
+    double tamanho = 15,
+  }) => Padding(
+    padding: const EdgeInsets.fromLTRB(2, 10, 2, 8),
+    child: Text.rich(
+      TextSpan(
+        text: texto,
+        children: [
+          if (destaque != null)
+            TextSpan(
+              text: destaque,
+              style: EstiloApp.negrito(tamanho, Colors.blue[300]!),
+            ),
+          if (sufixo != null) TextSpan(text: sufixo),
+        ],
+      ),
+      textAlign: TextAlign.center,
+      style: negrito
+          ? EstiloApp.negrito(tamanho, Colors.blue[300]!)
+          : TextStyle(
+              fontSize: tamanho,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue[300],
+            ),
+    ),
+  );
 
   /// Parte fixa de cada seção (não rola).
   List<Widget> _fixoDaSecao() => switch (_secao) {

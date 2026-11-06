@@ -2054,6 +2054,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     String? valor,
     // botão no fim da linha, separado do texto
     Widget? acao,
+    // fundo do card desmarcado
+    Color fundo = Colors.white,
   }) {
     const azulIcone = Color(0xFF228cb9);
     return Opacity(

@@ -1540,16 +1540,15 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     5 => [_tituloAzul('Aplicações Realizadas Hoje')],
     6 => [_tituloAzul('O Que Foi Feito Hoje')],
     _ => [
-      _tituloAzul('Atividades Registradas'),
+      _tituloAzul('Atividades Registradas', negrito: true, tamanho: 17),
       if (_atividadesRegistradas.isNotEmpty)
         Padding(
-          padding: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.only(left: 2, bottom: 10),
           child: Text(
             _atividadesRegistradas.length == 1
                 ? 'Clique na Atividade para Confirmar!'
                 : 'Clique nas Atividades para Confirmar!',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: _corRotulo),
+            style: EstiloApp.negrito(14, _corRotulo),
           ),
         ),
     ],

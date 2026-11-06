@@ -1106,14 +1106,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   Future<void> _proximo() async {
     FocusManager.instance.primaryFocus?.unfocus();
     if (_secao == 2) {
-      // todas as atividades sem registro têm que estar marcadas como NÃO
-      if (!_chavesNaoRegistradas.every(_naoRegistradasMarcadas.contains)) {
-        await AppAlert.erro(
-          context,
-          'Marque todas as atividades não registradas para continuar.',
-        );
-        return;
-      }
+      // só leitura (a conversa com o usuário): segue direto
       setState(() => _secao = 3);
       return;
     }

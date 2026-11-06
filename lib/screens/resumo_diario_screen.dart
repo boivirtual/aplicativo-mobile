@@ -1483,10 +1483,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           ),
         ),
         const SizedBox(height: 8),
-        Text(
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
           'Seção $_secao de $_totalSecoes',
-          textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 13, color: Colors.blue),
+        ),
         ),
       ],
     );
@@ -1543,7 +1545,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       _tituloAzul('Atividades Registradas', negrito: true, tamanho: 17),
       if (_atividadesRegistradas.isNotEmpty)
         Padding(
-          padding: const EdgeInsets.only(left: 2, bottom: 10),
+          padding: const EdgeInsets.only(left: 2, top: 6, bottom: 10),
           child: Text(
             _atividadesRegistradas.length == 1
                 ? 'Clique na Atividade para Confirmar!'
@@ -2028,20 +2030,32 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     String? imagem,
   ) {
     final marcada = _atividadesMarcadas.contains(chave);
-    return _linhaMarcar(
-      texto,
-      icone,
-      marcada,
-      (v) => _marcarAtividade(chave, v),
-      imagem: imagem,
-      // vazio: só o texto, sem negrito (ex.: Trocamos animais de pasto)
-      valor: valor,
-      semCaixa: true,
-      // azul bem claro: o marcado (azul mais forte) se destaca
-      fundo: const Color(0xFFF9FCFF),
-      acao: marcada
-          ? Icon(Icons.check, color: Colors.green[600], size: 28)
-          : null,
+    // card do tamanho da informação (cada um de um tamanho, chamando a
+    // atenção para o dado), encostado à esquerda
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: _linhaMarcar(
+        texto,
+        icone,
+        marcada,
+        (v) => _marcarAtividade(chave, v),
+        imagem: imagem,
+        // vazio: só o texto, sem negrito (ex.: Trocamos animais de pasto)
+        valor: valor,
+        semCaixa: true,
+        // azul bem claro; o marcado, um azul mais escuro
+        fundo: const Color(0xFFF9FCFF),
+        fundoMarcado: const Color(0xFFCFE5FA),
+        ajustado: true,
+        // o espaço do check fica sempre reservado: o card não muda de
+        // tamanho ao marcar
+        acao: SizedBox(
+          width: 28,
+          child: marcada
+              ? Icon(Icons.check, color: Colors.green[600], size: 28)
+              : null,
+        ),
+      ),
     );
   }
 
@@ -2061,8 +2075,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     String? valor,
     // botão no fim da linha, separado do texto
     Widget? acao,
-    // fundo do card desmarcado
+    // fundo do card desmarcado e do marcado
     Color fundo = Colors.white,
+    Color fundoMarcado = const Color(0xFFE3F2FD),
+    // card do tamanho do conteúdo (não ocupa a largura toda)
+    bool ajustado = false,
   }) {
     const azulIcone = Color(0xFF228cb9);
     return Opacity(
@@ -2075,13 +2092,14 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           constraints: const BoxConstraints(minHeight: 54),
           padding: const EdgeInsets.only(left: 4, right: 12),
           decoration: BoxDecoration(
-            color: marcada ? const Color(0xFFE3F2FD) : fundo,
+            color: marcada ? fundoMarcado : fundo,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: marcada ? _azulBotao : const Color(0xFFCFD8DC),
             ),
           ),
           child: Row(
+            mainAxisSize: ajustado ? MainAxisSize.min : MainAxisSize.max,
             children: [
               if (semCaixa)
                 const SizedBox(width: 14)
@@ -2104,7 +2122,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
               else
                 Icon(icone, size: 24, color: azulIcone),
               const SizedBox(width: 10),
-              Expanded(
+              Flexible(
+                fit: ajustado ? FlexFit.loose : FlexFit.tight,
                 child: valor == null
                     ? Text(
                         texto,

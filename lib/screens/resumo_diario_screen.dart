@@ -2197,6 +2197,17 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     );
   }
 
+  /// Card do tamanho do conteúdo ([ajustado], Seção 1): o texto fica
+  /// sempre numa linha só — se não couber, a fonte encolhe um pouco em vez
+  /// de quebrar (ex.: Distribuímos Nutrição nos Cochos).
+  static Widget _umaLinha(bool ajustado, Widget texto) => ajustado
+      ? FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: texto,
+        )
+      : texto;
+
   /// Linha com caixa de marcar, ícone azul e texto (Atividades do Dia,
   /// Sanidade Animal...): marcada fica com fundo azul claro e borda azul.
   Widget _linhaMarcar(
@@ -2268,29 +2279,34 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
               const SizedBox(width: 10),
               Flexible(
                 fit: ajustado ? FlexFit.loose : FlexFit.tight,
-                child: valor == null
-                    ? Text(
-                        texto,
-                        // mesmo peso das opções da Seção 2
-                        style: _textoGrosso(_corRotulo).copyWith(fontSize: 15),
-                      )
-                    : Text.rich(
-                        TextSpan(
-                          style: TextStyle(fontSize: 15, color: _corRotulo),
-                          children: [
-                            TextSpan(text: texto),
-                            TextSpan(
-                              text: valor,
-                              // 14: o negrito (e os números) parecem maiores
-                              // que o texto de 15
-                              style: _textoGrosso(
-                                _corRotulo,
-                              ).copyWith(fontSize: 14),
-                            ),
-                            TextSpan(text: depois),
-                          ],
+                child: _umaLinha(
+                  ajustado,
+                  valor == null
+                      ? Text(
+                          texto,
+                          // mesmo peso das opções da Seção 2
+                          style: _textoGrosso(
+                            _corRotulo,
+                          ).copyWith(fontSize: 15),
+                        )
+                      : Text.rich(
+                          TextSpan(
+                            style: TextStyle(fontSize: 15, color: _corRotulo),
+                            children: [
+                              TextSpan(text: texto),
+                              TextSpan(
+                                text: valor,
+                                // 14: o negrito (e os números) parecem maiores
+                                // que o texto de 15
+                                style: _textoGrosso(
+                                  _corRotulo,
+                                ).copyWith(fontSize: 14),
+                              ),
+                              TextSpan(text: depois),
+                            ],
+                          ),
                         ),
-                      ),
+                ),
               ),
               // botão no fim da linha (ex.: Registrar da Seção 2)
               if (acao != null) ...[const SizedBox(width: 8), acao],

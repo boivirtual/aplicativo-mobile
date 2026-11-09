@@ -2112,14 +2112,15 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ('nao', 'Não Conferi', Icons.block),
       ],
       _conferiuGado,
-      (v) => _responderRebanho(() {
-        // toda troca entre Gado Todo, Parte do Gado e Não Conferi começa
-        // do zero: limpa os campos e os selects da opção anterior
-        if (v != _conferiuGado) {
-          _encontradosController.clear();
-          _pastosConferidos.clear();
-          _pastosDiferenca.clear();
-        }
+      (v) => _responderRebanho(
+        () {
+          // toda troca entre Gado Todo, Parte do Gado e Não Conferi começa
+          // do zero: limpa os campos e os selects da opção anterior
+          if (v != _conferiuGado) {
+            _encontradosController.clear();
+            _pastosConferidos.clear();
+            _pastosDiferenca.clear();
+          }
           _conferiuGado = v;
         },
         // Gado Todo e Parte do Gado nunca levam o cursor para a Observação

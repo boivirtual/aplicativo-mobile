@@ -48,7 +48,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   // Seção 3 — Conferência de Rebanho
   String? _conferiuGado; // 'todo', 'parte', 'nao'
-  final _esperadosController = TextEditingController();
   final _encontradosController = TextEditingController();
   String? _conferiuPrenhas; // 'sim', 'nao', 'sem'
   final _obsRebanhoController = TextEditingController();

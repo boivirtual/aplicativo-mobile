@@ -2185,6 +2185,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         fundoMarcado: const Color(0xFFCFE5FA),
         ajustado: true,
         semBorda: true,
+        // menos espaço entre a borda do card e o ícone
+        recuo: 6,
         // o espaço do check fica sempre reservado: o card não muda de
         // tamanho ao marcar
         acao: SizedBox(
@@ -2233,6 +2235,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     bool ajustado = false,
     // sem a borda (antes e depois de marcar)
     bool semBorda = false,
+    // espaço à esquerda do ícone quando não tem a caixa de marcar
+    double recuo = 14,
   }) {
     const azulIcone = Color(0xFF228cb9);
     return Opacity(
@@ -2257,7 +2261,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             mainAxisSize: ajustado ? MainAxisSize.min : MainAxisSize.max,
             children: [
               if (semCaixa)
-                const SizedBox(width: 14)
+                SizedBox(width: recuo)
               else
                 Checkbox(
                   value: marcada,

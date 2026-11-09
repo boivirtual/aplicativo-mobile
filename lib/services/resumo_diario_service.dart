@@ -155,9 +155,9 @@ class ResumoDiarioService {
   }
 
   /// Seção 3: animais ativos da [fazenda], no total e por pasto (id do pasto
-  /// -> quantidade; pasto sem animais não vem). Só online. null se não
-  /// conseguiu consultar.
-  Future<({int total, Map<int, int> porPasto})?> animaisDaFazenda(
+  /// -> quantidade; pasto sem animais não vem), e quantas vacas prenhas ela
+  /// tem. Só online. null se não conseguiu consultar.
+  Future<({int total, int prenhas, Map<int, int> porPasto})?> animaisDaFazenda(
     String bd,
     String fazenda,
   ) async {
@@ -177,6 +177,7 @@ class ResumoDiarioService {
         final pastos = dados['pastos'];
         return (
           total: (dados['total'] as num?)?.toInt() ?? 0,
+          prenhas: (dados['prenhas'] as num?)?.toInt() ?? 0,
           porPasto: <int, int>{
             if (pastos is Map)
               for (final e in pastos.entries)

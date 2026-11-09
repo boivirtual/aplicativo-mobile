@@ -50,8 +50,13 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   // Seção 3 — Conferência de Rebanho
   String? _conferiuGado; // 'todo', 'parte', 'nao'
   final _encontradosController = TextEditingController();
-  String? _conferiuPrenhas; // 'sim', 'nao', 'sem'
+  String? _conferiuPrenhas; // 'sim', 'nao'
   final _obsRebanhoController = TextEditingController();
+  final _obsRebanhoFoco = FocusNode();
+
+  /// Rolagem da parte de baixo das seções (para levar a Observação da
+  /// Seção 3 para cima do teclado).
+  final _rolagem = ScrollController();
 
   // Seção 4 — Sanidade Animal: "Adicionar Tratamento" ou "Nenhum animal
   // doente ou medicado hoje" (um exclui o outro).
@@ -253,6 +258,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Animais ativos da fazenda (do servidor, ao entrar na Seção 3): o total
   /// e por pasto. null = ainda não consultado ou falhou.
   int? _animaisFazenda;
+  int? _vacasPrenhas;
   Map<int, int> _animaisPorPasto = {};
   bool _carregandoAnimais = false;
 
@@ -280,7 +286,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     // checagem da internet na hora (o Resumo Diário só funciona online)
     final nivel = await ConnectivityService.instance.verificarAgora();
     String? erro = _mensagemSemInternet(nivel);
-    ({int total, Map<int, int> porPasto})? r;
+    ({int total, int prenhas, Map<int, int> porPasto})? r;
     if (erro == null) {
       r = await ResumoDiarioService.instance.animaisDaFazenda(bd, fazenda);
       if (r == null) {
@@ -295,6 +301,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       if (r != null && fazenda == _fazenda) {
         _animaisFazenda = r.total;
         _animaisPorPasto = r.porPasto;
+        _vacasPrenhas = r.prenhas;
+        if (!_temPrenhas) _conferiuPrenhas = null;
         if ((_diferenca ?? 0) == 0) _pastosDiferenca.clear();
       }
     });
@@ -483,6 +491,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     WidgetsBinding.instance.removeObserver(this);
     _encontradosController.dispose();
     _obsRebanhoController.dispose();
+    _obsRebanhoFoco.dispose();
+    _rolagem.dispose();
     _qtdeCurralController.dispose();
     _obsCurralController.dispose();
     super.dispose();
@@ -1186,6 +1196,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       return;
     }
     if (_secao == 3) {
+      if (_animaisFazenda == null) {
+        // não conseguiu consultar os animais (esperados e prenhas): de novo
+        await _carregarAnimais();
+        return;
+      }
       if (_conferiuGado == null) {
         await AppAlert.erro(context, 'Informe se conferiu o gado.');
         return;
@@ -1195,11 +1210,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         return;
       }
       if (_conferiuGado != 'nao') {
-        if (_animaisFazenda == null) {
-          // não conseguiu consultar os Animais Esperados: tenta de novo
-          await _carregarAnimais();
-          return;
-        }
         if (_encontradosController.text.trim().isEmpty) {
           await AppAlert.erro(
             context,
@@ -1219,7 +1229,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         );
         return;
       }
-      if (_conferiuPrenhas == null) {
+      if (_temPrenhas && _conferiuPrenhas == null) {
         await AppAlert.erro(context, 'Informe se conferiu as vacas prenhas.');
         return;
       }
@@ -2009,6 +2019,39 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ),
   ];
 
+  /// A fazenda tem vacas prenhas (consultado ao entrar na Seção 3)?
+  bool get _temPrenhas => (_vacasPrenhas ?? 0) > 0;
+
+  /// A Observação Sobre o Rebanho aparece depois de responder "Conferiu o
+  /// Gado?" e, se a fazenda tem vacas prenhas, "Conferiu as Vacas Prenhas?".
+  bool get _obsRebanhoVisivel =>
+      _vacasPrenhas != null &&
+      _conferiuGado != null &&
+      (!_temPrenhas || _conferiuPrenhas != null);
+
+  /// Resposta de uma das perguntas da Seção 3. Se com ela a Observação
+  /// aparece, o cursor vai para ela (teclado aberto) e a tela rola até o
+  /// fim, deixando a Observação, o teclado e os botões Anterior/Próximo
+  /// visíveis.
+  void _responderRebanho(VoidCallback mudar) {
+    final antes = _obsRebanhoVisivel;
+    setState(mudar);
+    if (antes || !_obsRebanhoVisivel) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _obsRebanhoFoco.requestFocus();
+      // espera o teclado abrir (a tela encolhe) para rolar até o fim
+      Future.delayed(const Duration(milliseconds: 450), () {
+        if (!mounted || !_rolagem.hasClients) return;
+        _rolagem.animateTo(
+          _rolagem.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      });
+    });
+  }
+
   List<Widget> _conferenciaRebanho() => [
     _pergunta('Conferiu o Gado?'),
     _opcoes(
@@ -2018,10 +2061,15 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ('nao', 'Não Conferi', Icons.block),
       ],
       _conferiuGado,
-      (v) => setState(() {
+      (v) => _responderRebanho(() {
+        // toda troca entre Gado Todo, Parte do Gado e Não Conferi começa
+        // do zero: limpa os campos e os selects da opção anterior
+        if (v != _conferiuGado) {
+          _encontradosController.clear();
+          _pastosConferidos.clear();
+          _pastosDiferenca.clear();
+        }
         _conferiuGado = v;
-        // Gado Todo x Parte muda o esperado: sem diferença, limpa os pastos
-        if ((_diferenca ?? 0) == 0) _pastosDiferenca.clear();
       }),
     ),
     // os totais só com "Gado Todo" ou "Parte do Gado"
@@ -2065,28 +2113,35 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ],
       ]),
     ],
-    _pergunta('Conferiu as Vacas Prenhas?'),
-    _opcoes(
-      const [
-        ('sim', 'Sim', Icons.check_circle_outline),
-        ('nao', 'Não', Icons.highlight_off),
-        ('sem', 'Sem\nVacas Prenhas', Icons.do_not_disturb_on_outlined),
-      ],
-      _conferiuPrenhas,
-      (v) => setState(() => _conferiuPrenhas = v),
-    ),
-    const SizedBox(height: 14),
-    _painelCinza([
-      CampoTextoTopo(
-        rotulo: 'Observação Sobre o Rebanho',
-        corRotulo: _corRotulo,
-        controller: _obsRebanhoController,
-        altura: null,
-        linhas: 3,
-        dica: 'Comentar problemas do rebanho',
-        textCapitalization: TextCapitalization.sentences,
+    // só quando a fazenda tem vacas prenhas (Positivas e ainda sem
+    // nascimento, aborto, natimorto ou absorção)
+    if (_temPrenhas) ...[
+      _pergunta('Conferiu as Vacas Prenhas?'),
+      _opcoes(
+        const [
+          ('sim', 'Sim', Icons.check_circle_outline),
+          ('nao', 'Não', Icons.highlight_off),
+        ],
+        _conferiuPrenhas,
+        (v) => _responderRebanho(() => _conferiuPrenhas = v),
       ),
-    ]),
+    ],
+    // a Observação só depois de responder as perguntas acima
+    if (_obsRebanhoVisivel) ...[
+      const SizedBox(height: 14),
+      _painelCinza([
+        CampoTextoTopo(
+          rotulo: 'Observação Sobre o Rebanho',
+          corRotulo: _corRotulo,
+          controller: _obsRebanhoController,
+          focusNode: _obsRebanhoFoco,
+          altura: null,
+          linhas: 3,
+          dica: 'Comentar problemas do rebanho',
+          textCapitalization: TextCapitalization.sentences,
+        ),
+      ]),
+    ],
   ];
 
   /// Seção 1 — "Atividades Registradas": uma linha por atividade registrada

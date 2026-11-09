@@ -311,8 +311,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   int? get _encontrados => int.tryParse(_encontradosController.text.trim());
 
-  /// Encontrados − Esperados (null enquanto falta um dos dois).
+  /// Encontrados − Esperados (null enquanto falta um dos dois; só no Gado
+  /// Todo).
   int? get _diferenca {
+    if (_conferiuGado != 'todo') return null;
     final e = _esperados, n = _encontrados;
     return e == null || n == null ? null : n - e;
   }
@@ -1209,7 +1211,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         await AppAlert.erro(context, 'Informe quais pastos foram conferidos.');
         return;
       }
-      if (_conferiuGado != 'nao') {
+      if (_conferiuGado == 'todo') {
         if (_encontradosController.text.trim().isEmpty) {
           await AppAlert.erro(
             context,
@@ -1219,7 +1221,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         }
       }
       final dif = _diferenca;
-      if (_conferiuGado != 'nao' &&
+      if (_conferiuGado == 'todo' &&
           dif != null &&
           dif != 0 &&
           _pastosDiferenca.isEmpty) {
@@ -2091,31 +2093,35 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           const SizedBox(height: 10),
         ],
         _animaisEsperados(),
-        const SizedBox(height: 10),
-        CampoTextoTopo(
-          rotulo: '* Totais de Animais Encontrados',
-          rotuloNegrito: 'Encontrados',
-          altura: 80,
-          corRotulo: _corRotulo,
-          controller: _encontradosController,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          onChanged: (_) => _totaisMudaram(),
-        ),
-        // Totais diferentes: a diferença (só leitura) e os pastos
-        if ((_diferenca ?? 0) != 0) ...[
-          const SizedBox(height: 8),
-          CampoValorTopo(
-            rotulo: _diferenca! < 0 ? 'Quantos Faltaram' : 'Quantos Sobraram',
+        // Encontrados e a diferença só no Gado Todo (na Parte do Gado basta
+        // escolher os pastos conferidos)
+        if (_conferiuGado == 'todo') ...[
+          const SizedBox(height: 10),
+          CampoTextoTopo(
+            rotulo: '* Totais de Animais Encontrados',
+            rotuloNegrito: 'Encontrados',
             altura: 80,
             corRotulo: _corRotulo,
-            valor: '${_diferenca!.abs()}',
+            controller: _encontradosController,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onChanged: (_) => _totaisMudaram(),
           ),
-          const SizedBox(height: 8),
-          ..._seletorPastos(
-            '* Em qual(is) pasto(s) está a diferença?',
-            _pastosDiferenca,
-          ),
+          // Totais diferentes: a diferença (só leitura) e os pastos
+          if ((_diferenca ?? 0) != 0) ...[
+            const SizedBox(height: 8),
+            CampoValorTopo(
+              rotulo: _diferenca! < 0 ? 'Quantos Faltaram' : 'Quantos Sobraram',
+              altura: 80,
+              corRotulo: _corRotulo,
+              valor: '${_diferenca!.abs()}',
+            ),
+            const SizedBox(height: 8),
+            ..._seletorPastos(
+              '* Em qual(is) pasto(s) está a diferença?',
+              _pastosDiferenca,
+            ),
+          ],
         ],
       ]),
     ],

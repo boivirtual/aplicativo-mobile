@@ -10,7 +10,8 @@ import 'connectivity_service.dart';
 /// Atividades já registradas no sistema para a fazenda no dia (Seção 1 do
 /// Resumo): chuvaMm null = não choveu; mudouPasto = teve transferência de
 /// animais entre pastos; nutricao = teve nutrição; nascimentos, abortos
-/// (Aborto, Absorção e Natimorto) e mortes = quantos registros no dia.
+/// (Aborto, Absorção e Natimorto) e mortes = quantos registros no dia;
+/// pesados = quantos animais foram pesados no dia (Seção 4).
 typedef AtividadesDoDia = ({
   double? chuvaMm,
   bool mudouPasto,
@@ -18,6 +19,7 @@ typedef AtividadesDoDia = ({
   int nascimentos,
   int abortos,
   int mortes,
+  int pesados,
 });
 
 /// Dados do servidor usados pelo Resumo Diário da Fazenda.
@@ -146,6 +148,7 @@ class ResumoDiarioService {
           nascimentos: qtd('nascimentos'),
           abortos: qtd('abortos'),
           mortes: qtd('mortes'),
+          pesados: qtd('pesados'),
         );
       }
     } catch (e) {

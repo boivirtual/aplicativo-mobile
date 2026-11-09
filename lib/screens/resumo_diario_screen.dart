@@ -534,6 +534,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// mostra estas.
   Map<String, (String, String, String)> _atividadesRegistradas = {};
 
+  /// Seção 4: quantos animais foram pesados no dia (vem com as atividades).
+  int _animaisPesados = 0;
+
   /// Fazenda + data das atividades carregadas (trocou, as marcações não
   /// valem mais).
   String? _chaveAtividades;
@@ -586,6 +589,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     final chuva = a.chuvaMm;
     final chave = '$fazenda|${_formatar(data)}';
     setState(() {
+      _animaisPesados = a.pesados;
       if (chave != _chaveAtividades) {
         _atividadesMarcadas.clear();
       }
@@ -1646,7 +1650,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     // mesmo tamanho do título da Seção 2
     3 => [_tituloAzul('Contagem de Animais Hoje', tamanho: 17)],
     // nova: vai juntar as Seções 5, 6 e 7 (por enquanto só o título)
-    4 => [_tituloAzul('Atividades do Curral', tamanho: 17)],
+    4 => [
+      _tituloAzul('Atividades do Curral', tamanho: 17),
+      // mesmo espaço depois do título da Seção 2
+      const SizedBox(height: 16),
+    ],
     5 => [_tituloAzul('Tratamentos Realizados Hoje')],
     6 => [_tituloAzul('Aplicações Realizadas Hoje')],
     7 => [_tituloAzul('O Que Foi Feito Hoje')],
@@ -1687,7 +1695,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     1 => _atividadesDoDia(),
     2 => _atividadesNaoRegistradas(),
     3 => _conferenciaRebanho(),
-    4 => const [],
+    4 => _conversaCurral(),
     5 => [
       // botão (sem caixa de marcar), pode ser tocado várias vezes; travado
       // com "Nenhum animal doente..." marcado
@@ -2350,6 +2358,33 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                   ],
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  /// Seção 4 — "Atividades do Curral": conversa com o usuário logado, como
+  /// na Seção 2, começando pela pesagem do dia.
+  List<Widget> _conversaCurral() {
+    final hoje = DateUtils.isSameDay(_data, _hoje());
+    final quando = hoje ? 'Hoje' : 'No dia ${_formatar(_data)}';
+    final pesados = _animaisPesados;
+    return [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(4, 4, 4, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('$_nomeUsuario!', style: EstiloApp.negrito(19, _corRotulo)),
+            const SizedBox(height: 10),
+            Text(
+              pesados > 0
+                  ? '$quando pesamos $pesados '
+                        '${pesados == 1 ? 'animal' : 'animais'}. Me conta mais!'
+                  : '$quando não pesamos animais. Me conta mais!',
+              style: TextStyle(fontSize: 17, height: 1.5, color: _corRotulo),
             ),
           ],
         ),

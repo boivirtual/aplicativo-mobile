@@ -1209,7 +1209,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     FocusManager.instance.primaryFocus?.unfocus();
     if (_secao == 2) {
       if (!_secao2Completa) return;
-      setState(() => _secao = 3);
+      setState(() {
+        _secao = 3;
+        // ao entrar na Seção 3 a Observação fica escondida
+        _obsLiberada = false;
+      });
       // "Animais Esperados" da Seção 3 (sempre atualizado ao entrar)
       await _carregarAnimais();
       return;
@@ -1325,6 +1329,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     if (_secao > 1) {
       setState(() {
         _secao--;
+        // voltou para a Seção 3: a Observação fica escondida de novo
+        if (_secao == 3) _obsLiberada = false;
         // voltou para a Seção 2: confirma de novo
         if (_secao == 2) _secao2Confirmada = false;
       });
@@ -1930,6 +1936,15 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ),
   );
 
+  /// Um pouco mais grosso que o normal, sem chegar ao negrito (a fonte do
+  /// app só tem a versão fina: o traço é engrossado com uma "sombra" leve da
+  /// mesma cor). Conversas das Seções 2 e 4.
+  static TextStyle _textoMedio(double tamanho, Color cor) => TextStyle(
+    fontSize: tamanho,
+    color: cor,
+    shadows: [Shadow(color: cor, offset: const Offset(0.3, 0))],
+  );
+
   static TextStyle _textoGrosso(Color cor) => TextStyle(
     fontSize: 13,
     height: 1.15,
@@ -2080,12 +2095,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// A fazenda tem vacas prenhas (consultado ao entrar na Seção 3)?
   bool get _temPrenhas => (_vacasPrenhas ?? 0) > 0;
 
-  /// A Observação Sobre o Rebanho aparece depois de responder "Conferiu o
-  /// Gado?" e, se a fazenda tem vacas prenhas, "Conferiu as Vacas Prenhas?".
-  bool get _obsRebanhoVisivel =>
-      _vacasPrenhas != null &&
-      _conferiuGado != null &&
-      (!_temPrenhas || _conferiuPrenhas != null);
+  /// A Observação Sobre o Rebanho nunca aparece ao entrar na Seção 3: só
+  /// depois de tocar no Não Conferi (fazenda sem vacas prenhas) ou no Sim/Não
+  /// das vacas prenhas (fazenda com prenhas).
+  bool _obsLiberada = false;
+  bool get _obsRebanhoVisivel => _vacasPrenhas != null && _obsLiberada;
 
   /// Resposta de uma das perguntas da Seção 3. Com a Observação na tela, o
   /// cursor vai para ela (toda vez que tocar no botão) (teclado aberto) e a tela rola até o
@@ -2139,6 +2153,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             _pastosDiferenca.clear();
           }
           _conferiuGado = v;
+          // sem vacas prenhas, a Observação aparece só no Não Conferi
+          if (!_temPrenhas) _obsLiberada = v == 'nao';
         },
         // Gado Todo e Parte do Gado nunca levam o cursor para a Observação
         // (ainda têm campos a preencher); o Não Conferi leva só sem vacas
@@ -2203,7 +2219,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           ('nao', 'Não', Icons.highlight_off),
         ],
         _conferiuPrenhas,
-        (v) => _responderRebanho(() => _conferiuPrenhas = v),
+        (v) => _responderRebanho(() {
+          _conferiuPrenhas = v;
+          _obsLiberada = true;
+        }),
         semBorda: true,
       ),
     ],
@@ -2281,12 +2300,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     final hoje = DateUtils.isSameDay(_data, _hoje());
     // visual de link: azul padrão de link (o da internet) e sublinhado
     const azulLink = Color(0xFF0645AD);
-    const link = TextStyle(
-      fontSize: 17,
-      color: azulLink,
-      decoration: TextDecoration.underline,
-      decorationColor: azulLink,
-    );
+    final link = _textoMedio(
+      17,
+      azulLink,
+    ).copyWith(decoration: TextDecoration.underline, decorationColor: azulLink);
     return [
       Padding(
         padding: const EdgeInsets.fromLTRB(4, 4, 4, 14),
@@ -2297,7 +2314,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             const SizedBox(height: 10),
             Text.rich(
               TextSpan(
-                style: TextStyle(fontSize: 17, height: 1.5, color: _corRotulo),
+                style: _textoMedio(17, _corRotulo).copyWith(height: 1.5),
                 children: [
                   // dia passado: a data no lugar do "Hoje"
                   TextSpan(
@@ -2384,7 +2401,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                   ? '$quando pesamos $pesados '
                         '${pesados == 1 ? 'animal' : 'animais'}. Me conta mais!'
                   : '$quando não pesamos animais. Me conta mais!',
-              style: TextStyle(fontSize: 17, height: 1.5, color: _corRotulo),
+              style: _textoMedio(17, _corRotulo).copyWith(height: 1.5),
             ),
           ],
         ),

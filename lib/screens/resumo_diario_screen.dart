@@ -246,7 +246,61 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   List<MapEntry<int, String>> _pastosFazenda = [];
   String? _pastosDaFazenda; // fazenda dos pastos carregados
 
-  int? get _esperados => int.tryParse(_esperadosController.text.trim());
+  // pastos conferidos (Parte do Gado)
+  final Set<int> _pastosConferidos = {};
+
+  /// Animais ativos da fazenda (do servidor, ao entrar na Seção 3): o total
+  /// e por pasto. null = ainda não consultado ou falhou.
+  int? _animaisFazenda;
+  Map<int, int> _animaisPorPasto = {};
+  String? _animaisDaFazenda; // fazenda dos animais carregados
+  bool _carregandoAnimais = false;
+
+  /// Animais Esperados: Gado Todo = todos os ativos da fazenda; Parte do
+  /// Gado = soma dos pastos conferidos (null enquanto não escolher nenhum).
+  int? get _esperados {
+    if (_animaisFazenda == null) return null;
+    if (_conferiuGado == 'todo') return _animaisFazenda;
+    if (_pastosConferidos.isEmpty) return null;
+    return _pastosConferidos.fold<int>(
+      0,
+      (s, id) => s + (_animaisPorPasto[id] ?? 0),
+    );
+  }
+
+  /// Ao entrar na Seção 3: consulta no servidor os animais ativos da
+  /// fazenda (só online; sem internet ou se falhar, avisa) e carrega os
+  /// pastos guardados no aparelho para os selects.
+  Future<void> _carregarAnimais() async {
+    final fazenda = _fazenda;
+    final bd = _bd;
+    unawaited(_carregarPastos());
+    if (fazenda == null || bd == null || _carregandoAnimais) return;
+    setState(() => _carregandoAnimais = true);
+    // checagem da internet na hora (o Resumo Diário só funciona online)
+    final nivel = await ConnectivityService.instance.verificarAgora();
+    String? erro = _mensagemSemInternet(nivel);
+    ({int total, Map<int, int> porPasto})? r;
+    if (erro == null) {
+      r = await ResumoDiarioService.instance.animaisDaFazenda(bd, fazenda);
+      if (r == null) {
+        erro =
+            'Não foi possível consultar os animais da fazenda. Tente '
+            'novamente.';
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _carregandoAnimais = false;
+      if (r != null && fazenda == _fazenda) {
+        _animaisFazenda = r.total;
+        _animaisPorPasto = r.porPasto;
+        _animaisDaFazenda = fazenda;
+        if ((_diferenca ?? 0) == 0) _pastosDiferenca.clear();
+      }
+    });
+    if (erro != null) await AppAlert.erro(context, erro);
+  }
   int? get _encontrados => int.tryParse(_encontradosController.text.trim());
 
   /// Encontrados − Esperados (null enquanto falta um dos dois).

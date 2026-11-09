@@ -2074,11 +2074,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Resposta de uma das perguntas da Seção 3. Se com ela a Observação
   /// aparece, o cursor vai para ela (teclado aberto) e a tela rola até o
   /// fim, deixando a Observação, o teclado e os botões Anterior/Próximo
-  /// visíveis.
-  void _responderRebanho(VoidCallback mudar) {
+  /// visíveis. [focarObs] false: a Observação aparece, mas o cursor não vai
+  /// para ela (Gado Todo e Parte do Gado ainda têm campos para preencher).
+  void _responderRebanho(VoidCallback mudar, {bool focarObs = true}) {
     final antes = _obsRebanhoVisivel;
     setState(mudar);
-    if (antes || !_obsRebanhoVisivel) return;
+    if (antes || !_obsRebanhoVisivel || !focarObs) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       // o foco rola a tela até a Observação (ver o listener do foco)

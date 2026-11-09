@@ -154,6 +154,42 @@ class ResumoDiarioService {
     return null;
   }
 
+  /// Seção 3: animais ativos da [fazenda], no total e por pasto (id do pasto
+  /// -> quantidade; pasto sem animais não vem). Só online. null se não
+  /// conseguiu consultar.
+  Future<({int total, Map<int, int> porPasto})?> animaisDaFazenda(
+    String bd,
+    String fazenda,
+  ) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(
+              "${ApiConfig.baseUrl}/rest/resumo-diario/animais_pastos.php",
+            ),
+            headers: {"Content-Type": "application/json"},
+            body: json.encode({'bd': bd, 'fazenda': fazenda}),
+          )
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode != 200) return null;
+      final dados = json.decode(response.body);
+      if (dados is Map && dados['success'] == true) {
+        final pastos = dados['pastos'];
+        return (
+          total: (dados['total'] as num?)?.toInt() ?? 0,
+          porPasto: <int, int>{
+            if (pastos is Map)
+              for (final e in pastos.entries)
+                int.tryParse(e.key.toString()) ?? 0: (e.value as num).toInt(),
+          },
+        );
+      }
+    } catch (e) {
+      debugPrint('[ResumoDiario] animais da fazenda: falhou -> $e');
+    }
+    return null;
+  }
+
   /// Tela inicial: o dia anterior a [data] ficou sem resumo da [fazenda]
   /// (um resumo por data e fazenda)? E a própria [data] já tem registro
   /// (tipoNoDia: 'R' = Resumo, 'F' = Folga, null = livre)? Só online

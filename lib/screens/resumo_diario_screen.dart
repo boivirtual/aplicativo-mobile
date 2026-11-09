@@ -311,10 +311,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   int? get _encontrados => int.tryParse(_encontradosController.text.trim());
 
-  /// Encontrados − Esperados (null enquanto falta um dos dois; só no Gado
-  /// Todo).
+  /// Encontrados − Esperados (null enquanto falta um dos dois).
   int? get _diferenca {
-    if (_conferiuGado != 'todo') return null;
     final e = _esperados, n = _encontrados;
     return e == null || n == null ? null : n - e;
   }
@@ -468,6 +466,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         escolhidos
           ..clear()
           ..addAll(marcados);
+        // desmarcou todos os pastos conferidos: o Encontrados some e é limpo
+        if (identical(escolhidos, _pastosConferidos) && escolhidos.isEmpty) {
+          _encontradosController.clear();
+        }
         // mudou o total esperado: sem diferença, limpa os pastos dela
         if ((_diferenca ?? 0) == 0) _pastosDiferenca.clear();
       });
@@ -1211,7 +1213,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         await AppAlert.erro(context, 'Informe quais pastos foram conferidos.');
         return;
       }
-      if (_conferiuGado == 'todo') {
+      if (_conferiuGado != 'nao') {
         if (_encontradosController.text.trim().isEmpty) {
           await AppAlert.erro(
             context,
@@ -1221,7 +1223,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         }
       }
       final dif = _diferenca;
-      if (_conferiuGado == 'todo' &&
+      if (_conferiuGado != 'nao' &&
           dif != null &&
           dif != 0 &&
           _pastosDiferenca.isEmpty) {
@@ -2092,10 +2094,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           ),
           const SizedBox(height: 10),
         ],
-        _animaisEsperados(),
-        // Encontrados e a diferença só no Gado Todo (na Parte do Gado basta
-        // escolher os pastos conferidos)
-        if (_conferiuGado == 'todo') ...[
+        // Esperados, Encontrados e a diferença: no Gado Todo direto; na Parte
+        // do Gado, depois de escolher os pastos conferidos
+        if (_conferiuGado == 'todo' || _pastosConferidos.isNotEmpty) ...[
+          _animaisEsperados(),
           const SizedBox(height: 10),
           CampoTextoTopo(
             rotulo: '* Totais de Animais Encontrados',

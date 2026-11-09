@@ -2071,19 +2071,20 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       _conferiuGado != null &&
       (!_temPrenhas || _conferiuPrenhas != null);
 
-  /// Resposta de uma das perguntas da Seção 3. Se com ela a Observação
-  /// aparece, o cursor vai para ela (teclado aberto) e a tela rola até o
+  /// Resposta de uma das perguntas da Seção 3. Com a Observação na tela, o
+  /// cursor vai para ela (toda vez que tocar no botão) (teclado aberto) e a tela rola até o
   /// fim, deixando a Observação, o teclado e os botões Anterior/Próximo
   /// visíveis. [focarObs] false: a Observação aparece, mas o cursor não vai
   /// para ela (Gado Todo e Parte do Gado ainda têm campos para preencher).
   void _responderRebanho(VoidCallback mudar, {bool focarObs = true}) {
-    final antes = _obsRebanhoVisivel;
     setState(mudar);
-    if (antes || !_obsRebanhoVisivel || !focarObs) return;
+    // toda vez (mesmo com a Observação já aparecendo antes)
+    if (!_obsRebanhoVisivel || !focarObs) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      // o foco rola a tela até a Observação (ver o listener do foco)
       _obsRebanhoFoco.requestFocus();
+      // rola até a Observação (também quando o cursor já estava nela)
+      _rolarAteObs(comEspera: true);
     });
   }
 
@@ -2124,8 +2125,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           _conferiuGado = v;
         },
         // Gado Todo e Parte do Gado nunca levam o cursor para a Observação
-        // (ainda têm campos a preencher); só o Não Conferi
-        focarObs: v == 'nao',
+        // (ainda têm campos a preencher); o Não Conferi leva só sem vacas
+        // prenhas — com prenhas, quem leva é o Sim/Não delas
+        focarObs: v == 'nao' && !_temPrenhas,
       ),
       semBorda: true,
     ),

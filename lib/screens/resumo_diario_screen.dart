@@ -1404,22 +1404,24 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                     children: [
                       // Só esta parte rola (na Seção 1, as Atividades do Dia)
                       ListView(
+                        controller: _rolagem,
                         // espaço no fim para o último item passar do botão Próximo
                         // (que fica por cima, junto com a barra do celular)
                         padding: EdgeInsets.fromLTRB(
                           12,
                           0,
                           12,
-                          _tecladoAberto
-                              ? 16
-                              : 96 + MediaQuery.of(context).padding.bottom,
+                          _barraVisivel
+                              ? 96 + MediaQuery.of(context).padding.bottom
+                              : 16,
                         ),
                         children: _rolavelDaSecao(),
                       ),
                       // Próximo sempre visível; a tela rola por trás dele. Com o
                       // teclado aberto ele sai da frente, para não cobrir o campo
-                      // que está sendo digitado.
-                      if (!_tecladoAberto)
+                      // que está sendo digitado — menos na Seção 3, onde fica
+                      // acima do teclado (a Observação é o último campo).
+                      if (_barraVisivel)
                         Positioned(
                           left: 0,
                           right: 0,

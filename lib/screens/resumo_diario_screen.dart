@@ -646,6 +646,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // entrou ou saiu da Observação: mostra ou esconde a barra Anterior/Próximo
+    _obsRebanhoFoco.addListener(() {
+      if (mounted) setState(() {});
+    });
     _carregar();
   }
 
@@ -2045,8 +2049,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   ];
 
   /// Barra Anterior/Próximo na tela: some com o teclado aberto, menos na
-  /// Seção 3.
-  bool get _barraVisivel => !_tecladoAberto || _secao == 3;
+  /// Observação Sobre o Rebanho (Seção 3) — campo não obrigatório, os botões
+  /// ficam acima do teclado para seguir sem precisar fechá-lo.
+  bool get _barraVisivel =>
+      !_tecladoAberto || (_secao == 3 && _obsRebanhoFoco.hasFocus);
 
   /// A fazenda tem vacas prenhas (consultado ao entrar na Seção 3)?
   bool get _temPrenhas => (_vacasPrenhas ?? 0) > 0;

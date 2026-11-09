@@ -1546,10 +1546,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     Colors.white,
   );
 
-  /// Fundo da tela e da barra do Próximo: azul da tarja nas Seções 1 e 2 (em
+  /// Fundo da tela e da barra do Próximo: azul da tarja nas Seções 1 a 3 (em
   /// teste), branco na tela inicial e nas outras.
   Color get _fundoTela =>
-      _secao == 1 || _secao == 2 ? _azulTarja : Colors.white;
+      _secao >= 1 && _secao <= 3 ? _azulTarja : Colors.white;
 
   /// Tarja de todas as seções: fazenda, data, barra de progresso e "Seção X
   /// de 11", de ponta a ponta, sem bordas arredondadas.
@@ -1627,7 +1627,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       _tituloAzul('Atividades NÃO Registradas', tamanho: 17),
       const SizedBox(height: 16),
     ],
-    3 => [_tituloAzul('Contagem de Animais Hoje')],
+    // mesmo tamanho do título da Seção 2
+    3 => [_tituloAzul('Contagem de Animais Hoje', tamanho: 17)],
     4 => [_tituloAzul('Tratamentos Realizados Hoje')],
     5 => [_tituloAzul('Aplicações Realizadas Hoje')],
     6 => [_tituloAzul('O Que Foi Feito Hoje')],
@@ -1646,6 +1647,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ),
     ],
   };
+
+  /// Campos e selects da Seção 3 direto no fundo azul, sem o painel cinza.
+  Widget _semPainel(List<Widget> filhos) =>
+      Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: filhos);
 
   Widget _painelCinza(List<Widget> filhos) => Container(
     padding: const EdgeInsets.all(12),
@@ -1878,15 +1883,23 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   // Seção 3 — Conferência de Rebanho
   // ---------------------------------------------------------------------
 
-  Widget _pergunta(String texto) => Padding(
-    padding: const EdgeInsets.fromLTRB(2, 14, 2, 8),
+  // negrito: o negrito forte do app (ex.: Seção 3); espacoAntes: espaço
+  // acima da pergunta
+  Widget _pergunta(
+    String texto, {
+    bool negrito = false,
+    double espacoAntes = 14,
+  }) => Padding(
+    padding: EdgeInsets.fromLTRB(2, espacoAntes, 2, 8),
     child: Text(
       texto,
-      style: const TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.bold,
-        color: Color(0xFF455A64),
-      ),
+      style: negrito
+          ? EstiloApp.negrito(15, const Color(0xFF455A64))
+          : const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF455A64),
+            ),
     ),
   );
 
@@ -1904,12 +1917,14 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   /// Opções lado a lado, no mesmo visual das Atividades do Dia: fundo
   /// branco e borda cinza; a escolhida fica com fundo azul claro e borda
-  /// azul. Ícone azul no centro e o texto embaixo.
+  /// azul. Ícone azul no centro e o texto embaixo. [semBorda]: como os cards
+  /// da Seção 1 — sem contorno, azul bem claro e, escolhida, azul mais escuro.
   Widget _opcoes(
     List<(String, String, IconData)> opcoes,
     String? escolhida,
-    ValueChanged<String> aoEscolher,
-  ) {
+    ValueChanged<String> aoEscolher, {
+    bool semBorda = false,
+  }) {
     const azulIcone = Color(0xFF228cb9);
     return Row(
       children: [
@@ -1928,14 +1943,18 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                 padding: const EdgeInsets.fromLTRB(4, 12, 4, 6),
                 decoration: BoxDecoration(
                   color: escolhida == opcoes[i].$1
-                      ? const Color(0xFFE3F2FD)
-                      : Colors.white,
+                      ? (semBorda
+                            ? const Color(0xFFCFE5FA)
+                            : const Color(0xFFE3F2FD))
+                      : (semBorda ? const Color(0xFFF9FCFF) : Colors.white),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: escolhida == opcoes[i].$1
-                        ? _azulBotao
-                        : const Color(0xFFCFD8DC),
-                  ),
+                  border: semBorda
+                      ? null
+                      : Border.all(
+                          color: escolhida == opcoes[i].$1
+                              ? _azulBotao
+                              : const Color(0xFFCFD8DC),
+                        ),
                 ),
                 child: Column(
                   children: [
@@ -2050,20 +2069,23 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _obsRebanhoFoco.requestFocus();
-      // espera o teclado abrir (a tela encolhe) para rolar até o fim
-      Future.delayed(const Duration(milliseconds: 450), () {
-        if (!mounted || !_rolagem.hasClients) return;
-        _rolagem.animateTo(
-          _rolagem.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOut,
-        );
-      });
+      // o teclado demora a abrir (e a tela encolhe aos poucos): rola até o
+      // fim algumas vezes, até ele terminar de abrir
+      for (final ms in const [350, 700, 1100]) {
+        Future.delayed(Duration(milliseconds: ms), () {
+          if (!mounted || !_rolagem.hasClients) return;
+          _rolagem.animateTo(
+            _rolagem.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+          );
+        });
+      }
     });
   }
 
   List<Widget> _conferenciaRebanho() => [
-    _pergunta('Conferiu o Gado?'),
+    _pergunta('Conferiu o Gado?', negrito: true),
     _opcoes(
       const [
         ('todo', 'Gado Todo', Icons.done_all),
@@ -2081,11 +2103,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         }
         _conferiuGado = v;
       }),
+      semBorda: true,
     ),
     // os totais só com "Gado Todo" ou "Parte do Gado"
     if (_conferiuGado == 'todo' || _conferiuGado == 'parte') ...[
       const SizedBox(height: 10),
-      _painelCinza([
+      _semPainel([
         // Parte do Gado: primeiro os pastos conferidos
         if (_conferiuGado == 'parte') ...[
           ..._seletorPastos(
@@ -2130,7 +2153,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     // só quando a fazenda tem vacas prenhas (Positivas e ainda sem
     // nascimento, aborto, natimorto ou absorção)
     if (_temPrenhas) ...[
-      _pergunta('Conferiu as Vacas Prenhas?'),
+      // mais espaço antes desta pergunta
+      _pergunta('Conferiu as Vacas Prenhas?', negrito: true, espacoAntes: 26),
       _opcoes(
         const [
           ('sim', 'Sim', Icons.check_circle_outline),
@@ -2138,19 +2162,20 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ],
         _conferiuPrenhas,
         (v) => _responderRebanho(() => _conferiuPrenhas = v),
+        semBorda: true,
       ),
     ],
     // a Observação só depois de responder as perguntas acima
     if (_obsRebanhoVisivel) ...[
       const SizedBox(height: 14),
-      _painelCinza([
+      _semPainel([
         CampoTextoTopo(
           rotulo: 'Observação Sobre o Rebanho',
           corRotulo: _corRotulo,
           controller: _obsRebanhoController,
           focusNode: _obsRebanhoFoco,
           altura: null,
-          linhas: 3,
+          linhas: 2,
           dica: 'Comentar problemas do rebanho',
           textCapitalization: TextCapitalization.sentences,
         ),

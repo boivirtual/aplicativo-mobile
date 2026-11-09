@@ -42,7 +42,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   static const _azulBotao = Color(0xFF007AFF);
   static final _corRotulo = Colors.blueGrey[800]!;
 
-  static const _totalSecoes = 11;
+  static const _totalSecoes = 12;
 
   /// 0 = tela inicial (escolha da fazenda), antes das seções.
   int _secao = 0;
@@ -58,7 +58,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Seção 3 para cima do teclado).
   final _rolagem = ScrollController();
 
-  // Seção 4 — Sanidade Animal: "Adicionar Tratamento" ou "Nenhum animal
+  // Seção 5 — Sanidade Animal: "Adicionar Tratamento" ou "Nenhum animal
   // doente ou medicado hoje" (um exclui o outro).
   bool _nenhumDoente = false;
 
@@ -177,7 +177,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ),
   ];
 
-  // Seção 6 — Atividades no Curral: "Teve atividade no curral hoje?"; com
+  // Seção 7 — Atividades no Curral: "Teve atividade no curral hoje?"; com
   // "Sim", as atividades, as categorias trabalhadas, a quantidade e a
   // observação.
   String? _teveCurral; // 'sim' ou 'nao'
@@ -211,8 +211,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     'CAVALOS',
   ];
 
-  // Seção 5 — Vacinas, Vermífugos e Carrapaticidas: "Adicionar Aplicação"
-  // ou "Nenhuma aplicação de vacina ou vermífugo hoje" (como a Seção 4).
+  // Seção 6 — Vacinas, Vermífugos e Carrapaticidas: "Adicionar Aplicação"
+  // ou "Nenhuma aplicação de vacina ou vermífugo hoje" (como a Seção 5).
   bool _nenhumaAplicacao = false;
 
   /// Aplicações adicionadas (a tela "Adicionar Aplicação" vem depois).
@@ -1252,6 +1252,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       return;
     }
     if (_secao == 4) {
+      // Atividades do Curral (nova): o Próximo fica desativado por enquanto
+      return;
+    }
+    if (_secao == 5) {
       if (!_nenhumDoente && _tratamentos.isEmpty) {
         await AppAlert.erro(
           context,
@@ -1260,10 +1264,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         );
         return;
       }
-      setState(() => _secao = 5);
+      setState(() => _secao = 6);
       return;
     }
-    if (_secao == 5) {
+    if (_secao == 6) {
       if (!_nenhumaAplicacao && _aplicacoes.isEmpty) {
         await AppAlert.erro(
           context,
@@ -1272,10 +1276,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         );
         return;
       }
-      setState(() => _secao = 6);
+      setState(() => _secao = 7);
       return;
     }
-    if (_secao == 6) {
+    if (_secao == 7) {
       String? erro;
       if (_teveCurral == null) {
         erro = 'Responda se teve atividade no curral hoje.';
@@ -1293,7 +1297,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         await AppAlert.erro(context, erro);
         return;
       }
-      // A Seção 7 vem nas próximas etapas.
+      // A Seção 8 vem nas próximas etapas.
       return;
     }
     if (_secao == 1) {
@@ -1513,11 +1517,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                         ),
                                         // Seção 1: inativo até confirmar as
                                         // atividades registradas; Seção 2: até o Sim da
-                                        // confirmação
+                                        // confirmação; Seção 4: desativado por enquanto
                                         onPressed:
                                             (_secao == 1 && !_secao1Completa) ||
                                                 (_secao == 2 &&
-                                                    !_secao2Completa)
+                                                    !_secao2Completa) ||
+                                                _secao == 4
                                             ? null
                                             : _proximo,
                                         child: const Row(
@@ -1557,10 +1562,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     Colors.white,
   );
 
-  /// Fundo da tela e da barra do Próximo: azul da tarja nas Seções 1 a 3 (em
+  /// Fundo da tela e da barra do Próximo: azul da tarja nas Seções 1 a 4 (em
   /// teste), branco na tela inicial e nas outras.
   Color get _fundoTela =>
-      _secao >= 1 && _secao <= 3 ? _azulTarja : Colors.white;
+      _secao >= 1 && _secao <= 4 ? _azulTarja : Colors.white;
 
   /// Tarja de todas as seções: fazenda, data, barra de progresso e "Seção X
   /// de 11", de ponta a ponta, sem bordas arredondadas.
@@ -1640,9 +1645,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ],
     // mesmo tamanho do título da Seção 2
     3 => [_tituloAzul('Contagem de Animais Hoje', tamanho: 17)],
-    4 => [_tituloAzul('Tratamentos Realizados Hoje')],
-    5 => [_tituloAzul('Aplicações Realizadas Hoje')],
-    6 => [_tituloAzul('O Que Foi Feito Hoje')],
+    // nova: vai juntar as Seções 5, 6 e 7 (por enquanto só o título)
+    4 => [_tituloAzul('Atividades do Curral', tamanho: 17)],
+    5 => [_tituloAzul('Tratamentos Realizados Hoje')],
+    6 => [_tituloAzul('Aplicações Realizadas Hoje')],
+    7 => [_tituloAzul('O Que Foi Feito Hoje')],
     _ => [
       _tituloAzul('Atividades Registradas', tamanho: 17),
       if (_atividadesRegistradas.isNotEmpty)
@@ -1680,7 +1687,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     1 => _atividadesDoDia(),
     2 => _atividadesNaoRegistradas(),
     3 => _conferenciaRebanho(),
-    4 => [
+    4 => const [],
+    5 => [
       // botão (sem caixa de marcar), pode ser tocado várias vezes; travado
       // com "Nenhum animal doente..." marcado
       _linhaMarcar(
@@ -1709,7 +1717,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ),
       ],
     ],
-    5 => [
+    6 => [
       // botão, pode ser tocado várias vezes; travado com "Nenhuma
       // aplicação..." marcado
       _linhaMarcar(
@@ -1738,12 +1746,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ),
       ],
     ],
-    6 => _atividadesNoCurral(),
+    7 => _atividadesNoCurral(),
     _ => const [],
   };
 
   // ---------------------------------------------------------------------
-  // Seção 6 — Atividades no Curral
+  // Seção 7 — Atividades no Curral
   // ---------------------------------------------------------------------
 
   List<Widget> _atividadesNoCurral() => [

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -253,7 +254,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// e por pasto. null = ainda não consultado ou falhou.
   int? _animaisFazenda;
   Map<int, int> _animaisPorPasto = {};
-  String? _animaisDaFazenda; // fazenda dos animais carregados
   bool _carregandoAnimais = false;
 
   /// Animais Esperados: Gado Todo = todos os ativos da fazenda; Parte do
@@ -295,12 +295,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       if (r != null && fazenda == _fazenda) {
         _animaisFazenda = r.total;
         _animaisPorPasto = r.porPasto;
-        _animaisDaFazenda = fazenda;
         if ((_diferenca ?? 0) == 0) _pastosDiferenca.clear();
       }
     });
     if (erro != null) await AppAlert.erro(context, erro);
   }
+
   int? get _encontrados => int.tryParse(_encontradosController.text.trim());
 
   /// Encontrados − Esperados (null enquanto falta um dos dois).
@@ -323,14 +323,16 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     setState(() {
       _pastosDaFazenda = fazenda;
       _pastosFazenda = [for (final p in pastos) MapEntry(p.id, p.descricao)];
-      _pastosDiferenca.removeWhere(
-        (id) => !_pastosFazenda.any((p) => p.key == id),
-      );
+      bool fora(int id) => !_pastosFazenda.any((p) => p.key == id);
+      _pastosDiferenca.removeWhere(fora);
+      _pastosConferidos.removeWhere(fora);
     });
   }
 
-  /// Lista para marcar um ou vários pastos.
-  Future<void> _escolherPastos() async {
+  /// Lista para marcar um ou vários pastos ([titulo] no alto), guardados
+  /// em [escolhidos] ("Quais pastos foram conferidos?" e "Em qual(is)
+  /// pasto(s) está a diferença?").
+  Future<void> _escolherPastos(String titulo, Set<int> escolhidos) async {
     FocusManager.instance.primaryFocus?.unfocus();
     await _carregarPastos();
     if (!mounted) return;
@@ -344,7 +346,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     }
     // Como o selectpicker do web: busca no topo e um toque marca/desmarca
     // a linha (fica destacada, com o ✓), sem caixinhas.
-    final marcados = {..._pastosDiferenca};
+    final marcados = {...escolhidos};
     var busca = '';
     final ok = await showDialog<bool>(
       context: context,
@@ -355,9 +357,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
               if (p.value.toUpperCase().contains(busca.toUpperCase())) p,
           ];
           return AlertDialog(
-            title: const Text(
-              'Em qual(is) pasto(s) está a diferença?',
-              style: TextStyle(fontSize: 16, color: _azul),
+            title: Text(
+              titulo,
+              style: const TextStyle(fontSize: 16, color: _azul),
             ),
             contentPadding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
             content: SizedBox(
@@ -452,11 +454,13 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ),
     );
     if (ok == true && mounted) {
-      setState(
-        () => _pastosDiferenca
+      setState(() {
+        escolhidos
           ..clear()
-          ..addAll(marcados),
-      );
+          ..addAll(marcados);
+        // mudou o total esperado: sem diferença, limpa os pastos dela
+        if ((_diferenca ?? 0) == 0) _pastosDiferenca.clear();
+      });
     }
   }
 
@@ -469,15 +473,14 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   }
 
   /// Nomes dos pastos marcados, na ordem da lista.
-  String get _nomesPastosDiferenca => [
+  String _nomesPastos(Set<int> marcados) => [
     for (final p in _pastosFazenda)
-      if (_pastosDiferenca.contains(p.key)) p.value,
+      if (marcados.contains(p.key)) p.value,
   ].join(', ');
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _esperadosController.dispose();
     _encontradosController.dispose();
     _obsRebanhoController.dispose();
     _qtdeCurralController.dispose();
@@ -1178,6 +1181,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     if (_secao == 2) {
       if (!_secao2Completa) return;
       setState(() => _secao = 3);
+      // "Animais Esperados" da Seção 3 (sempre atualizado ao entrar)
+      await _carregarAnimais();
       return;
     }
     if (_secao == 3) {
@@ -1185,12 +1190,20 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         await AppAlert.erro(context, 'Informe se conferiu o gado.');
         return;
       }
+      if (_conferiuGado == 'parte' && _pastosConferidos.isEmpty) {
+        await AppAlert.erro(context, 'Informe quais pastos foram conferidos.');
+        return;
+      }
       if (_conferiuGado != 'nao') {
-        if (_esperadosController.text.trim().isEmpty ||
-            _encontradosController.text.trim().isEmpty) {
+        if (_animaisFazenda == null) {
+          // não conseguiu consultar os Animais Esperados: tenta de novo
+          await _carregarAnimais();
+          return;
+        }
+        if (_encontradosController.text.trim().isEmpty) {
           await AppAlert.erro(
             context,
-            'Informe o Total de Animais Esperados e o de Encontrados.',
+            'Informe o Total de Animais Encontrados.',
           );
           return;
         }
@@ -1934,6 +1947,68 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     );
   }
 
+  /// "9999 Animais Esperados" (número em negrito, do tamanho do mm da
+  /// chuva): Gado Todo = ativos da fazenda; Parte do Gado = os dos pastos
+  /// conferidos. Consultando ou sem pastos escolhidos, avisa.
+  Widget _animaisEsperados() {
+    final esperados = _esperados;
+    final texto = TextStyle(fontSize: 15, color: _corRotulo);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: esperados == null
+          ? Text(
+              _carregandoAnimais
+                  ? 'Consultando os animais da fazenda...'
+                  : _animaisFazenda == null
+                  ? 'Não foi possível consultar os animais da fazenda.'
+                  : 'Escolha os pastos conferidos.',
+              style: texto.copyWith(fontStyle: FontStyle.italic),
+            )
+          : Text.rich(
+              TextSpan(
+                style: texto,
+                children: [
+                  TextSpan(
+                    text: '$esperados',
+                    style: _textoGrosso(_corRotulo).copyWith(fontSize: 14),
+                  ),
+                  TextSpan(
+                    text: esperados == 1
+                        ? ' Animal Esperado'
+                        : ' Animais Esperados',
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+
+  /// Select de pastos da Seção 3 (abre [_escolherPastos]) e, embaixo, os
+  /// nomes dos escolhidos.
+  List<Widget> _seletorPastos(String rotulo, Set<int> escolhidos) => [
+    CampoValorTopo(
+      rotulo: rotulo,
+      corRotulo: _corRotulo,
+      valor: escolhidos.isEmpty
+          ? ''
+          : '${escolhidos.length} pasto(s) selecionado(s)',
+      icone: Icon(Icons.arrow_drop_down, color: _corRotulo),
+      onTap: () => _escolherPastos(rotulo.replaceFirst('* ', ''), escolhidos),
+    ),
+    if (escolhidos.isNotEmpty)
+      Padding(
+        padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
+        child: Text(
+          _nomesPastos(escolhidos),
+          style: TextStyle(
+            fontSize: 13,
+            fontStyle: FontStyle.italic,
+            color: _corRotulo,
+          ),
+        ),
+      ),
+  ];
+
   List<Widget> _conferenciaRebanho() => [
     _pergunta('Conferiu o Gado?'),
     _opcoes(
@@ -1943,23 +2018,26 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ('nao', 'Não Conferi', Icons.block),
       ],
       _conferiuGado,
-      (v) => setState(() => _conferiuGado = v),
+      (v) => setState(() {
+        _conferiuGado = v;
+        // Gado Todo x Parte muda o esperado: sem diferença, limpa os pastos
+        if ((_diferenca ?? 0) == 0) _pastosDiferenca.clear();
+      }),
     ),
     // os totais só com "Gado Todo" ou "Parte do Gado"
     if (_conferiuGado == 'todo' || _conferiuGado == 'parte') ...[
       const SizedBox(height: 10),
       _painelCinza([
-        CampoTextoTopo(
-          rotulo: '* Totais de Animais Esperados',
-          rotuloNegrito: 'Esperados',
-          altura: 80,
-          corRotulo: _corRotulo,
-          controller: _esperadosController,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          onChanged: (_) => _totaisMudaram(),
-        ),
-        const SizedBox(height: 8),
+        // Parte do Gado: primeiro os pastos conferidos
+        if (_conferiuGado == 'parte') ...[
+          ..._seletorPastos(
+            '* Quais pastos foram conferidos?',
+            _pastosConferidos,
+          ),
+          const SizedBox(height: 10),
+        ],
+        _animaisEsperados(),
+        const SizedBox(height: 10),
         CampoTextoTopo(
           rotulo: '* Totais de Animais Encontrados',
           rotuloNegrito: 'Encontrados',
@@ -1980,27 +2058,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             valor: '${_diferenca!.abs()}',
           ),
           const SizedBox(height: 8),
-          CampoValorTopo(
-            rotulo: '* Em qual(is) pasto(s) está a diferença?',
-            corRotulo: _corRotulo,
-            valor: _pastosDiferenca.isEmpty
-                ? ''
-                : '${_pastosDiferenca.length} pasto(s) selecionado(s)',
-            icone: Icon(Icons.arrow_drop_down, color: _corRotulo),
-            onTap: _escolherPastos,
+          ..._seletorPastos(
+            '* Em qual(is) pasto(s) está a diferença?',
+            _pastosDiferenca,
           ),
-          if (_pastosDiferenca.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
-              child: Text(
-                _nomesPastosDiferenca,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontStyle: FontStyle.italic,
-                  color: _corRotulo,
-                ),
-              ),
-            ),
         ],
       ]),
     ],

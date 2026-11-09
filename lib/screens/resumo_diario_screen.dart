@@ -648,7 +648,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     WidgetsBinding.instance.addObserver(this);
     // entrou ou saiu da Observação: mostra ou esconde a barra Anterior/Próximo
     _obsRebanhoFoco.addListener(() {
-      if (mounted) setState(() {});
+      if (!mounted) return;
+      setState(() {});
+      // tocou na Observação (ou o cursor foi para ela sozinho): sobe a tela
+      // até ela ficar acima dos botões Anterior/Próximo e do teclado
+      if (_obsRebanhoFoco.hasFocus) _rolarAteObs(comEspera: true);
     });
     _carregar();
   }
@@ -663,6 +667,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   @override
   void didChangeMetrics() {
     if (mounted) setState(() {});
+    // o teclado abrindo encolhe a tela aos poucos: com o cursor na
+    // Observação, acompanha até ela ficar inteira acima dos botões
+    if (_obsRebanhoFoco.hasFocus) _rolarAteObs();
   }
 
   bool _estavaVisivel = false;
@@ -2074,20 +2081,25 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     if (antes || !_obsRebanhoVisivel) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      // o foco rola a tela até a Observação (ver o listener do foco)
       _obsRebanhoFoco.requestFocus();
-      // o teclado demora a abrir (e a tela encolhe aos poucos): rola até o
-      // fim algumas vezes, até ele terminar de abrir
-      for (final ms in const [350, 700, 1100]) {
-        Future.delayed(Duration(milliseconds: ms), () {
-          if (!mounted || !_rolagem.hasClients) return;
-          _rolagem.animateTo(
-            _rolagem.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-          );
-        });
-      }
     });
+  }
+
+  /// Rola a Seção 3 até o fim (a Observação é o último campo), depois que a
+  /// tela se ajustar. [comEspera]: também repete enquanto o teclado ainda
+  /// está abrindo — o Flutter, sozinho, deixaria o campo atrás dos botões.
+  void _rolarAteObs({bool comEspera = false}) {
+    void rolar() {
+      if (!mounted || !_rolagem.hasClients) return;
+      _rolagem.jumpTo(_rolagem.position.maxScrollExtent);
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => rolar());
+    if (!comEspera) return;
+    for (final ms in const [300, 600, 900, 1300]) {
+      Future.delayed(Duration(milliseconds: ms), rolar);
+    }
   }
 
   List<Widget> _conferenciaRebanho() => [

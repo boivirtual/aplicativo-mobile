@@ -460,16 +460,20 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   final Set<String> _atividadesMarcadas = {};
 
   /// Atividades já registradas no sistema para a fazenda e a data do resumo
-  /// (chave -> texto da linha + valor em negrito): a Seção 1 só mostra estas.
-  Map<String, (String, String)> _atividadesRegistradas = {};
+  /// (chave -> texto antes + valor em negrito + texto depois): a Seção 1 só
+  /// mostra estas.
+  Map<String, (String, String, String)> _atividadesRegistradas = {};
 
   /// Fazenda + data das atividades carregadas (trocou, as marcações não
   /// valem mais).
   String? _chaveAtividades;
   bool _carregandoAtividades = false;
 
-  /// 1 -> "1 registro"; 3 -> "3 registros".
-  static String _qtdRegistros(int n) => n == 1 ? '1 registro' : '$n registros';
+  /// Quantidade no singular ou no plural: (1, 'Bezerro nasceu',
+  /// 'Bezerros nasceram') -> ' Bezerro nasceu' (o número vai à parte, em
+  /// negrito).
+  static String _plural(int n, String um, String varios) =>
+      n == 1 ? ' $um' : ' $varios';
 
   /// 30 -> "30"; 12.5 -> "12,5".
   static String _mm(double v) => v == v.roundToDouble()
@@ -517,15 +521,34 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       }
       _chaveAtividades = chave;
       _atividadesRegistradas = {
-        if (chuva != null) 'choveu': ('Choveu ', '${_mm(chuva)} mm'),
+        if (chuva != null) 'choveu': ('Choveu ', '${_mm(chuva)} mm', ''),
         // sem valor em negrito
-        if (a.mudouPasto) 'mudei_pasto': ('Trocamos animais de pasto', ''),
-        if (a.nutricao) 'nutricao': ('Nutrição: ', 'SIM'),
+        if (a.mudouPasto) 'mudei_pasto': ('Trocamos animais de pasto', '', ''),
+        if (a.nutricao)
+          'nutricao': ('Distribuímos Nutrição nos Cochos', '', ''),
+        // quantidade em negrito na frente, singular ou plural
         if (a.nascimentos > 0)
-          'nascimento': ('Nascimento: ', _qtdRegistros(a.nascimentos)),
+          'nascimento': (
+            '',
+            '${a.nascimentos}',
+            _plural(a.nascimentos, 'Bezerro nasceu', 'Bezerros nasceram'),
+          ),
         if (a.abortos > 0)
-          'aborto_natimorto': ('Aborto/Natimorto: ', _qtdRegistros(a.abortos)),
-        if (a.mortes > 0) 'morte': ('Morte: ', _qtdRegistros(a.mortes)),
+          'aborto_natimorto': (
+            '',
+            '${a.abortos}',
+            _plural(
+              a.abortos,
+              'Animal Abortou/Natimorto',
+              'Animais Abortaram/Natimorto',
+            ),
+          ),
+        if (a.mortes > 0)
+          'morte': (
+            '',
+            '${a.mortes}',
+            _plural(a.mortes, 'Animal morreu', 'Animais morreram'),
+          ),
       };
       _atividadesMarcadas.removeWhere(
         (a) => !_atividadesRegistradas.containsKey(a),
@@ -1968,7 +1991,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     // só as já registradas no sistema
     for (final a in _atividades)
       if (_atividadesRegistradas[a.$1] case final linha?) ...[
-        _atividade(a.$1, linha.$1, linha.$2, a.$3, a.$4),
+        _atividade(a.$1, linha.$1, linha.$2, linha.$3, a.$3, a.$4),
         const SizedBox(height: 8),
       ],
   ];
@@ -2131,12 +2154,13 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     });
   }
 
-  /// Card de uma atividade da Seção 1: ícone, texto (o valor em negrito) e,
-  /// marcado, o check verde à direita.
+  /// Card de uma atividade da Seção 1: ícone, texto (o valor em negrito, com
+  /// texto antes e/ou depois) e, marcado, o check verde à direita.
   Widget _atividade(
     String chave,
     String texto,
     String valor,
+    String depois,
     IconData? icone,
     String? imagem,
   ) {
@@ -2154,6 +2178,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         imagem: imagem,
         // vazio: só o texto, sem negrito (ex.: Trocamos animais de pasto)
         valor: valor,
+        depois: depois,
         semCaixa: true,
         // azul bem claro; o marcado, um azul mais escuro
         fundo: const Color(0xFFF9FCFF),
@@ -2186,6 +2211,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     bool habilitado = true,
     // com valor: o texto fica sem negrito e só o valor em negrito
     String? valor,
+    // texto normal depois do valor (ex.: "3" + " Bezerros nasceram")
+    String depois = '',
     // botão no fim da linha, separado do texto
     Widget? acao,
     // fundo do card desmarcado e do marcado
@@ -2260,6 +2287,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                 _corRotulo,
                               ).copyWith(fontSize: 14),
                             ),
+                            TextSpan(text: depois),
                           ],
                         ),
                       ),

@@ -2120,8 +2120,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           _pastosConferidos.clear();
           _pastosDiferenca.clear();
         }
-        _conferiuGado = v;
-      }),
+          _conferiuGado = v;
+        },
+        // Gado Todo e Parte do Gado nunca levam o cursor para a Observação
+        // (ainda têm campos a preencher); só o Não Conferi
+        focarObs: v == 'nao',
+      ),
       semBorda: true,
     ),
     // os totais só com "Gado Todo" ou "Parte do Gado"

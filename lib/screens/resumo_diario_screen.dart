@@ -2021,6 +2021,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ),
   ];
 
+  /// Barra Anterior/Próximo na tela: some com o teclado aberto, menos na
+  /// Seção 3.
+  bool get _barraVisivel => !_tecladoAberto || _secao == 3;
+
   /// A fazenda tem vacas prenhas (consultado ao entrar na Seção 3)?
   bool get _temPrenhas => (_vacasPrenhas ?? 0) > 0;
 

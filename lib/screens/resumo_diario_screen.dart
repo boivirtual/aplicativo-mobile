@@ -1357,8 +1357,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     if (_secao > 1) {
       setState(() {
         _secao--;
-        // voltou para a Seção 3: a Observação fica escondida de novo
-        if (_secao == 3) _obsLiberada = false;
+        // voltou da Seção 4 para a 3 (já completa): a Observação continua
+        // aparecendo, com o que foi digitado
+        if (_secao == 3) _obsLiberada = true;
         // voltou para a Seção 2: confirma de novo
         if (_secao == 2) _secao2Confirmada = false;
       });

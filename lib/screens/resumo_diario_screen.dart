@@ -338,8 +338,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   }
 
   /// Lista para marcar um ou vários pastos ([titulo] no alto), guardados
-  /// em [escolhidos] ("Quais pastos foram conferidos?" e "Em qual(is)
-  /// pasto(s) está a diferença?").
+  /// em [escolhidos] ("Quais pastos foram conferidos?" e "Em quais
+  /// pastos está a diferença?"). No OK da diferença (com pastos marcados), a
+  /// Observação aparece com o cursor nela, como no Não Conferi.
   Future<void> _escolherPastos(String titulo, Set<int> escolhidos) async {
     FocusManager.instance.primaryFocus?.unfocus();
     await _carregarPastos();
@@ -462,17 +463,22 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ),
     );
     if (ok == true && mounted) {
-      setState(() {
+      final daDiferenca =
+          identical(escolhidos, _pastosDiferenca) && marcados.isNotEmpty;
+      _responderRebanho(() {
         escolhidos
           ..clear()
           ..addAll(marcados);
+        // pastos da diferença escolhidos: a Seção 3 está completa e a
+        // Observação aparece (o cursor vai para ela)
+        if (daDiferenca) _obsLiberada = true;
         // desmarcou todos os pastos conferidos: o Encontrados some e é limpo
         if (identical(escolhidos, _pastosConferidos) && escolhidos.isEmpty) {
           _encontradosController.clear();
         }
         // mudou o total esperado: sem diferença, limpa os pastos dela
         if ((_diferenca ?? 0) == 0) _pastosDiferenca.clear();
-      });
+      }, focarObs: daDiferenca);
     }
   }
 
@@ -1270,7 +1276,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           _pastosDiferenca.isEmpty) {
         await AppAlert.erro(
           context,
-          'Informe em qual(is) pasto(s) está a diferença.',
+          'Informe em quais pastos está a diferença.',
         );
         return;
       }
@@ -1926,10 +1932,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                 for (final o in opcoes)
                   if (marcados.contains(o)) o,
               ].join(', '),
+        // só uma referência do que foi escolhido: pequena e em azul claro
         style: TextStyle(
-          fontSize: 13,
+          fontSize: 11,
           fontStyle: FontStyle.italic,
-          color: marcados.isEmpty ? Colors.grey[600] : _corRotulo,
+          color: marcados.isEmpty ? Colors.grey[600] : Colors.blue[300],
         ),
       ),
     ),
@@ -2100,10 +2107,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
         child: Text(
           _nomesPastos(escolhidos),
+          // só uma referência do que foi escolhido: pequena e em azul claro
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 11,
             fontStyle: FontStyle.italic,
-            color: _corRotulo,
+            color: Colors.blue[300],
           ),
         ),
       ),
@@ -2293,7 +2301,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             ),
             const SizedBox(height: 8),
             ..._seletorPastos(
-              '* Em qual(is) pasto(s) está a diferença?',
+              '* Em quais pastos está a diferença?',
               _pastosDiferenca,
             ),
           ],

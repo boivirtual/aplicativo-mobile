@@ -245,10 +245,11 @@ class _TratamentoModalState extends State<TratamentoModal> {
                 for (final o in opcoes)
                   if (marcados.contains(o)) o,
               ].join(', '),
+        // só uma referência do que foi escolhido: pequena e em azul claro
         style: TextStyle(
-          fontSize: 13,
+          fontSize: 11,
           fontStyle: FontStyle.italic,
-          color: marcados.isEmpty ? Colors.grey[600] : _corRotulo,
+          color: marcados.isEmpty ? Colors.grey[600] : Colors.blue[300],
         ),
       ),
     ),

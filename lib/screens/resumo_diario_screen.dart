@@ -497,6 +497,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// o texto, ver [_textoForte]).
   Widget _fraseDiferenca(int diferenca) {
     final n = diferenca.abs();
+    // azul claro padrão do app (o dos títulos)
+    final cor = Colors.blue[300]!;
     final verbo = diferenca < 0
         ? (n == 1 ? 'Faltou' : 'Faltaram')
         : (n == 1 ? 'Sobrou' : 'Sobraram');
@@ -504,10 +506,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Text.rich(
         TextSpan(
-          style: _textoMedio(15, _corRotulo),
+          style: _textoMedio(15, cor),
           children: [
             TextSpan(text: '$verbo '),
-            TextSpan(text: '$n', style: _textoForte(15, _corRotulo)),
+            TextSpan(text: '$n', style: _textoForte(15, cor)),
             TextSpan(text: n == 1 ? ' animal' : ' animais'),
           ],
         ),

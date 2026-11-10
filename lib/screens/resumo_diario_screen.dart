@@ -2653,7 +2653,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     final aberta = _listasAbertas.contains(chave);
     // card do tamanho da informação (cada um de um tamanho, chamando a
     // atenção para o dado), encostado à esquerda
-    final card = Container(
+    return Container(
       alignment: Alignment.centerLeft,
       child: _linhaMarcar(
         texto,
@@ -2672,6 +2672,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         semBorda: true,
         // menos espaço entre a borda do card e o ícone
         recuo: 6,
+        // lista aberta pela seta, dentro do próprio card
+        abaixo: comLista && aberta
+            ? (chave == 'nutricao' ? _listaNutricao() : _listaPastosAlterados())
+            : null,
         // o espaço do check fica sempre reservado: o card não muda de
         // tamanho ao marcar
         acao: Row(
@@ -2706,20 +2710,30 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ),
       ),
     );
-    if (!comLista || !aberta) return card;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        card,
-        chave == 'nutricao' ? _listaNutricao() : _listaPastosAlterados(),
-      ],
-    );
   }
 
+  /// Card com conteúdo embaixo da linha (a lista aberta pela seta): a linha
+  /// continua com a altura mínima de sempre e a lista vem logo abaixo, dentro
+  /// do mesmo card.
+  static Widget _comAbaixo(Widget? abaixo, Widget linha) => abaixo == null
+      ? linha
+      : Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 54),
+              child: linha,
+            ),
+            abaixo,
+          ],
+        );
+
   /// Lista do card "Trocamos animais de pasto" (aberta pela seta): só os
-  /// nomes dos pastos com troca de animais no dia.
+  /// nomes dos pastos com troca de animais no dia. Dentro do card, alinhada ao
+  /// texto (depois do ícone).
   Widget _listaPastosAlterados() => Padding(
-    padding: const EdgeInsets.fromLTRB(12, 2, 12, 4),
+    padding: const EdgeInsets.fromLTRB(40, 0, 0, 10),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2766,7 +2780,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       );
     }
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 2, 12, 4),
+      padding: const EdgeInsets.fromLTRB(40, 0, 0, 10),
       child: Table(
         defaultColumnWidth: const IntrinsicColumnWidth(),
         children: linhas,
@@ -2812,6 +2826,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     bool semBorda = false,
     // espaço à esquerda do ícone quando não tem a caixa de marcar
     double recuo = 14,
+    // conteúdo dentro do card, embaixo da linha (ex.: lista da Nutrição)
+    Widget? abaixo,
   }) {
     const azulIcone = Color(0xFF228cb9);
     return Opacity(
@@ -2832,64 +2848,70 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                     color: marcada ? _azulBotao : const Color(0xFFCFD8DC),
                   ),
           ),
-          child: Row(
-            mainAxisSize: ajustado ? MainAxisSize.min : MainAxisSize.max,
-            children: [
-              if (semCaixa)
-                SizedBox(width: recuo)
-              else
-                Checkbox(
-                  value: marcada,
-                  activeColor: _azulBotao,
-                  // quadrado com a borda fina
-                  side: const BorderSide(width: 1.2, color: Color(0xFF90A4AE)),
-                  visualDensity: VisualDensity.compact,
-                  onChanged: (v) => aoMarcar(v ?? false),
-                ),
-              if (imagem != null)
-                Image.asset(
-                  'assets/images/$imagem',
-                  width: 24,
-                  height: 24,
-                  color: azulIcone,
-                )
-              else
-                Icon(icone, size: 24, color: azulIcone),
-              const SizedBox(width: 10),
-              Flexible(
-                fit: ajustado ? FlexFit.loose : FlexFit.tight,
-                child: _umaLinha(
-                  ajustado,
-                  valor == null
-                      ? Text(
-                          texto,
-                          // mesmo peso das opções da Seção 2
-                          style: _textoGrosso(
-                            _corRotulo,
-                          ).copyWith(fontSize: 15),
-                        )
-                      : Text.rich(
-                          TextSpan(
-                            style: TextStyle(fontSize: 15, color: _corRotulo),
-                            children: [
-                              TextSpan(text: texto),
-                              TextSpan(
-                                text: valor,
-                                // 14: o negrito (e os números) parecem maiores
-                                // que o texto de 15
-                                style: _textoGrosso(
-                                  _corRotulo,
-                                ).copyWith(fontSize: 14),
-                              ),
-                              TextSpan(text: depois),
-                            ],
+          child: _comAbaixo(
+            abaixo,
+            Row(
+              mainAxisSize: ajustado ? MainAxisSize.min : MainAxisSize.max,
+              children: [
+                if (semCaixa)
+                  SizedBox(width: recuo)
+                else
+                  Checkbox(
+                    value: marcada,
+                    activeColor: _azulBotao,
+                    // quadrado com a borda fina
+                    side: const BorderSide(
+                      width: 1.2,
+                      color: Color(0xFF90A4AE),
+                    ),
+                    visualDensity: VisualDensity.compact,
+                    onChanged: (v) => aoMarcar(v ?? false),
+                  ),
+                if (imagem != null)
+                  Image.asset(
+                    'assets/images/$imagem',
+                    width: 24,
+                    height: 24,
+                    color: azulIcone,
+                  )
+                else
+                  Icon(icone, size: 24, color: azulIcone),
+                const SizedBox(width: 10),
+                Flexible(
+                  fit: ajustado ? FlexFit.loose : FlexFit.tight,
+                  child: _umaLinha(
+                    ajustado,
+                    valor == null
+                        ? Text(
+                            texto,
+                            // mesmo peso das opções da Seção 2
+                            style: _textoGrosso(
+                              _corRotulo,
+                            ).copyWith(fontSize: 15),
+                          )
+                        : Text.rich(
+                            TextSpan(
+                              style: TextStyle(fontSize: 15, color: _corRotulo),
+                              children: [
+                                TextSpan(text: texto),
+                                TextSpan(
+                                  text: valor,
+                                  // 14: o negrito (e os números) parecem maiores
+                                  // que o texto de 15
+                                  style: _textoGrosso(
+                                    _corRotulo,
+                                  ).copyWith(fontSize: 14),
+                                ),
+                                TextSpan(text: depois),
+                              ],
+                            ),
                           ),
-                        ),
+                  ),
                 ),
-              ),
-              // botão no fim da linha (ex.: Registrar da Seção 2)
-              if (acao != null) ...[const SizedBox(width: 8), acao],
-            ],
+                // botão no fim da linha (ex.: Registrar da Seção 2)
+                if (acao != null) ...[const SizedBox(width: 8), acao],
+              ],
+            ),
           ),
         ),
       ),

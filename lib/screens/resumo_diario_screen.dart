@@ -1516,10 +1516,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                         controller: _rolagem,
                         // espaço no fim para o último item passar do botão Próximo
                         // (que fica por cima, junto com a barra do celular)
+                        // (na Seção 3, mais afastada das bordas da tela)
                         padding: EdgeInsets.fromLTRB(
-                          12,
+                          _secao == 3 ? 24 : 12,
                           0,
-                          12,
+                          _secao == 3 ? 24 : 12,
                           _barraVisivel
                               ? 96 + MediaQuery.of(context).padding.bottom
                               : 16,

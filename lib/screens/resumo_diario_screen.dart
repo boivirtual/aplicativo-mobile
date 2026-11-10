@@ -50,6 +50,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   // Seção 3 — Conferência de Rebanho
   String? _conferiuGado; // 'todo', 'parte', 'nao'
   final _encontradosController = TextEditingController();
+  final _encontradosFoco = FocusNode();
   String? _conferiuPrenhas; // 'sim', 'nao'
   final _obsRebanhoController = TextEditingController();
   final _obsRebanhoFoco = FocusNode();
@@ -544,6 +545,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     _encontradosController.dispose();
     _obsRebanhoController.dispose();
     _obsRebanhoFoco.dispose();
+    _encontradosFoco.dispose();
     _rolagem.dispose();
     _qtdeCurralController.dispose();
     _obsCurralController.dispose();
@@ -2305,23 +2307,32 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ('nao', 'Não Conferi', Icons.block),
       ],
       _conferiuGado,
-      (v) => _responderRebanho(
-        () {
-          // toda troca entre Gado Todo, Parte do Gado e Não Conferi começa
-          // do zero: limpa os campos e os selects da opção anterior
-          if (v != _conferiuGado) {
-            _encontradosController.clear();
-            _pastosConferidos.clear();
-            _pastosDiferenca.clear();
-          }
-          _conferiuGado = v;
-          // a Observação aparece só no Não Conferi
-          _obsLiberada = v == 'nao';
-        },
-        // só o Não Conferi leva o cursor para a Observação (Gado Todo e
-        // Parte do Gado ainda têm campos a preencher)
-        focarObs: v == 'nao',
-      ),
+      (v) {
+        _responderRebanho(
+          () {
+            // toda troca entre Gado Todo, Parte do Gado e Não Conferi começa
+            // do zero: limpa os campos e os selects da opção anterior
+            if (v != _conferiuGado) {
+              _encontradosController.clear();
+              _pastosConferidos.clear();
+              _pastosDiferenca.clear();
+            }
+            _conferiuGado = v;
+            // a Observação aparece só no Não Conferi
+            _obsLiberada = v == 'nao';
+          },
+          // só o Não Conferi leva o cursor para a Observação (Gado Todo e
+          // Parte do Gado ainda têm campos a preencher)
+          focarObs: v == 'nao',
+        );
+        // Gado Todo: com os Animais Esperados na tela, o cursor vai para os
+        // Encontrados e o teclado abre
+        if (v == 'todo') {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _encontradosFoco.requestFocus();
+          });
+        }
+      },
       semBorda: true,
     ),
     // os totais só com "Gado Todo" ou "Parte do Gado"
@@ -2357,6 +2368,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                   altura: 80,
                   corRotulo: _corRotulo,
                   controller: _encontradosController,
+                  focusNode: _encontradosFoco,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   onChanged: (_) => _totaisMudaram(),

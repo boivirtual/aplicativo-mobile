@@ -520,11 +520,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   /// Largura de um campo do tamanho do seu rótulo (fonte do rótulo no meio
   /// do campo + as margens de dentro).
-  double _larguraDoRotulo(String rotulo) {
+  double _larguraDoRotulo(String rotulo, {double tamanho = 14}) {
     final p = TextPainter(
       text: TextSpan(
         text: rotulo,
-        style: DefaultTextStyle.of(context).style.copyWith(fontSize: 14),
+        style: DefaultTextStyle.of(context).style.copyWith(fontSize: tamanho),
       ),
       textDirection: TextDirection.ltr,
       textScaler: MediaQuery.textScalerOf(context),
@@ -2266,13 +2266,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         const SizedBox(height: 14),
         _semPainel([
           CampoTextoTopo(
-            rotulo: 'Observação Sobre o Rebanho',
+            rotulo: 'Observação ou Problemas sobre o rebanho',
             corRotulo: _corRotulo,
             controller: _obsRebanhoController,
             focusNode: _obsRebanhoFoco,
             altura: null,
             linhas: 2,
-            dica: 'Comentar problemas do rebanho',
             textCapitalization: TextCapitalization.sentences,
           ),
         ]),
@@ -2332,27 +2331,35 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         if (_conferiuGado == 'todo' || _pastosConferidos.isNotEmpty) ...[
           _animaisEsperados(),
           const SizedBox(height: 10),
-          // da largura do rótulo (o total tem poucos dígitos)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: SizedBox(
-              width: _larguraDoRotulo('* Totais de Animais Encontrados'),
-              child: CampoTextoTopo(
-                rotulo: '* Totais de Animais Encontrados',
-                rotuloNegrito: 'Encontrados',
-                altura: 80,
-                corRotulo: _corRotulo,
-                controller: _encontradosController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                onChanged: (_) => _totaisMudaram(),
+          // o campo da largura do rótulo (o total tem poucos dígitos) — com o
+          // valor digitado o rótulo fica pequeno em cima e o campo encolhe —
+          // e, na mesma linha, a diferença (frase, só leitura)
+          Row(
+            children: [
+              SizedBox(
+                width: _larguraDoRotulo(
+                  '* Totais de Animais Encontrados',
+                  tamanho: _encontradosController.text.isEmpty ? 14 : 11,
+                ),
+                child: CampoTextoTopo(
+                  rotulo: '* Totais de Animais Encontrados',
+                  rotuloNegrito: 'Encontrados',
+                  altura: 80,
+                  corRotulo: _corRotulo,
+                  controller: _encontradosController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  onChanged: (_) => _totaisMudaram(),
+                ),
               ),
-            ),
+              if ((_diferenca ?? 0) != 0) ...[
+                const SizedBox(width: 12),
+                Expanded(child: _fraseDiferenca(_diferenca!)),
+              ],
+            ],
           ),
-          // Totais diferentes: a diferença (frase, só leitura) e os pastos
+          // Totais diferentes: os pastos da diferença
           if ((_diferenca ?? 0) != 0) ...[
-            const SizedBox(height: 10),
-            _fraseDiferenca(_diferenca!),
             const SizedBox(height: 10),
             ..._seletorPastos(
               '* Em quais pastos está a diferença?',

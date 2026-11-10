@@ -976,7 +976,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// dia anterior sem resumo é um modal, ver [_conferirDiaAnterior]).
   List<Widget> _dataDaTelaInicial() => [
     Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 8, 0),
+      padding: const EdgeInsets.fromLTRB(24, 10, 16, 0),
       child: Row(
         children: [
           Expanded(
@@ -1011,7 +1011,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ),
     if (_conferindoDia || _registrandoFolga)
       Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
         child: Row(
           children: [
             const SizedBox(
@@ -1044,7 +1044,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   List<Widget> _perguntaAtualizacao() => [
     Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
       child: Text.rich(
         TextSpan(
           style: _textoMedio(17, EstiloApp.azulBarra),
@@ -1060,7 +1060,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ),
     ),
     Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
       child: Row(
         children: [
           Expanded(
@@ -1116,7 +1116,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Caixa vermelha de aviso (alert-danger do web).
   Widget _avisoTelaInicial(String texto, {Widget? acao}) => Container(
     width: double.infinity,
-    margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+    margin: const EdgeInsets.fromLTRB(24, 12, 24, 0),
     padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
     decoration: BoxDecoration(
       color: const Color(0xFFF2DEDE),
@@ -1242,7 +1242,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       if (_fazenda != null)
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
           child: Text.rich(
             TextSpan(
               // mesmo peso das conversas das Seções 2 e 4
@@ -1502,7 +1502,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                 // Parte fixa da seção (não rola): na Seção 1, a Identificação e o
                 // título das Atividades do Dia.
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+                  padding: const EdgeInsets.fromLTRB(24, 4, 24, 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: _fixoDaSecao(),
@@ -1516,11 +1516,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                         controller: _rolagem,
                         // espaço no fim para o último item passar do botão Próximo
                         // (que fica por cima, junto com a barra do celular)
-                        // (na Seção 3, mais afastada das bordas da tela)
+                        // (24 dos lados: o mesmo afastamento das bordas em todo o
+                        // Resumo — tela inicial, parte fixa e seções)
                         padding: EdgeInsets.fromLTRB(
-                          _secao == 3 ? 24 : 12,
+                          24,
                           0,
-                          _secao == 3 ? 24 : 12,
+                          24,
                           _barraVisivel
                               ? 96 + MediaQuery.of(context).padding.bottom
                               : 16,
@@ -1751,7 +1752,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       if (_atividadesRegistradas.isNotEmpty)
         Padding(
           // mesmo espaço depois do título da Seção 2; alinhado aos cards
-          padding: const EdgeInsets.only(left: 10, top: 16, bottom: 10),
+          padding: const EdgeInsets.only(top: 16, bottom: 10),
           child: Text(
             _atividadesRegistradas.length == 1
                 ? 'Clique na Atividade para Confirmar!'
@@ -2478,7 +2479,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ).copyWith(decoration: TextDecoration.underline, decorationColor: azulLink);
     return [
       Padding(
-        padding: const EdgeInsets.fromLTRB(4, 4, 4, 14),
+        padding: const EdgeInsets.fromLTRB(0, 4, 0, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -2562,7 +2563,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     final pesados = _animaisPesados;
     return [
       Padding(
-        padding: const EdgeInsets.fromLTRB(4, 4, 4, 14),
+        padding: const EdgeInsets.fromLTRB(0, 4, 0, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -2632,10 +2633,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   ) {
     final marcada = _atividadesMarcadas.contains(chave);
     // card do tamanho da informação (cada um de um tamanho, chamando a
-    // atenção para o dado), à esquerda, afastado um pouco da borda da tela
+    // atenção para o dado), encostado à esquerda
     return Container(
       alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.only(left: 10),
       child: _linhaMarcar(
         texto,
         icone,

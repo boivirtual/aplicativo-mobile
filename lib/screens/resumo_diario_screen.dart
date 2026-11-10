@@ -2142,6 +2142,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       valor: escolhidos.isEmpty
           ? ''
           : '${escolhidos.length} pasto(s) selecionado(s)',
+      // com pastos escolhidos, mais alto: o "N pasto(s) selecionado(s)" não
+      // fica grudado na borda
+      altura: escolhidos.isEmpty ? 56 : 66,
       icone: Icon(Icons.arrow_drop_down, color: _corRotulo),
       onTap: () => _escolherPastos(rotulo.replaceFirst('* ', ''), escolhidos),
     ),

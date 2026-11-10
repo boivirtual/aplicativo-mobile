@@ -493,8 +493,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     }, focarObs: !batiam && _totaisBatem);
   }
 
-  /// "Faltaram 6 animais" / "Sobraram 2 animais" (o número em negrito, do
-  /// tamanho do mm da chuva).
+  /// "Faltaram 6 animais" / "Sobraram 2 animais" (o número mais grosso que
+  /// o texto, ver [_textoForte]).
   Widget _fraseDiferenca(int diferenca) {
     final n = diferenca.abs();
     final verbo = diferenca < 0
@@ -504,13 +504,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Text.rich(
         TextSpan(
-          style: TextStyle(fontSize: 15, color: _corRotulo),
+          style: _textoMedio(15, _corRotulo),
           children: [
             TextSpan(text: '$verbo '),
-            TextSpan(
-              text: '$n',
-              style: _textoGrosso(_corRotulo).copyWith(fontSize: 14),
-            ),
+            TextSpan(text: '$n', style: _textoForte(15, _corRotulo)),
             TextSpan(text: n == 1 ? ' animal' : ' animais'),
           ],
         ),
@@ -2018,6 +2015,18 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     shadows: [Shadow(color: cor, offset: const Offset(0.3, 0))],
   );
 
+  /// Mais grosso que o [_textoMedio], sem chegar ao negrito: os números da
+  /// Seção 3 (Animais Esperados, Faltaram/Sobraram) se destacam do texto só
+  /// pelo peso.
+  static TextStyle _textoForte(double tamanho, Color cor) => TextStyle(
+    fontSize: tamanho,
+    color: cor,
+    shadows: [
+      Shadow(color: cor, offset: const Offset(0.6, 0)),
+      Shadow(color: cor, offset: const Offset(-0.3, 0)),
+    ],
+  );
+
   static TextStyle _textoGrosso(Color cor) => TextStyle(
     fontSize: 13,
     height: 1.15,
@@ -2102,7 +2111,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// conferidos. Consultando ou sem pastos escolhidos, avisa.
   Widget _animaisEsperados() {
     final esperados = _esperados;
-    final texto = TextStyle(fontSize: 15, color: _corRotulo);
+    final texto = _textoMedio(15, _corRotulo);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: esperados == null
@@ -2120,7 +2129,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                 children: [
                   TextSpan(
                     text: '$esperados',
-                    style: _textoGrosso(_corRotulo).copyWith(fontSize: 14),
+                    style: _textoForte(15, _corRotulo),
                   ),
                   TextSpan(
                     text: esperados == 1

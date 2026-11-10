@@ -271,8 +271,9 @@ class _MainContainerState extends State<MainContainer>
           const IndicadorSincronizandoWidget(),
         ],
       ),
-      // AJUSTE: Se estiver na Home (Index 5), o rodapé some.
-      bottomNavigationBar: _currentIndex == 5
+      // AJUSTE: Se estiver na Home (Index 5), o rodapé some. No Resumo Diário
+      // (Index 4) também: ele tem os próprios botões e a seta de voltar.
+      bottomNavigationBar: _currentIndex == 5 || _currentIndex == 4
           ? null
           : BottomNavigationBar(
               currentIndex: _currentIndex > 4 ? 0 : _currentIndex,

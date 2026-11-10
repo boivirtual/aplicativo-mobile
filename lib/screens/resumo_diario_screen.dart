@@ -925,10 +925,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           Expanded(
             child: Text.rich(
               TextSpan(
-                style: const TextStyle(
-                  fontSize: 17,
-                  color: EstiloApp.azulBarra,
-                ),
+                style: _textoMedio(17, EstiloApp.azulBarra),
                 children: [
                   TextSpan(
                     text: _data == _hoje() ? 'Hoje é o dia ' : 'Resumo do dia ',
@@ -993,7 +990,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
       child: Text.rich(
         TextSpan(
-          style: const TextStyle(fontSize: 17, color: EstiloApp.azulBarra),
+          style: _textoMedio(17, EstiloApp.azulBarra),
           children: [
             const TextSpan(text: 'Todos os usuários já '),
             TextSpan(
@@ -1154,10 +1151,34 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           textoVazio: 'Selecione uma Fazenda',
         )
       else
-        TarjaFazendaWidget(
-          nomeFazenda: _nomeFazenda,
-          temOutras: _fazendas.length > 1,
-          onTrocar: _escolherOutraFazenda,
+        // mesma tarja reta das seções (azul de ponta a ponta), com o ícone
+        // para trocar de fazenda
+        Container(
+          width: double.infinity,
+          color: _azulTarja,
+          padding: EdgeInsets.fromLTRB(16, 6, _fazendas.length > 1 ? 4 : 16, 6),
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _nomeFazenda,
+                  style: const TextStyle(fontSize: 13, color: Colors.blue),
+                ),
+              ),
+              if (_fazendas.length > 1)
+                IconButton(
+                  onPressed: _escolherOutraFazenda,
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(
+                    Icons.edit_note,
+                    color: Colors.blue,
+                    size: 22,
+                  ),
+                  tooltip: 'Trocar de fazenda',
+                ),
+            ],
+          ),
         ),
       // saudação: "Olá <usuário>!", com o nome em negrito, à esquerda; só
       // depois de escolher a fazenda
@@ -1167,7 +1188,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
           child: Text.rich(
             TextSpan(
-              style: const TextStyle(fontSize: 20, color: EstiloApp.azulBarra),
+              // mesmo peso das conversas das Seções 2 e 4
+              style: _textoMedio(20, EstiloApp.azulBarra),
               children: [
                 const TextSpan(text: 'Olá '),
                 TextSpan(
@@ -1572,10 +1594,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     Colors.white,
   );
 
-  /// Fundo da tela e da barra do Próximo: azul da tarja nas Seções 1 a 4 (em
-  /// teste), branco na tela inicial e nas outras.
-  Color get _fundoTela =>
-      _secao >= 1 && _secao <= 4 ? _azulTarja : Colors.white;
+  /// Fundo da tela e da barra do Próximo: azul da tarja na tela inicial e
+  /// nas Seções 1 a 4, branco nas outras.
+  Color get _fundoTela => _secao <= 4 ? _azulTarja : Colors.white;
 
   /// Tarja de todas as seções: fazenda, data, barra de progresso e "Seção X
   /// de 11", de ponta a ponta, sem bordas arredondadas.

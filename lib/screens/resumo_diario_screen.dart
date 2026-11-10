@@ -1549,11 +1549,13 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                         ),
                                         // Seção 1: inativo até confirmar as
                                         // atividades registradas; Seção 2: até o Sim da
-                                        // confirmação; Seção 4: desativado por enquanto
+                                        // confirmação; Seção 3: até completar; Seção 4: desativado por enquanto
                                         onPressed:
                                             (_secao == 1 && !_secao1Completa) ||
                                                 (_secao == 2 &&
                                                     !_secao2Completa) ||
+                                                (_secao == 3 &&
+                                                    !_secao3Completa) ||
                                                 _secao == 4
                                             ? null
                                             : _proximo,
@@ -2117,16 +2119,14 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   bool get _temPrenhas => (_vacasPrenhas ?? 0) > 0;
 
   /// A Observação Sobre o Rebanho nunca aparece ao entrar na Seção 3: só
-  /// depois de tocar no Não Conferi (fazenda sem vacas prenhas) ou no Sim/Não
-  /// das vacas prenhas (fazenda com prenhas).
+  /// depois de tocar no Não Conferi (com ou sem vacas prenhas).
   bool _obsLiberada = false;
   bool get _obsRebanhoVisivel => _vacasPrenhas != null && _obsLiberada;
 
-  /// Resposta de uma das perguntas da Seção 3. Com a Observação na tela, o
-  /// cursor vai para ela (toda vez que tocar no botão) (teclado aberto) e a tela rola até o
-  /// fim, deixando a Observação, o teclado e os botões Anterior/Próximo
-  /// visíveis. [focarObs] false: a Observação aparece, mas o cursor não vai
-  /// para ela (Gado Todo e Parte do Gado ainda têm campos para preencher).
+  /// Resposta de uma das perguntas da Seção 3. Com [focarObs] e a Observação
+  /// na tela (só no Não Conferi), o cursor vai para ela toda vez, com o
+  /// teclado aberto, e a tela rola até deixar a Observação, o teclado e os
+  /// botões Anterior/Próximo visíveis.
   void _responderRebanho(VoidCallback mudar, {bool focarObs = true}) {
     setState(mudar);
     // toda vez (mesmo com a Observação já aparecendo antes)
@@ -2155,8 +2155,80 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     }
   }
 
+  /// Seção 3 — "Contagem de Animais Hoje". Com vacas prenhas na fazenda,
+  /// primeiro "Conferiu as Vacas Prenhas?" e, respondida, "Conferiu o Gado?";
+  /// sem prenhas, direto "Conferiu o Gado?". A Observação aparece no Não
+  /// Conferi (ver [_obsLiberada]). O Próximo fica desativado até completar
+  /// (ver [_secao3Completa]).
   List<Widget> _conferenciaRebanho() => [
-    _pergunta('Conferiu o Gado?', negrito: true),
+    // antes de saber se tem vacas prenhas (consulta no servidor)
+    if (_vacasPrenhas == null) ...[
+      const SizedBox(height: 16),
+      Text(
+        _carregandoAnimais
+            ? 'Consultando os animais da fazenda...'
+            : 'Não foi possível consultar os animais da fazenda.',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 15,
+          fontStyle: FontStyle.italic,
+          color: _corRotulo,
+        ),
+      ),
+      if (!_carregandoAnimais)
+        Center(
+          child: TextButton(
+            onPressed: _carregarAnimais,
+            child: const Text('Tentar novamente'),
+          ),
+        ),
+    ] else ...[
+      // só quando a fazenda tem vacas prenhas (Positivas e ainda sem
+      // nascimento, aborto, natimorto ou absorção): vem primeiro
+      if (_temPrenhas) ...[
+        _pergunta('Conferiu as Vacas Prenhas?', negrito: true),
+        _opcoes(
+          const [
+            ('sim', 'Sim', Icons.check_circle_outline),
+            ('nao', 'Não', Icons.highlight_off),
+          ],
+          _conferiuPrenhas,
+          // só mostra o "Conferiu o Gado?" (o cursor não vai para a
+          // Observação)
+          (v) => _responderRebanho(() => _conferiuPrenhas = v, focarObs: false),
+          semBorda: true,
+        ),
+      ],
+      // com prenhas, depois de responder a pergunta delas
+      if (!_temPrenhas || _conferiuPrenhas != null) ..._perguntaConferiuGado(),
+      // a Observação só depois do Não Conferi
+      if (_obsRebanhoVisivel) ...[
+        const SizedBox(height: 14),
+        _semPainel([
+          CampoTextoTopo(
+            rotulo: 'Observação Sobre o Rebanho',
+            corRotulo: _corRotulo,
+            controller: _obsRebanhoController,
+            focusNode: _obsRebanhoFoco,
+            altura: null,
+            linhas: 2,
+            dica: 'Comentar problemas do rebanho',
+            textCapitalization: TextCapitalization.sentences,
+          ),
+        ]),
+      ],
+    ],
+  ];
+
+  /// "Conferiu o Gado?" com Gado Todo / Parte do Gado / Não Conferi e os
+  /// campos de cada um.
+  List<Widget> _perguntaConferiuGado() => [
+    // depois das vacas prenhas, com mais espaço antes
+    _pergunta(
+      'Conferiu o Gado?',
+      negrito: true,
+      espacoAntes: _temPrenhas ? 26 : 14,
+    ),
     _opcoes(
       const [
         ('todo', 'Gado Todo', Icons.done_all),
@@ -2174,13 +2246,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             _pastosDiferenca.clear();
           }
           _conferiuGado = v;
-          // sem vacas prenhas, a Observação aparece só no Não Conferi
-          if (!_temPrenhas) _obsLiberada = v == 'nao';
+          // a Observação aparece só no Não Conferi
+          _obsLiberada = v == 'nao';
         },
-        // Gado Todo e Parte do Gado nunca levam o cursor para a Observação
-        // (ainda têm campos a preencher); o Não Conferi leva só sem vacas
-        // prenhas — com prenhas, quem leva é o Sim/Não delas
-        focarObs: v == 'nao' && !_temPrenhas,
+        // só o Não Conferi leva o cursor para a Observação (Gado Todo e
+        // Parte do Gado ainda têm campos a preencher)
+        focarObs: v == 'nao',
       ),
       semBorda: true,
     ),
@@ -2229,41 +2300,22 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ],
       ]),
     ],
-    // só quando a fazenda tem vacas prenhas (Positivas e ainda sem
-    // nascimento, aborto, natimorto ou absorção)
-    if (_temPrenhas) ...[
-      // mais espaço antes desta pergunta
-      _pergunta('Conferiu as Vacas Prenhas?', negrito: true, espacoAntes: 26),
-      _opcoes(
-        const [
-          ('sim', 'Sim', Icons.check_circle_outline),
-          ('nao', 'Não', Icons.highlight_off),
-        ],
-        _conferiuPrenhas,
-        (v) => _responderRebanho(() {
-          _conferiuPrenhas = v;
-          _obsLiberada = true;
-        }),
-        semBorda: true,
-      ),
-    ],
-    // a Observação só depois de responder as perguntas acima
-    if (_obsRebanhoVisivel) ...[
-      const SizedBox(height: 14),
-      _semPainel([
-        CampoTextoTopo(
-          rotulo: 'Observação Sobre o Rebanho',
-          corRotulo: _corRotulo,
-          controller: _obsRebanhoController,
-          focusNode: _obsRebanhoFoco,
-          altura: null,
-          linhas: 2,
-          dica: 'Comentar problemas do rebanho',
-          textCapitalization: TextCapitalization.sentences,
-        ),
-      ]),
-    ],
   ];
+
+  /// Seção 3 pronta para o Próximo: animais consultados, vacas prenhas
+  /// respondidas (se tiver), "Conferiu o Gado?" respondido e, no Gado Todo /
+  /// Parte do Gado, os pastos conferidos, os Encontrados e, com diferença,
+  /// os pastos dela.
+  bool get _secao3Completa {
+    if (_animaisFazenda == null) return false;
+    if (_temPrenhas && _conferiuPrenhas == null) return false;
+    final gado = _conferiuGado;
+    if (gado == null) return false;
+    if (gado == 'nao') return true;
+    if (gado == 'parte' && _pastosConferidos.isEmpty) return false;
+    if (_encontradosController.text.trim().isEmpty) return false;
+    return (_diferenca ?? 0) == 0 || _pastosDiferenca.isNotEmpty;
+  }
 
   /// Seção 1 — "Atividades Registradas": uma linha por atividade registrada
   /// no dia, em cards com ícone (ver [_atividade]). Tocar no card

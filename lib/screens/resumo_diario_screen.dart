@@ -2127,9 +2127,18 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   bool get _temPrenhas => (_vacasPrenhas ?? 0) > 0;
 
   /// A Observação Sobre o Rebanho nunca aparece ao entrar na Seção 3: só
-  /// depois de tocar no Não Conferi (com ou sem vacas prenhas).
+  /// depois de tocar no Não Conferi (com ou sem vacas prenhas), no OK dos
+  /// pastos da diferença ou quando os Encontrados batem com os Esperados.
   bool _obsLiberada = false;
-  bool get _obsRebanhoVisivel => _vacasPrenhas != null && _obsLiberada;
+  bool get _obsRebanhoVisivel =>
+      _vacasPrenhas != null && (_obsLiberada || _totaisBatem);
+
+  /// Gado Todo / Parte do Gado com os Encontrados iguais aos Esperados: a
+  /// Observação aparece, sem levar o cursor (ainda digitando o total).
+  bool get _totaisBatem =>
+      (_conferiuGado == 'todo' || _conferiuGado == 'parte') &&
+      _encontradosController.text.trim().isNotEmpty &&
+      _diferenca == 0;
 
   /// Resposta de uma das perguntas da Seção 3. Com [focarObs] e a Observação
   /// na tela (só no Não Conferi), o cursor vai para ela toda vez, com o

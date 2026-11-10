@@ -594,6 +594,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Seção 4: quantos animais foram pesados no dia (vem com as atividades).
   int _animaisPesados = 0;
 
+  /// Seção 1: o que foi distribuído de nutrição no dia (pasto, produto,
+  /// quantidade) e se a lista do card da Nutrição está aberta.
+  List<NutricaoDoDia> _nutricoesDia = const [];
+  bool _nutricaoAberta = false;
+
   /// Fazenda + data das atividades carregadas (trocou, as marcações não
   /// valem mais).
   String? _chaveAtividades;
@@ -647,6 +652,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     final chave = '$fazenda|${_formatar(data)}';
     setState(() {
       _animaisPesados = a.pesados;
+      _nutricoesDia = a.nutricoes;
       if (chave != _chaveAtividades) {
         _atividadesMarcadas.clear();
       }
@@ -2632,9 +2638,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     String? imagem,
   ) {
     final marcada = _atividadesMarcadas.contains(chave);
+    // Nutrição: seta à direita que abre/fecha a lista do que foi distribuído
+    final comLista = chave == 'nutricao' && _nutricoesDia.isNotEmpty;
     // card do tamanho da informação (cada um de um tamanho, chamando a
     // atenção para o dado), encostado à esquerda
-    return Container(
+    final card = Container(
       alignment: Alignment.centerLeft,
       child: _linhaMarcar(
         texto,
@@ -2655,12 +2663,79 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         recuo: 6,
         // o espaço do check fica sempre reservado: o card não muda de
         // tamanho ao marcar
-        acao: SizedBox(
-          width: 28,
-          child: marcada
-              ? Icon(Icons.check, color: Colors.green[600], size: 28)
-              : null,
+        acao: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (comLista)
+              InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () => setState(() => _nutricaoAberta = !_nutricaoAberta),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    _nutricaoAberta
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
+                    color: const Color(0xFF228cb9),
+                    size: 26,
+                  ),
+                ),
+              ),
+            SizedBox(
+              width: 28,
+              child: marcada
+                  ? Icon(Icons.check, color: Colors.green[600], size: 28)
+                  : null,
+            ),
+          ],
         ),
+      ),
+    );
+    if (!comLista || !_nutricaoAberta) return card;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [card, _listaNutricao()],
+    );
+  }
+
+  /// Lista do card da Nutrição (aberta pela seta): pasto, produto e
+  /// quantidade, sem cabeçalho; o pasto só na primeira linha dos seus
+  /// produtos.
+  Widget _listaNutricao() {
+    final estilo = _textoMedio(13, _corRotulo);
+    String? pastoAnterior;
+    final linhas = <TableRow>[];
+    for (final n in _nutricoesDia) {
+      final novoPasto = n.pasto != pastoAnterior;
+      pastoAnterior = n.pasto;
+      linhas.add(
+        TableRow(
+          children: [
+            Padding(
+              padding: EdgeInsets.only(top: novoPasto ? 6 : 2, right: 12),
+              child: Text(novoPasto ? n.pasto : '', style: estilo),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: novoPasto ? 6 : 2, right: 12),
+              child: Text(n.produto, style: estilo),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: novoPasto ? 6 : 2),
+              child: Text(
+                n.quantidade,
+                textAlign: TextAlign.right,
+                style: estilo,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 2, 12, 4),
+      child: Table(
+        defaultColumnWidth: const IntrinsicColumnWidth(),
+        children: linhas,
       ),
     );
   }

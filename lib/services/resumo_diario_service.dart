@@ -20,7 +20,12 @@ typedef AtividadesDoDia = ({
   int abortos,
   int mortes,
   int pesados,
+  List<NutricaoDoDia> nutricoes,
 });
+
+/// Uma linha da nutrição do dia (lista do card da Nutrição na Seção 1):
+/// pasto, produto e a quantidade já com a unidade ("10 Kg").
+typedef NutricaoDoDia = ({String pasto, String produto, String quantidade});
 
 /// Dados do servidor usados pelo Resumo Diário da Fazenda.
 class ResumoDiarioService {
@@ -69,6 +74,16 @@ class ResumoDiarioService {
       for (final r in (json.decode(guardado) as List))
         MapEntry((r as Map)['id'].toString(), r['nome'].toString()),
     ];
+  }
+
+  /// 10 + "Kg" -> "10 Kg"; 12.5 + "Kg" -> "12,5 Kg".
+  static String _quantidade(Object? valor, Object? unidade) {
+    final v = valor is num ? valor : num.tryParse('$valor') ?? 0;
+    final numero = v == v.roundToDouble()
+        ? v.toInt().toString()
+        : v.toString().replaceAll('.', ',');
+    final u = unidade?.toString().trim() ?? '';
+    return u.isEmpty ? numero : '$numero $u';
   }
 
   static String _diaApi(DateTime d) =>
@@ -149,6 +164,16 @@ class ResumoDiarioService {
           abortos: qtd('abortos'),
           mortes: qtd('mortes'),
           pesados: qtd('pesados'),
+          nutricoes: [
+            if (dados['nutricoes'] is List)
+              for (final n in dados['nutricoes'] as List)
+                if (n is Map)
+                  (
+                    pasto: n['pasto']?.toString() ?? '',
+                    produto: n['produto']?.toString() ?? '',
+                    quantidade: _quantidade(n['quantidade'], n['unidade']),
+                  ),
+          ],
         );
       }
     } catch (e) {

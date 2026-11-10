@@ -484,10 +484,52 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   /// Ao digitar os totais: se a diferença sumir (iguais ou incompletos), os
   /// pastos marcados são limpos — numa nova diferença, escolhe-se de novo.
+  /// Quando os totais passam a bater, a Observação aparece e o cursor vai
+  /// para ela (teclado aberto, botões Anterior/Próximo à vista).
   void _totaisMudaram() {
-    setState(() {
+    final batiam = _totaisBatem;
+    _responderRebanho(() {
       if ((_diferenca ?? 0) == 0) _pastosDiferenca.clear();
-    });
+    }, focarObs: !batiam && _totaisBatem);
+  }
+
+  /// "Faltaram 6 animais" / "Sobraram 2 animais" (o número em negrito, do
+  /// tamanho do mm da chuva).
+  Widget _fraseDiferenca(int diferenca) {
+    final n = diferenca.abs();
+    final verbo = diferenca < 0
+        ? (n == 1 ? 'Faltou' : 'Faltaram')
+        : (n == 1 ? 'Sobrou' : 'Sobraram');
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Text.rich(
+        TextSpan(
+          style: TextStyle(fontSize: 15, color: _corRotulo),
+          children: [
+            TextSpan(text: '$verbo '),
+            TextSpan(
+              text: '$n',
+              style: _textoGrosso(_corRotulo).copyWith(fontSize: 14),
+            ),
+            TextSpan(text: n == 1 ? ' animal' : ' animais'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Largura de um campo do tamanho do seu rótulo (fonte do rótulo no meio
+  /// do campo + as margens de dentro).
+  double _larguraDoRotulo(String rotulo) {
+    final p = TextPainter(
+      text: TextSpan(
+        text: rotulo,
+        style: DefaultTextStyle.of(context).style.copyWith(fontSize: 14),
+      ),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    return p.width + 32;
   }
 
   /// Nomes dos pastos marcados, na ordem da lista.
@@ -2290,26 +2332,28 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         if (_conferiuGado == 'todo' || _pastosConferidos.isNotEmpty) ...[
           _animaisEsperados(),
           const SizedBox(height: 10),
-          CampoTextoTopo(
-            rotulo: '* Totais de Animais Encontrados',
-            rotuloNegrito: 'Encontrados',
-            altura: 80,
-            corRotulo: _corRotulo,
-            controller: _encontradosController,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            onChanged: (_) => _totaisMudaram(),
-          ),
-          // Totais diferentes: a diferença (só leitura) e os pastos
-          if ((_diferenca ?? 0) != 0) ...[
-            const SizedBox(height: 8),
-            CampoValorTopo(
-              rotulo: _diferenca! < 0 ? 'Quantos Faltaram' : 'Quantos Sobraram',
-              altura: 80,
-              corRotulo: _corRotulo,
-              valor: '${_diferenca!.abs()}',
+          // da largura do rótulo (o total tem poucos dígitos)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: SizedBox(
+              width: _larguraDoRotulo('* Totais de Animais Encontrados'),
+              child: CampoTextoTopo(
+                rotulo: '* Totais de Animais Encontrados',
+                rotuloNegrito: 'Encontrados',
+                altura: 80,
+                corRotulo: _corRotulo,
+                controller: _encontradosController,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                onChanged: (_) => _totaisMudaram(),
+              ),
             ),
-            const SizedBox(height: 8),
+          ),
+          // Totais diferentes: a diferença (frase, só leitura) e os pastos
+          if ((_diferenca ?? 0) != 0) ...[
+            const SizedBox(height: 10),
+            _fraseDiferenca(_diferenca!),
+            const SizedBox(height: 10),
             ..._seletorPastos(
               '* Em quais pastos está a diferença?',
               _pastosDiferenca,

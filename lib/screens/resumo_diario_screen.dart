@@ -506,10 +506,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Text.rich(
         TextSpan(
-          style: _textoMedio(15, cor),
+          // o azul claro é suave: texto na Medium e o número no negrito
+          style: _textoForte(15, cor),
           children: [
             TextSpan(text: '$verbo '),
-            TextSpan(text: '$n', style: _textoForte(15, cor)),
+            TextSpan(text: '$n', style: _negrito(15, cor)),
             TextSpan(text: n == 1 ? ' animal' : ' animais'),
           ],
         ),

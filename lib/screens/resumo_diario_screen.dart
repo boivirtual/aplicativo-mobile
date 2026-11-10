@@ -480,6 +480,13 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         // mudou o total esperado: sem diferença, limpa os pastos dela
         if ((_diferenca ?? 0) == 0) _pastosDiferenca.clear();
       }, focarObs: daDiferenca);
+      // pastos conferidos escolhidos (Parte do Gado): com os Animais Esperados
+      // na tela, o cursor vai para os Encontrados e o teclado abre
+      if (identical(escolhidos, _pastosConferidos) && marcados.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _encontradosFoco.requestFocus();
+        });
+      }
     }
   }
 

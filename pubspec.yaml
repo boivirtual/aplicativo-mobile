@@ -8,7 +8,7 @@ publish_to: 'none'
 # sempre que uma build nova for gerada pra teste (a hora importa: pode sair
 # mais de uma build no mesmo dia), é assim que o testador confirma na tela
 # "Atualizações" qual versão está rodando no aparelho.
-version: 3.0.0+11100944
+version: 3.0.0+11100949
 
 environment:
   sdk: ^3.10.0
@@ -55,6 +55,14 @@ flutter:
     - family: FuturaStd
       fonts:
         - asset: assets/fonts/FuturaStd-Light.otf
+    # Pesos reais da Futura, em famílias à parte (só onde o programa pedir —
+    # por enquanto o Resumo Diário); o resto do app continua na Light.
+    - family: FuturaStdMedium
+      fonts:
+        - asset: assets/fonts/FuturaStd-Medium.otf
+    - family: FuturaStdBold
+      fonts:
+        - asset: assets/fonts/FuturaStd-Bold.otf
 
 # Configuração do Splash
 flutter_native_splash:

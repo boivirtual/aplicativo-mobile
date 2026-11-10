@@ -903,7 +903,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           children: [
             const Icon(Icons.warning_amber_rounded, color: texto, size: 30),
             const SizedBox(width: 10),
-            Text('Atenção', style: EstiloApp.negrito(18, texto)),
+            Text('Atenção', style: _negrito(18, texto)),
           ],
         ),
         // largura toda que o modal permite (senão ele encolhe no texto)
@@ -924,7 +924,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             children: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, 'resumo'),
-                child: Text('Registrar', style: EstiloApp.negrito(14, texto)),
+                child: Text('Registrar', style: _negrito(14, texto)),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, 'folga'),
@@ -977,7 +977,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                   ),
                   TextSpan(
                     text: _formatar(_data),
-                    style: EstiloApp.negrito(17, EstiloApp.azulBarra),
+                    style: _negrito(17, EstiloApp.azulBarra),
                   ),
                 ],
               ),
@@ -1040,7 +1040,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             const TextSpan(text: 'Todos os usuários já '),
             TextSpan(
               text: 'Atualizaram',
-              style: EstiloApp.negrito(17, EstiloApp.azulBarra),
+              style: _negrito(17, EstiloApp.azulBarra),
             ),
             const TextSpan(text: ' os dados On-Line?'),
           ],
@@ -1114,7 +1114,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(texto, style: EstiloApp.negrito(15, const Color(0xFFA94442))),
+        Text(texto, style: _negrito(15, const Color(0xFFA94442))),
         if (acao != null) acao,
       ],
     ),
@@ -1239,7 +1239,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                 const TextSpan(text: 'Olá '),
                 TextSpan(
                   text: _nomeUsuario,
-                  style: EstiloApp.negrito(20, EstiloApp.azulBarra),
+                  style: _negrito(20, EstiloApp.azulBarra),
                 ),
                 const TextSpan(text: '!'),
               ],
@@ -1670,7 +1670,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
               ),
             ),
             const SizedBox(width: 10),
-            Text(_formatar(_data), style: EstiloApp.negrito(13, Colors.blue)),
+            Text(_formatar(_data), style: _negrito(13, Colors.blue)),
           ],
         ),
         const SizedBox(height: 8),
@@ -1706,7 +1706,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       texto,
       textAlign: TextAlign.center,
       style: negrito
-          ? EstiloApp.negrito(tamanho, Colors.blue[300]!)
+          ? _negrito(tamanho, Colors.blue[300]!)
           : TextStyle(
               fontSize: tamanho,
               fontWeight: FontWeight.bold,
@@ -1743,7 +1743,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             _atividadesRegistradas.length == 1
                 ? 'Clique na Atividade para Confirmar!'
                 : 'Clique nas Atividades para Confirmar!',
-            style: EstiloApp.negrito(14, _corRotulo),
+            style: _negrito(14, _corRotulo),
           ),
         ),
     ],
@@ -1997,7 +1997,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     child: Text(
       texto,
       style: negrito
-          ? EstiloApp.negrito(15, const Color(0xFF455A64))
+          ? _negrito(15, const Color(0xFF455A64))
           : const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
@@ -2015,28 +2015,23 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     shadows: [Shadow(color: cor, offset: const Offset(0.3, 0))],
   );
 
-  /// Mais grosso que o [_textoMedio], sem chegar ao negrito: os números da
-  /// Seção 3 (Animais Esperados, Faltaram/Sobraram) se destacam do texto só
-  /// pelo peso.
-  static TextStyle _textoForte(double tamanho, Color cor) => TextStyle(
-    fontSize: tamanho,
-    color: cor,
-    shadows: [
-      Shadow(color: cor, offset: const Offset(0.6, 0)),
-      Shadow(color: cor, offset: const Offset(-0.3, 0)),
-    ],
-  );
+  /// FuturaStd Medium (peso real, mais grosso que o [_textoMedio] e sem chegar
+  /// ao negrito): os números da Seção 3 (Animais Esperados,
+  /// Faltaram/Sobraram) se destacam do texto só pelo peso.
+  static TextStyle _textoForte(double tamanho, Color cor) =>
+      TextStyle(fontFamily: 'FuturaStdMedium', fontSize: tamanho, color: cor);
+
+  /// Negrito de verdade (FuturaStd Bold) no lugar do negrito simulado do
+  /// app (EstiloApp.negrito: traço da Light engrossado) — por enquanto só
+  /// no Resumo Diário.
+  static TextStyle _negrito(double tamanho, Color cor) =>
+      TextStyle(fontFamily: 'FuturaStdBold', fontSize: tamanho, color: cor);
 
   static TextStyle _textoGrosso(Color cor) => TextStyle(
+    fontFamily: 'FuturaStdBold',
     fontSize: 13,
     height: 1.15,
-    fontWeight: FontWeight.w900,
     color: cor,
-    shadows: [
-      Shadow(color: cor, offset: const Offset(0.4, 0)),
-      Shadow(color: cor, offset: const Offset(-0.4, 0)),
-      Shadow(color: cor, offset: const Offset(0, 0.4)),
-    ],
   );
 
   /// Opções lado a lado, no mesmo visual das Atividades do Dia: fundo
@@ -2464,7 +2459,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('$_nomeUsuario!', style: EstiloApp.negrito(19, _corRotulo)),
+            Text('$_nomeUsuario!', style: _negrito(19, _corRotulo)),
             const SizedBox(height: 10),
             Text.rich(
               TextSpan(
@@ -2496,7 +2491,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             const SizedBox(height: 24),
             Text(
               'Você Confirma todas as afirmativas acima?',
-              style: EstiloApp.negrito(17, _corRotulo),
+              style: _negrito(17, _corRotulo),
             ),
             const SizedBox(height: 12),
             SizedBox(
@@ -2548,7 +2543,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('$_nomeUsuario!', style: EstiloApp.negrito(19, _corRotulo)),
+            Text('$_nomeUsuario!', style: _negrito(19, _corRotulo)),
             const SizedBox(height: 10),
             Text(
               pesados > 0

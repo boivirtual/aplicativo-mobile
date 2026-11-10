@@ -597,7 +597,13 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Seção 1: o que foi distribuído de nutrição no dia (pasto, produto,
   /// quantidade) e se a lista do card da Nutrição está aberta.
   List<NutricaoDoDia> _nutricoesDia = const [];
-  bool _nutricaoAberta = false;
+
+  /// Seção 1: nomes dos pastos com troca de animais no dia (lista do card
+  /// "Trocamos animais de pasto").
+  List<String> _pastosAlteradosDia = const [];
+
+  /// Cards da Seção 1 com a lista aberta pela seta (Nutrição, Pastos).
+  final Set<String> _listasAbertas = {};
 
   /// Fazenda + data das atividades carregadas (trocou, as marcações não
   /// valem mais).
@@ -653,6 +659,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     setState(() {
       _animaisPesados = a.pesados;
       _nutricoesDia = a.nutricoes;
+      _pastosAlteradosDia = a.pastosAlterados;
       if (chave != _chaveAtividades) {
         _atividadesMarcadas.clear();
       }
@@ -2638,8 +2645,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     String? imagem,
   ) {
     final marcada = _atividadesMarcadas.contains(chave);
-    // Nutrição: seta à direita que abre/fecha a lista do que foi distribuído
-    final comLista = chave == 'nutricao' && _nutricoesDia.isNotEmpty;
+    // Nutrição e troca de pasto: seta à direita que abre/fecha a lista (o
+    // que foi distribuído; os pastos com troca)
+    final comLista =
+        (chave == 'nutricao' && _nutricoesDia.isNotEmpty) ||
+        (chave == 'mudei_pasto' && _pastosAlteradosDia.isNotEmpty);
+    final aberta = _listasAbertas.contains(chave);
     // card do tamanho da informação (cada um de um tamanho, chamando a
     // atenção para o dado), encostado à esquerda
     final card = Container(
@@ -2669,11 +2680,15 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
             if (comLista)
               InkWell(
                 borderRadius: BorderRadius.circular(16),
-                onTap: () => setState(() => _nutricaoAberta = !_nutricaoAberta),
+                onTap: () => setState(
+                  () => aberta
+                      ? _listasAbertas.remove(chave)
+                      : _listasAbertas.add(chave),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(4),
                   child: Icon(
-                    _nutricaoAberta
+                    aberta
                         ? Icons.keyboard_arrow_up
                         : Icons.keyboard_arrow_down,
                     color: const Color(0xFF228cb9),
@@ -2691,12 +2706,31 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ),
       ),
     );
-    if (!comLista || !_nutricaoAberta) return card;
+    if (!comLista || !aberta) return card;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [card, _listaNutricao()],
+      children: [
+        card,
+        chave == 'nutricao' ? _listaNutricao() : _listaPastosAlterados(),
+      ],
     );
   }
+
+  /// Lista do card "Trocamos animais de pasto" (aberta pela seta): só os
+  /// nomes dos pastos com troca de animais no dia.
+  Widget _listaPastosAlterados() => Padding(
+    padding: const EdgeInsets.fromLTRB(12, 2, 12, 4),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final p in _pastosAlteradosDia)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(p, style: _textoMedio(13, _corRotulo)),
+          ),
+      ],
+    ),
+  );
 
   /// Lista do card da Nutrição (aberta pela seta): pasto, produto e
   /// quantidade, sem cabeçalho; o pasto só na primeira linha dos seus

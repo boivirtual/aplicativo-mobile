@@ -21,6 +21,7 @@ typedef AtividadesDoDia = ({
   int mortes,
   int pesados,
   List<NutricaoDoDia> nutricoes,
+  List<String> pastosAlterados,
 });
 
 /// Uma linha da nutrição do dia (lista do card da Nutrição na Seção 1):
@@ -164,6 +165,10 @@ class ResumoDiarioService {
           abortos: qtd('abortos'),
           mortes: qtd('mortes'),
           pesados: qtd('pesados'),
+          pastosAlterados: [
+            if (dados['pastos_alterados'] is List)
+              for (final p in dados['pastos_alterados'] as List) p.toString(),
+          ],
           nutricoes: [
             if (dados['nutricoes'] is List)
               for (final n in dados['nutricoes'] as List)

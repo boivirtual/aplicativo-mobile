@@ -2021,18 +2021,18 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   static TextStyle _textoForte(double tamanho, Color cor) =>
       TextStyle(fontFamily: 'FuturaStdMedium', fontSize: tamanho, color: cor);
 
-  /// Negrito de verdade (FuturaStd Bold) no lugar do negrito simulado do
-  /// app (EstiloApp.negrito: traço da Light engrossado) — por enquanto só
-  /// no Resumo Diário.
-  static TextStyle _negrito(double tamanho, Color cor) =>
-      TextStyle(fontFamily: 'FuturaStdBold', fontSize: tamanho, color: cor);
-
-  static TextStyle _textoGrosso(Color cor) => TextStyle(
-    fontFamily: 'FuturaStdBold',
-    fontSize: 13,
-    height: 1.15,
+  /// Negrito do Resumo Diário: FuturaStd Medium com um reforço leve no traço
+  /// — entre a Medium e a Bold (a Bold ficou forte demais; a Futura não tem
+  /// peso entre as duas). No lugar do EstiloApp.negrito (Light engrossada).
+  static TextStyle _negrito(double tamanho, Color cor) => TextStyle(
+    fontFamily: 'FuturaStdMedium',
+    fontSize: tamanho,
     color: cor,
+    shadows: [Shadow(color: cor, offset: const Offset(0.4, 0))],
   );
+
+  static TextStyle _textoGrosso(Color cor) =>
+      _negrito(13, cor).copyWith(height: 1.15);
 
   /// Opções lado a lado, no mesmo visual das Atividades do Dia: fundo
   /// branco e borda cinza; a escolhida fica com fundo azul claro e borda

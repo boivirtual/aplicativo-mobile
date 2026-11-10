@@ -497,8 +497,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// o texto, ver [_textoForte]).
   Widget _fraseDiferenca(int diferenca) {
     final n = diferenca.abs();
-    // azul claro padrão do app (o dos títulos)
-    final cor = Colors.blue[300]!;
+    // Faltaram em vermelho (alerta); Sobraram no azul claro padrão do app
+    final cor = diferenca < 0 ? Colors.red[700]! : Colors.blue[300]!;
     final verbo = diferenca < 0
         ? (n == 1 ? 'Faltou' : 'Faltaram')
         : (n == 1 ? 'Sobrou' : 'Sobraram');

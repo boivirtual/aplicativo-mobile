@@ -594,6 +594,40 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Seção 4: quantos animais foram pesados no dia (vem com as atividades).
   int _animaisPesados = 0;
 
+  /// Seção 4: atividades do curral feitas no dia (cards no padrão da Seção
+  /// 1). "Nenhuma das Atividades" não se mistura com as outras.
+  static const _atividadesCurralDia = <(String, String, IconData)>[
+    ('lotes', 'Separamos os Lotes', Icons.call_split),
+    ('remedio', 'Aplicamos Remédio(s)', Icons.medication_outlined),
+    ('marcacao', 'Tatuagem ou Marcação', Icons.local_offer_outlined),
+    ('desmama', 'Desmama', Icons.child_care_outlined),
+    ('descorna', 'Descorna (Mochação)', Icons.content_cut),
+    ('nenhuma', 'Nenhuma das Atividades', Icons.block),
+  ];
+  final Set<String> _curralMarcadas = {};
+
+  /// Seção 4 pronta para o Próximo: alguma atividade (ou "Nenhuma das
+  /// Atividades") marcada.
+  bool get _secao4Completa => _curralMarcadas.isNotEmpty;
+
+  void _marcarCurral(String chave, bool marcada) {
+    setState(() {
+      if (!marcada) {
+        _curralMarcadas.remove(chave);
+      } else if (chave == 'nenhuma') {
+        // "Nenhuma das Atividades" desmarca as outras
+        _curralMarcadas
+          ..clear()
+          ..add(chave);
+      } else {
+        // marcou uma atividade: sai o "Nenhuma das Atividades"
+        _curralMarcadas
+          ..remove('nenhuma')
+          ..add(chave);
+      }
+    });
+  }
+
   /// Seção 1: o que foi distribuído de nutrição no dia (pasto, produto,
   /// quantidade) e se a lista do card da Nutrição está aberta.
   List<NutricaoDoDia> _nutricoesDia = const [];
@@ -1352,8 +1386,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       return;
     }
     if (_secao == 4) {
-      // Atividades do Curral (nova, ainda sem campos): o Próximo segue para
-      // as seções que já estão prontas
+      // Atividades do Curral: alguma atividade marcada (o Próximo fica
+      // desativado até isso)
+      if (!_secao4Completa) return;
       setState(() => _secao = 5);
       return;
     }
@@ -1624,13 +1659,15 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                         ),
                                         // Seção 1: inativo até confirmar as
                                         // atividades registradas; Seção 2: até o Sim da
-                                        // confirmação; Seção 3: até completar
+                                        // confirmação; Seção 3: até completar; Seção 4: até marcar uma atividade
                                         onPressed:
                                             (_secao == 1 && !_secao1Completa) ||
                                                 (_secao == 2 &&
                                                     !_secao2Completa) ||
                                                 (_secao == 3 &&
-                                                    !_secao3Completa)
+                                                    !_secao3Completa) ||
+                                                (_secao == 4 &&
+                                                    !_secao4Completa)
                                             ? null
                                             : _proximo,
                                         child: const Row(
@@ -2610,6 +2647,23 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           ],
         ),
       ),
+      // cards das atividades, no padrão da Seção 1
+      Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Text(
+          'Clique nas Atividades para Confirmar!',
+          style: _negrito(14, _corRotulo),
+        ),
+      ),
+      for (final a in _atividadesCurralDia) ...[
+        _cardSecao1(
+          a.$2,
+          a.$3,
+          _curralMarcadas.contains(a.$1),
+          (v) => _marcarCurral(a.$1, v),
+        ),
+        const SizedBox(height: 8),
+      ],
     ];
   }
 
@@ -2651,6 +2705,38 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       }
     });
   }
+
+  /// Card simples no padrão da Seção 1 (só texto e ícone): azul bem claro,
+  /// sem borda, do tamanho do conteúdo; marcado, azul mais escuro com o
+  /// check verde. Usado nas atividades do curral da Seção 4.
+  Widget _cardSecao1(
+    String texto,
+    IconData icone,
+    bool marcada,
+    ValueChanged<bool> aoMarcar,
+  ) => Container(
+    alignment: Alignment.centerLeft,
+    child: _linhaMarcar(
+      texto,
+      icone,
+      marcada,
+      aoMarcar,
+      // vazio: o texto sem negrito, como os cards da Seção 1
+      valor: '',
+      semCaixa: true,
+      fundo: const Color(0xFFF9FCFF),
+      fundoMarcado: const Color(0xFFCFE5FA),
+      ajustado: true,
+      semBorda: true,
+      recuo: 6,
+      acao: SizedBox(
+        width: 28,
+        child: marcada
+            ? Icon(Icons.check, color: Colors.green[600], size: 28)
+            : null,
+      ),
+    ),
+  );
 
   /// Card de uma atividade da Seção 1: ícone, texto (o valor em negrito, com
   /// texto antes e/ou depois) e, marcado, o check verde à direita.

@@ -163,16 +163,21 @@ class _RemedioModalState extends State<RemedioModal> {
 
   /// "+ Medicamento": guarda o remédio, limpa só o grupo Remédio(s) (a
   /// categoria fica) e destaca o Tipo para incluir o próximo.
-  /// "Outra Categoria": guarda o remédio, limpa tudo e destaca a Categoria.
+  /// "Outra Categoria": guarda o remédio (se tiver um na tela — depois do
+  /// "+ Medicamento" o grupo já está vazio e guardado), limpa tudo e destaca
+  /// a Categoria.
   Future<void> _guardarE({required bool outraCategoria}) async {
     FocusManager.instance.primaryFocus?.unfocus();
-    final erro = _faltaNoRemedio;
+    // Outra Categoria com o grupo Remédio(s) vazio e algo já guardado: só
+    // limpa e passa para a próxima categoria
+    final guardar = !outraCategoria || _remedioComecado || _aplicacoes.isEmpty;
+    final erro = guardar ? _faltaNoRemedio : null;
     if (erro != null) {
       await AppAlert.erro(context, erro);
       return;
     }
     setState(() {
-      _guardarRemedio();
+      if (guardar) _guardarRemedio();
       _limparRemedio();
       _selectAberto = null;
       if (outraCategoria) {
@@ -593,7 +598,7 @@ class _RemedioModalState extends State<RemedioModal> {
                       ),
                       onPressed: _confirmar,
                       child: const Text(
-                        'Confirmar Aplicação',
+                        'Encerrar Aplicação',
                         style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
                     ),

@@ -1352,7 +1352,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       return;
     }
     if (_secao == 4) {
-      // Atividades do Curral (nova): o Próximo fica desativado por enquanto
+      // Atividades do Curral (nova, ainda sem campos): o Próximo segue para
+      // as seções que já estão prontas
+      setState(() => _secao = 5);
       return;
     }
     if (_secao == 5) {
@@ -1622,14 +1624,13 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                         ),
                                         // Seção 1: inativo até confirmar as
                                         // atividades registradas; Seção 2: até o Sim da
-                                        // confirmação; Seção 3: até completar; Seção 4: desativado por enquanto
+                                        // confirmação; Seção 3: até completar
                                         onPressed:
                                             (_secao == 1 && !_secao1Completa) ||
                                                 (_secao == 2 &&
                                                     !_secao2Completa) ||
                                                 (_secao == 3 &&
-                                                    !_secao3Completa) ||
-                                                _secao == 4
+                                                    !_secao3Completa)
                                             ? null
                                             : _proximo,
                                         child: const Row(

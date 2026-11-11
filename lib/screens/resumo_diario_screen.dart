@@ -16,6 +16,7 @@ import '../widgets/tarja_fazenda_widget.dart';
 import 'aplicacao_modal.dart';
 import 'chuva_screen.dart';
 import 'mapa_screen.dart';
+import 'remedio_modal.dart';
 import 'tratamento_modal.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 
@@ -606,19 +607,38 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   ];
   final Set<String> _curralMarcadas = {};
 
+  /// Dados do modal "Aplicação de Remédio(s)" (card "Aplicamos Remédio(s)").
+  Map<String, dynamic>? _remedio;
+
   /// Seção 4 pronta para o Próximo: alguma atividade (ou "Nenhuma das
   /// Atividades") marcada.
   bool get _secao4Completa => _curralMarcadas.isNotEmpty;
+
+  /// Card "Aplicamos Remédio(s)": abre o modal (com o que já foi informado,
+  /// se tiver). Confirmado, o card fica marcado; pelo (x), nada muda.
+  Future<void> _abrirRemedio() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final dados = await showDialog<Map<String, dynamic>>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => RemedioModal(dados: _remedio),
+    );
+    if (dados == null || !mounted) return;
+    _remedio = dados;
+    _marcarCurral('remedio', true);
+  }
 
   void _marcarCurral(String chave, bool marcada) {
     setState(() {
       if (!marcada) {
         _curralMarcadas.remove(chave);
+        if (chave == 'remedio') _remedio = null;
       } else if (chave == 'nenhuma') {
         // "Nenhuma das Atividades" desmarca as outras
         _curralMarcadas
           ..clear()
           ..add(chave);
+        _remedio = null;
       } else {
         // marcou uma atividade: sai o "Nenhuma das Atividades"
         _curralMarcadas
@@ -2660,7 +2680,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           a.$2,
           a.$3,
           _curralMarcadas.contains(a.$1),
-          (v) => _marcarCurral(a.$1, v),
+          (v) => a.$1 == 'remedio' ? _abrirRemedio() : _marcarCurral(a.$1, v),
         ),
         const SizedBox(height: 8),
       ],

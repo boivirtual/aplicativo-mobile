@@ -136,6 +136,21 @@ class _RemedioModalState extends State<RemedioModal> {
     });
   }
 
+  /// Título de um grupo de campos (Categoria, Remédio(s)): a mesma fonte do
+  /// "Clique nas Atividades para Confirmar!" do Resumo (Medium com reforço).
+  Widget _tituloGrupo(String texto) => Padding(
+    padding: const EdgeInsets.only(left: 2, bottom: 8),
+    child: Text(
+      texto,
+      style: TextStyle(
+        fontFamily: 'FuturaStdMedium',
+        fontSize: 14,
+        color: _corRotulo,
+        shadows: [Shadow(color: _corRotulo, offset: const Offset(0.4, 0))],
+      ),
+    ),
+  );
+
   /// Select aberto no próprio campo (só um por vez); null = todos fechados.
   String? _selectAberto;
 
@@ -306,6 +321,7 @@ class _RemedioModalState extends State<RemedioModal> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        _tituloGrupo('Categoria'),
                         _select(
                           'Categoria Animal',
                           _categorias,
@@ -344,7 +360,8 @@ class _RemedioModalState extends State<RemedioModal> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 18),
+                        _tituloGrupo('Remédio(s)'),
                         _select(
                           'Tipo',
                           _tipos,

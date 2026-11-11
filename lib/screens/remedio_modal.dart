@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../utils/app_alert.dart';
+import '../utils/estilo_app.dart';
 import '../utils/rolar_ate_foco.dart';
 import '../widgets/campo_topo_widget.dart';
 
@@ -69,6 +70,14 @@ class _RemedioModalState extends State<RemedioModal> {
   final Set<String> _sintomasMarcados = {};
   final _doseController = TextEditingController();
   String? _unidade;
+
+  /// Remédios já guardados pelo "+ Medicamento" / "Outra Categoria" (cada um
+  /// com a categoria e a qtde da hora), na ordem em que entraram.
+  final List<Map<String, dynamic>> _aplicacoes = [];
+
+  /// Select com a borda azul, indicando o próximo a preencher (Tipo depois do
+  /// "+ Medicamento"; Categoria Animal depois do "Outra Categoria").
+  String? _destacado;
   final _rolagem = ScrollController();
 
   @override
@@ -76,6 +85,9 @@ class _RemedioModalState extends State<RemedioModal> {
     super.initState();
     final d = widget.dados;
     if (d != null) {
+      for (final a in (d['aplicacoes'] as List? ?? const [])) {
+        _aplicacoes.add(Map<String, dynamic>.from(a as Map));
+      }
       _categoria = d['categoria']?.toString();
       _qtdeController.text = (d['qtde'] ?? '').toString();
       _brincoController.text = (d['brinco'] ?? '').toString();
@@ -99,27 +111,32 @@ class _RemedioModalState extends State<RemedioModal> {
 
   int get _qtde => int.tryParse(_qtdeController.text.trim()) ?? 0;
 
-  Future<void> _confirmar() async {
-    FocusManager.instance.primaryFocus?.unfocus();
-    final erro = _categoria == null
-        ? 'Selecione a Categoria Animal.'
-        : _qtde <= 0
-        ? 'Informe a Qtde Animais.'
-        : _tipo == null
-        ? 'Selecione o Tipo.'
-        : _produtoController.text.trim().isEmpty
-        ? 'Informe o Nome do Produto.'
-        : _doseController.text.trim().isEmpty
-        ? 'Informe a Qtde/Cabeça.'
-        : _unidade == null
-        ? 'Selecione a Unidade.'
-        : null;
-    if (erro != null) {
-      await AppAlert.erro(context, erro);
-      return;
-    }
-    if (!mounted) return;
-    Navigator.pop(context, <String, dynamic>{
+  /// O que falta para guardar o remédio da tela (null = pode guardar).
+  String? get _faltaNoRemedio => _categoria == null
+      ? 'Selecione a Categoria Animal.'
+      : _qtde <= 0
+      ? 'Informe a Qtde Animais.'
+      : _tipo == null
+      ? 'Selecione o Tipo.'
+      : _produtoController.text.trim().isEmpty
+      ? 'Informe o Nome do Produto.'
+      : _doseController.text.trim().isEmpty
+      ? 'Informe a Qtde/Cabeça.'
+      : _unidade == null
+      ? 'Selecione a Unidade.'
+      : null;
+
+  /// Algum campo do grupo Remédio(s) começado.
+  bool get _remedioComecado =>
+      _tipo != null ||
+      _produtoController.text.trim().isNotEmpty ||
+      _sintomasMarcados.isNotEmpty ||
+      _doseController.text.trim().isNotEmpty ||
+      _unidade != null;
+
+  /// Guarda na lista o remédio da tela, com a categoria e a qtde da hora.
+  void _guardarRemedio() {
+    _aplicacoes.add(<String, dynamic>{
       'categoria': _categoria,
       'qtde': _qtde,
       // o brinco só vale para 1 animal
@@ -135,6 +152,123 @@ class _RemedioModalState extends State<RemedioModal> {
       'unidade': _unidade,
     });
   }
+
+  void _limparRemedio() {
+    _tipo = null;
+    _produtoController.clear();
+    _sintomasMarcados.clear();
+    _doseController.clear();
+    _unidade = null;
+  }
+
+  /// "+ Medicamento": guarda o remédio, limpa só o grupo Remédio(s) (a
+  /// categoria fica) e destaca o Tipo para incluir o próximo.
+  /// "Outra Categoria": guarda o remédio, limpa tudo e destaca a Categoria.
+  Future<void> _guardarE({required bool outraCategoria}) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final erro = _faltaNoRemedio;
+    if (erro != null) {
+      await AppAlert.erro(context, erro);
+      return;
+    }
+    setState(() {
+      _guardarRemedio();
+      _limparRemedio();
+      _selectAberto = null;
+      if (outraCategoria) {
+        _categoria = null;
+        _qtdeController.clear();
+        _brincoController.clear();
+        _destacado = 'Categoria Animal';
+      } else {
+        _destacado = 'Tipo';
+      }
+    });
+  }
+
+  Future<void> _confirmar() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    // o remédio da tela entra junto (se começado, tem que estar completo)
+    if (_remedioComecado || _aplicacoes.isEmpty) {
+      final erro = _faltaNoRemedio;
+      if (erro != null) {
+        await AppAlert.erro(context, erro);
+        return;
+      }
+      _guardarRemedio();
+    }
+    if (!mounted) return;
+    Navigator.pop(context, <String, dynamic>{'aplicacoes': _aplicacoes});
+  }
+
+  /// Lista do que já foi guardado, com rolagem: a categoria e a qtde só na
+  /// primeira linha de cada uma; depois o tipo e o nome do produto.
+  Widget _listaAplicacoes() {
+    final estilo = TextStyle(fontSize: 13, color: _corRotulo);
+    final linhas = <TableRow>[];
+    String? grupoAnterior;
+    for (final a in _aplicacoes) {
+      final grupo = '${a['categoria']}|${a['qtde']}';
+      final novo = grupo != grupoAnterior;
+      grupoAnterior = grupo;
+      final topo = novo && linhas.isNotEmpty ? 8.0 : 2.0;
+      linhas.add(
+        TableRow(
+          children: [
+            Padding(
+              padding: EdgeInsets.only(top: topo, right: 10),
+              child: Text(
+                novo ? '${a['categoria']} - ${a['qtde']}' : '',
+                style: estilo,
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: topo, right: 10),
+              child: Text('${a['tipo']}', style: estilo),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: topo),
+              child: Text('${a['produto']}', style: estilo),
+            ),
+          ],
+        ),
+      );
+    }
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      constraints: const BoxConstraints(maxHeight: 150),
+      padding: const EdgeInsets.fromLTRB(10, 6, 6, 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Scrollbar(
+        thumbVisibility: true,
+        child: SingleChildScrollView(
+          child: Table(
+            defaultColumnWidth: const IntrinsicColumnWidth(),
+            children: linhas,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Botão de guardar (+ Medicamento / Outra Categoria): btn-info do app.
+  Widget _botaoGuardar(String texto, VoidCallback aoTocar) => SizedBox(
+    height: 42,
+    child: ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF5BC0DE),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      onPressed: aoTocar,
+      child: Text(texto, style: const TextStyle(fontSize: 14)),
+    ),
+  );
 
   /// Título de um grupo de campos (Categoria, Remédio(s)): a mesma fonte do
   /// "Clique nas Atividades para Confirmar!" do Resumo (Medium com reforço).
@@ -166,6 +300,7 @@ class _RemedioModalState extends State<RemedioModal> {
     Set<String>? marcados,
   }) {
     final aberto = _selectAberto == rotulo;
+    final destacado = _destacado == rotulo;
     final varios = marcados != null;
     final escolhidos = [
       for (final o in opcoes)
@@ -174,22 +309,30 @@ class _RemedioModalState extends State<RemedioModal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        CampoValorTopo(
-          rotulo: rotulo,
-          corRotulo: _corRotulo,
-          valor: varios
-              ? (escolhidos.isEmpty
-                    ? ''
-                    : '${escolhidos.length} selecionado(s)')
-              : (valor ?? ''),
-          icone: Icon(
-            aberto ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-            color: _corRotulo,
+        // destacado: borda azul (a mesma do campo em edição)
+        DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: EstiloApp.molduraCampo(ativo: destacado),
+          child: CampoValorTopo(
+            rotulo: rotulo,
+            corRotulo: _corRotulo,
+            valor: varios
+                ? (escolhidos.isEmpty
+                      ? ''
+                      : '${escolhidos.length} selecionado(s)')
+                : (valor ?? ''),
+            icone: Icon(
+              aberto ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+              color: _corRotulo,
+            ),
+            onTap: () {
+              FocusManager.instance.primaryFocus?.unfocus();
+              setState(() {
+                _selectAberto = aberto ? null : rotulo;
+                if (destacado) _destacado = null;
+              });
+            },
           ),
-          onTap: () {
-            FocusManager.instance.primaryFocus?.unfocus();
-            setState(() => _selectAberto = aberto ? null : rotulo);
-          },
         ),
         if (aberto)
           Container(
@@ -413,6 +556,25 @@ class _RemedioModalState extends State<RemedioModal> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _botaoGuardar(
+                                '+ Medicamento',
+                                () => _guardarE(outraCategoria: false),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _botaoGuardar(
+                                'Outra Categoria',
+                                () => _guardarE(outraCategoria: true),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (_aplicacoes.isNotEmpty) _listaAplicacoes(),
                       ],
                     ),
                   ),

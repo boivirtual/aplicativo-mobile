@@ -2582,12 +2582,29 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           children: [
             Text('$_nomeUsuario!', style: _negrito(19, _corRotulo)),
             const SizedBox(height: 10),
-            Text(
-              pesados > 0
-                  ? '$quando pesamos $pesados '
-                        '${pesados == 1 ? 'animal' : 'animais'}. Me conta mais!'
-                  : '$quando não pesamos animais. Me conta mais!',
-              style: _textoMedio(17, _corRotulo).copyWith(height: 1.5),
+            Text.rich(
+              TextSpan(
+                style: _textoMedio(17, _corRotulo).copyWith(height: 1.5),
+                children: pesados > 0
+                    ? [
+                        TextSpan(text: '$quando pesamos '),
+                        // a quantidade em destaque, como nas outras seções
+                        TextSpan(
+                          text: '$pesados',
+                          style: _textoForte(17, _corRotulo),
+                        ),
+                        TextSpan(
+                          text:
+                              ' ${pesados == 1 ? 'animal' : 'animais'}. '
+                              'Me conta mais!',
+                        ),
+                      ]
+                    : [
+                        TextSpan(
+                          text: '$quando não pesamos animais. Me conta mais!',
+                        ),
+                      ],
+              ),
             ),
           ],
         ),

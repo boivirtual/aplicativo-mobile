@@ -11,8 +11,8 @@ import '../widgets/campo_topo_widget.dart';
 /// conteúdo com rolagem.
 ///
 /// Campos: Categoria Animal (uma só), Qtde Animais e, com 1 animal, o Id do
-/// Brinco (opcional); Tipo; Nome do Produto e Sintoma (opcional); Qtde/Cabeça
-/// e Unidade. Devolve os dados ao confirmar; null pelo (x).
+/// Brinco (opcional); Tipo; Nome do Produto; Sintoma (vários, opcional);
+/// Qtde/Cabeça e Unidade. Devolve os dados ao confirmar; null pelo (x).
 class RemedioModal extends StatefulWidget {
   /// Dados já informados (editar); null = novo.
   final Map<String, dynamic>? dados;
@@ -66,7 +66,7 @@ class _RemedioModalState extends State<RemedioModal> {
   final _brincoController = TextEditingController();
   String? _tipo;
   final _produtoController = TextEditingController();
-  String? _sintoma;
+  final Set<String> _sintomasMarcados = {};
   final _doseController = TextEditingController();
   String? _unidade;
   final _rolagem = ScrollController();
@@ -81,7 +81,7 @@ class _RemedioModalState extends State<RemedioModal> {
       _brincoController.text = (d['brinco'] ?? '').toString();
       _tipo = d['tipo']?.toString();
       _produtoController.text = (d['produto'] ?? '').toString();
-      _sintoma = d['sintoma']?.toString();
+      _sintomasMarcados.addAll(List<String>.from(d['sintomas'] ?? []));
       _doseController.text = (d['dose'] ?? '').toString();
       _unidade = d['unidade']?.toString();
     }
@@ -126,7 +126,11 @@ class _RemedioModalState extends State<RemedioModal> {
       'brinco': _qtde == 1 ? _brincoController.text.trim() : '',
       'tipo': _tipo,
       'produto': _produtoController.text.trim(),
-      'sintoma': _sintoma,
+      // na ordem das opções, não na ordem em que foram tocados
+      'sintomas': [
+        for (final s in _sintomas)
+          if (_sintomasMarcados.contains(s)) s,
+      ],
       'dose': _doseController.text.trim(),
       'unidade': _unidade,
     });
@@ -227,55 +231,122 @@ class _RemedioModalState extends State<RemedioModal> {
     ),
   ];
 
-  /// Select de uma opção (Tipo, Sintoma, Unidade): o campo mostra a
-  /// escolhida; o toque abre a lista, e um toque na opção escolhe e fecha.
+  /// Select aberto no próprio campo (só um por vez); null = todos fechados.
+  String? _selectAberto;
+
+  /// Select com a lista aberta embaixo do próprio campo (como o Responsável
+  /// do Tratamento). De uma opção ([valor]/[aoEscolher]: Tipo, Unidade), o
+  /// toque escolhe e fecha; de várias ([marcados]: Sintoma), o toque marca ou
+  /// desmarca, a lista fica aberta e os marcados aparecem embaixo do campo.
   Widget _select(
     String rotulo,
-    List<String> opcoes,
+    List<String> opcoes, {
     String? valor,
-    ValueChanged<String> aoEscolher,
-  ) => CampoValorTopo(
-    rotulo: rotulo,
-    corRotulo: _corRotulo,
-    valor: valor ?? '',
-    icone: Icon(Icons.arrow_drop_down, color: _corRotulo),
-    onTap: () async {
-      FocusManager.instance.primaryFocus?.unfocus();
-      final escolhida = await showDialog<String>(
-        context: context,
-        builder: (ctx) => SimpleDialog(
-          title: Text(
-            rotulo,
-            style: const TextStyle(fontSize: 16, color: _azulTitulo),
+    ValueChanged<String>? aoEscolher,
+    Set<String>? marcados,
+  }) {
+    final aberto = _selectAberto == rotulo;
+    final varios = marcados != null;
+    final escolhidos = [
+      for (final o in opcoes)
+        if (varios ? marcados.contains(o) : o == valor) o,
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CampoValorTopo(
+          rotulo: rotulo,
+          corRotulo: _corRotulo,
+          valor: varios
+              ? (escolhidos.isEmpty
+                    ? ''
+                    : '${escolhidos.length} selecionado(s)')
+              : (valor ?? ''),
+          icone: Icon(
+            aberto ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+            color: _corRotulo,
           ),
-          children: [
-            for (final o in opcoes)
-              SimpleDialogOption(
-                onPressed: () => Navigator.pop(ctx, o),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        o,
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: o == valor ? _azulTitulo : Colors.black87,
+          onTap: () {
+            FocusManager.instance.primaryFocus?.unfocus();
+            setState(() => _selectAberto = aberto ? null : rotulo);
+          },
+        ),
+        if (aberto)
+          Container(
+            margin: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFCFD8DC)),
+            ),
+            child: Column(
+              children: [
+                for (final o in opcoes)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 3),
+                    child: Material(
+                      color: escolhidos.contains(o)
+                          ? const Color(0xFFD6E8FA)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(6),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(6),
+                        onTap: () => setState(() {
+                          if (varios) {
+                            if (!marcados.remove(o)) marcados.add(o);
+                          } else {
+                            aoEscolher?.call(o);
+                            _selectAberto = null;
+                          }
+                        }),
+                        child: Container(
+                          height: 40,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  o,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: escolhidos.contains(o)
+                                        ? _azulTitulo
+                                        : Colors.black87,
+                                  ),
+                                ),
+                              ),
+                              if (escolhidos.contains(o))
+                                const Icon(
+                                  Icons.check,
+                                  size: 18,
+                                  color: _azulBotao,
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                    if (o == valor)
-                      const Icon(Icons.check, size: 18, color: _azulBotao),
-                  ],
-                ),
+                  ),
+              ],
+            ),
+          ),
+        // vários: os marcados embaixo do campo, como no Tratamento
+        if (varios && escolhidos.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
+            child: Text(
+              escolhidos.join(', '),
+              style: TextStyle(
+                fontSize: 11,
+                fontStyle: FontStyle.italic,
+                color: Colors.blue[300],
               ),
-          ],
-        ),
-      );
-      if (escolhida != null && mounted) {
-        setState(() => aoEscolher(escolhida));
-      }
-    },
-  );
+            ),
+          ),
+      ],
+    );
+  }
 
   bool _tecladoAntes = false;
 
@@ -356,30 +427,25 @@ class _RemedioModalState extends State<RemedioModal> {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        _select('Tipo', _tipos, _tipo, (v) => _tipo = v),
+                        _select(
+                          'Tipo',
+                          _tipos,
+                          valor: _tipo,
+                          aoEscolher: (v) => _tipo = v,
+                        ),
                         const SizedBox(height: 12),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: CampoTextoTopo(
-                                rotulo: 'Nome do Produto',
-                                corRotulo: _corRotulo,
-                                controller: _produtoController,
-                                textCapitalization:
-                                    TextCapitalization.characters,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _select(
-                                'Sintoma',
-                                _sintomas,
-                                _sintoma,
-                                (v) => _sintoma = v,
-                              ),
-                            ),
-                          ],
+                        // Nome do Produto e, embaixo, o Sintoma
+                        CampoTextoTopo(
+                          rotulo: 'Nome do Produto',
+                          corRotulo: _corRotulo,
+                          controller: _produtoController,
+                          textCapitalization: TextCapitalization.characters,
+                        ),
+                        const SizedBox(height: 12),
+                        _select(
+                          'Sintoma',
+                          _sintomas,
+                          marcados: _sintomasMarcados,
                         ),
                         const SizedBox(height: 12),
                         Row(
@@ -406,8 +472,8 @@ class _RemedioModalState extends State<RemedioModal> {
                               child: _select(
                                 'Unidade',
                                 _unidades,
-                                _unidade,
-                                (v) => _unidade = v,
+                                valor: _unidade,
+                                aoEscolher: (v) => _unidade = v,
                               ),
                             ),
                           ],

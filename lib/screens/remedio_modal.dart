@@ -136,101 +136,6 @@ class _RemedioModalState extends State<RemedioModal> {
     });
   }
 
-  /// Rótulo do campo em negrito (a fonte do app só tem a versão fina: o
-  /// traço é engrossado com "sombras" da mesma cor).
-  Widget _rotulo(String texto) => Padding(
-    padding: const EdgeInsets.only(left: 2, bottom: 2),
-    child: Text(
-      texto,
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w900,
-        color: _corRotulo,
-        shadows: [
-          Shadow(color: _corRotulo, offset: const Offset(0.4, 0)),
-          Shadow(color: _corRotulo, offset: const Offset(-0.4, 0)),
-        ],
-      ),
-    ),
-  );
-
-  /// Lista já aberta, como a do Tratamento, mas de uma opção só: um toque
-  /// escolhe a categoria (a anterior sai); embaixo, a escolhida.
-  List<Widget> _listaCategoria() => [
-    _rotulo('Categoria Animal'),
-    Padding(
-      padding: const EdgeInsets.only(left: 2, bottom: 4),
-      child: Text(
-        'Toque para selecionar uma opção.',
-        style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-      ),
-    ),
-    Container(
-      // 4 linhas à vista; o resto rola
-      height: 4 * 44 + 8,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Scrollbar(
-        thumbVisibility: true,
-        child: ListView.builder(
-          padding: const EdgeInsets.fromLTRB(4, 4, 10, 4),
-          itemExtent: 44,
-          itemCount: _categorias.length,
-          itemBuilder: (context, i) {
-            final c = _categorias[i];
-            final marcado = c == _categoria;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 3),
-              child: Material(
-                color: marcado ? const Color(0xFFD6E8FA) : Colors.transparent,
-                borderRadius: BorderRadius.circular(6),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(6),
-                  onTap: () {
-                    FocusManager.instance.primaryFocus?.unfocus();
-                    setState(() => _categoria = c);
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            c,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: marcado ? _azulTitulo : Colors.black87,
-                            ),
-                          ),
-                        ),
-                        if (marcado)
-                          const Icon(Icons.check, size: 18, color: _azulBotao),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    ),
-    Padding(
-      padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
-      child: Text(
-        _categoria ?? 'Nenhuma selecionada',
-        // só uma referência do que foi escolhido: pequena e em azul claro
-        style: TextStyle(
-          fontSize: 11,
-          fontStyle: FontStyle.italic,
-          color: _categoria == null ? Colors.grey[600] : Colors.blue[300],
-        ),
-      ),
-    ),
-  ];
-
   /// Select aberto no próprio campo (só um por vez); null = todos fechados.
   String? _selectAberto;
 
@@ -337,10 +242,18 @@ class _RemedioModalState extends State<RemedioModal> {
             padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
             child: Text(
               escolhidos.join(', '),
+              // um pouco mais grosso que o texto normal (a fonte do app só tem
+              // a versão fina: o traço é engrossado com uma "sombra" leve)
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 fontStyle: FontStyle.italic,
                 color: Colors.blue[300],
+                shadows: [
+                  Shadow(
+                    color: Colors.blue[300]!,
+                    offset: const Offset(0.4, 0),
+                  ),
+                ],
               ),
             ),
           ),
@@ -393,7 +306,12 @@ class _RemedioModalState extends State<RemedioModal> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        ..._listaCategoria(),
+                        _select(
+                          'Categoria Animal',
+                          _categorias,
+                          valor: _categoria,
+                          aoEscolher: (v) => _categoria = v,
+                        ),
                         const SizedBox(height: 12),
                         Row(
                           children: [

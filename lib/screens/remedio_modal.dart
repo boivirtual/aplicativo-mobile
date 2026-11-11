@@ -10,8 +10,9 @@ import '../widgets/campo_topo_widget.dart';
 /// da Seção 5: fundo cinza, (x) no canto para fechar sem gravar nada e o
 /// conteúdo com rolagem.
 ///
-/// Por enquanto: Categoria Animal (uma só), Qtde Animais e, com 1 animal, o
-/// Id do Brinco (opcional). Devolve os dados ao confirmar; null pelo (x).
+/// Campos: Categoria Animal (uma só), Qtde Animais e, com 1 animal, o Id do
+/// Brinco (opcional); Tipo; Nome do Produto e Sintoma (opcional); Qtde/Cabeça
+/// e Unidade. Devolve os dados ao confirmar; null pelo (x).
 class RemedioModal extends StatefulWidget {
   /// Dados já informados (editar); null = novo.
   final Map<String, dynamic>? dados;
@@ -39,9 +40,35 @@ class _RemedioModalState extends State<RemedioModal> {
     'CAVALOS',
   ];
 
+  static const _tipos = [
+    'Vacina',
+    'Vermífugo',
+    'Carrapaticida',
+    'Mosquicida',
+    'Medicamento',
+    'Reprodução',
+  ];
+
+  // os mesmos sintomas do modal de Tratamento (Seção 5)
+  static const _sintomas = [
+    'Apático',
+    'Bicheira',
+    'Diarreia',
+    'Mancando',
+    'Coriza / Tosse',
+    'Outro',
+  ];
+
+  static const _unidades = ['ml', 'ml/Kg', 'Unidade'];
+
   String? _categoria;
   final _qtdeController = TextEditingController();
   final _brincoController = TextEditingController();
+  String? _tipo;
+  final _produtoController = TextEditingController();
+  String? _sintoma;
+  final _doseController = TextEditingController();
+  String? _unidade;
   final _rolagem = ScrollController();
 
   @override
@@ -52,6 +79,11 @@ class _RemedioModalState extends State<RemedioModal> {
       _categoria = d['categoria']?.toString();
       _qtdeController.text = (d['qtde'] ?? '').toString();
       _brincoController.text = (d['brinco'] ?? '').toString();
+      _tipo = d['tipo']?.toString();
+      _produtoController.text = (d['produto'] ?? '').toString();
+      _sintoma = d['sintoma']?.toString();
+      _doseController.text = (d['dose'] ?? '').toString();
+      _unidade = d['unidade']?.toString();
     }
   }
 
@@ -59,6 +91,8 @@ class _RemedioModalState extends State<RemedioModal> {
   void dispose() {
     _qtdeController.dispose();
     _brincoController.dispose();
+    _produtoController.dispose();
+    _doseController.dispose();
     _rolagem.dispose();
     super.dispose();
   }
@@ -71,6 +105,14 @@ class _RemedioModalState extends State<RemedioModal> {
         ? 'Selecione a Categoria Animal.'
         : _qtde <= 0
         ? 'Informe a Qtde Animais.'
+        : _tipo == null
+        ? 'Selecione o Tipo.'
+        : _produtoController.text.trim().isEmpty
+        ? 'Informe o Nome do Produto.'
+        : _doseController.text.trim().isEmpty
+        ? 'Informe a Qtde/Cabeça.'
+        : _unidade == null
+        ? 'Selecione a Unidade.'
         : null;
     if (erro != null) {
       await AppAlert.erro(context, erro);
@@ -82,6 +124,11 @@ class _RemedioModalState extends State<RemedioModal> {
       'qtde': _qtde,
       // o brinco só vale para 1 animal
       'brinco': _qtde == 1 ? _brincoController.text.trim() : '',
+      'tipo': _tipo,
+      'produto': _produtoController.text.trim(),
+      'sintoma': _sintoma,
+      'dose': _doseController.text.trim(),
+      'unidade': _unidade,
     });
   }
 
@@ -180,6 +227,56 @@ class _RemedioModalState extends State<RemedioModal> {
     ),
   ];
 
+  /// Select de uma opção (Tipo, Sintoma, Unidade): o campo mostra a
+  /// escolhida; o toque abre a lista, e um toque na opção escolhe e fecha.
+  Widget _select(
+    String rotulo,
+    List<String> opcoes,
+    String? valor,
+    ValueChanged<String> aoEscolher,
+  ) => CampoValorTopo(
+    rotulo: rotulo,
+    corRotulo: _corRotulo,
+    valor: valor ?? '',
+    icone: Icon(Icons.arrow_drop_down, color: _corRotulo),
+    onTap: () async {
+      FocusManager.instance.primaryFocus?.unfocus();
+      final escolhida = await showDialog<String>(
+        context: context,
+        builder: (ctx) => SimpleDialog(
+          title: Text(
+            rotulo,
+            style: const TextStyle(fontSize: 16, color: _azulTitulo),
+          ),
+          children: [
+            for (final o in opcoes)
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(ctx, o),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        o,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: o == valor ? _azulTitulo : Colors.black87,
+                        ),
+                      ),
+                    ),
+                    if (o == valor)
+                      const Icon(Icons.check, size: 18, color: _azulBotao),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      );
+      if (escolhida != null && mounted) {
+        setState(() => aoEscolher(escolhida));
+      }
+    },
+  );
+
   bool _tecladoAntes = false;
 
   @override
@@ -255,6 +352,63 @@ class _RemedioModalState extends State<RemedioModal> {
                                           TextCapitalization.characters,
                                     )
                                   : const SizedBox.shrink(),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        _select('Tipo', _tipos, _tipo, (v) => _tipo = v),
+                        const SizedBox(height: 12),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: CampoTextoTopo(
+                                rotulo: 'Nome do Produto',
+                                corRotulo: _corRotulo,
+                                controller: _produtoController,
+                                textCapitalization:
+                                    TextCapitalization.characters,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _select(
+                                'Sintoma',
+                                _sintomas,
+                                _sintoma,
+                                (v) => _sintoma = v,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: CampoTextoTopo(
+                                rotulo: 'Qtde/Cabeça',
+                                corRotulo: _corRotulo,
+                                controller: _doseController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                    RegExp(r'[0-9,]'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _select(
+                                'Unidade',
+                                _unidades,
+                                _unidade,
+                                (v) => _unidade = v,
+                              ),
                             ),
                           ],
                         ),

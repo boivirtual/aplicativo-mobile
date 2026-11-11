@@ -78,6 +78,12 @@ class _RemedioModalState extends State<RemedioModal> {
   /// Select com a borda azul, indicando o próximo a preencher (Tipo depois do
   /// "+ Medicamento"; Categoria Animal depois do "Outra Categoria").
   String? _destacado;
+
+  /// Remédio da lista em edição (índice em [_aplicacoes]); null = incluindo.
+  /// Na edição só o grupo Remédio(s) muda; o que estava sendo digitado antes
+  /// fica guardado em [_rascunho] e volta ao confirmar ou cancelar.
+  int? _editando;
+  Map<String, dynamic>? _rascunho;
   final _rolagem = ScrollController();
 
   @override
@@ -193,6 +199,10 @@ class _RemedioModalState extends State<RemedioModal> {
 
   Future<void> _confirmar() async {
     FocusManager.instance.primaryFocus?.unfocus();
+    if (_editando != null) {
+      await AppAlert.erro(context, 'Confirme ou cancele a edição do remédio.');
+      return;
+    }
     // o remédio da tela entra junto (se começado, tem que estar completo)
     if (_remedioComecado || _aplicacoes.isEmpty) {
       final erro = _faltaNoRemedio;
@@ -209,31 +219,47 @@ class _RemedioModalState extends State<RemedioModal> {
   /// Lista do que já foi guardado, com rolagem: a categoria e a qtde só na
   /// primeira linha de cada uma; depois o tipo e o nome do produto.
   Widget _listaAplicacoes() {
-    final estilo = TextStyle(fontSize: 13, color: _corRotulo);
+    final estilo = TextStyle(fontSize: 11, color: _corRotulo);
     final linhas = <TableRow>[];
     String? grupoAnterior;
-    for (final a in _aplicacoes) {
+    for (var n = 0; n < _aplicacoes.length; n++) {
+      final a = _aplicacoes[n];
       final grupo = '${a['categoria']}|${a['qtde']}';
       final novo = grupo != grupoAnterior;
       grupoAnterior = grupo;
       final topo = novo && linhas.isNotEmpty ? 8.0 : 2.0;
       linhas.add(
         TableRow(
+          // a linha em edição fica em azul claro
+          decoration: n == _editando
+              ? BoxDecoration(
+                  color: const Color(0xFFD6E8FA),
+                  borderRadius: BorderRadius.circular(4),
+                )
+              : null,
           children: [
             Padding(
-              padding: EdgeInsets.only(top: topo, right: 10),
+              padding: EdgeInsets.only(top: topo, right: 8),
               child: Text(
                 novo ? '${a['categoria']} - ${a['qtde']}' : '',
                 style: estilo,
               ),
             ),
             Padding(
-              padding: EdgeInsets.only(top: topo, right: 10),
+              padding: EdgeInsets.only(top: topo, right: 8),
               child: Text('${a['tipo']}', style: estilo),
             ),
             Padding(
-              padding: EdgeInsets.only(top: topo),
+              padding: EdgeInsets.only(top: topo, right: 4),
               child: Text('${a['produto']}', style: estilo),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: topo - 2),
+              child: _iconeLista(Icons.edit_outlined, () => _editar(n)),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: topo - 2),
+              child: _iconeLista(Icons.delete_outline, () => _excluir(n)),
             ),
           ],
         ),
@@ -252,6 +278,9 @@ class _RemedioModalState extends State<RemedioModal> {
         child: SingleChildScrollView(
           child: Table(
             defaultColumnWidth: const IntrinsicColumnWidth(),
+            // o nome do produto fica com o que sobrar (quebra se precisar)
+            columnWidths: const {2: FlexColumnWidth()},
+            defaultVerticalAlignment: TableCellVerticalAlignment.top,
             children: linhas,
           ),
         ),
@@ -259,13 +288,134 @@ class _RemedioModalState extends State<RemedioModal> {
     );
   }
 
-  /// Botão de guardar (+ Medicamento / Outra Categoria): btn-info do app.
-  Widget _botaoGuardar(String texto, VoidCallback aoTocar) => SizedBox(
+  /// Ícone de editar/excluir da lista, no azul do btn-primary.
+  Widget _iconeLista(IconData icone, VoidCallback aoTocar) => InkWell(
+    borderRadius: BorderRadius.circular(12),
+    onTap: aoTocar,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      child: Icon(icone, size: 18, color: _azulBotao),
+    ),
+  );
+
+  /// Campos do grupo Remédio(s) da tela.
+  Map<String, dynamic> _camposRemedio() => <String, dynamic>{
+    'tipo': _tipo,
+    'produto': _produtoController.text.trim(),
+    // na ordem das opções, não na ordem em que foram tocados
+    'sintomas': [
+      for (final s in _sintomas)
+        if (_sintomasMarcados.contains(s)) s,
+    ],
+    'dose': _doseController.text.trim(),
+    'unidade': _unidade,
+  };
+
+  void _preencherRemedio(Map<String, dynamic> d) {
+    _tipo = d['tipo']?.toString();
+    _produtoController.text = (d['produto'] ?? '').toString();
+    _sintomasMarcados
+      ..clear()
+      ..addAll(List<String>.from(d['sintomas'] ?? []));
+    _doseController.text = (d['dose'] ?? '').toString();
+    _unidade = d['unidade']?.toString();
+  }
+
+  /// Editar um remédio da lista: os campos dele vão para o grupo Remédio(s)
+  /// (a categoria não muda); o que estava sendo digitado fica guardado.
+  void _editar(int n) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _rascunho ??= _camposRemedio();
+      _editando = n;
+      _preencherRemedio(_aplicacoes[n]);
+      _selectAberto = null;
+      _destacado = null;
+    });
+  }
+
+  /// Confirmar a edição: grava os campos do grupo Remédio(s) no remédio da
+  /// lista e volta o que estava sendo digitado antes.
+  Future<void> _confirmarEdicao() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final n = _editando;
+    if (n == null) return;
+    final erro = _tipo == null
+        ? 'Selecione o Tipo.'
+        : _produtoController.text.trim().isEmpty
+        ? 'Informe o Nome do Produto.'
+        : _doseController.text.trim().isEmpty
+        ? 'Informe a Qtde/Cabeça.'
+        : _unidade == null
+        ? 'Selecione a Unidade.'
+        : null;
+    if (erro != null) {
+      await AppAlert.erro(context, erro);
+      return;
+    }
+    setState(() {
+      _aplicacoes[n].addAll(_camposRemedio());
+      _sairDaEdicao();
+    });
+  }
+
+  /// Cancelar a edição (ou sair dela): a lista não muda e o que estava sendo
+  /// digitado volta.
+  void _sairDaEdicao() {
+    _editando = null;
+    _preencherRemedio(_rascunho ?? const {});
+    _rascunho = null;
+    _selectAberto = null;
+  }
+
+  /// Excluir um remédio da lista (pergunta antes).
+  Future<void> _excluir(int n) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final a = _aplicacoes[n];
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(
+          'Excluir Remédio',
+          style: TextStyle(fontSize: 17, color: _azulTitulo),
+        ),
+        content: Text(
+          'Excluir ${a['tipo']} ${a['produto']} de ${a['categoria']}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('NÃO'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('SIM'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() {
+      // excluiu o que estava em edição: sai da edição
+      if (_editando == n) _sairDaEdicao();
+      _aplicacoes.removeAt(n);
+      if (_editando != null && _editando! > n) _editando = _editando! - 1;
+    });
+  }
+
+  /// Botão de guardar (+ Medicamento / Outra Categoria): btn-info do app;
+  /// [cor]/[corTexto] para os da edição (Confirmar / Cancelar).
+  Widget _botaoGuardar(
+    String texto,
+    VoidCallback aoTocar, {
+    Color cor = const Color(0xFF5BC0DE),
+    Color corTexto = Colors.white,
+  }) => SizedBox(
     height: 42,
     child: ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF5BC0DE),
-        foregroundColor: Colors.white,
+        backgroundColor: cor,
+        foregroundColor: corTexto,
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -509,7 +659,11 @@ class _RemedioModalState extends State<RemedioModal> {
                           ],
                         ),
                         const SizedBox(height: 18),
-                        _tituloGrupo('Remédio(s)'),
+                        _tituloGrupo(
+                          _editando == null
+                              ? 'Remédio(s)'
+                              : 'Remédio(s) — editando',
+                        ),
                         _select(
                           'Tipo',
                           _tipos,
@@ -562,23 +716,46 @@ class _RemedioModalState extends State<RemedioModal> {
                           ],
                         ),
                         const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _botaoGuardar(
-                                '+ Medicamento',
-                                () => _guardarE(outraCategoria: false),
+                        // editando um remédio da lista: Confirmar Edição / Cancelar
+                        if (_editando != null)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _botaoGuardar(
+                                  'Confirmar Edição',
+                                  _confirmarEdicao,
+                                  cor: _azulBotao,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _botaoGuardar(
-                                'Outra Categoria',
-                                () => _guardarE(outraCategoria: true),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _botaoGuardar(
+                                  'Cancelar',
+                                  () => setState(_sairDaEdicao),
+                                  cor: const Color(0xFFE9ECEF),
+                                  corTexto: const Color(0xFF333333),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
+                            ],
+                          )
+                        else
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _botaoGuardar(
+                                  '+ Medicamento',
+                                  () => _guardarE(outraCategoria: false),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _botaoGuardar(
+                                  'Outra Categoria',
+                                  () => _guardarE(outraCategoria: true),
+                                ),
+                              ),
+                            ],
+                          ),
                         if (_aplicacoes.isNotEmpty) _listaAplicacoes(),
                       ],
                     ),

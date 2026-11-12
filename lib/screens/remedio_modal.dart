@@ -89,11 +89,11 @@ class _RemedioModalState extends State<RemedioModal> {
   /// são da mesma) até o "Outra Categoria".
   bool _categoriaPresa = false;
 
-  /// Categoria Animal, Qtde Animais e Id do Brinco travados: digitando no
-  /// grupo Remédio(s), editando um remédio da lista, ou presa pelo
-  /// "+ Medicamento". Só o "Outra Categoria" libera.
-  bool get _categoriaTravada =>
-      _editando != null || _categoriaPresa || _remedioComecado;
+  /// Categoria Animal, Qtde Animais e Id do Brinco travados só depois que o
+  /// primeiro remédio da categoria entrou na lista ("+ Medicamento") e
+  /// durante a edição de um remédio da lista. Antes disso ficam livres (dá
+  /// para corrigir a Qtde esquecida). Só o "Outra Categoria" libera.
+  bool get _categoriaTravada => _editando != null || _categoriaPresa;
   Map<String, dynamic>? _rascunho;
   final _rolagem = ScrollController();
 
@@ -700,8 +700,6 @@ class _RemedioModalState extends State<RemedioModal> {
                           rotulo: 'Nome do Produto',
                           corRotulo: _corRotulo,
                           controller: _produtoController,
-                          // começou o remédio: trava a categoria
-                          onChanged: (_) => setState(() {}),
                           textCapitalization: TextCapitalization.characters,
                         ),
                         const SizedBox(height: 12),
@@ -719,7 +717,6 @@ class _RemedioModalState extends State<RemedioModal> {
                                 rotulo: 'Qtde/Cabeça',
                                 corRotulo: _corRotulo,
                                 controller: _doseController,
-                                onChanged: (_) => setState(() {}),
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
                                       decimal: true,

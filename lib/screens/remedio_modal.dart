@@ -229,13 +229,15 @@ class _RemedioModalState extends State<RemedioModal> {
     Navigator.pop(context, <String, dynamic>{'aplicacoes': _aplicacoes});
   }
 
-  /// Lista do que já foi guardado, com rolagem: a categoria e a qtde só na
-  /// primeira linha de cada uma; depois o tipo e o nome do produto.
+  /// Lista do que já foi guardado, com rolagem, do último para o primeiro: a
+  /// categoria e a qtde só na primeira linha de cada uma; depois o tipo e o
+  /// nome do produto.
   Widget _listaAplicacoes() {
     final estilo = TextStyle(fontSize: 11, color: _corRotulo);
     final linhas = <TableRow>[];
     String? grupoAnterior;
-    for (var n = 0; n < _aplicacoes.length; n++) {
+    // o último guardado no topo (como na Pesagem); n segue o índice real
+    for (var n = _aplicacoes.length - 1; n >= 0; n--) {
       final a = _aplicacoes[n];
       final grupo = '${a['categoria']}|${a['qtde']}';
       final novo = grupo != grupoAnterior;

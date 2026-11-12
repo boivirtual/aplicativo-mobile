@@ -84,6 +84,16 @@ class _RemedioModalState extends State<RemedioModal> {
   /// Na edição só o grupo Remédio(s) muda; o que estava sendo digitado antes
   /// fica guardado em [_rascunho] e volta ao confirmar ou cancelar.
   int? _editando;
+
+  /// Depois do "+ Medicamento" a categoria fica presa (os próximos remédios
+  /// são da mesma) até o "Outra Categoria".
+  bool _categoriaPresa = false;
+
+  /// Categoria Animal, Qtde Animais e Id do Brinco travados: digitando no
+  /// grupo Remédio(s), editando um remédio da lista, ou presa pelo
+  /// "+ Medicamento". Só o "Outra Categoria" libera.
+  bool get _categoriaTravada =>
+      _editando != null || _categoriaPresa || _remedioComecado;
   Map<String, dynamic>? _rascunho;
   final _rolagem = ScrollController();
 
@@ -192,8 +202,10 @@ class _RemedioModalState extends State<RemedioModal> {
         _qtdeController.clear();
         _brincoController.clear();
         _destacado = 'Categoria Animal';
+        _categoriaPresa = false;
       } else {
         _destacado = 'Tipo';
+        _categoriaPresa = true;
       }
     });
   }
@@ -454,8 +466,10 @@ class _RemedioModalState extends State<RemedioModal> {
     String? valor,
     ValueChanged<String>? aoEscolher,
     Set<String>? marcados,
+    // travado: acinzentado e sem abrir
+    bool habilitado = true,
   }) {
-    final aberto = _selectAberto == rotulo;
+    final aberto = habilitado && _selectAberto == rotulo;
     final destacado = _destacado == rotulo;
     final varios = marcados != null;
     final escolhidos = [
@@ -465,29 +479,35 @@ class _RemedioModalState extends State<RemedioModal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // destacado: borda azul (a mesma do campo em edição)
-        DecoratedBox(
-          position: DecorationPosition.foreground,
-          decoration: EstiloApp.molduraCampo(ativo: destacado),
-          child: CampoValorTopo(
-            rotulo: rotulo,
-            corRotulo: _corRotulo,
-            valor: varios
-                ? (escolhidos.isEmpty
-                      ? ''
-                      : '${escolhidos.length} selecionado(s)')
-                : (valor ?? ''),
-            icone: Icon(
-              aberto ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-              color: _corRotulo,
+        Opacity(
+          opacity: habilitado ? 1 : 0.5,
+          child: IgnorePointer(
+            ignoring: !habilitado,
+            child: // destacado: borda azul (a mesma do campo em edição)
+            DecoratedBox(
+              position: DecorationPosition.foreground,
+              decoration: EstiloApp.molduraCampo(ativo: destacado),
+              child: CampoValorTopo(
+                rotulo: rotulo,
+                corRotulo: _corRotulo,
+                valor: varios
+                    ? (escolhidos.isEmpty
+                          ? ''
+                          : '${escolhidos.length} selecionado(s)')
+                    : (valor ?? ''),
+                icone: Icon(
+                  aberto ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                  color: _corRotulo,
+                ),
+                onTap: () {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                  setState(() {
+                    _selectAberto = aberto ? null : rotulo;
+                    if (destacado) _destacado = null;
+                  });
+                },
+              ),
             ),
-            onTap: () {
-              FocusManager.instance.primaryFocus?.unfocus();
-              setState(() {
-                _selectAberto = aberto ? null : rotulo;
-                if (destacado) _destacado = null;
-              });
-            },
           ),
         ),
         if (aberto)
@@ -626,6 +646,7 @@ class _RemedioModalState extends State<RemedioModal> {
                           _categorias,
                           valor: _categoria,
                           aoEscolher: (v) => _categoria = v,
+                          habilitado: !_categoriaTravada,
                         ),
                         const SizedBox(height: 12),
                         Row(
@@ -635,6 +656,7 @@ class _RemedioModalState extends State<RemedioModal> {
                                 rotulo: 'Qtde Animais',
                                 corRotulo: _corRotulo,
                                 controller: _qtdeController,
+                                enabled: !_categoriaTravada,
                                 keyboardType: TextInputType.number,
                                 inputFormatters: [
                                   FilteringTextInputFormatter.digitsOnly,
@@ -652,6 +674,7 @@ class _RemedioModalState extends State<RemedioModal> {
                                       rotuloComplemento: '(opcional)',
                                       corRotulo: _corRotulo,
                                       controller: _brincoController,
+                                      enabled: !_categoriaTravada,
                                       textCapitalization:
                                           TextCapitalization.characters,
                                     )
@@ -677,6 +700,8 @@ class _RemedioModalState extends State<RemedioModal> {
                           rotulo: 'Nome do Produto',
                           corRotulo: _corRotulo,
                           controller: _produtoController,
+                          // começou o remédio: trava a categoria
+                          onChanged: (_) => setState(() {}),
                           textCapitalization: TextCapitalization.characters,
                         ),
                         const SizedBox(height: 12),
@@ -694,6 +719,7 @@ class _RemedioModalState extends State<RemedioModal> {
                                 rotulo: 'Qtde/Cabeça',
                                 corRotulo: _corRotulo,
                                 controller: _doseController,
+                                onChanged: (_) => setState(() {}),
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
                                       decimal: true,

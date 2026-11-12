@@ -615,7 +615,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   bool get _secao4Completa => _curralMarcadas.isNotEmpty;
 
   /// Card "Aplicamos Remédio(s)": abre o modal (com o que já foi informado,
-  /// se tiver). Confirmado, o card fica marcado; pelo (x), nada muda.
+  /// se tiver). Ao fechar (Encerrar ou x) vale a lista do modal: com remédios
+  /// o card fica marcado; vazia, desmarca.
   Future<void> _abrirRemedio() async {
     FocusManager.instance.primaryFocus?.unfocus();
     final dados = await showDialog<Map<String, dynamic>>(
@@ -624,6 +625,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       builder: (_) => RemedioModal(dados: _remedio),
     );
     if (dados == null || !mounted) return;
+    // lista vazia (ex.: excluiu o único remédio e fechou): o card desmarca
+    final lista = dados['aplicacoes'] as List? ?? const [];
+    if (lista.isEmpty) {
+      _marcarCurral('remedio', false);
+      return;
+    }
     _remedio = dados;
     _marcarCurral('remedio', true);
   }

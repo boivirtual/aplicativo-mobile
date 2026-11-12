@@ -13,7 +13,8 @@ import '../widgets/campo_topo_widget.dart';
 ///
 /// Campos: Categoria Animal (uma só), Qtde Animais e, com 1 animal, o Id do
 /// Brinco (opcional); Tipo; Nome do Produto; Sintoma (vários, opcional);
-/// Qtde/Cabeça e Unidade. Devolve os dados ao confirmar; null pelo (x).
+/// Qtde/Cabeça e Unidade. Devolve { aplicacoes } ao encerrar e também pelo
+/// (x) — a lista vale do jeito que está; pelo (x) só os campos se perdem.
 class RemedioModal extends StatefulWidget {
   /// Dados já informados (editar); null = novo.
   final Map<String, dynamic>? dados;
@@ -786,7 +787,7 @@ class _RemedioModalState extends State<RemedioModal> {
               ],
             ),
           ),
-          // (x) no canto: fecha sem gravar nada
+          // (x) no canto: fecha sem guardar os campos da tela
           Positioned(
             top: -10,
             right: -10,
@@ -798,7 +799,11 @@ class _RemedioModalState extends State<RemedioModal> {
               elevation: 3,
               child: InkWell(
                 customBorder: const CircleBorder(),
-                onTap: () => Navigator.pop(context),
+                // o que já está na lista (incluído, editado ou excluído) vale
+                // mesmo fechando pelo (x); só o que está nos campos se perde
+                onTap: () => Navigator.pop(context, <String, dynamic>{
+                  'aplicacoes': _aplicacoes,
+                }),
                 child: const Padding(
                   padding: EdgeInsets.all(6),
                   child: Icon(Icons.close, color: Colors.white, size: 22),

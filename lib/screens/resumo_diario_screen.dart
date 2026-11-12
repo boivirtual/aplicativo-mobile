@@ -518,6 +518,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     _rolagem.dispose();
     _qtdeCurralController.dispose();
     _obsCurralController.dispose();
+    _outrasAtividadesController.dispose();
     super.dispose();
   }
 
@@ -567,6 +568,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ('nenhuma', 'Nenhuma das Atividades', Icons.block),
   ];
   final Set<String> _curralMarcadas = {};
+
+  /// Seção 4: "Descreva outras atividades ou observações" (não obrigatório).
+  final _outrasAtividadesController = TextEditingController();
 
   /// Dados do modal "Aplicação de Remédio(s)" (card "Aplicamos Remédio(s)").
   Map<String, dynamic>? _remedio;
@@ -2621,6 +2625,16 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ),
         const SizedBox(height: 8),
       ],
+      // outras atividades ou observações (não obrigatório)
+      const SizedBox(height: 6),
+      CampoTextoTopo(
+        rotulo: 'Descreva outras atividades ou observações',
+        corRotulo: _corRotulo,
+        controller: _outrasAtividadesController,
+        altura: null,
+        linhas: 2,
+        textCapitalization: TextCapitalization.sentences,
+      ),
     ];
   }
 

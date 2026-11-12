@@ -17,7 +17,6 @@ import 'aplicacao_modal.dart';
 import 'chuva_screen.dart';
 import 'mapa_screen.dart';
 import 'remedio_modal.dart';
-import 'tratamento_modal.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 
 /// "Resumo Diário da Fazenda": conferência, por usuário logado, dos
@@ -59,44 +58,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Rolagem da parte de baixo das seções (para levar a Observação da
   /// Seção 3 para cima do teclado).
   final _rolagem = ScrollController();
-
-  // Seção 5 — Sanidade Animal: "Adicionar Tratamento" ou "Nenhum animal
-  // doente ou medicado hoje" (um exclui o outro).
-  bool _nenhumDoente = false;
-
-  /// Tratamentos adicionados (a tela de inclusão vem nas próximas etapas).
-  final List<Map<String, dynamic>> _tratamentos = [];
-
-  /// "Adicionar Tratamento": abre o modal "Tratamento N" (N = próximo
-  /// número); ao confirmar, entra na lista abaixo do botão.
-  Future<void> _adicionarTratamento({int? editar}) async {
-    FocusManager.instance.primaryFocus?.unfocus();
-    final indice = editar ?? _tratamentos.length;
-    final dados = await showDialog<Map<String, dynamic>>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => TratamentoModal(
-        numero: indice + 1,
-        dados: editar == null ? null : _tratamentos[editar],
-        bd: _bd ?? '',
-        fazenda: _fazenda ?? '',
-      ),
-    );
-    if (dados == null || !mounted) return;
-    setState(() {
-      if (editar == null) {
-        _tratamentos.add(dados);
-      } else {
-        _tratamentos[editar] = dados;
-      }
-    });
-  }
-
-  Future<void> _excluirTratamento(int indice) async {
-    if (await _confirmarExclusao('Tratamento', indice) && mounted) {
-      setState(() => _tratamentos.removeAt(indice));
-    }
-  }
 
   /// "Excluir <nome> N?" — mesmo modelo do "Excluir Item" da Pesagem.
   Future<bool> _confirmarExclusao(String nome, int indice) async {
@@ -214,7 +175,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   ];
 
   // Seção 6 — Vacinas, Vermífugos e Carrapaticidas: "Adicionar Aplicação"
-  // ou "Nenhuma aplicação de vacina ou vermífugo hoje" (como a Seção 5).
+  // ou "Nenhuma aplicação de vacina ou vermífugo hoje".
   bool _nenhumaAplicacao = false;
 
   /// Aplicações adicionadas (a tela "Adicionar Aplicação" vem depois).
@@ -1420,15 +1381,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       return;
     }
     if (_secao == 5) {
-      if (!_nenhumDoente && _tratamentos.isEmpty) {
-        await AppAlert.erro(
-          context,
-          'Adicione um tratamento ou marque "Nenhum animal doente ou '
-          'medicado hoje".',
-        );
-        return;
-      }
-      setState(() => _secao = 6);
+      // Nutrição e Misturas (nova): o Próximo fica desativado por enquanto
       return;
     }
     if (_secao == 6) {
@@ -1686,7 +1639,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                         ),
                                         // Seção 1: inativo até confirmar as
                                         // atividades registradas; Seção 2: até o Sim da
-                                        // confirmação; Seção 3: até completar; Seção 4: até marcar uma atividade
+                                        // confirmação; Seção 3: até completar; Seção 4: até marcar uma atividade; Seção 5: desativado por enquanto
                                         onPressed:
                                             (_secao == 1 && !_secao1Completa) ||
                                                 (_secao == 2 &&
@@ -1694,7 +1647,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                                 (_secao == 3 &&
                                                     !_secao3Completa) ||
                                                 (_secao == 4 &&
-                                                    !_secao4Completa)
+                                                    !_secao4Completa) ||
+                                                _secao == 5
                                             ? null
                                             : _proximo,
                                         child: const Row(
@@ -1736,7 +1690,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   /// Fundo da tela e da barra do Próximo: azul da tarja na tela inicial e
   /// nas Seções 1 a 4, branco nas outras.
-  Color get _fundoTela => _secao <= 4 ? _azulTarja : Colors.white;
+  Color get _fundoTela => _secao <= 5 ? _azulTarja : Colors.white;
 
   /// Tarja de todas as seções: fazenda, data, barra de progresso e "Seção X
   /// de 11", de ponta a ponta, sem bordas arredondadas.
@@ -1822,7 +1776,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       // mesmo espaço depois do título da Seção 2
       const SizedBox(height: 16),
     ],
-    5 => [_tituloAzul('Tratamentos Realizados Hoje')],
+    5 => [
+      _tituloAzul('Nutrição e Misturas', tamanho: 17),
+      // mesmo espaço depois do título da Seção 4
+      const SizedBox(height: 16),
+    ],
     6 => [_tituloAzul('Aplicações Realizadas Hoje')],
     7 => [_tituloAzul('O Que Foi Feito Hoje')],
     _ => [
@@ -1863,35 +1821,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     2 => _atividadesNaoRegistradas(),
     3 => _conferenciaRebanho(),
     4 => _conversaCurral(),
-    5 => [
-      // botão (sem caixa de marcar), pode ser tocado várias vezes; travado
-      // com "Nenhum animal doente..." marcado
-      _linhaMarcar(
-        'Adicionar Tratamento',
-        Icons.medical_services_outlined,
-        false,
-        (_) => _adicionarTratamento(),
-        semCaixa: true,
-        habilitado: !_nenhumDoente,
-      ),
-      ..._listaRegistros(
-        'Tratamento',
-        _tratamentos.length,
-        (i) => _adicionarTratamento(editar: i),
-        _excluirTratamento,
-      ),
-      // com pelo menos 1 tratamento na lista, o "Nenhum animal doente..."
-      // fica escondido; volta quando todos forem excluídos
-      if (_tratamentos.isEmpty) ...[
-        const SizedBox(height: 8),
-        _linhaMarcar(
-          'Nenhum animal doente ou medicado hoje',
-          Icons.verified_outlined,
-          _nenhumDoente,
-          (v) => setState(() => _nenhumDoente = v),
-        ),
-      ],
-    ],
+    5 => _conversaNutricao(),
     6 => [
       // botão, pode ser tocado várias vezes; travado com "Nenhuma
       // aplicação..." marcado
@@ -2693,6 +2623,25 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ],
     ];
   }
+
+  /// Seção 5 — "Nutrição e Misturas": conversa com o usuário logado, como
+  /// na Seção 4.
+  List<Widget> _conversaNutricao() => [
+    Padding(
+      padding: const EdgeInsets.fromLTRB(0, 4, 0, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$_nomeUsuario!', style: _negrito(19, _corRotulo)),
+          const SizedBox(height: 10),
+          Text(
+            'Agora vamos para a Fábrica de Ração!',
+            style: _textoMedio(17, _corRotulo).copyWith(height: 1.5),
+          ),
+        ],
+      ),
+    ),
+  ];
 
   /// Link de uma atividade da Seção 2: Choveu abre o programa da Chuva (com
   /// a fazenda e a data do resumo); as outras, o Mapa de Gado (Tabuleiro)

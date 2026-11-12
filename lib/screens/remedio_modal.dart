@@ -649,38 +649,42 @@ class _RemedioModalState extends State<RemedioModal> {
                           habilitado: !_categoriaTravada,
                         ),
                         const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: CampoTextoTopo(
-                                rotulo: 'Qtde Animais',
-                                corRotulo: _corRotulo,
-                                controller: _qtdeController,
-                                enabled: !_categoriaTravada,
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                ],
-                                // o Id do Brinco aparece/some conforme a qtde
-                                onChanged: (_) => setState(() {}),
+                        // travados: acinzentados, como o select da Categoria
+                        Opacity(
+                          opacity: _categoriaTravada ? 0.5 : 1,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: CampoTextoTopo(
+                                  rotulo: 'Qtde Animais',
+                                  corRotulo: _corRotulo,
+                                  controller: _qtdeController,
+                                  enabled: !_categoriaTravada,
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
+                                  // o Id do Brinco aparece/some conforme a qtde
+                                  onChanged: (_) => setState(() {}),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            // só com 1 animal; ao lado da Qtde, não obrigatório
-                            Expanded(
-                              child: _qtde == 1
-                                  ? CampoTextoTopo(
-                                      rotulo: 'Id do Brinco',
-                                      rotuloComplemento: '(opcional)',
-                                      corRotulo: _corRotulo,
-                                      controller: _brincoController,
-                                      enabled: !_categoriaTravada,
-                                      textCapitalization:
-                                          TextCapitalization.characters,
-                                    )
-                                  : const SizedBox.shrink(),
-                            ),
-                          ],
+                              const SizedBox(width: 8),
+                              // só com 1 animal; ao lado da Qtde, não obrigatório
+                              Expanded(
+                                child: _qtde == 1
+                                    ? CampoTextoTopo(
+                                        rotulo: 'Id do Brinco',
+                                        rotuloComplemento: '(opcional)',
+                                        corRotulo: _corRotulo,
+                                        controller: _brincoController,
+                                        enabled: !_categoriaTravada,
+                                        textCapitalization:
+                                            TextCapitalization.characters,
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 18),
                         _tituloGrupo(

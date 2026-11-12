@@ -403,12 +403,12 @@ class _RemedioModalState extends State<RemedioModal> {
     });
   }
 
-  /// Botão de guardar (+ Medicamento / Outra Categoria): btn-info do app;
+  /// Botão de guardar (+ Medicamento / Outra Categoria): btn-primary do app;
   /// [cor]/[corTexto] para os da edição (Confirmar / Cancelar).
   Widget _botaoGuardar(
     String texto,
     VoidCallback aoTocar, {
-    Color cor = const Color(0xFF5BC0DE),
+    Color cor = _azulBotao,
     Color corTexto = Colors.white,
   }) => SizedBox(
     height: 42,
@@ -761,26 +761,28 @@ class _RemedioModalState extends State<RemedioModal> {
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _verde,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                // com o teclado aberto o Encerrar some (fica só lá embaixo)
+                if (!tecladoAberto)
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: SizedBox(
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _verde,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
-                      ),
-                      onPressed: _confirmar,
-                      child: const Text(
-                        'Encerrar Aplicação',
-                        style: TextStyle(fontSize: 16, color: Colors.white),
+                        onPressed: _confirmar,
+                        child: const Text(
+                          'Encerrar Aplicação',
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ),

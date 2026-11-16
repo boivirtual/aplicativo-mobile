@@ -318,8 +318,8 @@ class _MisturaModalState extends State<MisturaModal> {
     return Dialog(
       backgroundColor: Colors.transparent,
       alignment: Alignment.topCenter,
-      // um pouco abaixo do topo (não encosta na barra do celular)
-      insetPadding: const EdgeInsets.fromLTRB(16, 44, 16, 16),
+      // abaixo do título "Resumo Diário da Fazenda" (barra azul do topo)
+      insetPadding: const EdgeInsets.fromLTRB(16, 76, 16, 16),
       child: Stack(
         clipBehavior: Clip.none,
         children: [

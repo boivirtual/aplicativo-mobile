@@ -16,6 +16,7 @@ import '../widgets/tarja_fazenda_widget.dart';
 import 'aplicacao_modal.dart';
 import 'chuva_screen.dart';
 import 'mapa_screen.dart';
+import 'mistura_modal.dart';
 import 'remedio_modal.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 
@@ -569,9 +570,31 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   ];
   final Set<String> _curralMarcadas = {};
 
-  /// Seção 5: "Nenhuma Mistura feita hoje" marcado (libera o Próximo).
+  /// Seção 5: "Nenhuma Mistura feita hoje" marcado, ou as misturas feitas no
+  /// modal "Mistura(s)" (card "Adicionar Mistura"). Um exclui o outro.
   bool _nenhumaMistura = false;
-  bool get _secao5Completa => _nenhumaMistura;
+  List<Map<String, dynamic>> _misturas = [];
+  bool get _secao5Completa => _nenhumaMistura || _misturas.isNotEmpty;
+
+  /// Card "Adicionar Mistura": abre o modal com as misturas já feitas. Ao
+  /// fechar vale a lista do modal: com misturas o card fica marcado (e sai o
+  /// "Nenhuma Mistura feita hoje"); vazia, desmarca.
+  Future<void> _abrirMisturas() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final dados = await showDialog<Map<String, dynamic>>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => MisturaModal(bd: _bd ?? '', misturas: _misturas),
+    );
+    if (dados == null || !mounted) return;
+    setState(() {
+      _misturas = [
+        for (final m in (dados['misturas'] as List? ?? const []))
+          Map<String, dynamic>.from(m as Map),
+      ];
+      if (_misturas.isNotEmpty) _nenhumaMistura = false;
+    });
+  }
 
   /// Seção 4: "Descreva outras atividades ou observações" (não obrigatório).
   final _outrasAtividadesController = TextEditingController();
@@ -2668,11 +2691,22 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       'Nenhuma Mistura feita hoje',
       Icons.block,
       _nenhumaMistura,
-      (v) => setState(() => _nenhumaMistura = v),
+      // marcar "Nenhuma Mistura" apaga as misturas feitas
+      (v) => setState(() {
+        _nenhumaMistura = v;
+        if (v) _misturas = [];
+      }),
     ),
     const SizedBox(height: 8),
-    // "Adicionar Mistura" vem nas próximas etapas (por enquanto sem ação)
-    _cardSecao1('Adicionar Mistura', Icons.add_circle_outline, false, (_) {}),
+    // abre o modal "Mistura(s)"; marcado enquanto tiver alguma mistura
+    _cardSecao1(
+      _misturas.isEmpty
+          ? 'Adicionar Mistura'
+          : 'Adicionar Mistura (${_misturas.length})',
+      Icons.add_circle_outline,
+      _misturas.isNotEmpty,
+      (_) => _abrirMisturas(),
+    ),
     const SizedBox(height: 8),
   ];
 

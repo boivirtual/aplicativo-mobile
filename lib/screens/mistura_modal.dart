@@ -366,10 +366,7 @@ class _MisturaModalState extends State<MisturaModal> {
                               'Os produtos da Nutrição ainda não foram '
                               'baixados neste aparelho. Abra o Mapa de Gado '
                               'com internet e tente de novo.',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: _corRotulo,
-                              ),
+                              style: TextStyle(fontSize: 14, color: _corRotulo),
                             ),
                           )
                         else ...[

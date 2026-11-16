@@ -10,10 +10,12 @@ import '../widgets/campo_topo_widget.dart';
 /// "Adicionar Mistura"). Mesmo visual do modal "Aplicação de Remédio(s)" da
 /// Seção 4: fundo cinza, (x) no canto e o conteúdo com rolagem.
 ///
-/// Lista todos os produtos do select Produto da Nutrição do Mapa de Gado
-/// (guardados no aparelho), cada um com a sua quantidade. "Concluir Mistura"
-/// guarda a mistura na lista abaixo do botão (editar e excluir, a última no
-/// topo) e limpa as quantidades. Devolve { misturas } ao fechar pelo (x).
+/// Primeiro o select "Mistura" (opções: os produtos do select Produto da
+/// Nutrição do Mapa de Gado, guardados no aparelho); escolhida, aparecem os
+/// itens — por enquanto os mesmos produtos — cada um com a sua quantidade.
+/// "Concluir Mistura" guarda a mistura (com o nome dela) na lista abaixo do
+/// botão (editar e excluir, a última no topo) e limpa tudo. Devolve
+/// { misturas } ao fechar pelo (x).
 class MisturaModal extends StatefulWidget {
   /// Empresa (CNPJ): os produtos vêm do Mapa de Gado guardado no aparelho.
   final String bd;
@@ -46,6 +48,16 @@ class _MisturaModalState extends State<MisturaModal> {
 
   /// Mistura da lista em edição (índice em [_misturas]); null = nova.
   int? _editando;
+
+  /// Mistura escolhida no select "Mistura" (id do produto da Nutrição) e se
+  /// a lista do select está aberta.
+  int? _misturaId;
+  bool _misturaAberta = false;
+
+  String? get _nomeMistura => _produtos
+      .where((p) => p['id'] == _misturaId)
+      .map((p) => '${p['descricao']}')
+      .firstOrNull;
 
   final _rolagem = ScrollController();
 
@@ -105,19 +117,30 @@ class _MisturaModalState extends State<MisturaModal> {
   /// (ou grava a editada) e limpa as quantidades.
   Future<void> _concluir() async {
     FocusManager.instance.primaryFocus?.unfocus();
+    if (_misturaId == null) {
+      await AppAlert.erro(context, 'Selecione a Mistura.');
+      return;
+    }
     final itens = _itensDaTela();
     if (itens.isEmpty) {
       await AppAlert.erro(context, 'Informe a quantidade de algum produto.');
       return;
     }
     setState(() {
+      final mistura = <String, dynamic>{
+        'mistura_id': _misturaId,
+        'mistura': _nomeMistura,
+        'itens': itens,
+      };
       if (_editando != null) {
-        _misturas[_editando!]['itens'] = itens;
+        _misturas[_editando!] = mistura;
         _editando = null;
       } else {
-        _misturas.add(<String, dynamic>{'itens': itens});
+        _misturas.add(mistura);
       }
       _limparQtdes();
+      // a próxima começa pela escolha da mistura
+      _misturaId = null;
     });
   }
 
@@ -128,6 +151,8 @@ class _MisturaModalState extends State<MisturaModal> {
     setState(() {
       _editando = n;
       _limparQtdes();
+      _misturaId = _misturas[n]['mistura_id'] as int?;
+      _misturaAberta = false;
       for (final i in (_misturas[n]['itens'] as List)) {
         _qtdes[(i as Map)['id']]?.text = '${i['qtde']}';
       }
@@ -144,6 +169,7 @@ class _MisturaModalState extends State<MisturaModal> {
     setState(() {
       _editando = null;
       _limparQtdes();
+      _misturaId = null;
     });
   }
 
@@ -157,7 +183,7 @@ class _MisturaModalState extends State<MisturaModal> {
           'Excluir Mistura',
           style: TextStyle(fontSize: 17, color: _azulTitulo),
         ),
-        content: Text('Excluir a Mistura ${n + 1}?'),
+        content: Text('Excluir a mistura ${_rotuloMistura(n)}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -176,44 +202,135 @@ class _MisturaModalState extends State<MisturaModal> {
       if (_editando == n) {
         _editando = null;
         _limparQtdes();
+        _misturaId = null;
       }
       _misturas.removeAt(n);
       if (_editando != null && _editando! > n) _editando = _editando! - 1;
     });
   }
 
-  /// Um produto e, ao lado, o campo da quantidade.
+  /// Nome da mistura na lista (ou "Mistura N" nas antigas, sem nome).
+  String _rotuloMistura(int n) =>
+      '${_misturas[n]['mistura'] ?? 'Mistura ${n + 1}'}';
+
+  /// Um produto: o nome com a unidade em cima, em negrito, e o campo da
+  /// quantidade embaixo, na largura toda.
   Widget _linhaProduto(Map<String, dynamic> p) {
     final unidade = (p['unidade'] ?? '').toString().trim();
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
+          Padding(
+            padding: const EdgeInsets.only(left: 2, bottom: 4),
             child: Text(
-              '${p['descricao']}',
-              style: TextStyle(fontSize: 14, color: _corRotulo),
+              '${p['descricao']} (${unidade.isEmpty ? 'kg' : unidade})',
+              style: TextStyle(
+                fontFamily: 'FuturaStdMedium',
+                fontSize: 14,
+                color: _corRotulo,
+                shadows: [
+                  Shadow(color: _corRotulo, offset: const Offset(0.4, 0)),
+                ],
+              ),
             ),
           ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 120,
-            child: CampoTextoTopo(
-              rotulo: 'Qtde (${unidade.isEmpty ? 'Kg' : unidade})',
-              corRotulo: _corRotulo,
-              controller: _qtdes[p['id']]!,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
-              ],
-            ),
+          CampoTextoTopo(
+            rotulo: 'Quantidade',
+            corRotulo: _corRotulo,
+            controller: _qtdes[p['id']]!,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
+            ],
           ),
         ],
       ),
     );
   }
+
+  /// Select "Mistura" com a lista aberta embaixo do próprio campo: as opções
+  /// são os produtos da Nutrição; o toque escolhe e fecha.
+  Widget _selectMistura() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      CampoValorTopo(
+        rotulo: 'Mistura',
+        corRotulo: _corRotulo,
+        valor: _nomeMistura ?? '',
+        icone: Icon(
+          _misturaAberta ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+          color: _corRotulo,
+        ),
+        onTap: () {
+          FocusManager.instance.primaryFocus?.unfocus();
+          setState(() => _misturaAberta = !_misturaAberta);
+        },
+      ),
+      if (_misturaAberta)
+        Container(
+          margin: const EdgeInsets.only(top: 4),
+          constraints: const BoxConstraints(maxHeight: 5 * 44 + 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFCFD8DC)),
+          ),
+          child: Scrollbar(
+            thumbVisibility: true,
+            child: ListView.builder(
+              shrinkWrap: true,
+              padding: const EdgeInsets.fromLTRB(4, 4, 10, 4),
+              itemExtent: 44,
+              itemCount: _produtos.length,
+              itemBuilder: (context, i) {
+                final p = _produtos[i];
+                final marcado = p['id'] == _misturaId;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 3),
+                  child: Material(
+                    color: marcado
+                        ? const Color(0xFFD6E8FA)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(6),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(6),
+                      onTap: () => setState(() {
+                        _misturaId = p['id'] as int;
+                        _misturaAberta = false;
+                      }),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${p['descricao']}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: marcado ? _azulTitulo : Colors.black87,
+                                ),
+                              ),
+                            ),
+                            if (marcado)
+                              const Icon(
+                                Icons.check,
+                                size: 18,
+                                color: _azulBotao,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+    ],
+  );
 
   /// Ícone de editar/excluir da lista, no azul do btn-primary.
   Widget _iconeLista(IconData icone, VoidCallback aoTocar) => InkWell(
@@ -225,8 +342,8 @@ class _MisturaModalState extends State<MisturaModal> {
     ),
   );
 
-  /// Lista das misturas, com rolagem, da última para a primeira: "Mistura
-  /// N", os produtos e os ícones de editar e excluir.
+  /// Lista das misturas, com rolagem, da última para a primeira: o nome da
+  /// mistura, os produtos e os ícones de editar e excluir.
   Widget _listaMisturas() {
     final estilo = TextStyle(fontSize: 11, color: _corRotulo);
     final linhas = <TableRow>[];
@@ -246,7 +363,7 @@ class _MisturaModalState extends State<MisturaModal> {
           children: [
             Padding(
               padding: const EdgeInsets.only(top: 4, right: 8),
-              child: Text('Mistura ${n + 1}', style: estilo),
+              child: Text(_rotuloMistura(n), style: estilo),
             ),
             Padding(
               padding: const EdgeInsets.only(top: 4, right: 4),
@@ -337,7 +454,7 @@ class _MisturaModalState extends State<MisturaModal> {
                   child: Text(
                     _editando == null
                         ? 'Mistura(s)'
-                        : 'Mistura ${_editando! + 1} — editando',
+                        : '${_rotuloMistura(_editando!)} — editando',
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 18, color: _azulTitulo),
                   ),
@@ -370,31 +487,37 @@ class _MisturaModalState extends State<MisturaModal> {
                             ),
                           )
                         else ...[
-                          for (final p in _produtos) _linhaProduto(p),
-                          const SizedBox(height: 6),
-                          if (_editando == null)
-                            _botao('Concluir Mistura', _concluir)
-                          else
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _botao(
-                                    'Confirmar Edição',
-                                    _concluir,
-                                    cor: _azulBotao,
+                          _selectMistura(),
+                          const SizedBox(height: 14),
+                          // os itens só depois de escolher a mistura (por
+                          // enquanto todos os produtos da Nutrição)
+                          if (_misturaId != null) ...[
+                            for (final p in _produtos) _linhaProduto(p),
+                            const SizedBox(height: 6),
+                            if (_editando == null)
+                              _botao('Concluir Mistura', _concluir)
+                            else
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _botao(
+                                      'Confirmar Edição',
+                                      _concluir,
+                                      cor: _azulBotao,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: _botao(
-                                    'Cancelar',
-                                    _cancelarEdicao,
-                                    cor: const Color(0xFFE9ECEF),
-                                    corTexto: const Color(0xFF333333),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: _botao(
+                                      'Cancelar',
+                                      _cancelarEdicao,
+                                      cor: const Color(0xFFE9ECEF),
+                                      corTexto: const Color(0xFF333333),
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
+                                ],
+                              ),
+                          ],
                           if (_misturas.isNotEmpty) _listaMisturas(),
                         ],
                       ],

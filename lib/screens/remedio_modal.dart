@@ -12,7 +12,8 @@ import '../widgets/campo_topo_widget.dart';
 /// conteúdo com rolagem.
 ///
 /// Campos: Categoria Animal (uma só), Qtde Animais e, com 1 animal, o Id do
-/// Brinco (opcional); Tipo; Nome do Produto; Sintoma (vários, opcional);
+/// Brinco (opcional); Tipo; Nome do Produto (select na Vacina); Sintomas (só no
+/// Medicamento, vários, opcional);
 /// Qtde/Cabeça e Unidade. Devolve { aplicacoes } ao encerrar e também pelo
 /// (x) — a lista vale do jeito que está; pelo (x) só os campos se perdem.
 class RemedioModal extends StatefulWidget {
@@ -62,6 +63,15 @@ class _RemedioModalState extends State<RemedioModal> {
   ];
 
   static const _unidades = ['ml', 'ml/Kg', 'Unidade'];
+
+  /// Tipo Vacina: o Nome do Produto vira um select com estas vacinas.
+  static const _vacinas = [
+    'Raiva',
+    'Mal de Ano',
+    'Brucelose',
+    'Aftosa',
+    'Pneumonia',
+  ];
 
   String? _categoria;
   final _qtdeController = TextEditingController();
@@ -455,6 +465,18 @@ class _RemedioModalState extends State<RemedioModal> {
     ),
   );
 
+  /// Trocou o Tipo: o Nome do Produto muda de jeito (select na Vacina,
+  /// digitado nos outros) e começa vazio; os Sintomas só valem no
+  /// Medicamento.
+  void _escolherTipo(String tipo) {
+    if (tipo != _tipo) {
+      final eraVacina = _tipo == 'Vacina';
+      if (eraVacina || tipo == 'Vacina') _produtoController.clear();
+      if (tipo != 'Medicamento') _sintomasMarcados.clear();
+    }
+    _tipo = tipo;
+  }
+
   /// Select aberto no próprio campo (só um por vez); null = todos fechados.
   String? _selectAberto;
 
@@ -698,22 +720,36 @@ class _RemedioModalState extends State<RemedioModal> {
                           'Tipo',
                           _tipos,
                           valor: _tipo,
-                          aoEscolher: (v) => _tipo = v,
+                          aoEscolher: _escolherTipo,
                         ),
                         const SizedBox(height: 12),
-                        // Nome do Produto e, embaixo, o Sintoma
-                        CampoTextoTopo(
-                          rotulo: 'Nome do Produto',
-                          corRotulo: _corRotulo,
-                          controller: _produtoController,
-                          textCapitalization: TextCapitalization.characters,
-                        ),
-                        const SizedBox(height: 12),
-                        _select(
-                          'Sintoma',
-                          _sintomas,
-                          marcados: _sintomasMarcados,
-                        ),
+                        // Nome do Produto: na Vacina, select das vacinas; nos
+                        // outros tipos, digitado
+                        if (_tipo == 'Vacina')
+                          _select(
+                            'Nome do Produto',
+                            _vacinas,
+                            valor: _produtoController.text.isEmpty
+                                ? null
+                                : _produtoController.text,
+                            aoEscolher: (v) => _produtoController.text = v,
+                          )
+                        else
+                          CampoTextoTopo(
+                            rotulo: 'Nome do Produto',
+                            corRotulo: _corRotulo,
+                            controller: _produtoController,
+                            textCapitalization: TextCapitalization.characters,
+                          ),
+                        // Sintomas: só no Medicamento
+                        if (_tipo == 'Medicamento') ...[
+                          const SizedBox(height: 12),
+                          _select(
+                            'Sintomas',
+                            _sintomas,
+                            marcados: _sintomasMarcados,
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,

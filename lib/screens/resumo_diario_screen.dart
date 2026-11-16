@@ -569,6 +569,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   ];
   final Set<String> _curralMarcadas = {};
 
+  /// Seção 5: "Nenhuma Mistura feita hoje" marcado (libera o Próximo).
+  bool _nenhumaMistura = false;
+  bool get _secao5Completa => _nenhumaMistura;
+
   /// Seção 4: "Descreva outras atividades ou observações" (não obrigatório).
   final _outrasAtividadesController = TextEditingController();
 
@@ -1385,7 +1389,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       return;
     }
     if (_secao == 5) {
-      // Nutrição e Misturas (nova): o Próximo fica desativado por enquanto
+      // Nutrição e Misturas: por enquanto só segue com "Nenhuma Mistura feita
+      // hoje" marcado
+      if (!_secao5Completa) return;
+      setState(() => _secao = 6);
       return;
     }
     if (_secao == 6) {
@@ -1643,7 +1650,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                         ),
                                         // Seção 1: inativo até confirmar as
                                         // atividades registradas; Seção 2: até o Sim da
-                                        // confirmação; Seção 3: até completar; Seção 4: até marcar uma atividade; Seção 5: desativado por enquanto
+                                        // confirmação; Seção 3: até completar; Seção 4: até marcar uma atividade; Seção 5: até marcar "Nenhuma Mistura"
                                         onPressed:
                                             (_secao == 1 && !_secao1Completa) ||
                                                 (_secao == 2 &&
@@ -1652,7 +1659,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                                     !_secao3Completa) ||
                                                 (_secao == 4 &&
                                                     !_secao4Completa) ||
-                                                _secao == 5
+                                                (_secao == 5 &&
+                                                    !_secao5Completa)
                                             ? null
                                             : _proximo,
                                         child: const Row(
@@ -2655,6 +2663,17 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ],
       ),
     ),
+    // cards no padrão da Seção 4
+    _cardSecao1(
+      'Nenhuma Mistura feita hoje',
+      Icons.block,
+      _nenhumaMistura,
+      (v) => setState(() => _nenhumaMistura = v),
+    ),
+    const SizedBox(height: 8),
+    // "Adicionar Mistura" vem nas próximas etapas (por enquanto sem ação)
+    _cardSecao1('Adicionar Mistura', Icons.add_circle_outline, false, (_) {}),
+    const SizedBox(height: 8),
   ];
 
   /// Link de uma atividade da Seção 2: Choveu abre o programa da Chuva (com

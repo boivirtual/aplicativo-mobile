@@ -71,8 +71,9 @@ class _ServicoModalState extends State<ServicoModal> {
   /// Serviços já confirmados, na ordem em que foram incluídos.
   final List<Map<String, dynamic>> _servicos = [];
 
-  /// O que precisa ser feito (um ou os dois, obrigatório) em cada tipo que
-  /// tem: Pasto (Limpeza / Plantio) e Bebedouro (Limpeza / Manutenção).
+  /// O que precisa ser feito (um ou mais, obrigatório) em cada tipo que tem:
+  /// Pasto (Limpeza / Plantio), Bebedouro (Limpeza / Manutenção) e Cerca
+  /// (Elétrica / Liso / Farpado).
   static const _acoesPorTipo = <String, List<(String, IconData)>>{
     'Pasto': [
       ('Limpeza', Icons.cleaning_services_outlined),
@@ -82,10 +83,15 @@ class _ServicoModalState extends State<ServicoModal> {
       ('Limpeza', Icons.cleaning_services_outlined),
       ('Manutenção', Icons.build_outlined),
     ],
+    'Cerca': [
+      ('Elétrica', Icons.bolt),
+      ('Liso', Icons.horizontal_rule),
+      ('Farpado', Icons.fence),
+    ],
   };
 
   /// Tipos que pedem os pastos (vários, obrigatório) da fazenda do resumo.
-  static const _tiposComPasto = {'Pasto', 'Bebedouro', 'Cocho'};
+  static const _tiposComPasto = {'Pasto', 'Bebedouro', 'Cocho', 'Cerca'};
 
   /// O que precisa ser feito do tipo escolhido (vazio = o tipo não tem).
   List<(String, IconData)> get _acoes => _acoesPorTipo[_tipo] ?? const [];
@@ -94,6 +100,19 @@ class _ServicoModalState extends State<ServicoModal> {
   final Set<int> _pastosMarcados = {};
   List<MapEntry<int, String>> _pastos = [];
   bool _pastosAberto = false;
+
+  /// Tipo "Máquina (manutenção)": qual máquina (uma, obrigatório).
+  static const _maquinas = [
+    'Trator',
+    'Bomba',
+    'Implemento',
+    'Roçadeira',
+    'Moto/Veículo',
+    'Outro',
+  ];
+  String? _maquina;
+  bool _maquinaAberta = false;
+  bool get _comMaquina => _tipo == 'Máquina (manutenção)';
 
   /// Serviço da lista em edição (índice em [_servicos]); null = novo.
   int? _editando;
@@ -135,13 +154,14 @@ class _ServicoModalState extends State<ServicoModal> {
     super.dispose();
   }
 
-  /// Fecha as listas abertas (Tipo, Pastos) ao ir para outro campo, para
-  /// não ficarem ocupando a tela.
+  /// Fecha as listas abertas (Tipo, Pastos, Qual máquina) ao ir para outro
+  /// campo, para não ficarem ocupando a tela.
   void _fecharListas() {
-    if (!_tipoAberto && !_pastosAberto) return;
+    if (!_tipoAberto && !_pastosAberto && !_maquinaAberta) return;
     setState(() {
       _tipoAberto = false;
       _pastosAberto = false;
+      _maquinaAberta = false;
     });
   }
 
@@ -153,6 +173,8 @@ class _ServicoModalState extends State<ServicoModal> {
     _acoesMarcadas.clear();
     _pastosMarcados.clear();
     _pastosAberto = false;
+    _maquina = null;
+    _maquinaAberta = false;
   }
 
   /// "Confirmar Serviço" (ou "Confirmar Edição"): guarda o serviço na lista
@@ -164,6 +186,8 @@ class _ServicoModalState extends State<ServicoModal> {
         : _acoes.isNotEmpty && _acoesMarcadas.isEmpty
         ? 'Marque o que precisa ser feito '
               '(${_acoes.map((a) => a.$1).join(' ou ')}).'
+        : _comMaquina && _maquina == null
+        ? 'Selecione qual máquina.'
         : _comPastos && _pastosMarcados.isEmpty
         ? 'Selecione o(s) Pasto(s).'
         : _tipo == 'Outro' && _descricaoController.text.trim().isEmpty
@@ -184,6 +208,7 @@ class _ServicoModalState extends State<ServicoModal> {
             for (final o in _acoes)
               if (_acoesMarcadas.contains(o.$1)) o.$1,
           ],
+        if (_comMaquina) 'maquina': _maquina,
         if (_comPastos) ...{
           'pastos': [
             for (final p in _pastos)
@@ -212,6 +237,7 @@ class _ServicoModalState extends State<ServicoModal> {
       _editando = n;
       _limpar();
       _tipo = s['tipo']?.toString();
+      _maquina = s['maquina']?.toString();
       _acoesMarcadas.addAll(List<String>.from(s['acoes'] ?? const []));
       for (final p in (s['pastos'] as List? ?? const [])) {
         _pastosMarcados.add((p as Map)['id'] as int);
@@ -287,6 +313,7 @@ class _ServicoModalState extends State<ServicoModal> {
           setState(() {
             _tipoAberto = !_tipoAberto;
             _pastosAberto = false;
+            _maquinaAberta = false;
           });
         },
       ),
@@ -314,7 +341,10 @@ class _ServicoModalState extends State<ServicoModal> {
                       onTap: () => setState(() {
                         // trocou o tipo: o que precisa ser feito muda; os
                         // pastos só ficam se o novo tipo também pede
-                        if (t != _tipo) _acoesMarcadas.clear();
+                        if (t != _tipo) {
+                          _acoesMarcadas.clear();
+                          _maquina = null;
+                        }
                         if (!_tiposComPasto.contains(t)) {
                           _pastosMarcados.clear();
                         }
@@ -511,6 +541,7 @@ class _ServicoModalState extends State<ServicoModal> {
             setState(() {
               _pastosAberto = !_pastosAberto;
               _tipoAberto = false;
+              _maquinaAberta = false;
             });
           },
         ),
@@ -599,6 +630,87 @@ class _ServicoModalState extends State<ServicoModal> {
       ],
     );
   }
+
+  /// Select "Qual máquina" (uma só) com a lista aberta embaixo do próprio
+  /// campo, como o Tipo: um toque escolhe e fecha.
+  Widget _selectMaquina() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      CampoValorTopo(
+        rotulo: 'Qual máquina',
+        corRotulo: _corRotulo,
+        valor: _maquina ?? '',
+        icone: Icon(
+          _maquinaAberta ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+          color: _corRotulo,
+        ),
+        onTap: () {
+          FocusManager.instance.primaryFocus?.unfocus();
+          setState(() {
+            _maquinaAberta = !_maquinaAberta;
+            _tipoAberto = false;
+            _pastosAberto = false;
+          });
+        },
+      ),
+      if (_maquinaAberta)
+        Container(
+          margin: const EdgeInsets.only(top: 4),
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFCFD8DC)),
+          ),
+          child: Column(
+            children: [
+              for (final m in _maquinas)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 3),
+                  child: Material(
+                    color: m == _maquina
+                        ? const Color(0xFFD6E8FA)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(6),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(6),
+                      onTap: () => setState(() {
+                        _maquina = m;
+                        _maquinaAberta = false;
+                      }),
+                      child: Container(
+                        height: 40,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                m,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: m == _maquina
+                                      ? _azulTitulo
+                                      : Colors.black87,
+                                ),
+                              ),
+                            ),
+                            if (m == _maquina)
+                              const Icon(
+                                Icons.check,
+                                size: 18,
+                                color: _azulBotao,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+    ],
+  );
 
   /// Ícone de editar/excluir da lista, no azul do btn-primary.
   Widget _iconeLista(IconData icone, VoidCallback aoTocar) => InkWell(
@@ -742,8 +854,13 @@ class _ServicoModalState extends State<ServicoModal> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _selectTipo(),
-                        // o que precisa ser feito (Pasto, Bebedouro) e os
-                        // pastos (Pasto, Bebedouro, Cocho)
+                        // Máquina (manutenção): qual máquina
+                        if (_comMaquina) ...[
+                          const SizedBox(height: 12),
+                          _selectMaquina(),
+                        ],
+                        // o que precisa ser feito (Pasto, Bebedouro, Cerca)
+                        // e os pastos (Pasto, Bebedouro, Cocho, Cerca)
                         if (_acoes.isNotEmpty) ...[
                           const SizedBox(height: 12),
                           _opcoesPasto(),

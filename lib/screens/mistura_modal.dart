@@ -192,7 +192,12 @@ class _MisturaModalState extends State<MisturaModal> {
           Expanded(
             child: Text(
               '${p['descricao']}',
-              style: TextStyle(fontSize: 14, color: _corRotulo),
+              // FuturaStd Medium: mais grosso que o texto normal, sem negrito
+              style: TextStyle(
+                fontFamily: 'FuturaStdMedium',
+                fontSize: 14,
+                color: _corRotulo,
+              ),
             ),
           ),
           const SizedBox(width: 8),

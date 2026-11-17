@@ -17,6 +17,7 @@ import 'chuva_screen.dart';
 import 'mapa_screen.dart';
 import 'mistura_modal.dart';
 import 'remedio_modal.dart';
+import 'servico_modal.dart';
 import '../widgets/indicador_conectividade_widget.dart';
 
 /// "Resumo Diário da Fazenda": conferência, por usuário logado, dos
@@ -93,10 +94,31 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     'CAVALOS',
   ];
 
-  // Seção 6 — Serviços: "Nenhum serviço necessário hoje" (libera o Próximo)
-  // ou "Adicionar Serviço" (o modal vem nas próximas etapas).
+  // Seção 6 — Serviços: "Nenhum serviço necessário hoje" ou os serviços do
+  // modal "Serviço(s)" (card "Adicionar Serviço"). Um exclui o outro.
   bool _nenhumServico = false;
-  bool get _secao6Completa => _nenhumServico;
+  List<Map<String, dynamic>> _servicos = [];
+  bool get _secao6Completa => _nenhumServico || _servicos.isNotEmpty;
+
+  /// Card "Adicionar Serviço": abre o modal com os serviços já incluídos. Ao
+  /// fechar vale a lista do modal: com serviços o card fica marcado (e sai o
+  /// "Nenhum serviço necessário hoje"); vazia, desmarca.
+  Future<void> _abrirServicos() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final dados = await showDialog<Map<String, dynamic>>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => ServicoModal(servicos: _servicos),
+    );
+    if (dados == null || !mounted) return;
+    setState(() {
+      _servicos = [
+        for (final s in (dados['servicos'] as List? ?? const []))
+          Map<String, dynamic>.from(s as Map),
+      ];
+      if (_servicos.isNotEmpty) _nenhumServico = false;
+    });
+  }
 
   // pastos onde está a diferença (quando Esperados ≠ Encontrados)
   final Set<int> _pastosDiferenca = {};
@@ -1554,7 +1576,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                         ),
                                         // Seção 1: inativo até confirmar as
                                         // atividades registradas; Seção 2: até o Sim da
-                                        // confirmação; Seção 3: até completar; Seção 4: até marcar uma atividade; Seção 5: até marcar "Nenhuma Mistura" ou ter mistura; Seção 6: até marcar "Nenhum serviço"
+                                        // confirmação; Seção 3: até completar; Seção 4: até marcar uma atividade; Seção 5: até marcar "Nenhuma Mistura" ou ter mistura; Seção 6: até marcar "Nenhum serviço" ou ter serviço
                                         onPressed:
                                             (_secao == 1 && !_secao1Completa) ||
                                                 (_secao == 2 &&
@@ -2590,11 +2612,22 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       'Nenhum serviço necessário hoje',
       Icons.block,
       _nenhumServico,
-      (v) => setState(() => _nenhumServico = v),
+      // marcar "Nenhum serviço" apaga os serviços incluídos
+      (v) => setState(() {
+        _nenhumServico = v;
+        if (v) _servicos = [];
+      }),
     ),
     const SizedBox(height: 8),
-    // "Adicionar Serviço": o modal vem nas próximas etapas (sem ação)
-    _cardSecao1('Adicionar Serviço', Icons.add_circle_outline, false, (_) {}),
+    // abre o modal "Serviço(s)"; marcado enquanto tiver algum serviço
+    _cardSecao1(
+      _servicos.isEmpty
+          ? 'Adicionar Serviço'
+          : 'Adicionar Serviço (${_servicos.length})',
+      Icons.add_circle_outline,
+      _servicos.isNotEmpty,
+      (_) => _abrirServicos(),
+    ),
     const SizedBox(height: 8),
   ];
 

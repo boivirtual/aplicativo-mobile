@@ -9,7 +9,7 @@ import '../widgets/campo_topo_widget.dart';
 /// fundo cinza, (x) no canto, conteúdo com rolagem, botão verde que guarda o
 /// serviço na lista de baixo (editar e excluir, o último no topo).
 ///
-/// Campos: Tipo (um ou mais, obrigatório), "Descreva o que precisa ser feito
+/// Campos: Tipo (um só, obrigatório), "Descreva o que precisa ser feito
 /// e a urgência" e o andamento (Feito / Em andamento / Será feito, um
 /// obrigatório). Devolve { servicos } ao fechar pelo (x).
 class ServicoModal extends StatefulWidget {
@@ -48,7 +48,7 @@ class _ServicoModalState extends State<ServicoModal> {
     ('Será feito', Icons.schedule),
   ];
 
-  final Set<String> _tiposMarcados = {};
+  String? _tipo;
   final _descricaoController = TextEditingController();
   String? _andamento;
 
@@ -79,7 +79,7 @@ class _ServicoModalState extends State<ServicoModal> {
   }
 
   void _limpar() {
-    _tiposMarcados.clear();
+    _tipo = null;
     _descricaoController.clear();
     _andamento = null;
     _tipoAberto = false;
@@ -89,7 +89,7 @@ class _ServicoModalState extends State<ServicoModal> {
   /// (ou grava o editado) e limpa os campos.
   Future<void> _confirmar() async {
     FocusManager.instance.primaryFocus?.unfocus();
-    final erro = _tiposMarcados.isEmpty
+    final erro = _tipo == null
         ? 'Selecione o Tipo.'
         : _andamento == null
         ? 'Marque se o serviço foi feito, está em andamento ou será feito.'
@@ -100,11 +100,7 @@ class _ServicoModalState extends State<ServicoModal> {
     }
     setState(() {
       final servico = <String, dynamic>{
-        // na ordem das opções, não na ordem em que foram tocados
-        'tipos': [
-          for (final t in _tipos)
-            if (_tiposMarcados.contains(t)) t,
-        ],
+        'tipo': _tipo,
         'descricao': _descricaoController.text.trim(),
         'andamento': _andamento,
       };
@@ -125,7 +121,7 @@ class _ServicoModalState extends State<ServicoModal> {
     setState(() {
       _editando = n;
       _limpar();
-      _tiposMarcados.addAll(List<String>.from(s['tipos'] ?? []));
+      _tipo = s['tipo']?.toString();
       _descricaoController.text = '${s['descricao'] ?? ''}';
       _andamento = s['andamento']?.toString();
     });
@@ -180,16 +176,14 @@ class _ServicoModalState extends State<ServicoModal> {
   }
 
   /// Select "Tipo" com a lista aberta embaixo do próprio campo: um toque
-  /// marca ou desmarca (vários); os marcados aparecem embaixo do campo.
+  /// escolhe (um só) e fecha.
   Widget _selectTipo() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       CampoValorTopo(
         rotulo: 'Tipo',
         corRotulo: _corRotulo,
-        valor: _tiposMarcados.isEmpty
-            ? ''
-            : '${_tiposMarcados.length} selecionado(s)',
+        valor: _tipo ?? '',
         icone: Icon(
           _tipoAberto ? Icons.arrow_drop_up : Icons.arrow_drop_down,
           color: _corRotulo,
@@ -214,14 +208,15 @@ class _ServicoModalState extends State<ServicoModal> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 3),
                   child: Material(
-                    color: _tiposMarcados.contains(t)
+                    color: t == _tipo
                         ? const Color(0xFFD6E8FA)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(6),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(6),
                       onTap: () => setState(() {
-                        if (!_tiposMarcados.remove(t)) _tiposMarcados.add(t);
+                        _tipo = t;
+                        _tipoAberto = false;
                       }),
                       child: Container(
                         height: 40,
@@ -233,13 +228,13 @@ class _ServicoModalState extends State<ServicoModal> {
                                 t,
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: _tiposMarcados.contains(t)
+                                  color: t == _tipo
                                       ? _azulTitulo
                                       : Colors.black87,
                                 ),
                               ),
                             ),
-                            if (_tiposMarcados.contains(t))
+                            if (t == _tipo)
                               const Icon(
                                 Icons.check,
                                 size: 18,
@@ -254,67 +249,65 @@ class _ServicoModalState extends State<ServicoModal> {
             ],
           ),
         ),
-      // os marcados embaixo do campo, como no Sintomas
-      if (_tiposMarcados.isNotEmpty)
-        Padding(
-          padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
-          child: Text(
-            [
-              for (final t in _tipos)
-                if (_tiposMarcados.contains(t)) t,
-            ].join(', '),
-            style: TextStyle(
-              fontSize: 12,
-              fontStyle: FontStyle.italic,
-              color: Colors.blue[300],
-              shadows: [
-                Shadow(color: Colors.blue[300]!, offset: const Offset(0.4, 0)),
-              ],
-            ),
-          ),
-        ),
     ],
   );
 
-  /// Cards do andamento (um só): o marcado fica azul mais escuro com o check
-  /// verde, como os cards da Seção 4.
-  Widget _cardAndamento((String, IconData) a) {
-    final marcado = _andamento == a.$1;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: marcado ? const Color(0xFFCFE5FA) : const Color(0xFFF9FCFF),
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () {
-            FocusManager.instance.primaryFocus?.unfocus();
-            setState(() => _andamento = marcado ? null : a.$1);
-          },
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 48),
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Row(
-              children: [
-                Icon(a.$2, size: 22, color: const Color(0xFF228cb9)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    a.$1,
-                    style: TextStyle(fontSize: 15, color: _corRotulo),
-                  ),
+  /// Andamento (um só) lado a lado, no mesmo padrão dos botões "Gado Todo /
+  /// Parte do Gado / Não Conferi" da Seção 3: ícone em cima, texto embaixo,
+  /// azul bem claro e, escolhido, azul mais escuro — sem efeito de toque.
+  Widget _opcoesAndamento() {
+    const azulIcone = Color(0xFF228cb9);
+    return Row(
+      children: [
+        for (var i = 0; i < _andamentos.length; i++) ...[
+          if (i > 0) const SizedBox(width: 8),
+          Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                FocusManager.instance.primaryFocus?.unfocus();
+                setState(() => _andamento = _andamentos[i].$1);
+              },
+              child: Container(
+                height: 96,
+                padding: const EdgeInsets.fromLTRB(4, 12, 4, 6),
+                decoration: BoxDecoration(
+                  color: _andamento == _andamentos[i].$1
+                      ? const Color(0xFFCFE5FA)
+                      : const Color(0xFFF9FCFF),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                SizedBox(
-                  width: 28,
-                  child: marcado
-                      ? Icon(Icons.check, color: Colors.green[600], size: 26)
-                      : null,
+                child: Column(
+                  children: [
+                    Icon(_andamentos[i].$2, size: 28, color: azulIcone),
+                    const SizedBox(height: 6),
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          _andamentos[i].$1,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          style: TextStyle(
+                            fontFamily: 'FuturaStdMedium',
+                            fontSize: 13,
+                            color: _corRotulo,
+                            shadows: [
+                              Shadow(
+                                color: _corRotulo,
+                                offset: const Offset(0.4, 0),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        ],
+      ],
     );
   }
 
@@ -349,10 +342,7 @@ class _ServicoModalState extends State<ServicoModal> {
             ),
             Padding(
               padding: EdgeInsets.only(top: topo, right: 6),
-              child: Text(
-                (s['tipos'] as List? ?? const []).join(', '),
-                style: estilo,
-              ),
+              child: Text('${s['tipo'] ?? ''}', style: estilo),
             ),
             Padding(
               padding: EdgeInsets.only(top: topo, right: 4),
@@ -465,7 +455,8 @@ class _ServicoModalState extends State<ServicoModal> {
                         _selectTipo(),
                         const SizedBox(height: 12),
                         CampoTextoTopo(
-                          rotulo: 'Descreva o que precisa ser feito e a urgência',
+                          rotulo:
+                              'Descreva o que precisa ser feito e a urgência',
                           corRotulo: _corRotulo,
                           controller: _descricaoController,
                           altura: null,
@@ -473,8 +464,8 @@ class _ServicoModalState extends State<ServicoModal> {
                           textCapitalization: TextCapitalization.sentences,
                         ),
                         const SizedBox(height: 12),
-                        for (final a in _andamentos) _cardAndamento(a),
-                        const SizedBox(height: 4),
+                        _opcoesAndamento(),
+                        const SizedBox(height: 14),
                         if (_editando == null)
                           _botao('Confirmar Serviço', _confirmar)
                         else

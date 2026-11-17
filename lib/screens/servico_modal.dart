@@ -1,0 +1,536 @@
+import 'package:flutter/material.dart';
+
+import '../utils/app_alert.dart';
+import '../utils/rolar_ate_foco.dart';
+import '../widgets/campo_topo_widget.dart';
+
+/// Modal "Serviço(s)" do Resumo Diário (Seção 6 — Serviços, card "Adicionar
+/// Serviço"). Mesmo visual e funcionamento do modal "Mistura(s)" da Seção 5:
+/// fundo cinza, (x) no canto, conteúdo com rolagem, botão verde que guarda o
+/// serviço na lista de baixo (editar e excluir, o último no topo).
+///
+/// Campos: Tipo (um ou mais, obrigatório), "Descreva o que precisa ser feito
+/// e a urgência" e o andamento (Feito / Em andamento / Será feito, um
+/// obrigatório). Devolve { servicos } ao fechar pelo (x).
+class ServicoModal extends StatefulWidget {
+  /// Serviços já incluídos (editar); null = nenhum.
+  final List<Map<String, dynamic>>? servicos;
+
+  const ServicoModal({super.key, this.servicos});
+
+  @override
+  State<ServicoModal> createState() => _ServicoModalState();
+}
+
+class _ServicoModalState extends State<ServicoModal> {
+  static const _azulTitulo = Color(0xFF18385F);
+  static const _azulBotao = Color(0xFF007AFF);
+  static const _verde = Color(0xFF4CAF50);
+  static final _corRotulo = Colors.blueGrey[800]!;
+
+  static const _tipos = [
+    'Pasto',
+    'Bebedouro',
+    'Cocho',
+    'Cerca',
+    'Curral',
+    'Estrada / Acesso',
+    'Máquina (manutenção)',
+    'Motofoice',
+    'Herbicida',
+    'Trator',
+    'Outro',
+  ];
+
+  static const _andamentos = <(String, IconData)>[
+    ('Feito', Icons.check_circle_outline),
+    ('Em andamento', Icons.timelapse),
+    ('Será feito', Icons.schedule),
+  ];
+
+  final Set<String> _tiposMarcados = {};
+  final _descricaoController = TextEditingController();
+  String? _andamento;
+
+  /// Lista do Tipo aberta embaixo do campo.
+  bool _tipoAberto = false;
+
+  /// Serviços já confirmados, na ordem em que foram incluídos.
+  final List<Map<String, dynamic>> _servicos = [];
+
+  /// Serviço da lista em edição (índice em [_servicos]); null = novo.
+  int? _editando;
+
+  final _rolagem = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    for (final s in widget.servicos ?? const []) {
+      _servicos.add(Map<String, dynamic>.from(s));
+    }
+  }
+
+  @override
+  void dispose() {
+    _descricaoController.dispose();
+    _rolagem.dispose();
+    super.dispose();
+  }
+
+  void _limpar() {
+    _tiposMarcados.clear();
+    _descricaoController.clear();
+    _andamento = null;
+    _tipoAberto = false;
+  }
+
+  /// "Confirmar Serviço" (ou "Confirmar Edição"): guarda o serviço na lista
+  /// (ou grava o editado) e limpa os campos.
+  Future<void> _confirmar() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final erro = _tiposMarcados.isEmpty
+        ? 'Selecione o Tipo.'
+        : _andamento == null
+        ? 'Marque se o serviço foi feito, está em andamento ou será feito.'
+        : null;
+    if (erro != null) {
+      await AppAlert.erro(context, erro);
+      return;
+    }
+    setState(() {
+      final servico = <String, dynamic>{
+        // na ordem das opções, não na ordem em que foram tocados
+        'tipos': [
+          for (final t in _tipos)
+            if (_tiposMarcados.contains(t)) t,
+        ],
+        'descricao': _descricaoController.text.trim(),
+        'andamento': _andamento,
+      };
+      if (_editando != null) {
+        _servicos[_editando!] = servico;
+        _editando = null;
+      } else {
+        _servicos.add(servico);
+      }
+      _limpar();
+    });
+  }
+
+  /// Editar um serviço da lista: os dados dele voltam para os campos.
+  void _editar(int n) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final s = _servicos[n];
+    setState(() {
+      _editando = n;
+      _limpar();
+      _tiposMarcados.addAll(List<String>.from(s['tipos'] ?? []));
+      _descricaoController.text = '${s['descricao'] ?? ''}';
+      _andamento = s['andamento']?.toString();
+    });
+    _rolagem.animateTo(
+      0,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _cancelarEdicao() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _editando = null;
+      _limpar();
+    });
+  }
+
+  /// Excluir um serviço da lista (pergunta antes).
+  Future<void> _excluir(int n) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(
+          'Excluir Serviço',
+          style: TextStyle(fontSize: 17, color: _azulTitulo),
+        ),
+        content: Text('Excluir o Serviço ${n + 1}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('NÃO'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('SIM'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() {
+      // excluiu o que estava em edição: sai da edição
+      if (_editando == n) {
+        _editando = null;
+        _limpar();
+      }
+      _servicos.removeAt(n);
+      if (_editando != null && _editando! > n) _editando = _editando! - 1;
+    });
+  }
+
+  /// Select "Tipo" com a lista aberta embaixo do próprio campo: um toque
+  /// marca ou desmarca (vários); os marcados aparecem embaixo do campo.
+  Widget _selectTipo() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      CampoValorTopo(
+        rotulo: 'Tipo',
+        corRotulo: _corRotulo,
+        valor: _tiposMarcados.isEmpty
+            ? ''
+            : '${_tiposMarcados.length} selecionado(s)',
+        icone: Icon(
+          _tipoAberto ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+          color: _corRotulo,
+        ),
+        onTap: () {
+          FocusManager.instance.primaryFocus?.unfocus();
+          setState(() => _tipoAberto = !_tipoAberto);
+        },
+      ),
+      if (_tipoAberto)
+        Container(
+          margin: const EdgeInsets.only(top: 4),
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFCFD8DC)),
+          ),
+          child: Column(
+            children: [
+              for (final t in _tipos)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 3),
+                  child: Material(
+                    color: _tiposMarcados.contains(t)
+                        ? const Color(0xFFD6E8FA)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(6),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(6),
+                      onTap: () => setState(() {
+                        if (!_tiposMarcados.remove(t)) _tiposMarcados.add(t);
+                      }),
+                      child: Container(
+                        height: 40,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                t,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: _tiposMarcados.contains(t)
+                                      ? _azulTitulo
+                                      : Colors.black87,
+                                ),
+                              ),
+                            ),
+                            if (_tiposMarcados.contains(t))
+                              const Icon(
+                                Icons.check,
+                                size: 18,
+                                color: _azulBotao,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      // os marcados embaixo do campo, como no Sintomas
+      if (_tiposMarcados.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
+          child: Text(
+            [
+              for (final t in _tipos)
+                if (_tiposMarcados.contains(t)) t,
+            ].join(', '),
+            style: TextStyle(
+              fontSize: 12,
+              fontStyle: FontStyle.italic,
+              color: Colors.blue[300],
+              shadows: [
+                Shadow(color: Colors.blue[300]!, offset: const Offset(0.4, 0)),
+              ],
+            ),
+          ),
+        ),
+    ],
+  );
+
+  /// Cards do andamento (um só): o marcado fica azul mais escuro com o check
+  /// verde, como os cards da Seção 4.
+  Widget _cardAndamento((String, IconData) a) {
+    final marcado = _andamento == a.$1;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: marcado ? const Color(0xFFCFE5FA) : const Color(0xFFF9FCFF),
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () {
+            FocusManager.instance.primaryFocus?.unfocus();
+            setState(() => _andamento = marcado ? null : a.$1);
+          },
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 48),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Row(
+              children: [
+                Icon(a.$2, size: 22, color: const Color(0xFF228cb9)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    a.$1,
+                    style: TextStyle(fontSize: 15, color: _corRotulo),
+                  ),
+                ),
+                SizedBox(
+                  width: 28,
+                  child: marcado
+                      ? Icon(Icons.check, color: Colors.green[600], size: 26)
+                      : null,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Ícone de editar/excluir da lista, no azul do btn-primary.
+  Widget _iconeLista(IconData icone, VoidCallback aoTocar) => InkWell(
+    borderRadius: BorderRadius.circular(12),
+    onTap: aoTocar,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      child: Icon(icone, size: 18, color: _azulBotao),
+    ),
+  );
+
+  /// Lista dos serviços, com rolagem, do último para o primeiro: "Serviço N",
+  /// os tipos, o andamento e os ícones de editar e excluir.
+  Widget _listaServicos() {
+    final estilo = TextStyle(fontSize: 11, color: _corRotulo);
+    final linhas = <TableRow>[];
+    for (var n = _servicos.length - 1; n >= 0; n--) {
+      final s = _servicos[n];
+      final topo = linhas.isNotEmpty ? 8.0 : 2.0;
+      linhas.add(
+        TableRow(
+          // o serviço em edição fica em azul claro
+          decoration: n == _editando
+              ? const BoxDecoration(color: Color(0xFFD6E8FA))
+              : null,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(top: topo, right: 8),
+              child: Text('Serviço ${n + 1}', style: estilo),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: topo, right: 6),
+              child: Text(
+                (s['tipos'] as List? ?? const []).join(', '),
+                style: estilo,
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: topo, right: 4),
+              child: Text('${s['andamento'] ?? ''}', style: estilo),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: topo - 2),
+              child: _iconeLista(Icons.edit_outlined, () => _editar(n)),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: topo - 2),
+              child: _iconeLista(Icons.delete_outline, () => _excluir(n)),
+            ),
+          ],
+        ),
+      );
+    }
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      constraints: const BoxConstraints(maxHeight: 150),
+      padding: const EdgeInsets.fromLTRB(10, 6, 6, 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Scrollbar(
+        thumbVisibility: true,
+        child: SingleChildScrollView(
+          child: Table(
+            defaultColumnWidth: const IntrinsicColumnWidth(),
+            // os tipos ficam com o que sobrar (quebra se precisar)
+            columnWidths: const {1: FlexColumnWidth()},
+            defaultVerticalAlignment: TableCellVerticalAlignment.top,
+            children: linhas,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Botão do modal (Confirmar / Confirmar Edição / Cancelar).
+  Widget _botao(
+    String texto,
+    VoidCallback aoTocar, {
+    Color cor = _verde,
+    Color corTexto = Colors.white,
+  }) => SizedBox(
+    height: 46,
+    child: ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: cor,
+        foregroundColor: corTexto,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      onPressed: aoTocar,
+      child: Text(texto, style: const TextStyle(fontSize: 15)),
+    ),
+  );
+
+  bool _tecladoAntes = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tecladoAberto = MediaQuery.viewInsetsOf(context).bottom > 0;
+    // teclado acabou de abrir: leva o campo em edição para a parte visível
+    if (tecladoAberto && !_tecladoAntes) rolarAteCampoEmFoco();
+    _tecladoAntes = tecladoAberto;
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      // centralizado, mas sem passar para cima da barra do título "Resumo
+      // Diário da Fazenda" quando o conteúdo é alto
+      alignment: Alignment.center,
+      insetPadding: const EdgeInsets.fromLTRB(16, 72, 16, 24),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 14, 44, 6),
+                  child: Text(
+                    _editando == null
+                        ? 'Serviço(s)'
+                        : 'Serviço ${_editando! + 1} — editando',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 18, color: _azulTitulo),
+                  ),
+                ),
+                Flexible(
+                  child: SingleChildScrollView(
+                    controller: _rolagem,
+                    padding: EdgeInsets.fromLTRB(
+                      12,
+                      4,
+                      12,
+                      tecladoAberto ? 160 : 12,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _selectTipo(),
+                        const SizedBox(height: 12),
+                        CampoTextoTopo(
+                          rotulo: 'Descreva o que precisa ser feito e a urgência',
+                          corRotulo: _corRotulo,
+                          controller: _descricaoController,
+                          altura: null,
+                          linhas: 3,
+                          textCapitalization: TextCapitalization.sentences,
+                        ),
+                        const SizedBox(height: 12),
+                        for (final a in _andamentos) _cardAndamento(a),
+                        const SizedBox(height: 4),
+                        if (_editando == null)
+                          _botao('Confirmar Serviço', _confirmar)
+                        else
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _botao(
+                                  'Confirmar Edição',
+                                  _confirmar,
+                                  cor: _azulBotao,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _botao(
+                                  'Cancelar',
+                                  _cancelarEdicao,
+                                  cor: const Color(0xFFE9ECEF),
+                                  corTexto: const Color(0xFF333333),
+                                ),
+                              ),
+                            ],
+                          ),
+                        if (_servicos.isNotEmpty) _listaServicos(),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // (x) no canto: fecha; os serviços da lista valem do jeito que
+          // estão (só o que está nos campos e não foi confirmado se perde)
+          Positioned(
+            top: -10,
+            right: -10,
+            child: Material(
+              color: _azulTitulo,
+              shape: const CircleBorder(
+                side: BorderSide(color: Colors.white, width: 2),
+              ),
+              elevation: 3,
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () => Navigator.pop(context, <String, dynamic>{
+                  'servicos': _servicos,
+                }),
+                child: const Padding(
+                  padding: EdgeInsets.all(6),
+                  child: Icon(Icons.close, color: Colors.white, size: 22),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

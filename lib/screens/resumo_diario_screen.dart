@@ -2572,6 +2572,16 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       ),
     ),
     // cards no padrão da Seção 4
+    // abre o modal "Mistura(s)"; marcado enquanto tiver alguma mistura
+    _cardSecao1(
+      _misturas.isEmpty
+          ? 'Adicionar Mistura'
+          : 'Adicionar Mistura (${_misturas.length})',
+      Icons.add_circle_outline,
+      _misturas.isNotEmpty,
+      (_) => _abrirMisturas(),
+    ),
+    const SizedBox(height: 8),
     _cardSecao1(
       'Nenhuma Mistura feita hoje',
       Icons.block,
@@ -2581,16 +2591,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         _nenhumaMistura = v;
         if (v) _misturas = [];
       }),
-    ),
-    const SizedBox(height: 8),
-    // abre o modal "Mistura(s)"; marcado enquanto tiver alguma mistura
-    _cardSecao1(
-      _misturas.isEmpty
-          ? 'Adicionar Mistura'
-          : 'Adicionar Mistura (${_misturas.length})',
-      Icons.add_circle_outline,
-      _misturas.isNotEmpty,
-      (_) => _abrirMisturas(),
     ),
     const SizedBox(height: 8),
   ];
@@ -2612,6 +2612,16 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ],
       ),
     ),
+    // abre o modal "Serviço(s)"; marcado enquanto tiver algum serviço
+    _cardSecao1(
+      _servicos.isEmpty
+          ? 'Adicionar Serviço'
+          : 'Adicionar Serviço (${_servicos.length})',
+      Icons.add_circle_outline,
+      _servicos.isNotEmpty,
+      (_) => _abrirServicos(),
+    ),
+    const SizedBox(height: 8),
     _cardSecao1(
       'Nenhum serviço necessário hoje',
       Icons.block,
@@ -2621,16 +2631,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         _nenhumServico = v;
         if (v) _servicos = [];
       }),
-    ),
-    const SizedBox(height: 8),
-    // abre o modal "Serviço(s)"; marcado enquanto tiver algum serviço
-    _cardSecao1(
-      _servicos.isEmpty
-          ? 'Adicionar Serviço'
-          : 'Adicionar Serviço (${_servicos.length})',
-      Icons.add_circle_outline,
-      _servicos.isNotEmpty,
-      (_) => _abrirServicos(),
     ),
     const SizedBox(height: 8),
   ];

@@ -13,7 +13,6 @@ import '../utils/estilo_app.dart';
 import '../widgets/cabecalho_fazenda_widget.dart';
 import '../widgets/campo_topo_widget.dart';
 import '../widgets/tarja_fazenda_widget.dart';
-import 'aplicacao_modal.dart';
 import 'chuva_screen.dart';
 import 'mapa_screen.dart';
 import 'mistura_modal.dart';
@@ -60,87 +59,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Seção 3 para cima do teclado).
   final _rolagem = ScrollController();
 
-  /// "Excluir <nome> N?" — mesmo modelo do "Excluir Item" da Pesagem.
-  Future<bool> _confirmarExclusao(String nome, int indice) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        // mesmo modelo do "Excluir Item" da Pesagem: o NÃO em evidência
-        title: Text(
-          'Excluir $nome',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: Text(
-          'Confirma a exclusão ${nome == 'Aplicação' ? 'da' : 'do'} '
-          '$nome ${indice + 1}?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
-              'NÃO',
-              style: TextStyle(
-                color: Colors.blue,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'SIM',
-              style: TextStyle(color: Colors.blue, fontSize: 16),
-            ),
-          ),
-        ],
-      ),
-    );
-    return ok == true;
-  }
-
-  /// Lista dos registros confirmados ("Tratamento N", "Aplicação N"...),
-  /// cada um com editar e lixeira.
-  List<Widget> _listaRegistros(
-    String nome,
-    int quantidade,
-    void Function(int) editar,
-    void Function(int) excluir,
-  ) => [
-    for (var i = 0; i < quantidade; i++)
-      Container(
-        margin: const EdgeInsets.only(top: 6),
-        padding: const EdgeInsets.only(left: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFCFD8DC)),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                '$nome ${i + 1}',
-                style: _textoGrosso(_corRotulo).copyWith(fontSize: 15),
-              ),
-            ),
-            IconButton(
-              tooltip: 'Editar',
-              // azul do btn-primary (Bootstrap 3)
-              icon: const Icon(Icons.edit_outlined, color: Color(0xFF337AB7)),
-              onPressed: () => editar(i),
-            ),
-            IconButton(
-              tooltip: 'Excluir',
-              icon: const Icon(Icons.delete_outline, color: Color(0xFF337AB7)),
-              onPressed: () => excluir(i),
-            ),
-          ],
-        ),
-      ),
-  ];
-
   // Seção 7 — Atividades no Curral: "Teve atividade no curral hoje?"; com
   // "Sim", as atividades, as categorias trabalhadas, a quantidade e a
   // observação.
@@ -175,41 +93,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     'CAVALOS',
   ];
 
-  // Seção 6 — Vacinas, Vermífugos e Carrapaticidas: "Adicionar Aplicação"
-  // ou "Nenhuma aplicação de vacina ou vermífugo hoje".
-  bool _nenhumaAplicacao = false;
-
-  /// Aplicações adicionadas (a tela "Adicionar Aplicação" vem depois).
-  final List<Map<String, dynamic>> _aplicacoes = [];
-
-  /// "Adicionar Aplicação": abre o modal "Aplicação N" (N = próximo
-  /// número); ao confirmar, entra na lista abaixo do botão.
-  Future<void> _adicionarAplicacao({int? editar}) async {
-    FocusManager.instance.primaryFocus?.unfocus();
-    final indice = editar ?? _aplicacoes.length;
-    final dados = await showDialog<Map<String, dynamic>>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AplicacaoModal(
-        numero: indice + 1,
-        dados: editar == null ? null : _aplicacoes[editar],
-      ),
-    );
-    if (dados == null || !mounted) return;
-    setState(() {
-      if (editar == null) {
-        _aplicacoes.add(dados);
-      } else {
-        _aplicacoes[editar] = dados;
-      }
-    });
-  }
-
-  Future<void> _excluirAplicacao(int indice) async {
-    if (await _confirmarExclusao('Aplicação', indice) && mounted) {
-      setState(() => _aplicacoes.removeAt(indice));
-    }
-  }
+  // Seção 6 — Serviços: "Nenhum serviço necessário hoje" (libera o Próximo)
+  // ou "Adicionar Serviço" (o modal vem nas próximas etapas).
+  bool _nenhumServico = false;
+  bool get _secao6Completa => _nenhumServico;
 
   // pastos onde está a diferença (quando Esperados ≠ Encontrados)
   final Set<int> _pastosDiferenca = {};
@@ -1419,14 +1306,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       return;
     }
     if (_secao == 6) {
-      if (!_nenhumaAplicacao && _aplicacoes.isEmpty) {
-        await AppAlert.erro(
-          context,
-          'Adicione uma aplicação ou marque "Nenhuma aplicação de vacina ou '
-          'vermífugo hoje".',
-        );
-        return;
-      }
+      // Serviços: por enquanto só segue com "Nenhum serviço necessário hoje"
+      if (!_secao6Completa) return;
       setState(() => _secao = 7);
       return;
     }
@@ -1673,7 +1554,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                         ),
                                         // Seção 1: inativo até confirmar as
                                         // atividades registradas; Seção 2: até o Sim da
-                                        // confirmação; Seção 3: até completar; Seção 4: até marcar uma atividade; Seção 5: até marcar "Nenhuma Mistura"
+                                        // confirmação; Seção 3: até completar; Seção 4: até marcar uma atividade; Seção 5: até marcar "Nenhuma Mistura" ou ter mistura; Seção 6: até marcar "Nenhum serviço"
                                         onPressed:
                                             (_secao == 1 && !_secao1Completa) ||
                                                 (_secao == 2 &&
@@ -1683,7 +1564,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                                 (_secao == 4 &&
                                                     !_secao4Completa) ||
                                                 (_secao == 5 &&
-                                                    !_secao5Completa)
+                                                    !_secao5Completa) ||
+                                                (_secao == 6 &&
+                                                    !_secao6Completa)
                                             ? null
                                             : _proximo,
                                         child: const Row(
@@ -1725,7 +1608,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   /// Fundo da tela e da barra do Próximo: azul da tarja na tela inicial e
   /// nas Seções 1 a 4, branco nas outras.
-  Color get _fundoTela => _secao <= 5 ? _azulTarja : Colors.white;
+  Color get _fundoTela => _secao <= 6 ? _azulTarja : Colors.white;
 
   /// Tarja de todas as seções: fazenda, data, barra de progresso e "Seção X
   /// de 11", de ponta a ponta, sem bordas arredondadas.
@@ -1816,7 +1699,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       // mesmo espaço depois do título da Seção 4
       const SizedBox(height: 16),
     ],
-    6 => [_tituloAzul('Aplicações Realizadas Hoje')],
+    6 => [
+      _tituloAzul('Serviços', tamanho: 17),
+      // mesmo espaço depois do título da Seção 5
+      const SizedBox(height: 16),
+    ],
     7 => [_tituloAzul('O Que Foi Feito Hoje')],
     _ => [
       _tituloAzul('Atividades Registradas', tamanho: 17),
@@ -1857,35 +1744,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     3 => _conferenciaRebanho(),
     4 => _conversaCurral(),
     5 => _conversaNutricao(),
-    6 => [
-      // botão, pode ser tocado várias vezes; travado com "Nenhuma
-      // aplicação..." marcado
-      _linhaMarcar(
-        'Adicionar Aplicação',
-        Icons.vaccines_outlined,
-        false,
-        (_) => _adicionarAplicacao(),
-        semCaixa: true,
-        habilitado: !_nenhumaAplicacao,
-      ),
-      ..._listaRegistros(
-        'Aplicação',
-        _aplicacoes.length,
-        (i) => _adicionarAplicacao(editar: i),
-        _excluirAplicacao,
-      ),
-      // com pelo menos 1 aplicação na lista, o "Nenhuma aplicação..."
-      // fica escondido; volta quando todas forem excluídas
-      if (_aplicacoes.isEmpty) ...[
-        const SizedBox(height: 8),
-        _linhaMarcar(
-          'Nenhuma aplicação de vacina ou vermífugo hoje',
-          Icons.verified_outlined,
-          _nenhumaAplicacao,
-          (v) => setState(() => _nenhumaAplicacao = v),
-        ),
-      ],
-    ],
+    6 => _conversaServicos(),
     7 => _atividadesNoCurral(),
     _ => const [],
   };
@@ -2707,6 +2566,35 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       _misturas.isNotEmpty,
       (_) => _abrirMisturas(),
     ),
+    const SizedBox(height: 8),
+  ];
+
+  /// Seção 6 — "Serviços": conversa com o usuário logado, como na Seção 5,
+  /// e os cards no padrão da Seção 4.
+  List<Widget> _conversaServicos() => [
+    Padding(
+      padding: const EdgeInsets.fromLTRB(0, 4, 0, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$_nomeUsuario!', style: _negrito(19, _corRotulo)),
+          const SizedBox(height: 10),
+          Text(
+            'Quais os serviços foram necessários hoje?',
+            style: _textoMedio(17, _corRotulo).copyWith(height: 1.5),
+          ),
+        ],
+      ),
+    ),
+    _cardSecao1(
+      'Nenhum serviço necessário hoje',
+      Icons.block,
+      _nenhumServico,
+      (v) => setState(() => _nenhumServico = v),
+    ),
+    const SizedBox(height: 8),
+    // "Adicionar Serviço": o modal vem nas próximas etapas (sem ação)
+    _cardSecao1('Adicionar Serviço', Icons.add_circle_outline, false, (_) {}),
     const SizedBox(height: 8),
   ];
 

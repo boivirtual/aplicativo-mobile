@@ -62,6 +62,7 @@ class _ServicoModalState extends State<ServicoModal> {
 
   String? _tipo;
   final _descricaoController = TextEditingController();
+  final _descricaoFoco = FocusNode();
   String? _andamento;
 
   /// Lista do Tipo aberta embaixo do campo.
@@ -93,6 +94,10 @@ class _ServicoModalState extends State<ServicoModal> {
       _servicos.add(Map<String, dynamic>.from(s));
     }
     _carregarPastos();
+    // foi para a descrição: fecha as listas abertas (Tipo, Pastos)
+    _descricaoFoco.addListener(() {
+      if (_descricaoFoco.hasFocus) _fecharListas();
+    });
   }
 
   /// Pastos da fazenda (do Mapa de Gado guardado no aparelho), na ordem do
@@ -112,8 +117,19 @@ class _ServicoModalState extends State<ServicoModal> {
   @override
   void dispose() {
     _descricaoController.dispose();
+    _descricaoFoco.dispose();
     _rolagem.dispose();
     super.dispose();
+  }
+
+  /// Fecha as listas abertas (Tipo, Pastos) ao ir para outro campo, para
+  /// não ficarem ocupando a tela.
+  void _fecharListas() {
+    if (!_tipoAberto && !_pastosAberto) return;
+    setState(() {
+      _tipoAberto = false;
+      _pastosAberto = false;
+    });
   }
 
   void _limpar() {
@@ -136,6 +152,8 @@ class _ServicoModalState extends State<ServicoModal> {
         ? 'Marque se é Limpeza ou Plantio.'
         : _tipo == 'Pasto' && _pastosMarcados.isEmpty
         ? 'Selecione o(s) Pasto(s).'
+        : _tipo == 'Outro' && _descricaoController.text.trim().isEmpty
+        ? 'Descreva o que precisa ser feito.'
         : _andamento == null
         ? 'Marque se o serviço foi feito, está em andamento ou será feito.'
         : null;
@@ -253,7 +271,10 @@ class _ServicoModalState extends State<ServicoModal> {
         ),
         onTap: () {
           FocusManager.instance.primaryFocus?.unfocus();
-          setState(() => _tipoAberto = !_tipoAberto);
+          setState(() {
+            _tipoAberto = !_tipoAberto;
+            _pastosAberto = false;
+          });
         },
       ),
       if (_tipoAberto)
@@ -333,6 +354,7 @@ class _ServicoModalState extends State<ServicoModal> {
               behavior: HitTestBehavior.opaque,
               onTap: () {
                 FocusManager.instance.primaryFocus?.unfocus();
+                _fecharListas();
                 setState(() => _andamento = _andamentos[i].$1);
               },
               child: Container(
@@ -391,6 +413,7 @@ class _ServicoModalState extends State<ServicoModal> {
               behavior: HitTestBehavior.opaque,
               onTap: () {
                 FocusManager.instance.primaryFocus?.unfocus();
+                _fecharListas();
                 final o = _servicosPasto[i].$1;
                 setState(() {
                   if (!_servicosPastoMarcados.remove(o)) {
@@ -463,7 +486,10 @@ class _ServicoModalState extends State<ServicoModal> {
               );
               return;
             }
-            setState(() => _pastosAberto = !_pastosAberto);
+            setState(() {
+              _pastosAberto = !_pastosAberto;
+              _tipoAberto = false;
+            });
           },
         ),
         if (_pastosAberto)
@@ -707,6 +733,7 @@ class _ServicoModalState extends State<ServicoModal> {
                               'Descreva o que precisa ser feito e a urgência',
                           corRotulo: _corRotulo,
                           controller: _descricaoController,
+                          focusNode: _descricaoFoco,
                           altura: null,
                           linhas: 3,
                           textCapitalization: TextCapitalization.sentences,

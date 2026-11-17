@@ -629,9 +629,10 @@ class _RemedioModalState extends State<RemedioModal> {
     _tecladoAntes = tecladoAberto;
     return Dialog(
       backgroundColor: Colors.transparent,
-      // centralizado na tela do celular
+      // centralizado, mas sem passar para cima da barra do título "Resumo
+      // Diário da Fazenda" quando o conteúdo é alto
       alignment: Alignment.center,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      insetPadding: const EdgeInsets.fromLTRB(16, 72, 16, 24),
       child: Stack(
         clipBehavior: Clip.none,
         children: [

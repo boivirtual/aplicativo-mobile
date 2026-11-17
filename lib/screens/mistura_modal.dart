@@ -225,45 +225,62 @@ class _MisturaModalState extends State<MisturaModal> {
     ),
   );
 
-  /// Lista das misturas, com rolagem, da última para a primeira: "Mistura
-  /// N", os produtos e os ícones de editar e excluir.
+  /// Lista das misturas, com rolagem, da última para a primeira: uma linha
+  /// por produto (produto e quantidade); "Mistura N" e os ícones de editar e
+  /// excluir só na primeira linha de cada mistura.
   Widget _listaMisturas() {
     final estilo = TextStyle(fontSize: 11, color: _corRotulo);
     final linhas = <TableRow>[];
     for (var n = _misturas.length - 1; n >= 0; n--) {
-      final itens = (_misturas[n]['itens'] as List)
-          .map((i) => '${(i as Map)['produto']}')
-          .join(', ');
-      linhas.add(
-        TableRow(
-          // a mistura em edição fica em azul claro
-          decoration: n == _editando
-              ? BoxDecoration(
-                  color: const Color(0xFFD6E8FA),
-                  borderRadius: BorderRadius.circular(4),
-                )
-              : null,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 4, right: 8),
-              child: Text('Mistura ${n + 1}', style: estilo),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 4, right: 4),
-              child: Text(itens, style: estilo),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: _iconeLista(Icons.edit_outlined, () => _editar(n)),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: _iconeLista(Icons.delete_outline, () => _excluir(n)),
-            ),
-          ],
-        ),
-      );
+      final itens = (_misturas[n]['itens'] as List).cast<Map>();
+      for (var k = 0; k < itens.length; k++) {
+        final item = itens[k];
+        final primeiro = k == 0;
+        // espaço entre uma mistura e outra
+        final topo = primeiro && linhas.isNotEmpty ? 8.0 : 2.0;
+        final unidade = '${item['unidade'] ?? ''}'.trim();
+        linhas.add(
+          TableRow(
+            // a mistura em edição fica em azul claro
+            decoration: n == _editando
+                ? const BoxDecoration(color: Color(0xFFD6E8FA))
+                : null,
+            children: [
+              // "Mistura N" e os ícones só na primeira linha de cada mistura
+              Padding(
+                padding: EdgeInsets.only(top: topo, right: 8),
+                child: Text(primeiro ? 'Mistura ${n + 1}' : '', style: estilo),
+              ),
+              Padding(
+                padding: EdgeInsets.only(top: topo, right: 6),
+                child: Text('${item['produto']}', style: estilo),
+              ),
+              Padding(
+                padding: EdgeInsets.only(top: topo, right: 4),
+                child: Text(
+                  '${item['qtde']} ${unidade.isEmpty ? 'Kg' : unidade}',
+                  textAlign: TextAlign.right,
+                  style: estilo,
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(top: topo - 2),
+                child: primeiro
+                    ? _iconeLista(Icons.edit_outlined, () => _editar(n))
+                    : const SizedBox.shrink(),
+              ),
+              Padding(
+                padding: EdgeInsets.only(top: topo - 2),
+                child: primeiro
+                    ? _iconeLista(Icons.delete_outline, () => _excluir(n))
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
+        );
+      }
     }
+
     return Container(
       margin: const EdgeInsets.only(top: 12),
       constraints: const BoxConstraints(maxHeight: 150),
@@ -277,8 +294,9 @@ class _MisturaModalState extends State<MisturaModal> {
         child: SingleChildScrollView(
           child: Table(
             defaultColumnWidth: const IntrinsicColumnWidth(),
-            // os produtos ficam com o que sobrar (quebra se precisar)
+            // o nome do produto fica com o que sobrar (quebra se precisar)
             columnWidths: const {1: FlexColumnWidth()},
+            defaultVerticalAlignment: TableCellVerticalAlignment.top,
             children: linhas,
           ),
         ),
@@ -317,9 +335,10 @@ class _MisturaModalState extends State<MisturaModal> {
     _tecladoAntes = tecladoAberto;
     return Dialog(
       backgroundColor: Colors.transparent,
-      // centralizado na tela do celular
+      // centralizado, mas sem passar para cima da barra do título "Resumo
+      // Diário da Fazenda" quando o conteúdo é alto
       alignment: Alignment.center,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      insetPadding: const EdgeInsets.fromLTRB(16, 72, 16, 24),
       child: Stack(
         clipBehavior: Clip.none,
         children: [

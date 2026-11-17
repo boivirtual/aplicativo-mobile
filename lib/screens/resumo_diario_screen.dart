@@ -60,39 +60,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Seção 3 para cima do teclado).
   final _rolagem = ScrollController();
 
-  // Seção 7 — Atividades no Curral: "Teve atividade no curral hoje?"; com
-  // "Sim", as atividades, as categorias trabalhadas, a quantidade e a
-  // observação.
-  String? _teveCurral; // 'sim' ou 'nao'
-  final Set<String> _atividadesCurral = {};
-  final Set<String> _categoriasCurral = {};
-  final _qtdeCurralController = TextEditingController();
-  final _obsCurralController = TextEditingController();
-
-  static const _atividadesDoCurral = <(String, String, IconData)>[
-    ('pesagem', 'Pesagem de animais', Icons.scale_outlined),
-    ('separacao', 'Separação de lotes', Icons.call_split),
-    ('desmama', 'Desmama', Icons.baby_changing_station_outlined),
-    ('tatuagem', 'Tatuagem ou marcação', Icons.sell_outlined),
-    ('descorna', 'Descorna (mochação)', Icons.content_cut),
-    ('protocolo', 'Protocolo de Reprodução', Icons.assignment_outlined),
-    ('diagnostico', 'Diagnóstico', Icons.biotech_outlined),
-    (
-      'medicamentos',
-      'Aplicação de Medicamentos (individual, coletivo, cura de umbigo)',
-      Icons.vaccines_outlined,
-    ),
-  ];
-
-  static const _categoriasAnimal = [
-    'Bezerros 0–7m',
-    'Bezerros 8–12m',
-    'Novilhas 13–24m',
-    'Garrotes 13–24m',
-    'Vacas',
-    'Bois',
-    'CAVALOS',
-  ];
+  // Seção 7 — Solicitação de Produtos: "Nenhuma solicitação hoje" (libera o
+  // Próximo) ou "Adicionar Produtos" (o modal vem nas próximas etapas).
+  bool _nenhumaSolicitacao = false;
+  bool get _secao7Completa => _nenhumaSolicitacao;
 
   // Seção 6 — Serviços: "Nenhum serviço necessário hoje" ou os serviços do
   // modal "Serviço(s)" (card "Adicionar Serviço"). Um exclui o outro.
@@ -430,8 +401,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     _obsRebanhoFoco.dispose();
     _encontradosFoco.dispose();
     _rolagem.dispose();
-    _qtdeCurralController.dispose();
-    _obsCurralController.dispose();
     _outrasAtividadesController.dispose();
     super.dispose();
   }
@@ -1338,23 +1307,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       return;
     }
     if (_secao == 7) {
-      String? erro;
-      if (_teveCurral == null) {
-        erro = 'Responda se teve atividade no curral hoje.';
-      } else if (_teveCurral == 'sim') {
-        if (_atividadesCurral.isEmpty) {
-          erro = 'Marque as Atividades Realizadas.';
-        } else if (_categoriasCurral.isEmpty) {
-          erro = 'Selecione a(s) Categoria(s) Trabalhada(s).';
-        } else if ((int.tryParse(_qtdeCurralController.text.trim()) ?? 0) <=
-            0) {
-          erro = 'Informe a Quantidade de Animais.';
-        }
-      }
-      if (erro != null) {
-        await AppAlert.erro(context, erro);
-        return;
-      }
+      // Solicitação de Produtos: segue com "Nenhuma solicitação hoje"
+      if (!_secao7Completa) return;
       // A Seção 8 vem nas próximas etapas.
       return;
     }
@@ -1580,7 +1534,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                         ),
                                         // Seção 1: inativo até confirmar as
                                         // atividades registradas; Seção 2: até o Sim da
-                                        // confirmação; Seção 3: até completar; Seção 4: até marcar uma atividade; Seção 5: até marcar "Nenhuma Mistura" ou ter mistura; Seção 6: até marcar "Nenhum serviço" ou ter serviço
+                                        // confirmação; Seção 3: até completar; Seção 4: até marcar uma atividade; Seção 5: até marcar "Nenhuma Mistura" ou ter mistura; Seção 6: até marcar "Nenhum serviço" ou ter serviço; Seção 7: até marcar "Nenhuma solicitação"
                                         onPressed:
                                             (_secao == 1 && !_secao1Completa) ||
                                                 (_secao == 2 &&
@@ -1592,7 +1546,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                                 (_secao == 5 &&
                                                     !_secao5Completa) ||
                                                 (_secao == 6 &&
-                                                    !_secao6Completa)
+                                                    !_secao6Completa) ||
+                                                (_secao == 7 &&
+                                                    !_secao7Completa)
                                             ? null
                                             : _proximo,
                                         child: const Row(
@@ -1634,7 +1590,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   /// Fundo da tela e da barra do Próximo: azul da tarja na tela inicial e
   /// nas Seções 1 a 4, branco nas outras.
-  Color get _fundoTela => _secao <= 6 ? _azulTarja : Colors.white;
+  Color get _fundoTela => _secao <= 7 ? _azulTarja : Colors.white;
 
   /// Tarja de todas as seções: fazenda, data, barra de progresso e "Seção X
   /// de 11", de ponta a ponta, sem bordas arredondadas.
@@ -1730,7 +1686,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       // mesmo espaço depois do título da Seção 5
       const SizedBox(height: 16),
     ],
-    7 => [_tituloAzul('O Que Foi Feito Hoje')],
+    7 => [
+      _tituloAzul('Solicitação de Produtos', tamanho: 17),
+      // mesmo espaço depois do título da Seção 6
+      const SizedBox(height: 16),
+    ],
     _ => [
       _tituloAzul('Atividades Registradas', tamanho: 17),
       if (_atividadesRegistradas.isNotEmpty)
@@ -1751,18 +1711,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   Widget _semPainel(List<Widget> filhos) =>
       Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: filhos);
 
-  Widget _painelCinza(List<Widget> filhos) => Container(
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: Colors.grey[200],
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: filhos,
-    ),
-  );
-
   /// Parte que rola em cada seção (por trás do botão Próximo).
   List<Widget> _rolavelDaSecao() => switch (_secao) {
     1 => _atividadesDoDia(),
@@ -1771,158 +1719,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     4 => _conversaCurral(),
     5 => _conversaNutricao(),
     6 => _conversaServicos(),
-    7 => _atividadesNoCurral(),
+    7 => _conversaSolicitacao(),
     _ => const [],
   };
-
-  // ---------------------------------------------------------------------
-  // Seção 7 — Atividades no Curral
-  // ---------------------------------------------------------------------
-
-  List<Widget> _atividadesNoCurral() => [
-    _pergunta('Teve Atividade no Curral Hoje?'),
-    _opcoes(
-      const [
-        ('sim', 'Sim', Icons.check_circle_outline),
-        ('nao', 'Não', Icons.highlight_off),
-      ],
-      _teveCurral,
-      (v) => setState(() {
-        _teveCurral = v;
-        // "Não": o que tinha sido marcado com "Sim" deixa de valer
-        if (v == 'nao') {
-          _atividadesCurral.clear();
-          _categoriasCurral.clear();
-          _qtdeCurralController.clear();
-          _obsCurralController.clear();
-        }
-      }),
-    ),
-    if (_teveCurral == 'sim') ...[
-      _pergunta('Atividades Realizadas'),
-      for (final a in _atividadesDoCurral) ...[
-        _linhaMarcar(
-          a.$2,
-          a.$3,
-          _atividadesCurral.contains(a.$1),
-          (v) => setState(() {
-            if (v) {
-              _atividadesCurral.add(a.$1);
-            } else {
-              _atividadesCurral.remove(a.$1);
-            }
-          }),
-        ),
-        const SizedBox(height: 8),
-      ],
-      _pergunta('Categorias Trabalhadas'),
-      ..._listaMultipla(_categoriasAnimal, _categoriasCurral),
-      const SizedBox(height: 14),
-      _painelCinza([
-        CampoTextoTopo(
-          rotulo: 'Quantidade de Animais',
-          altura: 80,
-          corRotulo: _corRotulo,
-          controller: _qtdeCurralController,
-          dica: 'Ex: 45',
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        ),
-        const SizedBox(height: 8),
-        CampoTextoTopo(
-          rotulo: 'Observações / Detalhes (descreva "Outras Atividades" aqui)',
-          corRotulo: _corRotulo,
-          controller: _obsCurralController,
-          altura: null,
-          linhas: 3,
-          dica: 'Descreva o que foi realizado, produtos usados, lotes, etc.',
-          textCapitalization: TextCapitalization.sentences,
-        ),
-      ]),
-    ],
-  ];
-
-  /// Lista já aberta, mostrando todas as opções (como a Categoria Animal
-  /// do Tratamento): um toque marca ou desmarca a linha (fica destacada,
-  /// com o ✓); embaixo, os nomes marcados.
-  List<Widget> _listaMultipla(List<String> opcoes, Set<String> marcados) => [
-    Padding(
-      padding: const EdgeInsets.only(left: 2, bottom: 4),
-      child: Text(
-        'Toque para selecionar uma ou mais opções.',
-        style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-      ),
-    ),
-    Container(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFCFD8DC)),
-      ),
-      child: Column(
-        children: [
-          for (final o in opcoes)
-            Container(
-              height: 44,
-              padding: const EdgeInsets.fromLTRB(4, 0, 4, 3),
-              child: Material(
-                color: marcados.contains(o)
-                    ? const Color(0xFFD6E8FA)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(6),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(6),
-                  onTap: () {
-                    FocusManager.instance.primaryFocus?.unfocus();
-                    setState(() {
-                      if (!marcados.remove(o)) marcados.add(o);
-                    });
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            o,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: marcados.contains(o)
-                                  ? _azul
-                                  : Colors.black87,
-                            ),
-                          ),
-                        ),
-                        if (marcados.contains(o))
-                          const Icon(Icons.check, size: 18, color: _azulBotao),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    ),
-    Padding(
-      padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
-      child: Text(
-        marcados.isEmpty
-            ? 'Nenhuma selecionada'
-            : [
-                for (final o in opcoes)
-                  if (marcados.contains(o)) o,
-              ].join(', '),
-        // só uma referência do que foi escolhido: pequena e em azul claro
-        style: TextStyle(
-          fontSize: 11,
-          fontStyle: FontStyle.italic,
-          color: marcados.isEmpty ? Colors.grey[600] : Colors.blue[300],
-        ),
-      ),
-    ),
-  ];
 
   // ---------------------------------------------------------------------
   // Seção 3 — Conferência de Rebanho
@@ -2631,6 +2430,35 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         _nenhumServico = v;
         if (v) _servicos = [];
       }),
+    ),
+    const SizedBox(height: 8),
+  ];
+
+  /// Seção 7 — "Solicitação de Produtos": conversa com o usuário logado e os
+  /// cards, no padrão das Seções 5 e 6 ("Adicionar" antes do "Nenhuma").
+  List<Widget> _conversaSolicitacao() => [
+    Padding(
+      padding: const EdgeInsets.fromLTRB(0, 4, 0, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$_nomeUsuario!', style: _negrito(19, _corRotulo)),
+          const SizedBox(height: 10),
+          Text(
+            'O que precisa ser comprado ou reposto?',
+            style: _textoMedio(17, _corRotulo).copyWith(height: 1.5),
+          ),
+        ],
+      ),
+    ),
+    // "Adicionar Produtos": o modal vem nas próximas etapas (sem ação)
+    _cardSecao1('Adicionar Produtos', Icons.add_circle_outline, false, (_) {}),
+    const SizedBox(height: 8),
+    _cardSecao1(
+      'Nenhuma solicitação hoje',
+      Icons.block,
+      _nenhumaSolicitacao,
+      (v) => setState(() => _nenhumaSolicitacao = v),
     ),
     const SizedBox(height: 8),
   ];

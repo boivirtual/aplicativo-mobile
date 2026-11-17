@@ -91,7 +91,16 @@ class _ServicoModalState extends State<ServicoModal> {
   };
 
   /// Tipos que pedem os pastos (vários, obrigatório) da fazenda do resumo.
-  static const _tiposComPasto = {'Pasto', 'Bebedouro', 'Cocho', 'Cerca'};
+  static const _tiposComPasto = {
+    'Pasto',
+    'Bebedouro',
+    'Cocho',
+    'Cerca',
+    'Estrada / Acesso',
+    'Motofoice',
+    'Herbicida',
+    'Trator',
+  };
 
   /// O que precisa ser feito do tipo escolhido (vazio = o tipo não tem).
   List<(String, IconData)> get _acoes => _acoesPorTipo[_tipo] ?? const [];
@@ -860,7 +869,7 @@ class _ServicoModalState extends State<ServicoModal> {
                           _selectMaquina(),
                         ],
                         // o que precisa ser feito (Pasto, Bebedouro, Cerca)
-                        // e os pastos (Pasto, Bebedouro, Cocho, Cerca)
+                        // e os pastos (ver [_tiposComPasto])
                         if (_acoes.isNotEmpty) ...[
                           const SizedBox(height: 12),
                           _opcoesPasto(),

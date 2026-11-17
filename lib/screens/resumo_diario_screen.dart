@@ -108,7 +108,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     final dados = await showDialog<Map<String, dynamic>>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => ServicoModal(servicos: _servicos),
+      builder: (_) => ServicoModal(
+        servicos: _servicos,
+        bd: _bd ?? '',
+        fazenda: _fazenda ?? '',
+      ),
     );
     if (dados == null || !mounted) return;
     setState(() {

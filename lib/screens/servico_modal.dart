@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/daos/mapa_gado_dao.dart';
 import '../utils/app_alert.dart';
 import '../utils/rolar_ate_foco.dart';
 import '../widgets/campo_topo_widget.dart';
@@ -9,14 +10,25 @@ import '../widgets/campo_topo_widget.dart';
 /// fundo cinza, (x) no canto, conteúdo com rolagem, botão verde que guarda o
 /// serviço na lista de baixo (editar e excluir, o último no topo).
 ///
-/// Campos: Tipo (um só, obrigatório), "Descreva o que precisa ser feito
+/// Campos: Tipo (um só, obrigatório) — no "Pasto", também Limpeza / Plantio e
+/// os pastos da fazenda (vários) —, "Descreva o que precisa ser feito
 /// e a urgência" e o andamento (Feito / Em andamento / Será feito, um
 /// obrigatório). Devolve { servicos } ao fechar pelo (x).
 class ServicoModal extends StatefulWidget {
   /// Serviços já incluídos (editar); null = nenhum.
   final List<Map<String, dynamic>>? servicos;
 
-  const ServicoModal({super.key, this.servicos});
+  /// Empresa (CNPJ) e fazenda do resumo: os pastos do Tipo "Pasto" vêm do
+  /// Mapa de Gado guardado no aparelho.
+  final String bd;
+  final String fazenda;
+
+  const ServicoModal({
+    super.key,
+    this.servicos,
+    required this.bd,
+    required this.fazenda,
+  });
 
   @override
   State<ServicoModal> createState() => _ServicoModalState();
@@ -58,6 +70,17 @@ class _ServicoModalState extends State<ServicoModal> {
   /// Serviços já confirmados, na ordem em que foram incluídos.
   final List<Map<String, dynamic>> _servicos = [];
 
+  /// Tipo "Pasto": o que precisa ser feito (Limpeza / Plantio, um ou os
+  /// dois) e os pastos (vários), da fazenda do resumo.
+  static const _servicosPasto = <(String, IconData)>[
+    ('Limpeza', Icons.cleaning_services_outlined),
+    ('Plantio', Icons.grass),
+  ];
+  final Set<String> _servicosPastoMarcados = {};
+  final Set<int> _pastosMarcados = {};
+  List<MapEntry<int, String>> _pastos = [];
+  bool _pastosAberto = false;
+
   /// Serviço da lista em edição (índice em [_servicos]); null = novo.
   int? _editando;
 
@@ -69,6 +92,21 @@ class _ServicoModalState extends State<ServicoModal> {
     for (final s in widget.servicos ?? const []) {
       _servicos.add(Map<String, dynamic>.from(s));
     }
+    _carregarPastos();
+  }
+
+  /// Pastos da fazenda (do Mapa de Gado guardado no aparelho), na ordem do
+  /// Tabuleiro.
+  Future<void> _carregarPastos() async {
+    final pastos = await MapaGadoDao.instance.pastos(
+      widget.bd,
+      int.tryParse(widget.fazenda) ?? 0,
+      incluirForaTabuleiro: true,
+    );
+    if (!mounted) return;
+    setState(
+      () => _pastos = [for (final p in pastos) MapEntry(p.id, p.descricao)],
+    );
   }
 
   @override
@@ -83,6 +121,9 @@ class _ServicoModalState extends State<ServicoModal> {
     _descricaoController.clear();
     _andamento = null;
     _tipoAberto = false;
+    _servicosPastoMarcados.clear();
+    _pastosMarcados.clear();
+    _pastosAberto = false;
   }
 
   /// "Confirmar Serviço" (ou "Confirmar Edição"): guarda o serviço na lista
@@ -91,6 +132,10 @@ class _ServicoModalState extends State<ServicoModal> {
     FocusManager.instance.primaryFocus?.unfocus();
     final erro = _tipo == null
         ? 'Selecione o Tipo.'
+        : _tipo == 'Pasto' && _servicosPastoMarcados.isEmpty
+        ? 'Marque se é Limpeza ou Plantio.'
+        : _tipo == 'Pasto' && _pastosMarcados.isEmpty
+        ? 'Selecione o(s) Pasto(s).'
         : _andamento == null
         ? 'Marque se o serviço foi feito, está em andamento ou será feito.'
         : null;
@@ -101,6 +146,18 @@ class _ServicoModalState extends State<ServicoModal> {
     setState(() {
       final servico = <String, dynamic>{
         'tipo': _tipo,
+        // só no Tipo "Pasto"; na ordem das opções
+        if (_tipo == 'Pasto') ...{
+          'servicos_pasto': [
+            for (final o in _servicosPasto)
+              if (_servicosPastoMarcados.contains(o.$1)) o.$1,
+          ],
+          'pastos': [
+            for (final p in _pastos)
+              if (_pastosMarcados.contains(p.key))
+                {'id': p.key, 'nome': p.value},
+          ],
+        },
         'descricao': _descricaoController.text.trim(),
         'andamento': _andamento,
       };
@@ -122,6 +179,12 @@ class _ServicoModalState extends State<ServicoModal> {
       _editando = n;
       _limpar();
       _tipo = s['tipo']?.toString();
+      _servicosPastoMarcados.addAll(
+        List<String>.from(s['servicos_pasto'] ?? const []),
+      );
+      for (final p in (s['pastos'] as List? ?? const [])) {
+        _pastosMarcados.add((p as Map)['id'] as int);
+      }
       _descricaoController.text = '${s['descricao'] ?? ''}';
       _andamento = s['andamento']?.toString();
     });
@@ -215,6 +278,10 @@ class _ServicoModalState extends State<ServicoModal> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(6),
                       onTap: () => setState(() {
+                        if (t != 'Pasto') {
+                          _servicosPastoMarcados.clear();
+                          _pastosMarcados.clear();
+                        }
                         _tipo = t;
                         _tipoAberto = false;
                       }),
@@ -307,6 +374,180 @@ class _ServicoModalState extends State<ServicoModal> {
             ),
           ),
         ],
+      ],
+    );
+  }
+
+  /// "Limpeza" / "Plantio" (um ou os dois) lado a lado, no padrão dos botões
+  /// do andamento, com o check verde no marcado.
+  Widget _opcoesPasto() {
+    const azulIcone = Color(0xFF228cb9);
+    return Row(
+      children: [
+        for (var i = 0; i < _servicosPasto.length; i++) ...[
+          if (i > 0) const SizedBox(width: 8),
+          Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                FocusManager.instance.primaryFocus?.unfocus();
+                final o = _servicosPasto[i].$1;
+                setState(() {
+                  if (!_servicosPastoMarcados.remove(o)) {
+                    _servicosPastoMarcados.add(o);
+                  }
+                });
+              },
+              child: Container(
+                height: 52,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  color: _servicosPastoMarcados.contains(_servicosPasto[i].$1)
+                      ? const Color(0xFFCFE5FA)
+                      : const Color(0xFFF9FCFF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(_servicosPasto[i].$2, size: 22, color: azulIcone),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _servicosPasto[i].$1,
+                        style: TextStyle(
+                          fontFamily: 'FuturaStdMedium',
+                          fontSize: 14,
+                          color: _corRotulo,
+                        ),
+                      ),
+                    ),
+                    if (_servicosPastoMarcados.contains(_servicosPasto[i].$1))
+                      Icon(Icons.check, color: Colors.green[600], size: 24),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Select "Pasto(s)" de vários, no mesmo padrão dos outros selects de
+  /// vários (Sintomas): lista aberta embaixo do campo, um toque marca ou
+  /// desmarca, e os marcados aparecem embaixo do campo em azul claro.
+  Widget _selectPastos() {
+    final marcados = [
+      for (final p in _pastos)
+        if (_pastosMarcados.contains(p.key)) p.value,
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CampoValorTopo(
+          rotulo: 'Pasto(s)',
+          corRotulo: _corRotulo,
+          valor: marcados.isEmpty ? '' : '${marcados.length} selecionado(s)',
+          altura: marcados.isEmpty ? 56 : 66,
+          icone: Icon(
+            _pastosAberto ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+            color: _corRotulo,
+          ),
+          onTap: () async {
+            FocusManager.instance.primaryFocus?.unfocus();
+            if (_pastos.isEmpty) {
+              await AppAlert.erro(
+                context,
+                'Os pastos desta fazenda ainda não foram baixados neste '
+                'aparelho. Abra o Mapa de Gado com internet e tente de novo.',
+              );
+              return;
+            }
+            setState(() => _pastosAberto = !_pastosAberto);
+          },
+        ),
+        if (_pastosAberto)
+          Container(
+            margin: const EdgeInsets.only(top: 4),
+            constraints: const BoxConstraints(maxHeight: 5 * 44 + 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFCFD8DC)),
+            ),
+            child: Scrollbar(
+              thumbVisibility: true,
+              child: ListView.builder(
+                shrinkWrap: true,
+                padding: const EdgeInsets.fromLTRB(4, 4, 10, 4),
+                itemExtent: 44,
+                itemCount: _pastos.length,
+                itemBuilder: (context, i) {
+                  final p = _pastos[i];
+                  final marcado = _pastosMarcados.contains(p.key);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 3),
+                    child: Material(
+                      color: marcado
+                          ? const Color(0xFFD6E8FA)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(6),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(6),
+                        onTap: () => setState(() {
+                          if (!_pastosMarcados.remove(p.key)) {
+                            _pastosMarcados.add(p.key);
+                          }
+                        }),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  p.value,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: marcado
+                                        ? _azulTitulo
+                                        : Colors.black87,
+                                  ),
+                                ),
+                              ),
+                              if (marcado)
+                                const Icon(
+                                  Icons.check,
+                                  size: 18,
+                                  color: _azulBotao,
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        if (marcados.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
+            child: Text(
+              marcados.join(', '),
+              style: TextStyle(
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+                color: Colors.blue[300],
+                shadows: [
+                  Shadow(
+                    color: Colors.blue[300]!,
+                    offset: const Offset(0.4, 0),
+                  ),
+                ],
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -453,6 +694,13 @@ class _ServicoModalState extends State<ServicoModal> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _selectTipo(),
+                        // Tipo "Pasto": Limpeza / Plantio e os pastos
+                        if (_tipo == 'Pasto') ...[
+                          const SizedBox(height: 12),
+                          _opcoesPasto(),
+                          const SizedBox(height: 12),
+                          _selectPastos(),
+                        ],
                         const SizedBox(height: 12),
                         CampoTextoTopo(
                           rotulo:

@@ -449,13 +449,20 @@ class _ServicoModalState extends State<ServicoModal> {
                   children: [
                     Icon(_acoes[i].$2, size: 22, color: azulIcone),
                     const SizedBox(width: 8),
+                    // sempre numa linha: se não couber (ex.: "Manutenção" com o
+                    // check), a fonte encolhe um pouco
                     Expanded(
-                      child: Text(
-                        _acoes[i].$1,
-                        style: TextStyle(
-                          fontFamily: 'FuturaStdMedium',
-                          fontSize: 14,
-                          color: _corRotulo,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          _acoes[i].$1,
+                          maxLines: 1,
+                          style: TextStyle(
+                            fontFamily: 'FuturaStdMedium',
+                            fontSize: 14,
+                            color: _corRotulo,
+                          ),
                         ),
                       ),
                     ),

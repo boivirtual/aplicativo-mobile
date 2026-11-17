@@ -10,8 +10,8 @@ import '../widgets/campo_topo_widget.dart';
 /// fundo cinza, (x) no canto, conteúdo com rolagem, botão verde que guarda o
 /// serviço na lista de baixo (editar e excluir, o último no topo).
 ///
-/// Campos: Tipo (um só, obrigatório) — no "Pasto", também Limpeza / Plantio e
-/// os pastos da fazenda (vários) —, "Descreva o que precisa ser feito
+/// Campos: Tipo (um só, obrigatório) — no Pasto e no Bebedouro também o que
+/// precisa ser feito, e no Pasto, Bebedouro e Cocho os pastos da fazenda —, "Descreva o que precisa ser feito
 /// e a urgência" e o andamento (Feito / Em andamento / Será feito, um
 /// obrigatório). Devolve { servicos } ao fechar pelo (x).
 class ServicoModal extends StatefulWidget {
@@ -71,13 +71,26 @@ class _ServicoModalState extends State<ServicoModal> {
   /// Serviços já confirmados, na ordem em que foram incluídos.
   final List<Map<String, dynamic>> _servicos = [];
 
-  /// Tipo "Pasto": o que precisa ser feito (Limpeza / Plantio, um ou os
-  /// dois) e os pastos (vários), da fazenda do resumo.
-  static const _servicosPasto = <(String, IconData)>[
-    ('Limpeza', Icons.cleaning_services_outlined),
-    ('Plantio', Icons.grass),
-  ];
-  final Set<String> _servicosPastoMarcados = {};
+  /// O que precisa ser feito (um ou os dois, obrigatório) em cada tipo que
+  /// tem: Pasto (Limpeza / Plantio) e Bebedouro (Limpeza / Manutenção).
+  static const _acoesPorTipo = <String, List<(String, IconData)>>{
+    'Pasto': [
+      ('Limpeza', Icons.cleaning_services_outlined),
+      ('Plantio', Icons.grass),
+    ],
+    'Bebedouro': [
+      ('Limpeza', Icons.cleaning_services_outlined),
+      ('Manutenção', Icons.build_outlined),
+    ],
+  };
+
+  /// Tipos que pedem os pastos (vários, obrigatório) da fazenda do resumo.
+  static const _tiposComPasto = {'Pasto', 'Bebedouro', 'Cocho'};
+
+  /// O que precisa ser feito do tipo escolhido (vazio = o tipo não tem).
+  List<(String, IconData)> get _acoes => _acoesPorTipo[_tipo] ?? const [];
+  bool get _comPastos => _tiposComPasto.contains(_tipo);
+  final Set<String> _acoesMarcadas = {};
   final Set<int> _pastosMarcados = {};
   List<MapEntry<int, String>> _pastos = [];
   bool _pastosAberto = false;
@@ -137,7 +150,7 @@ class _ServicoModalState extends State<ServicoModal> {
     _descricaoController.clear();
     _andamento = null;
     _tipoAberto = false;
-    _servicosPastoMarcados.clear();
+    _acoesMarcadas.clear();
     _pastosMarcados.clear();
     _pastosAberto = false;
   }
@@ -148,9 +161,10 @@ class _ServicoModalState extends State<ServicoModal> {
     FocusManager.instance.primaryFocus?.unfocus();
     final erro = _tipo == null
         ? 'Selecione o Tipo.'
-        : _tipo == 'Pasto' && _servicosPastoMarcados.isEmpty
-        ? 'Marque se é Limpeza ou Plantio.'
-        : _tipo == 'Pasto' && _pastosMarcados.isEmpty
+        : _acoes.isNotEmpty && _acoesMarcadas.isEmpty
+        ? 'Marque o que precisa ser feito '
+              '(${_acoes.map((a) => a.$1).join(' ou ')}).'
+        : _comPastos && _pastosMarcados.isEmpty
         ? 'Selecione o(s) Pasto(s).'
         : _tipo == 'Outro' && _descricaoController.text.trim().isEmpty
         ? 'Descreva o que precisa ser feito.'
@@ -164,12 +178,13 @@ class _ServicoModalState extends State<ServicoModal> {
     setState(() {
       final servico = <String, dynamic>{
         'tipo': _tipo,
-        // só no Tipo "Pasto"; na ordem das opções
-        if (_tipo == 'Pasto') ...{
-          'servicos_pasto': [
-            for (final o in _servicosPasto)
-              if (_servicosPastoMarcados.contains(o.$1)) o.$1,
+        // só nos tipos que têm; na ordem das opções
+        if (_acoes.isNotEmpty)
+          'acoes': [
+            for (final o in _acoes)
+              if (_acoesMarcadas.contains(o.$1)) o.$1,
           ],
+        if (_comPastos) ...{
           'pastos': [
             for (final p in _pastos)
               if (_pastosMarcados.contains(p.key))
@@ -197,9 +212,7 @@ class _ServicoModalState extends State<ServicoModal> {
       _editando = n;
       _limpar();
       _tipo = s['tipo']?.toString();
-      _servicosPastoMarcados.addAll(
-        List<String>.from(s['servicos_pasto'] ?? const []),
-      );
+      _acoesMarcadas.addAll(List<String>.from(s['acoes'] ?? const []));
       for (final p in (s['pastos'] as List? ?? const [])) {
         _pastosMarcados.add((p as Map)['id'] as int);
       }
@@ -299,8 +312,10 @@ class _ServicoModalState extends State<ServicoModal> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(6),
                       onTap: () => setState(() {
-                        if (t != 'Pasto') {
-                          _servicosPastoMarcados.clear();
+                        // trocou o tipo: o que precisa ser feito muda; os
+                        // pastos só ficam se o novo tipo também pede
+                        if (t != _tipo) _acoesMarcadas.clear();
+                        if (!_tiposComPasto.contains(t)) {
                           _pastosMarcados.clear();
                         }
                         _tipo = t;
@@ -400,13 +415,13 @@ class _ServicoModalState extends State<ServicoModal> {
     );
   }
 
-  /// "Limpeza" / "Plantio" (um ou os dois) lado a lado, no padrão dos botões
+  /// O que precisa ser feito (um ou os dois) lado a lado, no padrão dos botões
   /// do andamento, com o check verde no marcado.
   Widget _opcoesPasto() {
     const azulIcone = Color(0xFF228cb9);
     return Row(
       children: [
-        for (var i = 0; i < _servicosPasto.length; i++) ...[
+        for (var i = 0; i < _acoes.length; i++) ...[
           if (i > 0) const SizedBox(width: 8),
           Expanded(
             child: GestureDetector(
@@ -414,10 +429,10 @@ class _ServicoModalState extends State<ServicoModal> {
               onTap: () {
                 FocusManager.instance.primaryFocus?.unfocus();
                 _fecharListas();
-                final o = _servicosPasto[i].$1;
+                final o = _acoes[i].$1;
                 setState(() {
-                  if (!_servicosPastoMarcados.remove(o)) {
-                    _servicosPastoMarcados.add(o);
+                  if (!_acoesMarcadas.remove(o)) {
+                    _acoesMarcadas.add(o);
                   }
                 });
               },
@@ -425,18 +440,18 @@ class _ServicoModalState extends State<ServicoModal> {
                 height: 52,
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
-                  color: _servicosPastoMarcados.contains(_servicosPasto[i].$1)
+                  color: _acoesMarcadas.contains(_acoes[i].$1)
                       ? const Color(0xFFCFE5FA)
                       : const Color(0xFFF9FCFF),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
-                    Icon(_servicosPasto[i].$2, size: 22, color: azulIcone),
+                    Icon(_acoes[i].$2, size: 22, color: azulIcone),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        _servicosPasto[i].$1,
+                        _acoes[i].$1,
                         style: TextStyle(
                           fontFamily: 'FuturaStdMedium',
                           fontSize: 14,
@@ -444,7 +459,7 @@ class _ServicoModalState extends State<ServicoModal> {
                         ),
                       ),
                     ),
-                    if (_servicosPastoMarcados.contains(_servicosPasto[i].$1))
+                    if (_acoesMarcadas.contains(_acoes[i].$1))
                       Icon(Icons.check, color: Colors.green[600], size: 24),
                   ],
                 ),
@@ -720,10 +735,13 @@ class _ServicoModalState extends State<ServicoModal> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _selectTipo(),
-                        // Tipo "Pasto": Limpeza / Plantio e os pastos
-                        if (_tipo == 'Pasto') ...[
+                        // o que precisa ser feito (Pasto, Bebedouro) e os
+                        // pastos (Pasto, Bebedouro, Cocho)
+                        if (_acoes.isNotEmpty) ...[
                           const SizedBox(height: 12),
                           _opcoesPasto(),
+                        ],
+                        if (_comPastos) ...[
                           const SizedBox(height: 12),
                           _selectPastos(),
                         ],

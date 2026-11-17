@@ -11,7 +11,7 @@ import '../widgets/campo_topo_widget.dart';
 /// Seção 4: fundo cinza, (x) no canto e o conteúdo com rolagem.
 ///
 /// Lista todos os produtos do select Produto da Nutrição do Mapa de Gado
-/// (guardados no aparelho), cada um com a sua quantidade. "Concluir Mistura"
+/// (guardados no aparelho), cada um com a sua quantidade. "Confirmar Mistura"
 /// guarda a mistura na lista abaixo do botão (editar e excluir, a última no
 /// topo) e limpa as quantidades. Devolve { misturas } ao fechar pelo (x).
 class MisturaModal extends StatefulWidget {
@@ -101,7 +101,7 @@ class _MisturaModalState extends State<MisturaModal> {
     }
   }
 
-  /// "Concluir Mistura" (ou "Confirmar Edição"): guarda a mistura na lista
+  /// "Confirmar Mistura" (ou "Confirmar Edição"): guarda a mistura na lista
   /// (ou grava a editada) e limpa as quantidades.
   Future<void> _concluir() async {
     FocusManager.instance.primaryFocus?.unfocus();
@@ -392,7 +392,7 @@ class _MisturaModalState extends State<MisturaModal> {
                           for (final p in _produtos) _linhaProduto(p),
                           const SizedBox(height: 6),
                           if (_editando == null)
-                            _botao('Concluir Mistura', _concluir)
+                            _botao('Confirmar Mistura', _concluir)
                           else
                             Row(
                               children: [

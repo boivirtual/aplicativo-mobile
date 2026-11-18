@@ -2738,20 +2738,113 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     onTap: () async {
       FocusManager.instance.primaryFocus?.unfocus();
       _fecharMotivos();
-      final hora = await showTimePicker(
-        context: context,
-        initialTime: valor ?? TimeOfDay.now(),
-        helpText: rotulo,
-        cancelText: 'Cancelar',
-        confirmText: 'OK',
-        builder: (ctx, filho) => MediaQuery(
-          data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
-          child: filho!,
-        ),
-      );
+      final hora = await _escolherHora(rotulo, valor ?? TimeOfDay.now());
       if (hora != null && mounted) setState(() => aoMudar(hora));
     },
   );
+
+  /// Escolha da hora em roletas (horas 00 a 23 e minutos 00 a 59, girando),
+  /// no padrão dos modais do Resumo: fundo cinza, Cancelar e OK.
+  Future<TimeOfDay?> _escolherHora(String rotulo, TimeOfDay inicial) {
+    var escolhida = inicial;
+    return showDialog<TimeOfDay>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.grey[200],
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                rotulo,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 18, color: _azul),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                height: 200,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: CupertinoTheme(
+                  data: const CupertinoThemeData(
+                    textTheme: CupertinoTextThemeData(
+                      dateTimePickerTextStyle: TextStyle(
+                        fontSize: 24,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                  child: CupertinoDatePicker(
+                    mode: CupertinoDatePickerMode.time,
+                    use24hFormat: true,
+                    initialDateTime: DateTime(
+                      2000,
+                      1,
+                      1,
+                      inicial.hour,
+                      inicial.minute,
+                    ),
+                    onDateTimeChanged: (d) =>
+                        escolhida = TimeOfDay(hour: d.hour, minute: d.minute),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 46,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE9ECEF),
+                          foregroundColor: const Color(0xFF333333),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text(
+                          'Cancelar',
+                          style: TextStyle(fontSize: 15),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SizedBox(
+                      height: 46,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _azulBotao,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: () => Navigator.pop(ctx, escolhida),
+                        child: const Text('OK', style: TextStyle(fontSize: 15)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   static String _formatarHora(TimeOfDay h) =>
       '${h.hour.toString().padLeft(2, '0')}:'

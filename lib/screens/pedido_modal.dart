@@ -311,7 +311,15 @@ class _PedidoModalState extends State<PedidoModal> {
           children: [
             Padding(
               padding: EdgeInsets.only(top: topo, right: 8),
-              child: Text('Pedido ${n + 1}', style: estilo),
+              // bolinha com a cor da urgência na frente do "Pedido N"
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _bolinha(_corUrgencia(p['urgencia']?.toString()), 9),
+                  const SizedBox(width: 5),
+                  Text('Pedido ${n + 1}', style: estilo),
+                ],
+              ),
             ),
             Padding(
               padding: EdgeInsets.only(top: topo, right: 6),

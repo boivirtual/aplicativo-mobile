@@ -306,6 +306,94 @@ class _PedidoModalState extends State<PedidoModal> {
     ],
   );
 
+  /// Bolinha da urgência com contorno escuro (sem cor = branca).
+  Widget _bolinha(Color? cor, double tamanho) => Container(
+    width: tamanho,
+    height: tamanho,
+    decoration: BoxDecoration(
+      color: cor ?? Colors.white,
+      shape: BoxShape.circle,
+      border: Border.all(color: Colors.black87, width: 1),
+    ),
+  );
+
+  /// Urgência (uma só) em 2 x 2: bolinha colorida e o texto, no mesmo padrão
+  /// dos botões de andamento do Serviço — sem efeito de toque.
+  Widget _opcoesUrgencia() {
+    Widget opcao((String, Color?) u) => Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          FocusManager.instance.primaryFocus?.unfocus();
+          setState(() {
+            _urgencia = u.$1;
+            _tipoAberto = false;
+          });
+        },
+        child: Container(
+          height: 60,
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          decoration: BoxDecoration(
+            color: _urgencia == u.$1
+                ? const Color(0xFFCFE5FA)
+                : const Color(0xFFF9FCFF),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _bolinha(u.$2, 14),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  u.$1,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  style: TextStyle(
+                    fontFamily: 'FuturaStdMedium',
+                    fontSize: 13,
+                    color: _corRotulo,
+                    shadows: [
+                      Shadow(color: _corRotulo, offset: const Offset(0.4, 0)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 2, bottom: 6),
+          child: Text(
+            'Urgência',
+            style: TextStyle(fontSize: 14, color: _corRotulo),
+          ),
+        ),
+        Row(
+          children: [
+            opcao(_urgencias[0]),
+            const SizedBox(width: 8),
+            opcao(_urgencias[1]),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            opcao(_urgencias[2]),
+            const SizedBox(width: 8),
+            opcao(_urgencias[3]),
+          ],
+        ),
+      ],
+    );
+  }
+
   /// Ícone de editar/excluir da lista, no azul do btn-primary.
   Widget _iconeLista(IconData icone, VoidCallback aoTocar) => InkWell(
     borderRadius: BorderRadius.circular(12),

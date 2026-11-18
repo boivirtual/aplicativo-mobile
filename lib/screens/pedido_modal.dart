@@ -402,6 +402,17 @@ class _PedidoModalState extends State<PedidoModal> {
             opcao(_urgencias[3]),
           ],
         ),
+        // "Outro": descrever a urgência (obrigatório)
+        if (_urgencia == 'Outro') ...[
+          const SizedBox(height: 8),
+          CampoTextoTopo(
+            rotulo: 'Descreva a urgência',
+            corRotulo: _corRotulo,
+            controller: _urgenciaOutroController,
+            focusNode: _urgenciaOutroFoco,
+            textCapitalization: TextCapitalization.sentences,
+          ),
+        ],
       ],
     );
   }

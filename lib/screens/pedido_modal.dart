@@ -77,6 +77,10 @@ class _PedidoModalState extends State<PedidoModal> {
   String? _tipo;
   bool _tipoAberto = false;
   String? _urgencia;
+
+  /// Urgência "Outro": descrição obrigatória.
+  final _urgenciaOutroController = TextEditingController();
+  final _urgenciaOutroFoco = FocusNode();
   final _descricaoController = TextEditingController();
   final _descricaoFoco = FocusNode();
   final _qtdeController = TextEditingController();

@@ -225,6 +225,7 @@ class _ServicoModalState extends State<ServicoModal> {
             for (final o in _acoes)
               if (_acoesMarcadas.contains(o.$1)) o.$1,
           ],
+        if (_comTipoLimpeza) 'tipo_limpeza': _tipoLimpeza,
         if (_comMaquina) 'maquina': _maquina,
         if (_comPastos) ...{
           'pastos': [

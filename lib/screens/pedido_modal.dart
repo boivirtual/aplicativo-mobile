@@ -35,7 +35,11 @@ class _PedidoModalState extends State<PedidoModal> {
       'Ex: 5 frascos, 2 caixas',
     ),
     ('Nutrição', 'Ex: Sal mineral, Ureia, Fubá, Soja', 'Ex: 10 sacos de 30 kg'),
-    ('Materiais', 'Ex: Arame, Mourão, Cimento, Pregos', 'Ex: 5 rolos, 20 unidades'),
+    (
+      'Materiais',
+      'Ex: Arame, Mourão, Cimento, Pregos',
+      'Ex: 5 rolos, 20 unidades',
+    ),
     (
       'Equip / máquina / peça',
       'Ex: Bomba, Roçadeira, Peça de reposição',

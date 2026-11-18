@@ -893,6 +893,11 @@ class _ServicoModalState extends State<ServicoModal> {
                           const SizedBox(height: 12),
                           _opcoesPasto(),
                         ],
+                        // Pasto + Limpeza: tipo de limpeza, antes dos pastos
+                        if (_comTipoLimpeza) ...[
+                          const SizedBox(height: 12),
+                          _selectTipoLimpeza(),
+                        ],
                         if (_comPastos) ...[
                           const SizedBox(height: 12),
                           _selectPastos(),

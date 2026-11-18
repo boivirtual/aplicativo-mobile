@@ -535,6 +535,87 @@ class _ServicoModalState extends State<ServicoModal> {
     );
   }
 
+  /// Select "Tipo de Limpeza" (um só) com a lista aberta embaixo do próprio
+  /// campo, como o Tipo: um toque escolhe e fecha.
+  Widget _selectTipoLimpeza() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      CampoValorTopo(
+        rotulo: 'Tipo de Limpeza',
+        corRotulo: _corRotulo,
+        valor: _tipoLimpeza ?? '',
+        icone: Icon(
+          _limpezaAberta ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+          color: _corRotulo,
+        ),
+        onTap: () {
+          FocusManager.instance.primaryFocus?.unfocus();
+          setState(() {
+            _limpezaAberta = !_limpezaAberta;
+            _tipoAberto = false;
+            _pastosAberto = false;
+          });
+        },
+      ),
+      if (_limpezaAberta)
+        Container(
+          margin: const EdgeInsets.only(top: 4),
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFCFD8DC)),
+          ),
+          child: Column(
+            children: [
+              for (final l in _tiposLimpeza)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 3),
+                  child: Material(
+                    color: l == _tipoLimpeza
+                        ? const Color(0xFFD6E8FA)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(6),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(6),
+                      onTap: () => setState(() {
+                        _tipoLimpeza = l;
+                        _limpezaAberta = false;
+                      }),
+                      child: Container(
+                        height: 40,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                l,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: l == _tipoLimpeza
+                                      ? _azulTitulo
+                                      : Colors.black87,
+                                ),
+                              ),
+                            ),
+                            if (l == _tipoLimpeza)
+                              const Icon(
+                                Icons.check,
+                                size: 18,
+                                color: _azulBotao,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+    ],
+  );
+
   /// Select "Pasto(s)" de vários, no mesmo padrão dos outros selects de
   /// vários (Sintomas): lista aberta embaixo do campo, um toque marca ou
   /// desmarca, e os marcados aparecem embaixo do campo em azul claro.

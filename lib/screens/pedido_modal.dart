@@ -189,6 +189,7 @@ class _PedidoModalState extends State<PedidoModal> {
       _descricaoController.text = '${p['descricao'] ?? ''}';
       _qtdeController.text = '${p['quantidade'] ?? ''}';
       _urgencia = p['urgencia']?.toString();
+      _urgenciaOutroController.text = '${p['urgencia_descricao'] ?? ''}';
     });
     _rolagem.animateTo(
       0,

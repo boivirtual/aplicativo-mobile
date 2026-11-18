@@ -67,6 +67,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   List<Map<String, dynamic>> _pedidos = [];
   bool get _secao7Completa => _nenhumaSolicitacao || _pedidos.isNotEmpty;
 
+  // Seção 8 — Chegada e Saída de Produtos: "Nenhuma Chegada/Saída hoje"
+  // (libera o Próximo) ou Chegada / Saída (os modais vêm nas próximas etapas).
+  bool _nenhumaChegadaSaida = false;
+  bool get _secao8Completa => _nenhumaChegadaSaida;
+
   /// Card "Adicionar Produtos": abre o modal "Pedido" com os pedidos já
   /// incluídos. Com pedidos o card fica marcado (e sai o "Nenhuma
   /// solicitação hoje"); com a lista vazia, desmarca.
@@ -1331,7 +1336,13 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     if (_secao == 7) {
       // Solicitação de Produtos: segue com "Nenhuma solicitação hoje"
       if (!_secao7Completa) return;
-      // A Seção 8 vem nas próximas etapas.
+      setState(() => _secao = 8);
+      return;
+    }
+    if (_secao == 8) {
+      // Chegada e Saída de Produtos: segue com "Nenhuma Chegada/Saída hoje"
+      if (!_secao8Completa) return;
+      // A Seção 9 vem nas próximas etapas.
       return;
     }
     if (_secao == 1) {
@@ -1570,7 +1581,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                                 (_secao == 6 &&
                                                     !_secao6Completa) ||
                                                 (_secao == 7 &&
-                                                    !_secao7Completa)
+                                                    !_secao7Completa) ||
+                                                (_secao == 8 &&
+                                                    !_secao8Completa)
                                             ? null
                                             : _proximo,
                                         child: const Row(
@@ -1612,7 +1625,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   /// Fundo da tela e da barra do Próximo: azul da tarja na tela inicial e
   /// nas Seções 1 a 4, branco nas outras.
-  Color get _fundoTela => _secao <= 7 ? _azulTarja : Colors.white;
+  Color get _fundoTela => _secao <= 8 ? _azulTarja : Colors.white;
 
   /// Tarja de todas as seções: fazenda, data, barra de progresso e "Seção X
   /// de 11", de ponta a ponta, sem bordas arredondadas.
@@ -1713,6 +1726,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       // mesmo espaço depois do título da Seção 6
       const SizedBox(height: 16),
     ],
+    8 => [
+      _tituloAzul('Chegada e Saída de Produtos', tamanho: 17),
+      // mesmo espaço depois do título da Seção 7
+      const SizedBox(height: 16),
+    ],
     _ => [
       _tituloAzul('Atividades Registradas', tamanho: 17),
       if (_atividadesRegistradas.isNotEmpty)
@@ -1742,6 +1760,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     5 => _conversaNutricao(),
     6 => _conversaServicos(),
     7 => _conversaSolicitacao(),
+    8 => _conversaChegadaSaida(),
     _ => const [],
   };
 
@@ -2494,6 +2513,63 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     ),
     const SizedBox(height: 8),
   ];
+
+  /// Seção 8 — "Chegada e Saída de Produtos": conversa com o usuário logado,
+  /// os botões Chegada e Saída lado a lado e o "Nenhuma Chegada/Saída hoje".
+  List<Widget> _conversaChegadaSaida() => [
+    Padding(
+      padding: const EdgeInsets.fromLTRB(0, 4, 0, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$_nomeUsuario!', style: _negrito(19, _corRotulo)),
+          const SizedBox(height: 10),
+          Text(
+            'Quais produtos chegaram ou saíram da fazenda hoje?',
+            style: _textoMedio(17, _corRotulo).copyWith(height: 1.5),
+          ),
+        ],
+      ),
+    ),
+    // Chegada / Saída: os modais vêm nas próximas etapas (sem ação)
+    Row(
+      children: [
+        Expanded(child: _botaoChegadaSaida('Chegada', Icons.move_to_inbox)),
+        const SizedBox(width: 8),
+        Expanded(child: _botaoChegadaSaida('Saída', Icons.outbox)),
+      ],
+    ),
+    const SizedBox(height: 8),
+    _cardSecao1(
+      'Nenhuma Chegada/Saída hoje',
+      Icons.block,
+      _nenhumaChegadaSaida,
+      (v) => setState(() => _nenhumaChegadaSaida = v),
+    ),
+    const SizedBox(height: 8),
+  ];
+
+  /// Botão Chegada / Saída da Seção 8: ícone e texto centralizados, no azul
+  /// bem claro dos cards — sem efeito de toque.
+  Widget _botaoChegadaSaida(String texto, IconData icone) => GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    onTap: () {},
+    child: Container(
+      height: 56,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FCFF),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icone, size: 24, color: const Color(0xFF228cb9)),
+          const SizedBox(width: 8),
+          Text(texto, style: _textoMedio(16, _corRotulo)),
+        ],
+      ),
+    ),
+  );
 
   /// Link de uma atividade da Seção 2: Choveu abre o programa da Chuva (com
   /// a fazenda e a data do resumo); as outras, o Mapa de Gado (Tabuleiro)

@@ -117,6 +117,11 @@ class _PedidoModalState extends State<PedidoModal> {
 
     _descricaoFoco.addListener(fecharTipo);
     _qtdeFoco.addListener(fecharTipo);
+    _urgenciaOutroFoco.addListener(() {
+      if (_tipoAberto && _urgenciaOutroFoco.hasFocus) {
+        setState(() => _tipoAberto = false);
+      }
+    });
   }
 
   @override

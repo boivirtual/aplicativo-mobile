@@ -125,6 +125,8 @@ class _PedidoModalState extends State<PedidoModal> {
     _descricaoFoco.dispose();
     _qtdeController.dispose();
     _qtdeFoco.dispose();
+    _urgenciaOutroController.dispose();
+    _urgenciaOutroFoco.dispose();
     _rolagem.dispose();
     super.dispose();
   }

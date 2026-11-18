@@ -2472,14 +2472,24 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ],
       ),
     ),
-    // "Adicionar Produtos": o modal vem nas próximas etapas (sem ação)
-    _cardSecao1('Adicionar Produtos', Icons.add_circle_outline, false, (_) {}),
+    // abre o modal "Pedido"; marcado quando há pedidos
+    _cardSecao1(
+      _pedidos.isEmpty
+          ? 'Adicionar Produtos'
+          : 'Adicionar Produtos (${_pedidos.length})',
+      Icons.add_circle_outline,
+      _pedidos.isNotEmpty,
+      (_) => _abrirPedidos(),
+    ),
     const SizedBox(height: 8),
     _cardSecao1(
       'Nenhuma solicitação hoje',
       Icons.block,
       _nenhumaSolicitacao,
-      (v) => setState(() => _nenhumaSolicitacao = v),
+      (v) => setState(() {
+        _nenhumaSolicitacao = v;
+        if (v) _pedidos = [];
+      }),
     ),
     const SizedBox(height: 8),
   ];

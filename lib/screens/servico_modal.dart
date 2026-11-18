@@ -48,9 +48,6 @@ class _ServicoModalState extends State<ServicoModal> {
     'Curral',
     'Estrada / Acesso',
     'Máquina (manutenção)',
-    'Motofoice',
-    'Herbicida',
-    'Trator',
     'Outro',
   ];
 
@@ -97,9 +94,6 @@ class _ServicoModalState extends State<ServicoModal> {
     'Cocho',
     'Cerca',
     'Estrada / Acesso',
-    'Motofoice',
-    'Herbicida',
-    'Trator',
   };
 
   /// O que precisa ser feito do tipo escolhido (vazio = o tipo não tem).
@@ -122,6 +116,13 @@ class _ServicoModalState extends State<ServicoModal> {
   String? _maquina;
   bool _maquinaAberta = false;
   bool get _comMaquina => _tipo == 'Máquina (manutenção)';
+
+  /// Pasto + Limpeza: tipo de limpeza (um, obrigatório).
+  static const _tiposLimpeza = ['Motofoice', 'Herbicida', 'Trator'];
+  String? _tipoLimpeza;
+  bool _limpezaAberta = false;
+  bool get _comTipoLimpeza =>
+      _tipo == 'Pasto' && _acoesMarcadas.contains('Limpeza');
 
   /// Serviço da lista em edição (índice em [_servicos]); null = novo.
   int? _editando;
@@ -166,11 +167,14 @@ class _ServicoModalState extends State<ServicoModal> {
   /// Fecha as listas abertas (Tipo, Pastos, Qual máquina) ao ir para outro
   /// campo, para não ficarem ocupando a tela.
   void _fecharListas() {
-    if (!_tipoAberto && !_pastosAberto && !_maquinaAberta) return;
+    if (!_tipoAberto && !_pastosAberto && !_maquinaAberta && !_limpezaAberta) {
+      return;
+    }
     setState(() {
       _tipoAberto = false;
       _pastosAberto = false;
       _maquinaAberta = false;
+      _limpezaAberta = false;
     });
   }
 
@@ -184,6 +188,7 @@ class _ServicoModalState extends State<ServicoModal> {
     _pastosAberto = false;
     _maquina = null;
     _maquinaAberta = false;
+    _limpezaAberta = false;
   }
 
   /// "Confirmar Serviço" (ou "Confirmar Edição"): guarda o serviço na lista
@@ -323,6 +328,7 @@ class _ServicoModalState extends State<ServicoModal> {
             _tipoAberto = !_tipoAberto;
             _pastosAberto = false;
             _maquinaAberta = false;
+            _limpezaAberta = false;
           });
         },
       ),
@@ -551,6 +557,7 @@ class _ServicoModalState extends State<ServicoModal> {
               _pastosAberto = !_pastosAberto;
               _tipoAberto = false;
               _maquinaAberta = false;
+              _limpezaAberta = false;
             });
           },
         ),
@@ -686,6 +693,7 @@ class _ServicoModalState extends State<ServicoModal> {
                       onTap: () => setState(() {
                         _maquina = m;
                         _maquinaAberta = false;
+                        _limpezaAberta = false;
                       }),
                       child: Container(
                         height: 40,

@@ -152,6 +152,8 @@ class _PedidoModalState extends State<PedidoModal> {
         ? 'Informe a Quantidade.'
         : _urgencia == null
         ? 'Selecione a Urgência.'
+        : _urgencia == 'Outro' && _urgenciaOutroController.text.trim().isEmpty
+        ? 'Descreva a urgência.'
         : null;
     if (erro != null) {
       await AppAlert.erro(context, erro);

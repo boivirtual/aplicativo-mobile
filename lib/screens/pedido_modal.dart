@@ -454,7 +454,10 @@ class _PedidoModalState extends State<PedidoModal> {
                           controller: _qtdeController,
                           focusNode: _qtdeFoco,
                           dica: exemplos.$2.isEmpty ? null : exemplos.$2,
+                          altura: 64,
                         ),
+                        const SizedBox(height: 12),
+                        _opcoesUrgencia(),
                         const SizedBox(height: 14),
                         if (_editando == null)
                           _botao('Confirmar Pedido', _confirmar)

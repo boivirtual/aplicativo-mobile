@@ -137,6 +137,7 @@ class _PedidoModalState extends State<PedidoModal> {
     _descricaoController.clear();
     _qtdeController.clear();
     _urgencia = null;
+    _urgenciaOutroController.clear();
   }
 
   /// "Confirmar Pedido" (ou "Confirmar Edição"): guarda o pedido na lista

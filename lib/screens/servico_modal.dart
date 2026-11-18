@@ -481,7 +481,13 @@ class _ServicoModalState extends State<ServicoModal> {
                 _fecharListas();
                 final o = _acoes[i].$1;
                 setState(() {
-                  if (!_acoesMarcadas.remove(o)) {
+                  if (_tipo == 'Pasto') {
+                    // Pasto: Limpeza ou Plantio (uma opção só)
+                    _acoesMarcadas
+                      ..clear()
+                      ..add(o);
+                    if (o != 'Limpeza') _tipoLimpeza = null;
+                  } else if (!_acoesMarcadas.remove(o)) {
                     _acoesMarcadas.add(o);
                   }
                 });

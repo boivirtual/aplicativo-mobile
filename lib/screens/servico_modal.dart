@@ -189,6 +189,7 @@ class _ServicoModalState extends State<ServicoModal> {
     _maquina = null;
     _maquinaAberta = false;
     _limpezaAberta = false;
+    _tipoLimpeza = null;
   }
 
   /// "Confirmar Serviço" (ou "Confirmar Edição"): guarda o serviço na lista

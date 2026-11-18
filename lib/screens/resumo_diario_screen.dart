@@ -43,9 +43,12 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     with WidgetsBindingObserver {
   static const _azul = Color(0xFF18385F);
   static const _azulBotao = Color(0xFF007AFF);
+
+  /// Verde do btn-success (botão Finalizar da Seção 9).
+  static const _verdeFinalizar = Color(0xFF28A745);
   static final _corRotulo = Colors.blueGrey[800]!;
 
-  static const _totalSecoes = 12;
+  static const _totalSecoes = 9;
 
   /// 0 = tela inicial (escolha da fazenda), antes das seções.
   int _secao = 0;
@@ -74,6 +77,24 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   bool _nenhumaChegadaSaida = false;
   List<Map<String, dynamic>> _movimentos = [];
   bool get _secao8Completa => _nenhumaChegadaSaida || _movimentos.isNotEmpty;
+
+  // Seção 9 — Fechamento (a última): uso do trator (início, término e
+  // motivos), bomba d'água (início e término) e observações gerais do dia.
+  TimeOfDay? _tratorInicio;
+  TimeOfDay? _tratorTermino;
+  static const _motivosTrator = [
+    'Distribuir Nutrição',
+    'Carregar material',
+    'Carregar água',
+    'Limpeza de pasto',
+    'Outros',
+  ];
+  final Set<String> _motivosMarcados = {};
+  bool _motivosAberto = false;
+  final _outrosMotivosController = TextEditingController();
+  TimeOfDay? _bombaInicio;
+  TimeOfDay? _bombaTermino;
+  final _obsGeraisController = TextEditingController();
 
   /// Card "Adicionar Chegada ou Saída": abre o modal com os lançamentos já
   /// incluídos. Com lançamentos o card fica marcado (e sai o "Nenhuma
@@ -452,6 +473,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     _encontradosFoco.dispose();
     _rolagem.dispose();
     _outrasAtividadesController.dispose();
+    _outrosMotivosController.dispose();
+    _obsGeraisController.dispose();
     super.dispose();
   }
 
@@ -1365,7 +1388,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     if (_secao == 8) {
       // Chegada e Saída de Produtos: segue com "Nenhuma Chegada/Saída hoje"
       if (!_secao8Completa) return;
-      // A Seção 9 vem nas próximas etapas.
+      setState(() => _secao = 9);
       return;
     }
     if (_secao == 1) {
@@ -1576,7 +1599,10 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                       height: 48,
                                       child: ElevatedButton(
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: _azulBotao,
+                                          // Seção 9: "Finalizar" verde (btn-success)
+                                          backgroundColor: _secao == 9
+                                              ? _verdeFinalizar
+                                              : _azulBotao,
                                           foregroundColor: Colors.white,
                                           // inativo: o mesmo azul, clareado
                                           disabledBackgroundColor: _azulBotao
@@ -1608,21 +1634,41 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                                 (_secao == 8 &&
                                                     !_secao8Completa)
                                             ? null
+                                            : _secao == 9
+                                            ? _finalizar
                                             : _proximo,
-                                        child: const Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              'Próximo',
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                color: Colors.white,
+                                        child: _secao == 9
+                                            ? const Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(Icons.check, size: 20),
+                                                  SizedBox(width: 8),
+                                                  Text(
+                                                    'Finalizar',
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ],
+                                              )
+                                            : const Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    'Próximo',
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                  SizedBox(width: 8),
+                                                  Icon(
+                                                    Icons.arrow_forward,
+                                                    size: 20,
+                                                  ),
+                                                ],
                                               ),
-                                            ),
-                                            SizedBox(width: 8),
-                                            Icon(Icons.arrow_forward, size: 20),
-                                          ],
-                                        ),
                                       ),
                                     ),
                                   ),
@@ -1648,7 +1694,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
   /// Fundo da tela e da barra do Próximo: azul da tarja na tela inicial e
   /// nas Seções 1 a 4, branco nas outras.
-  Color get _fundoTela => _secao <= 8 ? _azulTarja : Colors.white;
+  Color get _fundoTela => _secao <= 9 ? _azulTarja : Colors.white;
 
   /// Tarja de todas as seções: fazenda, data, barra de progresso e "Seção X
   /// de 11", de ponta a ponta, sem bordas arredondadas.
@@ -1754,6 +1800,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       // mesmo espaço depois do título da Seção 7
       const SizedBox(height: 16),
     ],
+    9 => [
+      _tituloAzul('Fechamento', tamanho: 17),
+      // mesmo espaço depois do título da Seção 8
+      const SizedBox(height: 16),
+    ],
     _ => [
       _tituloAzul('Atividades Registradas', tamanho: 17),
       if (_atividadesRegistradas.isNotEmpty)
@@ -1784,6 +1835,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     6 => _conversaServicos(),
     7 => _conversaSolicitacao(),
     8 => _conversaChegadaSaida(),
+    9 => _conversaFechamento(),
     _ => const [],
   };
 
@@ -2576,6 +2628,264 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
 
     const SizedBox(height: 8),
   ];
+
+  /// Seção 9 — "Fechamento" (a última): conversa com o usuário logado, uso
+  /// do trator (início, término e motivos), bomba d'água (início e término)
+  /// e as observações gerais do dia.
+  List<Widget> _conversaFechamento() => [
+    Padding(
+      padding: const EdgeInsets.fromLTRB(0, 4, 0, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$_nomeUsuario!', style: _negrito(19, _corRotulo)),
+          const SizedBox(height: 10),
+          Text(
+            'Me conta mais sobre o uso de máquinas, sobre a equipe ou alguma '
+            'observação que você queira informar.',
+            style: _textoMedio(17, _corRotulo).copyWith(height: 1.5),
+          ),
+        ],
+      ),
+    ),
+    _tituloGrupo('Uso do Trator', Icons.agriculture),
+    _linhaHoras(
+      _tratorInicio,
+      _tratorTermino,
+      (h) => _tratorInicio = h,
+      (h) => _tratorTermino = h,
+    ),
+    const SizedBox(height: 12),
+    _selectMotivos(),
+    // "Outros" marcado (sozinho ou com outros): descrever
+    if (_motivosMarcados.contains('Outros')) ...[
+      const SizedBox(height: 12),
+      CampoTextoTopo(
+        rotulo: 'Descreva outros motivos',
+        corRotulo: _corRotulo,
+        controller: _outrosMotivosController,
+        onTap: _fecharMotivos,
+        textCapitalization: TextCapitalization.sentences,
+      ),
+    ],
+    const SizedBox(height: 18),
+    _tituloGrupo("Bomba d'água", Icons.water_drop_outlined),
+    _linhaHoras(
+      _bombaInicio,
+      _bombaTermino,
+      (h) => _bombaInicio = h,
+      (h) => _bombaTermino = h,
+    ),
+    const SizedBox(height: 18),
+    CampoTextoTopo(
+      rotulo: 'Observações gerais do dia',
+      corRotulo: _corRotulo,
+      controller: _obsGeraisController,
+      onTap: _fecharMotivos,
+      altura: null,
+      linhas: 3,
+      textCapitalization: TextCapitalization.sentences,
+    ),
+    const SizedBox(height: 8),
+  ];
+
+  /// Título de um grupo da Seção 9 (Uso do Trator, Bomba d'água).
+  Widget _tituloGrupo(String texto, IconData icone) => Padding(
+    padding: const EdgeInsets.only(left: 2, bottom: 8),
+    child: Row(
+      children: [
+        Icon(icone, size: 22, color: const Color(0xFF228cb9)),
+        const SizedBox(width: 8),
+        Text(texto, style: _negrito(16, _corRotulo)),
+      ],
+    ),
+  );
+
+  void _fecharMotivos() {
+    if (_motivosAberto) setState(() => _motivosAberto = false);
+  }
+
+  /// Início e Término lado a lado.
+  Widget _linhaHoras(
+    TimeOfDay? inicio,
+    TimeOfDay? termino,
+    void Function(TimeOfDay?) aoMudarInicio,
+    void Function(TimeOfDay?) aoMudarTermino,
+  ) => Row(
+    children: [
+      Expanded(child: _campoHora('Início', inicio, aoMudarInicio)),
+      const SizedBox(width: 10),
+      Expanded(child: _campoHora('Término', termino, aoMudarTermino)),
+    ],
+  );
+
+  /// Campo de hora: toque abre o relógio (24 horas); preenchido, o (x) limpa.
+  Widget _campoHora(
+    String rotulo,
+    TimeOfDay? valor,
+    void Function(TimeOfDay?) aoMudar,
+  ) => CampoValorTopo(
+    rotulo: rotulo,
+    corRotulo: _corRotulo,
+    valor: valor == null ? '' : _formatarHora(valor),
+    icone: valor == null
+        ? Icon(Icons.access_time, color: _corRotulo, size: 22)
+        : GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() => aoMudar(null)),
+            child: Icon(Icons.close, color: _corRotulo, size: 20),
+          ),
+    onTap: () async {
+      FocusManager.instance.primaryFocus?.unfocus();
+      _fecharMotivos();
+      final hora = await showTimePicker(
+        context: context,
+        initialTime: valor ?? TimeOfDay.now(),
+        helpText: rotulo,
+        cancelText: 'Cancelar',
+        confirmText: 'OK',
+        builder: (ctx, filho) => MediaQuery(
+          data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
+          child: filho!,
+        ),
+      );
+      if (hora != null && mounted) setState(() => aoMudar(hora));
+    },
+  );
+
+  static String _formatarHora(TimeOfDay h) =>
+      '${h.hour.toString().padLeft(2, '0')}:'
+      '${h.minute.toString().padLeft(2, '0')}';
+
+  /// Select "Motivo do Uso" de vários, no mesmo padrão dos outros selects de
+  /// vários (Sintomas, Pastos): lista aberta embaixo do campo, um toque marca
+  /// ou desmarca, e os marcados aparecem embaixo do campo em azul claro.
+  Widget _selectMotivos() {
+    final marcados = [
+      for (final m in _motivosTrator)
+        if (_motivosMarcados.contains(m)) m,
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CampoValorTopo(
+          rotulo: 'Motivo do Uso',
+          corRotulo: _corRotulo,
+          valor: marcados.isEmpty ? '' : '${marcados.length} selecionado(s)',
+          altura: marcados.isEmpty ? 56 : 66,
+          icone: Icon(
+            _motivosAberto ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+            color: _corRotulo,
+          ),
+          onTap: () {
+            FocusManager.instance.primaryFocus?.unfocus();
+            setState(() => _motivosAberto = !_motivosAberto);
+          },
+        ),
+        if (_motivosAberto)
+          Container(
+            margin: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFCFD8DC)),
+            ),
+            child: Column(
+              children: [
+                for (final m in _motivosTrator)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 3),
+                    child: Material(
+                      color: _motivosMarcados.contains(m)
+                          ? const Color(0xFFD6E8FA)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(6),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(6),
+                        onTap: () => setState(() {
+                          if (!_motivosMarcados.remove(m)) {
+                            _motivosMarcados.add(m);
+                          }
+                          if (!_motivosMarcados.contains('Outros')) {
+                            _outrosMotivosController.clear();
+                          }
+                        }),
+                        child: Container(
+                          height: 40,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  m,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: _motivosMarcados.contains(m)
+                                        ? _azul
+                                        : Colors.black87,
+                                  ),
+                                ),
+                              ),
+                              if (_motivosMarcados.contains(m))
+                                const Icon(
+                                  Icons.check,
+                                  size: 18,
+                                  color: _azulBotao,
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        if (marcados.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
+            child: Text(
+              marcados.join(', '),
+              style: TextStyle(
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+                color: Colors.blue[300],
+                shadows: [
+                  Shadow(
+                    color: Colors.blue[300]!,
+                    offset: const Offset(0.4, 0),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// "Finalizar" (Seção 9): confere os campos do Fechamento. A gravação do
+  /// Resumo no servidor vem nas próximas etapas.
+  Future<void> _finalizar() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    _fecharMotivos();
+    String? erro;
+    if ((_tratorInicio == null) != (_tratorTermino == null)) {
+      erro = 'Informe o Início e o Término do uso do Trator.';
+    } else if (_tratorInicio != null && _motivosMarcados.isEmpty) {
+      erro = 'Selecione o Motivo do Uso do Trator.';
+    } else if (_motivosMarcados.contains('Outros') &&
+        _outrosMotivosController.text.trim().isEmpty) {
+      erro = 'Descreva outros motivos.';
+    } else if ((_bombaInicio == null) != (_bombaTermino == null)) {
+      erro = "Informe o Início e o Término da Bomba d'água.";
+    }
+    if (erro != null) {
+      await AppAlert.erro(context, erro);
+      return;
+    }
+    // A gravação do Resumo vem nas próximas etapas.
+  }
 
   /// Link de uma atividade da Seção 2: Choveu abre o programa da Chuva (com
   /// a fazenda e a data do resumo); as outras, o Mapa de Gado (Tabuleiro)

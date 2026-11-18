@@ -165,6 +165,8 @@ class _PedidoModalState extends State<PedidoModal> {
         'descricao': _descricaoController.text.trim(),
         'quantidade': _qtdeController.text.trim(),
         'urgencia': _urgencia,
+        if (_urgencia == 'Outro')
+          'urgencia_descricao': _urgenciaOutroController.text.trim(),
       };
       if (_editando != null) {
         _pedidos[_editando!] = pedido;

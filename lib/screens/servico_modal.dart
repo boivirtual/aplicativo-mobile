@@ -256,6 +256,7 @@ class _ServicoModalState extends State<ServicoModal> {
       _limpar();
       _tipo = s['tipo']?.toString();
       _maquina = s['maquina']?.toString();
+      _tipoLimpeza = s['tipo_limpeza']?.toString();
       _acoesMarcadas.addAll(List<String>.from(s['acoes'] ?? const []));
       for (final p in (s['pastos'] as List? ?? const [])) {
         _pastosMarcados.add((p as Map)['id'] as int);

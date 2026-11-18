@@ -58,8 +58,25 @@ class _PedidoModalState extends State<PedidoModal> {
     ('Outro', 'Ex: Descreva o que precisa', 'Ex: 1 unidade'),
   ];
 
+  /// Urgência do pedido (uma, obrigatório) e a cor da bolinha.
+  static const _urgencias = <(String, Color?)>[
+    ('Até amanhã', Color(0xFFE53935)),
+    ('Semana que vem', Color(0xFFFDD835)),
+    ('Manutenção de estoque', Color(0xFF43A047)),
+    ('Outro', null),
+  ];
+
+  /// Cor da bolinha da urgência (null = branca, só o contorno).
+  static Color? _corUrgencia(String? urgencia) {
+    for (final u in _urgencias) {
+      if (u.$1 == urgencia) return u.$2;
+    }
+    return null;
+  }
+
   String? _tipo;
   bool _tipoAberto = false;
+  String? _urgencia;
   final _descricaoController = TextEditingController();
   final _descricaoFoco = FocusNode();
   final _qtdeController = TextEditingController();

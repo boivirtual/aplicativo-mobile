@@ -15,6 +15,7 @@ import '../widgets/campo_topo_widget.dart';
 import '../widgets/tarja_fazenda_widget.dart';
 import 'chuva_screen.dart';
 import 'mapa_screen.dart';
+import 'chegada_saida_modal.dart';
 import 'mistura_modal.dart';
 import 'pedido_modal.dart';
 import 'remedio_modal.dart';
@@ -67,10 +68,32 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   List<Map<String, dynamic>> _pedidos = [];
   bool get _secao7Completa => _nenhumaSolicitacao || _pedidos.isNotEmpty;
 
-  // Seção 8 — Chegada e Saída de Produtos: "Nenhuma Chegada/Saída hoje"
-  // (libera o Próximo) ou Chegada / Saída (os modais vêm nas próximas etapas).
+  // Seção 8 — Chegada e Saída de Produtos: "Nenhuma Chegada/Saída hoje" ou
+  // os lançamentos do modal "Chegada / Saída" (card "Adicionar Chegada ou
+  // Saída"). Um exclui o outro.
   bool _nenhumaChegadaSaida = false;
-  bool get _secao8Completa => _nenhumaChegadaSaida;
+  List<Map<String, dynamic>> _movimentos = [];
+  bool get _secao8Completa => _nenhumaChegadaSaida || _movimentos.isNotEmpty;
+
+  /// Card "Adicionar Chegada ou Saída": abre o modal com os lançamentos já
+  /// incluídos. Com lançamentos o card fica marcado (e sai o "Nenhuma
+  /// Chegada/Saída hoje"); com a lista vazia, desmarca.
+  Future<void> _abrirChegadaSaida() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final dados = await showDialog<Map<String, dynamic>>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => ChegadaSaidaModal(movimentos: _movimentos),
+    );
+    if (dados == null || !mounted) return;
+    setState(() {
+      _movimentos = [
+        for (final m in (dados['movimentos'] as List? ?? const []))
+          Map<String, dynamic>.from(m as Map),
+      ];
+      if (_movimentos.isNotEmpty) _nenhumaChegadaSaida = false;
+    });
+  }
 
   /// Card "Adicionar Produtos": abre o modal "Pedido" com os pedidos já
   /// incluídos. Com pedidos o card fica marcado (e sai o "Nenhuma
@@ -2515,7 +2538,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   ];
 
   /// Seção 8 — "Chegada e Saída de Produtos": conversa com o usuário logado,
-  /// os botões Chegada e Saída lado a lado e o "Nenhuma Chegada/Saída hoje".
+  /// os cards "Adicionar Chegada ou Saída" e "Nenhuma Chegada/Saída hoje".
   List<Widget> _conversaChegadaSaida() => [
     Padding(
       padding: const EdgeInsets.fromLTRB(0, 4, 0, 14),
@@ -2531,45 +2554,28 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         ],
       ),
     ),
-    // Chegada / Saída: os modais vêm nas próximas etapas (sem ação)
-    Row(
-      children: [
-        Expanded(child: _botaoChegadaSaida('Chegada', Icons.move_to_inbox)),
-        const SizedBox(width: 8),
-        Expanded(child: _botaoChegadaSaida('Saída', Icons.outbox)),
-      ],
+    // abre o modal "Chegada / Saída"; marcado quando há lançamentos
+    _cardSecao1(
+      _movimentos.isEmpty
+          ? 'Adicionar Chegada ou Saída'
+          : 'Adicionar Chegada ou Saída (${_movimentos.length})',
+      Icons.add_circle_outline,
+      _movimentos.isNotEmpty,
+      (_) => _abrirChegadaSaida(),
     ),
     const SizedBox(height: 8),
     _cardSecao1(
       'Nenhuma Chegada/Saída hoje',
       Icons.block,
       _nenhumaChegadaSaida,
-      (v) => setState(() => _nenhumaChegadaSaida = v),
+      (v) => setState(() {
+        _nenhumaChegadaSaida = v;
+        if (v) _movimentos = [];
+      }),
     ),
+
     const SizedBox(height: 8),
   ];
-
-  /// Botão Chegada / Saída da Seção 8: ícone e texto centralizados, no azul
-  /// bem claro dos cards — sem efeito de toque.
-  Widget _botaoChegadaSaida(String texto, IconData icone) => GestureDetector(
-    behavior: HitTestBehavior.opaque,
-    onTap: () {},
-    child: Container(
-      height: 56,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FCFF),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icone, size: 24, color: const Color(0xFF228cb9)),
-          const SizedBox(width: 8),
-          Text(texto, style: _textoMedio(16, _corRotulo)),
-        ],
-      ),
-    ),
-  );
 
   /// Link de uma atividade da Seção 2: Choveu abre o programa da Chuva (com
   /// a fazenda e a data do resumo); as outras, o Mapa de Gado (Tabuleiro)

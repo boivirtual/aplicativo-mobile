@@ -49,7 +49,8 @@ class _ChegadaSaidaModalState extends State<ChegadaSaidaModal> {
   final _rolagem = ScrollController();
 
   /// Rótulo do campo de origem/destino de acordo com a opção.
-  String get _rotuloLocal => _tipo == 'Saída' ? 'Para onde foi' : 'De onde veio';
+  String get _rotuloLocal =>
+      _tipo == 'Saída' ? 'Para onde foi' : 'De onde veio';
 
   @override
   void initState() {

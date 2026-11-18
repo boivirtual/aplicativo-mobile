@@ -60,10 +60,31 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Seção 3 para cima do teclado).
   final _rolagem = ScrollController();
 
-  // Seção 7 — Solicitação de Produtos: "Nenhuma solicitação hoje" (libera o
-  // Próximo) ou "Adicionar Produtos" (o modal vem nas próximas etapas).
+  // Seção 7 — Solicitação de Produtos: "Nenhuma solicitação hoje" ou os
+  // pedidos do modal "Pedido" (card "Adicionar Produtos"). Um exclui o outro.
   bool _nenhumaSolicitacao = false;
-  bool get _secao7Completa => _nenhumaSolicitacao;
+  List<Map<String, dynamic>> _pedidos = [];
+  bool get _secao7Completa => _nenhumaSolicitacao || _pedidos.isNotEmpty;
+
+  /// Card "Adicionar Produtos": abre o modal "Pedido" com os pedidos já
+  /// incluídos. Com pedidos o card fica marcado (e sai o "Nenhuma
+  /// solicitação hoje"); com a lista vazia, desmarca.
+  Future<void> _abrirPedidos() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final dados = await showDialog<Map<String, dynamic>>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => PedidoModal(pedidos: _pedidos),
+    );
+    if (dados == null || !mounted) return;
+    setState(() {
+      _pedidos = [
+        for (final p in (dados['pedidos'] as List? ?? const []))
+          Map<String, dynamic>.from(p as Map),
+      ];
+      if (_pedidos.isNotEmpty) _nenhumaSolicitacao = false;
+    });
+  }
 
   // Seção 6 — Serviços: "Nenhum serviço necessário hoje" ou os serviços do
   // modal "Serviço(s)" (card "Adicionar Serviço"). Um exclui o outro.

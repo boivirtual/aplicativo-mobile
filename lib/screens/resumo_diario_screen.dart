@@ -16,6 +16,7 @@ import '../widgets/tarja_fazenda_widget.dart';
 import 'chuva_screen.dart';
 import 'mapa_screen.dart';
 import 'mistura_modal.dart';
+import 'pedido_modal.dart';
 import 'remedio_modal.dart';
 import 'servico_modal.dart';
 import '../widgets/indicador_conectividade_widget.dart';

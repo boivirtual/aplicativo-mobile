@@ -201,6 +201,8 @@ class _ServicoModalState extends State<ServicoModal> {
         : _acoes.isNotEmpty && _acoesMarcadas.isEmpty
         ? 'Marque o que precisa ser feito '
               '(${_acoes.map((a) => a.$1).join(' ou ')}).'
+        : _comTipoLimpeza && _tipoLimpeza == null
+        ? 'Selecione o Tipo de Limpeza.'
         : _comMaquina && _maquina == null
         ? 'Selecione qual máquina.'
         : _comPastos && _pastosMarcados.isEmpty

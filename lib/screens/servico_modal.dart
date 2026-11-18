@@ -364,6 +364,7 @@ class _ServicoModalState extends State<ServicoModal> {
                         if (t != _tipo) {
                           _acoesMarcadas.clear();
                           _maquina = null;
+                          _tipoLimpeza = null;
                         }
                         if (!_tiposComPasto.contains(t)) {
                           _pastosMarcados.clear();

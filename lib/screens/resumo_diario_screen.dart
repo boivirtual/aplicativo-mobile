@@ -2858,7 +2858,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// meio, vai até o nome seguinte: "José da Silva").
   static String _doisNomes(String nome) {
     const ligacoes = {'da', 'de', 'do', 'das', 'dos', 'e'};
-    final partes = nome.trim().split(RegExp(r's+'));
+    final partes = nome.trim().split(RegExp(r'\s+'));
     if (partes.length <= 2) return partes.join(' ');
     final ate = ligacoes.contains(partes[1].toLowerCase()) ? 3 : 2;
     return partes.take(ate).join(' ');

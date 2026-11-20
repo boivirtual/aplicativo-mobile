@@ -224,6 +224,41 @@ class ResumoDiarioService {
     return null;
   }
 
+  /// Seção 9 ("Equipe do Dia"): funcionários (classe 05) ativos da
+  /// [fazenda], em ordem de nome. Só online. null se não conseguiu
+  /// consultar (sem resposta ou resposta com erro).
+  Future<List<({int id, String nome})>?> funcionariosDaFazenda(
+    String bd,
+    String fazenda,
+  ) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(
+              "${ApiConfig.baseUrl}/rest/resumo-diario/funcionarios.php",
+            ),
+            headers: {"Content-Type": "application/json"},
+            body: json.encode({'bd': bd, 'fazenda': fazenda}),
+          )
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode != 200) return null;
+      final dados = json.decode(response.body);
+      if (dados is Map && dados['success'] == true) {
+        return [
+          for (final f in (dados['funcionarios'] as List? ?? const []))
+            if (f is Map)
+              (
+                id: (f['id'] as num?)?.toInt() ?? 0,
+                nome: '${f['nome'] ?? ''}',
+              ),
+        ];
+      }
+    } catch (e) {
+      debugPrint('[ResumoDiario] funcionários da fazenda: falhou -> $e');
+    }
+    return null;
+  }
+
   /// Tela inicial: o dia anterior a [data] ficou sem resumo da [fazenda]
   /// (um resumo por data e fazenda)? E a própria [data] já tem registro
   /// (tipoNoDia: 'R' = Resumo, 'F' = Folga, null = livre)? Só online

@@ -34,6 +34,17 @@ class MapaGadoSyncService {
   /// Avisa a tela sempre que a fila muda (enviou, falhou, nova ação).
   final ValueNotifier<int> versaoFila = ValueNotifier(0);
 
+  /// Dia do Resumo Diário (Y-m-d) enquanto o Mapa de Gado está aberto pelo
+  /// Resumo (hoje ou ontem); null = aberto de qualquer outro lugar. Com ele,
+  /// as ações gravam a data do registro com o dia do resumo (a hora é a
+  /// atual): data_hora das ações da fila e data_resumo do Nascimento e dos
+  /// "Registros de Hoje". Quem define e limpa é a tela do Resumo.
+  String? dataResumo;
+
+  /// [dataResumo] como data (sem hora); null fora do Resumo.
+  DateTime? get diaResumo =>
+      dataResumo == null ? null : DateTime.tryParse(dataResumo!);
+
   /// Liga o reenvio automático: ao voltar internet e a cada 30s (mesmo
   /// intervalo da chuva e da pesagem). Chamado uma vez em main.dart.
   void iniciar() {

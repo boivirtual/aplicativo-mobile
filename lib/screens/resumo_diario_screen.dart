@@ -2740,6 +2740,120 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     const SizedBox(height: 8),
   ];
 
+  /// Equipe do Dia: cada funcionário da fazenda (nome em negrito) com as
+  /// presenças em 2 x 2 (uma, obrigatória), no padrão dos botões da
+  /// Urgência do Pedido — sem efeito de toque.
+  List<Widget> _equipeDoDia() {
+    final equipe = _equipe;
+    if (equipe == null) {
+      return [
+        if (_carregandoEquipe)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2.5),
+              ),
+            ),
+          )
+        else
+          // não carregou (sem internet ou erro): tentar de novo
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: _carregarEquipe,
+              icon: const Icon(Icons.refresh, size: 20),
+              label: const Text('Carregar os funcionários'),
+            ),
+          ),
+      ];
+    }
+    if (equipe.isEmpty) {
+      return [
+        Padding(
+          padding: const EdgeInsets.only(left: 2),
+          child: Text(
+            'Nenhum funcionário cadastrado nesta fazenda.',
+            style: _textoMedio(14, _corRotulo),
+          ),
+        ),
+      ];
+    }
+    Widget opcao(int id, String p) {
+      final marcada = _presencaMarcada[id] == p;
+      return Expanded(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            FocusManager.instance.primaryFocus?.unfocus();
+            _fecharMotivos();
+            setState(() => _presencaMarcada[id] = p);
+          },
+          child: Container(
+            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            decoration: BoxDecoration(
+              color: marcada
+                  ? const Color(0xFFCFE5FA)
+                  : const Color(0xFFF9FCFF),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      p,
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontFamily: 'FuturaStdMedium',
+                        fontSize: 14,
+                        color: _corRotulo,
+                      ),
+                    ),
+                  ),
+                ),
+                if (marcada) ...[
+                  const SizedBox(width: 4),
+                  Icon(Icons.check, color: Colors.green[600], size: 20),
+                ],
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return [
+      for (final f in equipe) ...[
+        Padding(
+          padding: const EdgeInsets.fromLTRB(2, 4, 0, 6),
+          child: Text(f.nome, style: _negrito(15, _corRotulo)),
+        ),
+        Row(
+          children: [
+            opcao(f.id, _presencas[0]),
+            const SizedBox(width: 8),
+            opcao(f.id, _presencas[1]),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            opcao(f.id, _presencas[2]),
+            const SizedBox(width: 8),
+            opcao(f.id, _presencas[3]),
+          ],
+        ),
+        const SizedBox(height: 10),
+      ],
+    ];
+  }
+
   /// Título de um grupo da Seção 9 (Uso do Trator, Bomba d'água).
   Widget _tituloGrupo(String texto, IconData icone) => Padding(
     padding: const EdgeInsets.only(left: 2, bottom: 8),

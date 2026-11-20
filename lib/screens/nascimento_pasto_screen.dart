@@ -148,7 +148,11 @@ class _NascimentoPastoScreenState extends State<NascimentoPastoScreen> {
       '${d.year}-${d.month.toString().padLeft(2, '0')}-'
       '${d.day.toString().padLeft(2, '0')}';
 
+  /// Hoje — ou, aberto pelo Resumo Diário, o dia do resumo (hoje ou ontem):
+  /// é a data do registro e o limite das datas da tela.
   static DateTime _hoje() {
+    final resumo = MapaGadoSyncService.instance.diaResumo;
+    if (resumo != null) return resumo;
     final a = DateTime.now();
     return DateTime(a.year, a.month, a.day);
   }

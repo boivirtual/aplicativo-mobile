@@ -1402,6 +1402,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       // Chegada e Saída de Produtos: segue com "Nenhuma Chegada/Saída hoje"
       if (!_secao8Completa) return;
       setState(() => _secao = 9);
+      unawaited(_carregarEquipe());
       return;
     }
     if (_secao == 1) {

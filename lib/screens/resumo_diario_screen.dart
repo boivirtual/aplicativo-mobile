@@ -2832,7 +2832,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       for (final f in equipe) ...[
         Padding(
           padding: const EdgeInsets.fromLTRB(2, 4, 0, 6),
-          child: Text(_doisNomes(f.nome), style: _textoForte(15, _corRotulo)),
+          child: Text(_doisNomes(f.nome), style: _textoMedio(15, _corRotulo)),
         ),
         Row(
           children: [

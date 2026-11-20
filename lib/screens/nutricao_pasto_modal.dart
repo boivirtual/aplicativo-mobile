@@ -372,8 +372,13 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
     corRotulo: _corRotulo,
     valor: _br(_data),
     altura: _alturaCampo,
-    icone: Icon(Icons.calendar_month, color: _corRotulo, size: 18),
-    onTap: _escolherData,
+    // aberto pelo Resumo Diário: a data é a do resumo, sem trocar
+    icone: MapaGadoSyncService.instance.diaResumo != null
+        ? Icon(Icons.lock_outline, color: _corRotulo, size: 18)
+        : Icon(Icons.calendar_month, color: _corRotulo, size: 18),
+    onTap: MapaGadoSyncService.instance.diaResumo != null
+        ? null
+        : _escolherData,
   );
 
   /// Campo só de leitura (Und vem do produto, como no web).

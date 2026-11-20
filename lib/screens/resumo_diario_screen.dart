@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/daos/mapa_gado_dao.dart';
 import '../services/connectivity_service.dart';
+import '../services/mapa_gado_sync_service.dart';
 import '../services/resumo_diario_service.dart';
 import '../utils/app_alert.dart';
 import '../utils/estilo_app.dart';

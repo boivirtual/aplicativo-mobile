@@ -3207,7 +3207,6 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
               ),
       ),
     );
-    if (mounted) await _abrirSecao1(naSecao2: true);
   }
 
   /// Sim do "Você Confirma todas as afirmativas acima?": com alguma

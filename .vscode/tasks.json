@@ -1,0 +1,36 @@
+{
+  // Terminal > Executar Tarefa... : escolha qual APK gerar.
+  // O APK fica em build\app\outputs\flutter-apk\
+  //   APK Teste             -> API do servidor de teste (agrolandes.com.br/teste_reproducao), com a tarja "TESTE"
+  //   APK Produção (release) -> API de produção (boivirtual.com.br/sistema), sem tarja
+  // Gerando sem as tarefas (flutter build apk ...), o app vai para o TESTE.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "APK Teste",
+      "type": "shell",
+      "command": "flutter",
+      "args": [
+        "build",
+        "apk",
+        "--release",
+        "--dart-define=API_URL=https://agrolandes.com.br/teste_reproducao/sistema/api"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "APK Produção (release)",
+      "type": "shell",
+      "command": "flutter",
+      "args": [
+        "build",
+        "apk",
+        "--release",
+        "--dart-define=API_URL=https://boivirtual.com.br/sistema/api"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}

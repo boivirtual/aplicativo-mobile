@@ -95,6 +95,18 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   final _outrosMotivosController = TextEditingController();
   TimeOfDay? _bombaInicio;
   TimeOfDay? _bombaTermino;
+
+  /// Equipe do Dia: funcionários da fazenda (do servidor, ao entrar na
+  /// Seção 9) e a presença marcada de cada um (uma, obrigatória).
+  static const _presencas = [
+    'Integral',
+    'Meio Período',
+    'Falta',
+    'Folga Combinada',
+  ];
+  List<({int id, String nome})>? _equipe;
+  bool _carregandoEquipe = false;
+  final Map<int, String> _presencaMarcada = {};
   final _obsGeraisController = TextEditingController();
 
   /// Card "Adicionar Chegada ou Saída": abre o modal com os lançamentos já

@@ -349,6 +349,8 @@ class MapaGadoSyncService {
               'acao': 'registros_hoje',
               'bd': bd,
               'fazenda': fazenda,
+              // pelo Resumo Diário: os registros do dia do resumo
+              if (dataResumo != null) 'data_resumo': dataResumo,
             }),
           )
           .timeout(const Duration(seconds: 15));

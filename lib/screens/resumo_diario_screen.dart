@@ -2725,6 +2725,9 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       (h) => _bombaTermino = h,
     ),
     const SizedBox(height: 18),
+    _tituloGrupo('Equipe do Dia', Icons.groups_outlined),
+    ..._equipeDoDia(),
+    const SizedBox(height: 18),
     CampoTextoTopo(
       rotulo: 'Observações gerais do dia',
       corRotulo: _corRotulo,

@@ -3171,6 +3171,26 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Seção 2 com o texto refeito.
   Future<void> _abrirPrograma(String chave) async {
     FocusManager.instance.primaryFocus?.unfocus();
+    // Mapa de Gado aberto pelo Resumo: o que for gravado lá (pastos,
+    // nutrição, nascimento, aborto/natimorto, morte) fica com a data do
+    // registro no dia do resumo (hoje ou ontem). Ao voltar, limpa: aberto
+    // de qualquer outro lugar, grava como sempre.
+    final d = _data;
+    final sync = MapaGadoSyncService.instance;
+    if (chave != 'choveu') {
+      sync.dataResumo =
+          '${d.year}-${d.month.toString().padLeft(2, '0')}-'
+          '${d.day.toString().padLeft(2, '0')}';
+    }
+    try {
+      await _abrirProgramaNaTela(chave);
+    } finally {
+      sync.dataResumo = null;
+    }
+    if (mounted) await _abrirSecao1(naSecao2: true);
+  }
+
+  Future<void> _abrirProgramaNaTela(String chave) async {
     await Navigator.push<bool>(
       context,
       MaterialPageRoute(

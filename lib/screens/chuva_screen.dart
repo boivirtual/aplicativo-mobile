@@ -503,7 +503,9 @@ class _ChuvaScreenState extends State<ChuvaScreen> {
               Expanded(
                 flex: 1,
                 child: GestureDetector(
-                  onTap: _escolherData,
+                  // aberta pelo Resumo Diário: a data é a do resumo, sem
+                  // trocar (a chuva é sempre do dia em que choveu)
+                  onTap: widget.aoRegistrar != null ? null : _escolherData,
                   child: Container(
                     height: 80,
                     decoration: _decoracaoInputBranco,

@@ -2832,7 +2832,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       for (final f in equipe) ...[
         Padding(
           padding: const EdgeInsets.fromLTRB(2, 4, 0, 6),
-          child: Text(f.nome, style: _textoForte(15, _corRotulo)),
+          child: Text(_doisNomes(f.nome), style: _textoForte(15, _corRotulo)),
         ),
         Row(
           children: [
@@ -2852,6 +2852,16 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
         const SizedBox(height: 10),
       ],
     ];
+  }
+
+  /// Só os dois primeiros nomes do funcionário (com o "da", "de" etc. no
+  /// meio, vai até o nome seguinte: "José da Silva").
+  static String _doisNomes(String nome) {
+    const ligacoes = {'da', 'de', 'do', 'das', 'dos', 'e'};
+    final partes = nome.trim().split(RegExp(r's+'));
+    if (partes.length <= 2) return partes.join(' ');
+    final ate = ligacoes.contains(partes[1].toLowerCase()) ? 3 : 2;
+    return partes.take(ate).join(' ');
   }
 
   /// Título de um grupo da Seção 9 (Uso do Trator, Bomba d'água).
@@ -3143,7 +3153,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       // Equipe do Dia: uma presença para cada funcionário
       for (final f in _equipe!) {
         if (!_presencaMarcada.containsKey(f.id)) {
-          erro = 'Marque a presença de ${f.nome} na Equipe do Dia.';
+          erro = 'Marque a presença de ${_doisNomes(f.nome)} na Equipe do Dia.';
           break;
         }
       }

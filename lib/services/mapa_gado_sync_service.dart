@@ -394,11 +394,14 @@ class MapaGadoSyncService {
     }
   }
 
+  /// Data e hora da ação. Aberto pelo Resumo Diário: o dia do resumo com a
+  /// hora atual (ver [dataResumo]).
   static String _agora() {
     final d = DateTime.now();
     String dois(int n) => n.toString().padLeft(2, '0');
-    return '${d.year}-${dois(d.month)}-${dois(d.day)} '
-        '${dois(d.hour)}:${dois(d.minute)}:${dois(d.second)}';
+    final dia =
+        instance.dataResumo ?? '${d.year}-${dois(d.month)}-${dois(d.day)}';
+    return '$dia ${dois(d.hour)}:${dois(d.minute)}:${dois(d.second)}';
   }
 
   // ---------------------------------------------------------------------

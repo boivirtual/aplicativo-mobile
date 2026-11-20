@@ -3137,6 +3137,16 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       erro = 'Descreva outros motivos.';
     } else if ((_bombaInicio == null) != (_bombaTermino == null)) {
       erro = "Informe o Início e o Término da Bomba d'água.";
+    } else if (_equipe == null) {
+      erro = 'Carregue os funcionários da Equipe do Dia.';
+    } else {
+      // Equipe do Dia: uma presença para cada funcionário
+      for (final f in _equipe!) {
+        if (!_presencaMarcada.containsKey(f.id)) {
+          erro = 'Marque a presença de ${f.nome} na Equipe do Dia.';
+          break;
+        }
+      }
     }
     if (erro != null) {
       await AppAlert.erro(context, erro);

@@ -320,7 +320,11 @@ class MapaGadoSyncService {
           .post(
             Uri.parse("${ApiConfig.baseUrl}/rest/mapa-gado/nascimento.php"),
             headers: {"Content-Type": "application/json"},
-            body: json.encode(corpo),
+            body: json.encode({
+              ...corpo,
+              // pelo Resumo Diário: "Registros de Hoje" do dia do resumo
+              if (dataResumo != null) 'data_resumo': dataResumo,
+            }),
           )
           .timeout(const Duration(seconds: 20));
       if (response.statusCode != 200) return null;

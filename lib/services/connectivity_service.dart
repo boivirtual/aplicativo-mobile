@@ -31,9 +31,10 @@ class ConnectivityService {
   /// `const` de propósito: os testes de rede ruim
   /// (test/sync_rede_ruim_test.dart) apontam isso pra "localhost" antes de
   /// rodar, pra não depender de internet real (nem de conseguir resolver o
-  /// domínio de produção) dentro do ambiente de teste. Em produção nunca
-  /// muda do valor abaixo.
-  static String hostParaChecagem = 'agrolandes.com.br';
+  /// domínio de produção) dentro do ambiente de teste. No app é o servidor
+  /// da API escolhido no build (agrolandes.com.br no teste,
+  /// boivirtual.com.br na produção — ver ApiConfig).
+  static String hostParaChecagem = Uri.parse(ApiConfig.baseUrl).host;
 
   final StreamController<NivelConexao> _controller =
       StreamController<NivelConexao>.broadcast();

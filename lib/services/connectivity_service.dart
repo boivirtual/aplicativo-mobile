@@ -4,11 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import '../config/api_config.dart';
 
 /// Nível de conectividade real, não só "tem uma interface de rede ativa".
-enum NivelConexao {
-  semInternet,
-  internetRuim,
-  internetOk,
-}
+enum NivelConexao { semInternet, internetRuim, internetOk }
 
 /// Serviço único de conectividade, compartilhado pelo app inteiro.
 ///
@@ -81,7 +77,9 @@ class ConnectivityService {
     return _ultimoNivel;
   }
 
-  Future<void> _processarStatusInternet(List<ConnectivityResult> results) async {
+  Future<void> _processarStatusInternet(
+    List<ConnectivityResult> results,
+  ) async {
     if (results.contains(ConnectivityResult.none)) {
       _emitir(NivelConexao.semInternet);
       return;

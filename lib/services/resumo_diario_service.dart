@@ -247,10 +247,7 @@ class ResumoDiarioService {
         return [
           for (final f in (dados['funcionarios'] as List? ?? const []))
             if (f is Map)
-              (
-                id: (f['id'] as num?)?.toInt() ?? 0,
-                nome: '${f['nome'] ?? ''}',
-              ),
+              (id: (f['id'] as num?)?.toInt() ?? 0, nome: '${f['nome'] ?? ''}'),
         ];
       }
     } catch (e) {

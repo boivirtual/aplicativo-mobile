@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import '../config/api_config.dart';
 
 /// Nível de conectividade real, não só "tem uma interface de rede ativa".
 enum NivelConexao {

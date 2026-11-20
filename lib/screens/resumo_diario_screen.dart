@@ -241,6 +241,40 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     if (erro != null) await AppAlert.erro(context, erro);
   }
 
+  /// Ao entrar na Seção 9: consulta no servidor os funcionários da fazenda
+  /// (só online; sem internet ou se falhar, avisa). As presenças já
+  /// marcadas continuam para quem ainda está na lista.
+  Future<void> _carregarEquipe() async {
+    final fazenda = _fazenda;
+    final bd = _bd;
+    if (fazenda == null || bd == null || _carregandoEquipe) return;
+    setState(() => _carregandoEquipe = true);
+    final nivel = await ConnectivityService.instance.verificarAgora();
+    String? erro = _mensagemSemInternet(nivel);
+    List<({int id, String nome})>? lista;
+    if (erro == null) {
+      lista = await ResumoDiarioService.instance.funcionariosDaFazenda(
+        bd,
+        fazenda,
+      );
+      if (lista == null) {
+        erro =
+            'Não foi possível consultar os funcionários da fazenda. Tente '
+            'novamente.';
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _carregandoEquipe = false;
+      if (lista != null && fazenda == _fazenda) {
+        _equipe = lista;
+        final ids = {for (final f in lista) f.id};
+        _presencaMarcada.removeWhere((id, _) => !ids.contains(id));
+      }
+    });
+    if (erro != null) await AppAlert.erro(context, erro);
+  }
+
   int? get _encontrados => int.tryParse(_encontradosController.text.trim());
 
   /// Encontrados − Esperados (null enquanto falta um dos dois).

@@ -40,6 +40,16 @@ class MyApp extends StatelessWidget {
         primaryColor: const Color(0xFF18385F),
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF18385F)),
       ),
+      // APK do servidor de teste: tarja "TESTE" no canto de cima (o de
+      // produção não mostra nada) — ver ApiConfig.
+      builder: (context, filho) => ApiConfig.ehTeste
+          ? Banner(
+              message: 'TESTE',
+              location: BannerLocation.topEnd,
+              color: const Color(0xFFE53935),
+              child: filho!,
+            )
+          : filho!,
       home: const AuthCheckScreen(),
       routes: {
         '/login': (context) => const LoginScreen(),

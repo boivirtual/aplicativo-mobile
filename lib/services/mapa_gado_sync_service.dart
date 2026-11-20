@@ -547,6 +547,8 @@ class MapaGadoSyncService {
               'acao': acao,
               'bd': bd,
               'usuario': usuario,
+              // pelo Resumo Diário: o registro fica com o dia do resumo
+              if (dataResumo != null) 'data_resumo': dataResumo,
               'campos': {
                 for (final c in campos.entries)
                   if (c.value != null) c.key: c.value,

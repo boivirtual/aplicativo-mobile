@@ -127,6 +127,46 @@ class ResumoDiarioService {
     return 'Não foi possível registrar a folga. Tente novamente.';
   }
 
+  /// "Finalizar" da Seção 9: grava o Resumo do [dia] da [fazenda] com os
+  /// dados das seções ([resumo], ver rest/resumo-diario/gravar.php). Só
+  /// online. Devolve null se gravou (ou se já estava gravado — reenvio) ou
+  /// a mensagem de erro.
+  Future<String?> gravarResumo(
+    String bd,
+    String fazenda,
+    String usuario,
+    DateTime dia,
+    Map<String, dynamic> resumo,
+  ) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse("${ApiConfig.baseUrl}/rest/resumo-diario/gravar.php"),
+            headers: {"Content-Type": "application/json"},
+            body: json.encode({
+              'bd': bd,
+              'fazenda': fazenda,
+              'usuario': usuario,
+              'data': _diaApi(dia),
+              'resumo': resumo,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
+      if (response.statusCode == 200) {
+        final dados = json.decode(response.body);
+        if (dados is Map) {
+          if (dados['success'] == true) return null;
+          final msg = dados['message']?.toString();
+          if (msg != null && msg.isNotEmpty) return msg;
+        }
+      }
+    } catch (e) {
+      debugPrint('[ResumoDiario] gravar resumo: falhou -> $e');
+    }
+    return 'Não foi possível gravar o Resumo Diário. Verifique a internet e '
+        'tente novamente.';
+  }
+
   /// Seção 1: atividades já registradas no sistema para a [fazenda] no [dia]
   /// (ver [AtividadesDoDia]). Só online. null se não conseguiu consultar.
   Future<AtividadesDoDia?> atividadesDoDia(

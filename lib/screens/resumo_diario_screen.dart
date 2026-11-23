@@ -1694,7 +1694,18 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
                                             : _secao == 9
                                             ? _finalizar
                                             : _proximo,
-                                        child: _secao == 9
+                                        child: _secao == 9 && _gravandoResumo
+                                            // gravando: rodinha no botão
+                                            ? const SizedBox(
+                                                width: 22,
+                                                height: 22,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2.5,
+                                                      color: Colors.white,
+                                                    ),
+                                              )
+                                            : _secao == 9
                                             ? const Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [

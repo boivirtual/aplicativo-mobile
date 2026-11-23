@@ -285,7 +285,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
                   Expanded(
                     flex: 5,
                     child: SeletorCampoWidget<int>(
-                      rotulo: '* Produto',
+                      rotulo: '* Mistura p/ Nutrição',
                       altura: _alturaCampo,
                       destaque: true,
                       corRotulo: _corRotulo,

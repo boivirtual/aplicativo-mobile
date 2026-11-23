@@ -3171,7 +3171,156 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       await AppAlert.erro(context, erro);
       return;
     }
-    // A gravação do Resumo vem nas próximas etapas.
+    await _gravarResumo();
+  }
+
+  /// Grava o Resumo no servidor (só online). Gravou: avisa, limpa a tela e
+  /// sai do programa, de volta para a tela inicial do aplicativo.
+  Future<void> _gravarResumo() async {
+    final bd = _bd;
+    final fazenda = _fazenda;
+    if (bd == null || fazenda == null || _gravandoResumo) return;
+    final dia = _data;
+    setState(() => _gravandoResumo = true);
+    final nivel = await ConnectivityService.instance.verificarAgora();
+    String? erro = _mensagemSemInternet(nivel);
+    erro ??= await ResumoDiarioService.instance.gravarResumo(
+      bd,
+      fazenda,
+      _nomeUsuario,
+      dia,
+      _dadosDoResumo(),
+    );
+    if (!mounted) return;
+    setState(() => _gravandoResumo = false);
+    if (erro != null) {
+      await AppAlert.erro(context, erro);
+      return;
+    }
+    await AppAlert.sucesso(
+      context,
+      'Resumo Diário do dia ${_formatar(dia)} gravado com sucesso!',
+    );
+    if (!mounted) return;
+    setState(_limparResumo);
+    if (widget.onBack != null) {
+      widget.onBack!();
+    } else {
+      Navigator.pop(context);
+    }
+  }
+
+  /// Dados das 9 seções para a gravação (ver rest/resumo-diario/gravar.php).
+  /// Seleções simples em S/N ou letra; listas e seleções múltiplas como
+  /// listas (o servidor guarda em JSON).
+  Map<String, dynamic> _dadosDoResumo() {
+    final a = _atividadesDia;
+    final nomePasto = {for (final p in _pastosFazenda) p.key: p.value};
+    List<Map<String, dynamic>> pastos(Set<int> ids) => [
+      for (final id in ids) {'id': id, 'nome': nomePasto[id] ?? ''},
+    ];
+    String? hora(TimeOfDay? h) => h == null ? null : _formatarHora(h);
+    String? sn(bool v) => v ? 'S' : null;
+    return {
+      // Seção 1 — o que o sistema mostrou (e o usuário confirmou)
+      'chuva_mm': a?.chuvaMm,
+      'mudou_pasto': a == null ? null : (a.mudouPasto ? 'S' : 'N'),
+      'nutricao': a == null ? null : (a.nutricao ? 'S' : 'N'),
+      'nascimentos': a?.nascimentos,
+      'abortos': a?.abortos,
+      'mortes': a?.mortes,
+      'pesados': a?.pesados,
+      // Seção 2
+      'confirmou_nao_registradas': sn(_secao2Confirmada),
+      // Seção 3
+      'conferiu_gado': switch (_conferiuGado) {
+        'todo' => 'T',
+        'parte' => 'P',
+        'nao' => 'N',
+        _ => null,
+      },
+      'pastos_conferidos': pastos(_pastosConferidos),
+      'animais_esperados': _esperados,
+      'animais_encontrados': _encontrados,
+      'pastos_diferenca': pastos(_pastosDiferenca),
+      'vacas_prenhas': _vacasPrenhas,
+      'conferiu_prenhas': switch (_conferiuPrenhas) {
+        'sim' => 'S',
+        'nao' => 'N',
+        _ => null,
+      },
+      'obs_rebanho': _obsRebanhoController.text.trim(),
+      // Seção 4
+      'curral_atividades': [
+        for (final c in _atividadesCurralDia)
+          if (_curralMarcadas.contains(c.$1)) c.$1,
+      ],
+      'remedios': _remedio?['aplicacoes'] ?? const [],
+      'curral_outras': _outrasAtividadesController.text.trim(),
+      // Seções 5 a 8
+      'nenhuma_mistura': sn(_nenhumaMistura),
+      'misturas': _misturas,
+      'nenhum_servico': sn(_nenhumServico),
+      'servicos': _servicos,
+      'nenhuma_solicitacao': sn(_nenhumaSolicitacao),
+      'pedidos': _pedidos,
+      'nenhuma_chegada_saida': sn(_nenhumaChegadaSaida),
+      'chegadas_saidas': _movimentos,
+      // Seção 9
+      'trator_inicio': hora(_tratorInicio),
+      'trator_termino': hora(_tratorTermino),
+      'trator_motivos': [
+        for (final m in _motivosTrator)
+          if (_motivosMarcados.contains(m)) m,
+      ],
+      'trator_outros_motivos': _outrosMotivosController.text.trim(),
+      'bomba_inicio': hora(_bombaInicio),
+      'bomba_termino': hora(_bombaTermino),
+      'equipe': [
+        for (final f in _equipe ?? const <({int id, String nome})>[])
+          {'id': f.id, 'nome': f.nome, 'presenca': _presencaMarcada[f.id]},
+      ],
+      'obs_gerais': _obsGeraisController.text.trim(),
+    };
+  }
+
+  /// Depois de gravar: tudo volta ao começo (o próximo resumo começa do
+  /// zero, na tela inicial, com a data de hoje).
+  void _limparResumo() {
+    _secao = 0;
+    _data = _hoje();
+    _atividadesDia = null;
+    _chaveAtividades = null;
+    _atividadesMarcadas.clear();
+    _secao2Confirmada = false;
+    _conferiuGado = null;
+    _pastosConferidos.clear();
+    _encontradosController.clear();
+    _pastosDiferenca.clear();
+    _conferiuPrenhas = null;
+    _obsRebanhoController.clear();
+    _obsLiberada = false;
+    _curralMarcadas.clear();
+    _remedio = null;
+    _outrasAtividadesController.clear();
+    _nenhumaMistura = false;
+    _misturas = [];
+    _nenhumServico = false;
+    _servicos = [];
+    _nenhumaSolicitacao = false;
+    _pedidos = [];
+    _nenhumaChegadaSaida = false;
+    _movimentos = [];
+    _tratorInicio = null;
+    _tratorTermino = null;
+    _motivosMarcados.clear();
+    _motivosAberto = false;
+    _outrosMotivosController.clear();
+    _bombaInicio = null;
+    _bombaTermino = null;
+    _equipe = null;
+    _presencaMarcada.clear();
+    _obsGeraisController.clear();
   }
 
   /// Link de uma atividade da Seção 2: Choveu abre o programa da Chuva (com

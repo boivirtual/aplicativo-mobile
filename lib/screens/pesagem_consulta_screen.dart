@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../widgets/selo_teste_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../repositories/pesagem_repository.dart';
 
@@ -121,6 +122,7 @@ class _PesagemConsultaScreenState extends State<PesagemConsultaScreen> {
             'Consulta de Pesagem',
             style: TextStyle(fontSize: 18),
           ),
+          actions: const [SeloTesteWidget(), SizedBox(width: 8)],
         ),
       ),
       body: Column(

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../widgets/selo_teste_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/cabecalho_fazenda_widget.dart';
 
@@ -60,6 +61,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: widget.onBack, // Volta para a Home
         ),
+        actions: const [SeloTesteWidget(), SizedBox(width: 8)],
       ),
       body: carregando
           ? const Center(child: CircularProgressIndicator())

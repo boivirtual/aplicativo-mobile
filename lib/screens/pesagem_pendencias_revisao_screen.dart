@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/selo_teste_widget.dart';
 import '../repositories/pesagem_repository.dart';
 import '../services/sync_service.dart';
 

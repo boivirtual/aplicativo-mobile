@@ -34,8 +34,15 @@ class _IndicadorConectividadeWidgetState
     super.dispose();
   }
 
+  /// Selo "TESTE" (só no APK de teste) antes do ícone: as barras que já têm
+  /// o indicador ganham o selo sem mexer em cada tela.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [const SeloTesteWidget(), _icone(context)],
+  );
+
+  Widget _icone(BuildContext context) {
     if (_nivel == NivelConexao.internetOk) return const SizedBox.shrink();
 
     final semInternet = _nivel == NivelConexao.semInternet;

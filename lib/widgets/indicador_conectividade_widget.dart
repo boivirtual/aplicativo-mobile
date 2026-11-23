@@ -60,9 +60,9 @@ class _IndicadorConectividadeWidgetState
         size: 20,
       ),
       onPressed: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(mensagem), backgroundColor: cor),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(mensagem), backgroundColor: cor));
       },
     );
   }

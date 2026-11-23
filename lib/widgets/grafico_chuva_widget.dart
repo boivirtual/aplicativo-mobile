@@ -49,7 +49,22 @@ class GraficoChuvaWidget extends StatelessWidget {
     final maxMm = mm.fold<double>(0, (p, v) => v > p ? v : p);
     final maxDias = dias.fold<double>(0, (p, v) => v > p ? v : p);
     final tetoMm = _tetoAgradavel(maxMm, const [
-      10, 20, 30, 50, 75, 100, 150, 200, 300, 400, 500, 750, 1000, 1500, 2000, 3000,
+      10,
+      20,
+      30,
+      50,
+      75,
+      100,
+      150,
+      200,
+      300,
+      400,
+      500,
+      750,
+      1000,
+      1500,
+      2000,
+      3000,
     ]);
     final tetoDias = _tetoAgradavel(maxDias, const [5, 10, 15, 20, 25, 31]);
     final largBarra = mm.length > 6 ? 14.0 : 24.0;
@@ -66,7 +81,8 @@ class GraficoChuvaWidget extends StatelessWidget {
       );
     }
 
-    Widget rotuloOculto(double valor, TitleMeta meta) => const SizedBox.shrink();
+    Widget rotuloOculto(double valor, TitleMeta meta) =>
+        const SizedBox.shrink();
 
     return Container(
       width: double.infinity,
@@ -102,9 +118,17 @@ class GraficoChuvaWidget extends StatelessWidget {
           const SizedBox(height: 10),
           const Row(
             children: [
-              _ItemLegenda(cor: _azulBarraBase, formato: _FormatoLegenda.quadrado, texto: 'mm Chuva'),
+              _ItemLegenda(
+                cor: _azulBarraBase,
+                formato: _FormatoLegenda.quadrado,
+                texto: 'mm Chuva',
+              ),
               SizedBox(width: 16),
-              _ItemLegenda(cor: _corLinha, formato: _FormatoLegenda.linha, texto: 'Dias Chuvosos'),
+              _ItemLegenda(
+                cor: _corLinha,
+                formato: _FormatoLegenda.linha,
+                texto: 'Dias Chuvosos',
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -144,12 +168,19 @@ class GraficoChuvaWidget extends StatelessWidget {
                             ),
                             children: [
                               TextSpan(
-                                text: 'mm Chuva: ${rod.toY.toStringAsFixed(0)}\n',
-                                style: const TextStyle(color: Colors.white, fontSize: 11),
+                                text:
+                                    'mm Chuva: ${rod.toY.toStringAsFixed(0)}\n',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                ),
                               ),
                               TextSpan(
                                 text: 'Dias Chuvosos: $diasValor',
-                                style: const TextStyle(color: Colors.white, fontSize: 11),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                ),
                               ),
                             ],
                           );
@@ -160,12 +191,16 @@ class GraficoChuvaWidget extends StatelessWidget {
                       show: true,
                       drawVerticalLine: false,
                       horizontalInterval: tetoMm / 4,
-                      getDrawingHorizontalLine: (_) =>
-                          const FlLine(color: Color(0xFFEEEEEE), strokeWidth: 1),
+                      getDrawingHorizontalLine: (_) => const FlLine(
+                        color: Color(0xFFEEEEEE),
+                        strokeWidth: 1,
+                      ),
                     ),
                     borderData: FlBorderData(show: false),
                     titlesData: FlTitlesData(
-                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
                       rightTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
@@ -186,7 +221,10 @@ class GraficoChuvaWidget extends StatelessWidget {
                           reservedSize: _reservadoEsquerda,
                           getTitlesWidget: (v, meta) => Text(
                             v.toInt().toString(),
-                            style: const TextStyle(fontSize: 10, color: Colors.grey),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey,
+                            ),
                           ),
                         ),
                       ),
@@ -199,7 +237,9 @@ class GraficoChuvaWidget extends StatelessWidget {
                             BarChartRodData(
                               toY: mm[i],
                               width: largBarra,
-                              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(4),
+                              ),
                               gradient: const LinearGradient(
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
@@ -224,7 +264,9 @@ class GraficoChuvaWidget extends StatelessWidget {
                       gridData: const FlGridData(show: false),
                       borderData: FlBorderData(show: false),
                       titlesData: FlTitlesData(
-                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
                         bottomTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
@@ -248,7 +290,10 @@ class GraficoChuvaWidget extends StatelessWidget {
                               padding: const EdgeInsets.only(left: 4),
                               child: Text(
                                 v.toInt().toString(),
-                                style: const TextStyle(fontSize: 10, color: _corLinha),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: _corLinha,
+                                ),
                               ),
                             ),
                           ),
@@ -256,14 +301,21 @@ class GraficoChuvaWidget extends StatelessWidget {
                       ),
                       lineBarsData: [
                         LineChartBarData(
-                          spots: [for (var i = 0; i < dias.length; i++) FlSpot(i.toDouble(), dias[i])],
+                          spots: [
+                            for (var i = 0; i < dias.length; i++)
+                              FlSpot(i.toDouble(), dias[i]),
+                          ],
                           isCurved: false,
                           color: _corLinha,
                           barWidth: 2,
                           dotData: FlDotData(
                             show: true,
                             getDotPainter: (spot, pct, bar, index) =>
-                                FlDotCirclePainter(radius: 2.5, color: _corLinha, strokeWidth: 0),
+                                FlDotCirclePainter(
+                                  radius: 2.5,
+                                  color: _corLinha,
+                                  strokeWidth: 0,
+                                ),
                           ),
                         ),
                       ],
@@ -286,7 +338,11 @@ class _ItemLegenda extends StatelessWidget {
   final _FormatoLegenda formato;
   final String texto;
 
-  const _ItemLegenda({required this.cor, required this.formato, required this.texto});
+  const _ItemLegenda({
+    required this.cor,
+    required this.formato,
+    required this.texto,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -297,7 +353,10 @@ class _ItemLegenda extends StatelessWidget {
           Container(
             width: 10,
             height: 10,
-            decoration: BoxDecoration(color: cor, borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(
+              color: cor,
+              borderRadius: BorderRadius.circular(2),
+            ),
           )
         else
           Container(width: 14, height: 2, color: cor),

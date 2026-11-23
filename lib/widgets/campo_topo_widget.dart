@@ -149,10 +149,7 @@ class _CampoTextoTopoState extends State<CampoTextoTopo> {
             TextSpan(text: widget.rotulo),
             TextSpan(
               text: ' $complemento',
-              style: TextStyle(
-                fontSize: tamanho - 2,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: tamanho - 2, color: Colors.grey[500]),
             ),
           ],
         ),

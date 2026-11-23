@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'config/api_config.dart';
 import 'screens/login_screen.dart';
 import 'screens/atualizando_dados_screen.dart';
 import 'main_container.dart';

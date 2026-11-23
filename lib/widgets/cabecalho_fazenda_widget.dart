@@ -100,53 +100,53 @@ class CabecalhoFazendaWidget extends StatelessWidget {
         : const Color(0xFF607D8B);
 
     final select = GestureDetector(
-        onTap: temMaisDeUma ? () => _abrirMenu(context, campoKey) : null,
-        child: Container(
-          key: campoKey,
-          height: 55,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              if (mostrarIcone) ...[
-                const Icon(Icons.location_on, color: Color(0xFF18385F), size: 20),
-                const SizedBox(width: 10),
-              ],
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      labelSelect,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF607D8B),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      textoExibido,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: textoCor,
-                        fontWeight: fazendaSelecionada != null
-                            ? FontWeight.w500
-                            : FontWeight.normal,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (temMaisDeUma)
-                const Icon(Icons.arrow_drop_down, color: Color(0xFF18385F)),
-            ],
-          ),
+      onTap: temMaisDeUma ? () => _abrirMenu(context, campoKey) : null,
+      child: Container(
+        key: campoKey,
+        height: 55,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
         ),
+        child: Row(
+          children: [
+            if (mostrarIcone) ...[
+              const Icon(Icons.location_on, color: Color(0xFF18385F), size: 20),
+              const SizedBox(width: 10),
+            ],
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    labelSelect,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF607D8B),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    textoExibido,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: textoCor,
+                      fontWeight: fazendaSelecionada != null
+                          ? FontWeight.w500
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (temMaisDeUma)
+              const Icon(Icons.arrow_drop_down, color: Color(0xFF18385F)),
+          ],
+        ),
+      ),
     );
 
     return Container(

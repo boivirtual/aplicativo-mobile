@@ -43,7 +43,9 @@ class TecladoPesoWidget extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (onFechar != null) _linhaFechar(),
-          ...mostrarOperadores ? _linhasComOperadores() : _linhasApenasDigitos(),
+          ...mostrarOperadores
+              ? _linhasComOperadores()
+              : _linhasApenasDigitos(),
         ],
       ),
     );
@@ -126,21 +128,13 @@ class TecladoPesoWidget extends StatelessWidget {
 
   List<Widget> _linhasApenasDigitos() {
     return [
-      Row(
-        children: [_botaoDigito('1'), _botaoDigito('2'), _botaoDigito('3')],
-      ),
+      Row(children: [_botaoDigito('1'), _botaoDigito('2'), _botaoDigito('3')]),
       const SizedBox(height: _espacoEntreLinhas),
-      Row(
-        children: [_botaoDigito('4'), _botaoDigito('5'), _botaoDigito('6')],
-      ),
+      Row(children: [_botaoDigito('4'), _botaoDigito('5'), _botaoDigito('6')]),
       const SizedBox(height: _espacoEntreLinhas),
-      Row(
-        children: [_botaoDigito('7'), _botaoDigito('8'), _botaoDigito('9')],
-      ),
+      Row(children: [_botaoDigito('7'), _botaoDigito('8'), _botaoDigito('9')]),
       const SizedBox(height: _espacoEntreLinhas),
-      Row(
-        children: [_botaoApagar(), _botaoDigito('0'), _botaoConfirmar()],
-      ),
+      Row(children: [_botaoApagar(), _botaoDigito('0'), _botaoConfirmar()]),
     ];
   }
 

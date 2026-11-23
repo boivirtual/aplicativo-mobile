@@ -41,14 +41,31 @@ class MyApp extends StatelessWidget {
         primaryColor: const Color(0xFF18385F),
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF18385F)),
       ),
-      // APK do servidor de teste: tarja "TESTE" no canto de cima (o de
-      // produção não mostra nada) — ver ApiConfig.
+      // APK do servidor de teste: tarja "TESTE" no canto de cima, logo
+      // abaixo da barra de status do celular (hora, bateria), para não
+      // ficar por baixo dela; não pega os toques. O de produção não mostra
+      // nada — ver ApiConfig.
       builder: (context, filho) => ApiConfig.ehTeste
-          ? Banner(
-              message: 'TESTE',
-              location: BannerLocation.topEnd,
-              color: const Color(0xFFE53935),
-              child: filho!,
+          ? Stack(
+              children: [
+                filho!,
+                Positioned(
+                  top: MediaQuery.paddingOf(context).top,
+                  right: 0,
+                  child: const IgnorePointer(
+                    child: SizedBox(
+                      width: 70,
+                      height: 70,
+                      child: Banner(
+                        message: 'TESTE',
+                        location: BannerLocation.topEnd,
+                        color: Color(0xE6E53935),
+                        child: SizedBox.expand(),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             )
           : filho!,
       home: const AuthCheckScreen(),

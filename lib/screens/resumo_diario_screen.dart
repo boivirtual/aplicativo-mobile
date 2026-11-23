@@ -872,6 +872,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       _conferindoDia = true;
       _diaPendente = false;
       _erroConferencia = null;
+      _tipoNoDiaTela = null;
     });
     // checagem da internet na hora (o Resumo Diário só funciona online)
     final nivel = await ConnectivityService.instance.verificarAgora();

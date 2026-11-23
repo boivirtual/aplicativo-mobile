@@ -1372,7 +1372,8 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           !_conferindoDia &&
           !_registrandoFolga &&
           !_diaPendente &&
-          _erroConferencia == null)
+          _erroConferencia == null &&
+          _tipoNoDiaTela == null)
         ..._perguntaAtualizacao(),
       Expanded(
         child: _fazenda == null

@@ -561,6 +561,13 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Seção 4: quantos animais foram pesados no dia (vem com as atividades).
   int _animaisPesados = 0;
 
+  /// Atividades do dia que o sistema mostrou na Seção 1 (vão gravadas no
+  /// Resumo, ver [_dadosDoResumo]).
+  AtividadesDoDia? _atividadesDia;
+
+  /// Gravando o Resumo (Finalizar): não deixa tocar duas vezes.
+  bool _gravandoResumo = false;
+
   /// Seção 4: atividades do curral feitas no dia (cards no padrão da Seção
   /// 1). "Nenhuma das Atividades" não se mistura com as outras.
   static const _atividadesCurralDia = <(String, String, IconData)>[

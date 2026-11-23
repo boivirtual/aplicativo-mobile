@@ -914,9 +914,22 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
       // só o dia de hoje cobra o dia anterior: no resumo de um dia passado
       // (ex.: depois do "Registrar" do aviso) não cobra o dia antes dele, senão
       // voltaria um dia por vez sem fim
-      _diaPendente = r?.pendente == true && DateUtils.isSameDay(data, _hoje());
+      // (com o dia de hoje já registrado, não cobra o anterior aqui: o
+      // usuário escolhe ele no calendário se quiser)
+      _diaPendente =
+          r?.pendente == true &&
+          DateUtils.isSameDay(data, _hoje()) &&
+          tipo == null;
       _erroConferencia = erro;
+      _tipoNoDiaTela = erro == null ? tipo : null;
     });
+    // A data já tem resumo (ou folga) da fazenda: avisa ao entrar no Resumo
+    // (uma fazenda só) ou ao escolher a fazenda; a pergunta para começar não
+    // aparece — dá para escolher outra fazenda ou outro dia.
+    if (_tipoNoDiaTela != null && TickerMode.of(context)) {
+      await AppAlert.erro(context, _mensagemDiaRegistrado(tipo!, data));
+      return;
+    }
     // Dia anterior sem resumo: avisa num modal (só com o Resumo na tela).
     // "Registrar" passa a tela para esse dia (o usuário continua o
     // resumo dele); "Dia de Folga" grava o dia como Folga e volta para

@@ -50,7 +50,9 @@ class MyApp extends StatelessWidget {
               children: [
                 filho!,
                 Positioned(
-                  top: MediaQuery.paddingOf(context).top,
+                  // abaixo da barra de status e da barra do título (não
+                  // cobre a bateria nem o menu ⋮)
+                  top: MediaQuery.paddingOf(context).top + kToolbarHeight,
                   right: 0,
                   child: const IgnorePointer(
                     child: SizedBox(

@@ -139,6 +139,7 @@ class _PesagemPendenciasRevisaoScreenState
             'O que o servidor recusou',
             style: TextStyle(fontSize: 16),
           ),
+          actions: const [SeloTesteWidget(), SizedBox(width: 8)],
         ),
       ),
       body: Column(

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/connectivity_service.dart';
+import 'selo_teste_widget.dart';
 
 /// Indicador discreto de conectividade para a AppBar: um ícone pequeno à
 /// direita do título, em vez de uma tarja ocupando a largura toda da tela.

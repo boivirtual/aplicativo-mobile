@@ -844,6 +844,18 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
   /// Não deu para conferir (sem internet ou falha): também para tudo.
   String? _erroConferencia;
 
+  /// A data da tela já tem registro da fazenda ('R' = Resumo já gravado,
+  /// 'F' = Folga): não deixa começar o resumo dela (por enquanto não dá
+  /// para refazer/editar).
+  String? _tipoNoDiaTela;
+
+  /// Aviso da data já registrada (no modal e no lugar da pergunta).
+  String _mensagemDiaRegistrado(String tipo, DateTime dia) => tipo == 'F'
+      ? 'O dia ${_formatar(dia)} da $_nomeFazenda já foi registrado como '
+            'Folga.'
+      : 'O Resumo Diário do dia ${_formatar(dia)} da $_nomeFazenda já foi '
+            'feito.';
+
   /// Só a última conferência vale (a data pode mudar no meio de uma).
   int _conferencia = 0;
 

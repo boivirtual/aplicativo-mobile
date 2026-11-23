@@ -1139,6 +1139,11 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
           onPressed: _conferirDiaAnterior,
           child: const Text('Tentar novamente'),
         ),
+      )
+    else if (_tipoNoDiaTela != null)
+      _avisoTelaInicial(
+        '${_mensagemDiaRegistrado(_tipoNoDiaTela!, _data)} Para fazer o '
+        'resumo de outro dia, toque no calendário.',
       ),
   ];
 

@@ -713,6 +713,7 @@ class _ResumoDiarioScreenState extends State<ResumoDiarioScreen>
     final chuva = a.chuvaMm;
     final chave = '$fazenda|${_formatar(data)}';
     setState(() {
+      _atividadesDia = a;
       _animaisPesados = a.pesados;
       _nutricoesDia = a.nutricoes;
       _pastosAlteradosDia = a.pastosAlterados;

@@ -13,12 +13,7 @@ class SeloTesteWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!ApiConfig.ehTeste) return const SizedBox.shrink();
     // virado na diagonal (como uma fita), sem sair da barra
-    return Center(
-      child: Transform.rotate(
-        angle: 0.6,
-        child: _selo(),
-      ),
-    );
+    return Center(child: Transform.rotate(angle: 0.6, child: _selo()));
   }
 
   Widget _selo() {

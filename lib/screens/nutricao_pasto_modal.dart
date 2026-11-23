@@ -487,7 +487,7 @@ class _NutricaoPastoModalState extends State<NutricaoPastoModal> {
             ),
             children: [
               cab('Data'),
-              cab('Produto'),
+              cab('Mistura'),
               cab('Quant.', alinhamento: TextAlign.right),
               cab('Und', alinhamento: TextAlign.center),
               cab('Qtd\nAnimais', alinhamento: TextAlign.center),

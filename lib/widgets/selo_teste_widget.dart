@@ -32,7 +32,7 @@ class SeloTesteWidget extends StatelessWidget {
             width: _largura,
             height: altura,
             child: ClipPath(
-              clipper: _Faixa(_faixa),
+              clipper: const _Faixa(_faixa),
               child: ColoredBox(
                 color: const Color(0xFFE53935),
                 child: Center(
